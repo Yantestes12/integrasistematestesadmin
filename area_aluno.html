@@ -935,6 +935,19 @@
         }
       }
 
+      // Descompacta subarray de matriculas se o n8n retornar agrupado [{ email: "...", matriculas: [...] }]
+      if (Array.isArray(items)) {
+        let unpacked = [];
+        items.forEach(it => {
+          if (it && Array.isArray(it.matriculas)) {
+            unpacked.push(...it.matriculas);
+          } else if (it && typeof it === 'object') {
+            unpacked.push(it);
+          }
+        });
+        items = unpacked;
+      }
+
       // Filtrar estritamente objetos de matrícula vazios [{}]
       if (Array.isArray(items)) {
         items = items.filter(item => {
