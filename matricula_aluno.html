@@ -3765,21 +3765,25 @@ window.dadosRecentesCPF = null;
             }
         }
 
-        // Garante envio de Bairro (nome + id) e Telefone/WhatsApp com todos os aliases para o backend
-        var elBairroText = document.getElementById('bairro');
-        var elBairroSelect = document.getElementById('bairro_id');
-        var valBairroNome = elBairroText ? elBairroText.value : '';
-        if ((!valBairroNome || valBairroNome.trim() === '') && elBairroSelect && elBairroSelect.selectedIndex >= 0) {
-            var selectedText = elBairroSelect.options[elBairroSelect.selectedIndex].text;
-            if (selectedText && !selectedText.includes('Selecione') && !selectedText.includes('Carregando')) {
-                valBairroNome = selectedText;
-                if (elBairroText) elBairroText.value = selectedText;
-            }
+        // Bairro de Residência do Aluno (puxado pelo CEP - onde a pessoa mora)
+        var elBairroText = document.getElementById('bairro') || document.querySelector('input[name="bairro"]');
+        var valBairroResidencia = elBairroText ? elBairroText.value : '';
+        if (valBairroResidencia) {
+            fd.set('bairro', valBairroResidencia);
+            fd.set('bairro_residencia', valBairroResidencia);
         }
-        if (valBairroNome) {
-            fd.set('bairro', valBairroNome);
-            fd.set('bairro_nome', valBairroNome);
-            fd.set('nome_bairro', valBairroNome);
+
+        // Bairro / Polo do Projeto (com ID da localidade)
+        var elBairroSelect = document.getElementById('bairro_id') || document.querySelector('select[name="bairro_id"]');
+        if (elBairroSelect && elBairroSelect.value) {
+            fd.set('bairro_id', elBairroSelect.value);
+            if (elBairroSelect.selectedIndex >= 0) {
+                var txtPolo = elBairroSelect.options[elBairroSelect.selectedIndex].text;
+                if (txtPolo && !txtPolo.includes('Selecione') && !txtPolo.includes('Carregando')) {
+                    fd.set('bairro_polo_nome', txtPolo);
+                    fd.set('bairro_projeto_nome', txtPolo);
+                }
+            }
         }
 
         var valWhatsapp = (document.getElementById('whatsapp') || {}).value || '';
