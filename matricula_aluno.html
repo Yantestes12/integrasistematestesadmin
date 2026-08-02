@@ -2586,6 +2586,7 @@ window.dadosRecentesCPF = null;
             setTimeout(function() {
                 mostrarStep(2);
             }, 1800);
+        },
         onFalha: function(msg) {
             mostrarStatusCPF('aviso', '⚠️ CPF não encontrado na consulta automática. Os campos de Nome e Data de Nascimento já foram liberados para preenchimento manual na próxima etapa.');
             var btnManual = document.getElementById('btn-manual-cpf');
