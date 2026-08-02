@@ -3765,6 +3765,31 @@ window.dadosRecentesCPF = null;
             }
         }
 
+        // Garante envio de Bairro (nome + id) e Telefone/WhatsApp com todos os aliases para o backend
+        var elBairroText = document.getElementById('bairro');
+        var elBairroSelect = document.getElementById('bairro_id');
+        var valBairroNome = elBairroText ? elBairroText.value : '';
+        if ((!valBairroNome || valBairroNome.trim() === '') && elBairroSelect && elBairroSelect.selectedIndex >= 0) {
+            var selectedText = elBairroSelect.options[elBairroSelect.selectedIndex].text;
+            if (selectedText && !selectedText.includes('Selecione') && !selectedText.includes('Carregando')) {
+                valBairroNome = selectedText;
+                if (elBairroText) elBairroText.value = selectedText;
+            }
+        }
+        if (valBairroNome) {
+            fd.set('bairro', valBairroNome);
+            fd.set('bairro_nome', valBairroNome);
+            fd.set('nome_bairro', valBairroNome);
+        }
+
+        var valWhatsapp = (document.getElementById('whatsapp') || {}).value || '';
+        if (valWhatsapp) {
+            fd.set('telefone', valWhatsapp);
+            fd.set('celular', valWhatsapp);
+            fd.set('whatsapp_aluno', valWhatsapp);
+            fd.set('telefone_aluno', valWhatsapp);
+        }
+
         var accSessionData = getAccountOwnerData();
         fd.set('email_conta', accSessionData.email_conta);
         fd.set('telefone_conta', accSessionData.telefone_conta);
