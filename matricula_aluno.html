@@ -3802,6 +3802,9 @@ window.dadosRecentesCPF = null;
         processarEnvioComProxyEFallback(fd)
             .then(function(data) {
                 console.log('Resposta do envio da matrícula:', data);
+                sessionStorage.setItem('force_refresh_matriculas', 'true');
+                sessionStorage.removeItem('usuario_dados');
+                localStorage.removeItem('usuario_dados');
                 mostrarMensagem('sucesso', 'Matrícula enviada com sucesso!');
                 var formMatricula = document.getElementById('form-matricula');
                 if (formMatricula) formMatricula.style.display = 'none';

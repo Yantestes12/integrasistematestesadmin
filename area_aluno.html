@@ -987,6 +987,18 @@
         items = [];
       }
 
+      // ORDENAÇÃO DECRESCENTE: Garante que a matrícula MAIS RECENTE fique no TOPO da lista
+      if (Array.isArray(items)) {
+        items.sort((a, b) => {
+          const idA = parseInt(a.id || a.matricula || 0);
+          const idB = parseInt(b.id || b.matricula || 0);
+          if (idA && idB && idA !== idB) return idB - idA;
+          const timeA = new Date(a.created_at || a.data_cadastro || 0).getTime();
+          const timeB = new Date(b.created_at || b.data_cadastro || 0).getTime();
+          return timeB - timeA;
+        });
+      }
+
       if ((!uNome || uNome === 'Participante') && items.length > 0) {
         let full = items[0].aluno_nome || items[0].nome_aluno || items[0].nome || '';
         if (full && !full.includes('{{')) {
