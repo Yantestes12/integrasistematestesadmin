@@ -2386,7 +2386,11 @@ window.dadosRecentesCPF = null;
             iniciar: function(cpfNum) {
                 if (buscando) return;
                 if (!validarCPF(cpfNum)) {
-                    mostrarStatusCPF('erro', '⚠️ CPF inválido. Verifique os números e tente novamente.');
+                    mostrarStatusCPF('aviso', '⚠️ CPF não localizado na consulta automática. O preenchimento manual dos dados foi liberado.');
+                    var btnManual = document.getElementById('btn-manual-cpf');
+                    if (btnManual) btnManual.style.display = 'block';
+                    ativandoManual(document.getElementById('TextAreaNome'));
+                    ativandoManual(document.getElementById('TextDataNasc'));
                     return;
                 }
                 buscando = true;
