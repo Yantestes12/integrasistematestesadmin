@@ -764,9 +764,21 @@
                             if (p.email && !p.email.includes('{{') && p.email.toLowerCase() !== 'sem_email') uEmail = limpaTemplate(p.email).toLowerCase();
                             if (p.id) uId = limpaTemplate(String(p.id));
 
-                            // uDados salva apenas as matrículas
-                            if (p.matriculas) uDados = JSON.stringify(p.matriculas);
-                            else uDados = JSON.stringify(p);
+                            // Extrai e achata a lista de matrículas para uDados
+                            let flatMat = [];
+                            let rawMat = p.matriculas || p.projetos_inscritos || p;
+                            if (Array.isArray(rawMat)) {
+                                rawMat.forEach(group => {
+                                    if (group && Array.isArray(group.matriculas)) {
+                                        flatMat.push(...group.matriculas);
+                                    } else if (group && typeof group === 'object') {
+                                        flatMat.push(group);
+                                    }
+                                });
+                            } else if (rawMat && typeof rawMat === 'object') {
+                                flatMat = [rawMat];
+                            }
+                            uDados = JSON.stringify(flatMat);
                         } else {
                             // Fallback texto puro linha por linha
                             const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);

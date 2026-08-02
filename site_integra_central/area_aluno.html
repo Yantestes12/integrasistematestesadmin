@@ -935,7 +935,22 @@
         }
       }
 
-      // Descompacta subarray de matriculas se o n8n retornar agrupado [{ email: "...", matriculas: [...] }]
+      // Fallback de leitura se a busca em tempo real estiver vazia
+      if (!items || items.length === 0) {
+        try {
+          const rawDados = getStoredVal('usuario_dados');
+          if (rawDados) {
+            let p = typeof rawDados === 'string' ? JSON.parse(rawDados) : rawDados;
+            if (Array.isArray(p)) items = p;
+            else if (p && typeof p === 'object') {
+              if (Array.isArray(p.matriculas)) items = p.matriculas;
+              else if (p.id || p.aluno_nome) items = [p];
+            }
+          }
+        } catch(e){}
+      }
+
+      // Descompacta subarray de matriculas em profundidade (para suportar o agrupamento do n8n)
       if (Array.isArray(items)) {
         let unpacked = [];
         items.forEach(it => {
