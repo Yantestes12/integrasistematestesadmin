@@ -1,0 +1,23 @@
+RewriteEngine On
+RewriteBase /
+
+# Tenta abrir o arquivo com a extensão .html
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.html -f
+RewriteRule ^(.*)$ $1.html [L]
+
+# ── Headers de Segurança ─────────────────────────────────────────────────
+<IfModule mod_headers.c>
+    # Impedir MIME sniffing
+    Header always set X-Content-Type-Options "nosniff"
+    # Impedir clickjacking (iframe embedding)
+    Header always set X-Frame-Options "DENY"
+    # Política de Referrer
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    # Proteção contra XSS (navegadores antigos)
+    Header always set X-XSS-Protection "1; mode=block"
+    # Desabilitar câmera, microfone, geolocalização
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    # Cache de segurança para conteúdo dinâmico
+    Header always set Cache-Control "no-store" "expr=%{CONTENT_TYPE} =~ m#application/json#"
+</IfModule>

@@ -1,0 +1,211 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redefinir Senha — INTEGRA</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=3">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 44px 36px;
+            max-width: 440px;
+            width: 100%;
+            box-shadow: 0 32px 80px rgba(0,0,0,0.25);
+            animation: slideUp .4s ease;
+        }
+        @keyframes slideUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+        .icon-box {
+            width: 64px; height: 64px;
+            background: linear-gradient(135deg, #1e40af, #2563eb);
+            border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 28px;
+        }
+        h1 { font-size: 22px; font-weight: 800; color: #0f172a; text-align: center; margin-bottom: 8px; }
+        .subtitle { color: #64748b; font-size: 14px; text-align: center; margin-bottom: 28px; line-height: 1.5; }
+        label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px; }
+        .input-wrap { position: relative; margin-bottom: 16px; }
+        input[type="password"] {
+            width: 100%; padding: 13px 44px 13px 14px;
+            border: 1.5px solid #e2e8f0; border-radius: 10px;
+            font-size: 15px; outline: none; transition: border .2s;
+            font-family: inherit; color: #0f172a;
+        }
+        input[type="password"]:focus { border-color: #2563eb; }
+        .toggle-pw {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 18px;
+        }
+        .strength-bar {
+            height: 4px; border-radius: 4px; background: #e2e8f0;
+            margin-top: 6px; overflow: hidden; transition: all .3s;
+        }
+        .strength-fill { height: 100%; border-radius: 4px; transition: width .3s, background .3s; width: 0%; }
+        .strength-text { font-size: 11px; margin-top: 4px; font-weight: 600; }
+        .btn {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #1e40af, #2563eb);
+            color: #fff; border: none; border-radius: 10px;
+            font-size: 15px; font-weight: 700; cursor: pointer;
+            font-family: inherit; transition: opacity .2s; margin-top: 8px;
+        }
+        .btn:disabled { opacity: .6; cursor: not-allowed; }
+        .erro { color: #dc2626; font-size: 13px; margin-bottom: 12px; display: none; }
+        .sucesso-box { text-align: center; display: none; }
+        .sucesso-box .emoji { font-size: 60px; margin-bottom: 16px; }
+        .sucesso-box h2 { font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
+        .sucesso-box p { color: #64748b; font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+        .btn-green { background: linear-gradient(135deg, #059669, #10b981); }
+        .logo-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 24px; }
+        .logo-row img { height: 32px; border-radius: 6px; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="logo-row">
+        <img src="logo_integra.png" alt="INTEGRA">
+        <span style="color:#cbd5e1;font-size:18px;">×</span>
+        <img src="logo_gasctpna.jpg" alt="GASCTPNA">
+    </div>
+
+    <!-- Formulário -->
+    <div id="formBox">
+        <div class="icon-box">🔐</div>
+        <h1>Redefinir Senha</h1>
+        <p class="subtitle">Digite sua nova senha abaixo. Escolha uma senha segura com pelo menos 6 caracteres.</p>
+
+        <div id="erroMsg" class="erro"></div>
+
+        <div>
+            <label>Nova Senha</label>
+            <div class="input-wrap">
+                <input type="password" id="novaSenha" placeholder="Mínimo 6 caracteres" oninput="verificarForca()">
+                <button type="button" class="toggle-pw" onclick="toggleSenha('novaSenha', this)">👁️</button>
+            </div>
+            <div class="strength-bar"><div class="strength-fill" id="forcaBar"></div></div>
+            <div class="strength-text" id="forcaText" style="color:#94a3b8;"></div>
+        </div>
+
+        <div style="margin-top:16px;">
+            <label>Confirmar Nova Senha</label>
+            <div class="input-wrap">
+                <input type="password" id="confirmarSenha" placeholder="Repita a nova senha">
+                <button type="button" class="toggle-pw" onclick="toggleSenha('confirmarSenha', this)">👁️</button>
+            </div>
+        </div>
+
+        <button class="btn" id="btnRedefinir" onclick="redefinirSenha()">Redefinir Senha</button>
+    </div>
+
+    <!-- Sucesso -->
+    <div class="sucesso-box" id="sucessoBox">
+        <div class="emoji">✅</div>
+        <h2>Senha Redefinida!</h2>
+        <p>Sua senha foi atualizada com sucesso. Você já pode fazer login com a nova senha.</p>
+        <a href="login.html"><button class="btn btn-green">Ir para o Login</button></a>
+    </div>
+</div>
+
+<script>
+    // Pega o email e id da URL: ?email=XXX&id=YYY
+    const urlParams = new URLSearchParams(window.location.search);
+    const resetEmail = decodeURIComponent(urlParams.get('email') || '');
+    const resetId    = urlParams.get('id') || '';
+
+    function toggleSenha(inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+        else { input.type = 'password'; btn.textContent = '👁️'; }
+    }
+
+    function verificarForca() {
+        const senha = document.getElementById('novaSenha').value;
+        const bar = document.getElementById('forcaBar');
+        const txt = document.getElementById('forcaText');
+        let pontos = 0;
+        if (senha.length >= 6) pontos++;
+        if (senha.length >= 10) pontos++;
+        if (/[A-Z]/.test(senha)) pontos++;
+        if (/[0-9]/.test(senha)) pontos++;
+        if (/[^a-zA-Z0-9]/.test(senha)) pontos++;
+        const niveis = [
+            { pct: 0, cor: '#e2e8f0', label: '' },
+            { pct: 20, cor: '#ef4444', label: 'Muito fraca' },
+            { pct: 40, cor: '#f97316', label: 'Fraca' },
+            { pct: 60, cor: '#eab308', label: 'Média' },
+            { pct: 80, cor: '#22c55e', label: 'Forte' },
+            { pct: 100, cor: '#10b981', label: 'Muito forte' },
+        ];
+        const n = niveis[pontos];
+        bar.style.width = n.pct + '%';
+        bar.style.background = n.cor;
+        txt.textContent = n.label;
+        txt.style.color = n.cor;
+    }
+
+    async function redefinirSenha() {
+        const senha = document.getElementById('novaSenha').value;
+        const confirmacao = document.getElementById('confirmarSenha').value;
+        const erroEl = document.getElementById('erroMsg');
+        const btn = document.getElementById('btnRedefinir');
+        erroEl.style.display = 'none';
+
+        if (senha.length < 6) {
+            erroEl.textContent = 'A senha deve ter pelo menos 6 caracteres.';
+            erroEl.style.display = 'block'; return;
+        }
+        if (senha !== confirmacao) {
+            erroEl.textContent = 'As senhas não coincidem.';
+            erroEl.style.display = 'block'; return;
+        }
+        if (!resetEmail) {
+            erroEl.textContent = 'Link de recuperação inválido. Solicite um novo.';
+            erroEl.style.display = 'block'; return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Redefinindo...';
+
+        try {
+            const resp = await fetch('https://w.ibrase.com.br/webhook/trocarsenha', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: resetEmail, id: resetId, nova_senha: senha })
+            });
+            const data = await resp.json();
+
+            if (data && (data.sucesso || data.status === 'ok' || data.senha === 'atualizada')) {
+                document.getElementById('formBox').style.display = 'none';
+                document.getElementById('sucessoBox').style.display = 'block';
+            } else {
+                erroEl.textContent = data.mensagem || 'Link expirado ou inválido. Solicite uma nova recuperação.';
+                erroEl.style.display = 'block';
+            }
+        } catch(e) {
+            erroEl.textContent = 'Erro ao conectar. Tente novamente.';
+            erroEl.style.display = 'block';
+        }
+        btn.disabled = false;
+        btn.textContent = 'Redefinir Senha';
+    }
+</script>
+</body>
+</html>
+
+

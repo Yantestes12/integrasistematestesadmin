@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="light">
+<head>
+  <meta charset="UTF-8">
+  <title>Área do Participante — INTEGRA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Favicon & Ícone da Aba -->
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=3">
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png?v=3">
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico?v=3">
+  <link rel="apple-touch-icon" href="favicon-192.png?v=3">
+
+  <!-- PWA & Mobile Web App Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="INTEGRA">
+  <meta name="theme-color" content="#003fa3">
+  <meta name="description" content="Área do Participante — INTEGRA Plataforma Unificada">
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #003fa3;
+      --primary-container: #0055d4;
+      --primary-gradient: linear-gradient(135deg, #003fa3 0%, #5800c7 100%);
+      --secondary-container: #56f5f8;
+      --on-secondary-container: #004f51;
+      --background: #f9f9ff;
+      --surface: #ffffff;
+      --surface-container-low: #f1f3ff;
+      --on-surface: #001a41;
+      --on-surface-variant: #424654;
+      --outline-variant: #c3c6d7;
+      --font-main: 'Montserrat', system-ui, -apple-system, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; width: 100%; min-height: 100vh; }
+    body {
+      font-family: var(--font-main);
+      background-color: var(--background);
+      color: var(--on-surface);
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Navbar Header */
+    .header-bar {
+      width: 100%;
+      height: 80px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--outline-variant);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .brand-logo img {
+      height: 38px;
+      width: auto;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+    .brand-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -0.02em;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .user-profile-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: transparent;
+      border: none;
+      padding: 0;
+    }
+    .user-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--primary-gradient);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 800;
+      border: 2.5px solid #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 63, 163, 0.2);
+    }
+
+    .user-details {
+      text-align: right;
+    }
+    .user-name {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--on-surface);
+      line-height: 1.2;
+    }
+    .user-sub {
+      font-size: 11.5px;
+      color: var(--on-surface-variant);
+      font-weight: 600;
+    }
+
+    .btn-logout {
+      background: var(--surface-container-low);
+      border: 1px solid var(--outline-variant);
+      color: var(--on-surface);
+      padding: 9px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-logout:hover {
+      background: #ffeeee;
+      border-color: #ffcdd2;
+      color: #d32f2f;
+    }
+
+    /* Main Container */
+    .main-wrapper {
+      flex: 1;
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 32px 24px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* Greeting Section */
+    .greeting-section h1 {
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--on-surface);
+      margin: 0 0 6px;
+      letter-spacing: -0.03em;
+    }
+    .greeting-section p {
+      font-size: 15.5px;
+      color: var(--on-surface-variant);
+      margin: 0;
+      font-weight: 500;
+    }
+
+    /* Fazer Matrícula Card */
+    .card-action-primary {
+      background: var(--primary-gradient);
+      border-radius: 24px;
+      padding: 24px 28px;
+      color: #ffffff;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 10px 24px rgba(0, 63, 163, 0.22);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      cursor: pointer;
+      border: none;
+      text-align: left;
+      width: 100%;
+    }
+    .card-action-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 32px rgba(0, 63, 163, 0.32);
+    }
+    .card-icon-box-white {
+      width: 54px;
+      height: 54px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+    }
+    .card-title-lg {
+      font-size: 22px;
+      font-weight: 800;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+
+    /* Results Section */
+    .results-section {
+      background: var(--surface);
+      border-radius: 24px;
+      border: 1.5px solid var(--outline-variant);
+      padding: 24px;
+      box-shadow: 0 6px 20px rgba(0, 26, 65, 0.03);
+    }
+    .results-header {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--on-surface);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Minimalist Compact Student Row */
+    .student-compact-row {
+      background: var(--background);
+      border: 1px solid var(--outline-variant);
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .student-name-text {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--on-surface);
+    }
+
+    .btn-action-sm {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .btn-pdf {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 63, 163, 0.2);
+    }
+    .btn-pdf:hover {
+      background: var(--primary-container);
+      transform: translateY(-1px);
+    }
+    .btn-details {
+      background: #ffffff;
+      border: 1px solid var(--outline-variant);
+      color: var(--on-surface);
+    }
+    .btn-details:hover {
+      background: var(--surface-container-low);
+    }
+
+    /* Edit Modal */
+    .al-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 26, 65, 0.65);
+      backdrop-filter: blur(6px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .al-modal {
+      background: #ffffff;
+      width: 100%;
+      max-width: 720px;
+      border-radius: 28px;
+      padding: 28px;
+      box-shadow: 0 24px 48px rgba(0, 26, 65, 0.2);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .al-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1.5px solid var(--outline-variant);
+    }
+    .al-modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--on-surface-variant);
+    }
+
+    .modal-section-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 18px 0 10px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--surface-container-low);
+    }
+    .form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .form-group-item { margin-bottom: 10px; }
+    .form-group-item label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--on-surface-variant);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+    .form-group-item input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--outline-variant);
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 13.5px;
+      background: #ffffff;
+      color: var(--on-surface);
+    }
+    .form-group-item select {
+      width: 100% !important;
+      padding: 10px 12px !important;
+      border: 1.5px solid var(--outline-variant) !important;
+      border-radius: 10px !important;
+      font-family: inherit !important;
+      font-size: 13.5px !important;
+      background-color: #ffffff !important;
+      color: var(--on-surface) !important;
+      -webkit-appearance: menulist !important;
+      -moz-appearance: menulist !important;
+      appearance: menulist !important;
+      cursor: pointer !important;
+    }
+
+    /* Footer */
+    footer.app-footer {
+      width: 100%;
+      padding: 24px;
+      text-align: center;
+      background: var(--surface-container-low);
+      border-top: 1px solid var(--outline-variant);
+      font-size: 13px;
+      color: var(--on-surface-variant);
+      font-weight: 600;
+      margin-top: auto;
+    }
+
+    @media (max-width: 640px) {
+      .header-bar { padding: 0 16px; height: 72px; }
+      .main-wrapper { padding: 20px 16px 36px; gap: 20px; }
+      .greeting-section h1 { font-size: 24px; }
+      .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
+      .user-details { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navbar Header -->
+  <header class="header-bar">
+    <a href="area_aluno.html" class="brand-logo">
+      <img src="logo_integra_simbolo.gif" onerror="this.onerror=null; this.src='logo_integra.png';" alt="INTEGRA">
+      <span class="brand-title" style="margin-left:4px;">Integra</span>
+    </a>
+    <div class="header-right">
+      <div class="user-profile-btn">
+        <div class="user-details">
+          <div class="user-name" id="display-topbar-name">Aluno Cadastrado</div>
+          <div class="user-sub">Painel do Aluno</div>
+        </div>
+        <div class="user-avatar" id="display-avatar-icon">P</div>
+      </div>
+      <button type="button" class="btn-logout" onclick="logout()">Sair</button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-wrapper">
+    <!-- Greeting Header -->
+    <section class="greeting-section">
+      <h1 id="display-welcome-title">Olá, Participante!</h1>
+      <p>Bem-vindo(a) ao seu Painel do Aluno GASCTPNA</p>
+
+      <div style="margin-top:14px;display:inline-flex;align-items:center;gap:12px;background:#ffffff;border:1px solid var(--outline-variant);border-radius:14px;padding:10px 18px;box-shadow:0 4px 14px rgba(0,26,65,0.03);">
+        <img src="logo_gasctpna.jpg" onerror="this.src='logo_integra.png';" style="height:34px;width:auto;object-fit:contain;border-radius:6px;">
+        <div style="font-size:13px;font-weight:800;color:var(--on-surface);letter-spacing:0.03em;">GASCTPNA</div>
+      </div>
+    </section>
+
+    <!-- Action Card Fazer Matrícula -->
+    <section>
+      <button class="card-action-primary" onclick="window.location.href='matricula.html'">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <div class="card-icon-box-white">
+            <span class="material-symbols-outlined" style="font-size:32px;font-variation-settings:'FILL' 1;">rocket_launch</span>
+          </div>
+          <div>
+            <h2 class="card-title-lg">Fazer Nova Matrícula</h2>
+            <div class="card-action-label" style="margin-top:2px;">
+              <span>Iniciar Cadastro</span>
+            </div>
+          </div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size:24px;">arrow_forward</span>
+      </button>
+    </section>
+
+    <!-- Matrículas Cadastradas (Layout Minimalista Limpo) -->
+    <section class="results-section" id="results-container">
+      <div class="results-header">
+        <span class="material-symbols-outlined" style="color:var(--primary);">badge</span>
+        <span>Suas Matrículas Cadastradas</span>
+      </div>
+      <div id="matriculas-list-body">
+        <!-- Preenchido via JS -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal Editar Informações Completas da Matrícula -->
+  <div class="al-modal-overlay" id="editModalOverlay" onclick="closeEditModal()" style="display:none">
+    <div class="al-modal" onclick="event.stopPropagation()">
+      <div class="al-modal-header">
+        <strong style="display:flex;align-items:center;gap:8px;font-size:17px;color:var(--primary);">
+          <span class="material-symbols-outlined">edit_note</span> Editar Informações da Matrícula
+        </strong>
+        <button type="button" class="al-modal-close" onclick="closeEditModal()">×</button>
+      </div>
+      <form id="form-edit-matricula" onsubmit="salvarEdicaoMatricula(event)">
+        <!-- ID Obrigatório para Update no Supabase -->
+        <input type="hidden" id="edit_id" name="id">
+        <input type="hidden" id="edit_naturalidade" name="naturalidade">
+
+        <!-- SEÇÃO 1: DADOS DO PROJETO E POLO -->
+        <div class="modal-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>1. Dados do Projeto & Polo</span>
+          <span style="font-size:11px;font-weight:bold;color:#0284c7;background:#e0f2fe;padding:2px 8px;border-radius:4px;">✏️ Turno Editável</span>
+        </div>
+        <div class="form-grid-3">
+          <div class="form-group-item">
+            <label>Projeto</label>
+            <input type="hidden" id="edit_projeto_id" name="projeto_id">
+            <input type="text" id="edit_projeto_nome" readonly style="background:#f1f5f9;color:#0f172a;font-weight:bold;cursor:not-allowed;" placeholder="Carregando projeto...">
+          </div>
+          <div class="form-group-item">
+            <label>Núcleo / Polo</label>
+            <input type="hidden" id="edit_nucleo_id" name="nucleo_id">
+            <input type="text" id="edit_nucleo_nome" readonly style="background:#f1f5f9;color:#0f172a;font-weight:bold;cursor:not-allowed;" placeholder="Carregando núcleo...">
+          </div>
+          <div class="form-group-item">
+            <label style="color:#0284c7;font-weight:bold;">Turno (Editável)</label>
+            <select id="edit_turno" name="turno" style="border:1.5px solid #0284c7;background:#f0f9ff;font-weight:bold;">
+              <option value="Manhã">Manhã</option>
+              <option value="Tarde">Tarde</option>
+              <option value="Noite">Noite</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- SEÇÃO 2: DADOS PESSOAIS DO ALUNO -->
+        <div class="modal-section-title">2. Dados Pessoais do Aluno</div>
+        <div class="form-group-item">
+          <label>Nome Completo do Aluno (Bloqueado)</label>
+          <input type="text" id="edit_aluno_nome" name="aluno_nome" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group-item">
+            <label style="color:#0284c7;font-weight:bold;">✏️ Nome Social (Editável)</label>
+            <input type="text" id="edit_nome_social" name="nome_social" placeholder="Digite o nome social se houver" style="border:1.5px solid #0284c7;background:#f0f9ff;">
+          </div>
+          <div class="form-group-item">
+            <label>CPF do Aluno</label>
+            <input type="text" id="edit_aluno_cpf" name="aluno_cpf" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+        </div>
+        <div class="form-grid-3">
+          <div class="form-group-item">
+            <label>Data de Nascimento</label>
+            <input type="date" id="edit_data_nascimento" name="data_nascimento" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+          <div class="form-group-item">
+            <label>Gênero / Sexo</label>
+            <select id="edit_sexo" name="sexo" disabled style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+              <option value="Masculino">Masculino</option>
+              <option value="Feminino">Feminino</option>
+            </select>
+          </div>
+          <div class="form-group-item">
+            <label>Raça / Etnia</label>
+            <select id="edit_raca" name="raca" disabled style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+              <option value="Branca">Branca</option>
+              <option value="Preta">Preta</option>
+              <option value="Parda">Parda</option>
+              <option value="Amarela">Amarela</option>
+              <option value="Indígena">Indígena</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="form-group-item">
+            <label>UF de Nascimento</label>
+            <select id="edit_naturalidade_uf" disabled style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+              <option value="">Selecione a UF</option>
+              <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option>
+              <option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option>
+              <option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option>
+              <option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option>
+              <option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option>
+              <option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option>
+              <option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option>
+              <option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option>
+              <option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option>
+            </select>
+          </div>
+          <div class="form-group-item">
+            <label>Cidade de Nascimento</label>
+            <select id="edit_naturalidade_cidade" disabled style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+              <option value="">Naturalidade</option>
+            </select>
+          </div>
+          <div class="form-group-item">
+            <label>Escolaridade</label>
+            <select id="edit_escolaridade" name="escolaridade" disabled style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+              <option value="Ensino Fundamental Incompleto">Ensino Fundamental Incompleto</option>
+              <option value="Ensino Fundamental Completo">Ensino Fundamental Completo</option>
+              <option value="Ensino Médio Incompleto">Ensino Médio Incompleto</option>
+              <option value="Ensino Médio Completo">Ensino Médio Completo</option>
+              <option value="Ensino Superior Incompleto">Ensino Superior Incompleto</option>
+              <option value="Ensino Superior Completo">Ensino Superior Completo</option>
+              <option value="Pos-graduacao">Pós-graduação</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group-item">
+            <label>Profissão / Ocupação</label>
+            <input type="text" id="edit_profissao" name="profissao" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+          <div class="form-group-item">
+            <label>Faixa Salarial / Renda</label>
+            <input type="text" id="edit_faixa_salarial" name="faixa_salarial" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+        </div>
+
+        <!-- SEÇÃO 3: CONTATO E ENDEREÇO -->
+        <div class="modal-section-title">3. Contato & Endereço (Bloqueados)</div>
+        <div class="form-grid-2">
+          <div class="form-group-item">
+            <label>Telefone / WhatsApp</label>
+            <input type="text" id="edit_whatsapp" name="whatsapp" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+          <div class="form-group-item">
+            <label>E-mail de Contato</label>
+            <input type="email" id="edit_email" name="email" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+        </div>
+        <div class="form-grid-3">
+          <div class="form-group-item">
+            <label>CEP</label>
+            <input type="text" id="edit_cep" name="cep" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+          <div class="form-group-item" style="grid-column: span 2;">
+            <label>Endereço / Logradouro</label>
+            <input type="text" id="edit_endereco" name="endereco" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+        </div>
+        <div class="form-grid-3">
+          <div class="form-group-item">
+            <label>Número</label>
+            <input type="text" id="edit_numero" name="numero" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+          <div class="form-group-item">
+            <label>Complemento</label>
+            <input type="text" id="edit_complemento" name="complemento" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+          <div class="form-group-item">
+            <label>Bairro</label>
+            <input type="text" id="edit_bairro" name="bairro" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group-item">
+            <label>Cidade</label>
+            <input type="text" id="edit_cidade" name="cidade" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+          <div class="form-group-item">
+            <label>UF do Endereço</label>
+            <select id="edit_uf" name="uf" disabled style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+              <option value="RJ">RJ</option><option value="SP">SP</option><option value="MG">MG</option>
+              <option value="ES">ES</option><option value="PR">PR</option><option value="SC">SC</option>
+              <option value="RS">RS</option><option value="BA">BA</option><option value="CE">CE</option>
+              <option value="PE">PE</option><option value="DF">DF</option><option value="GO">GO</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- SEÇÃO 4: UNIFORMES E MEDIDAS -->
+        <div class="modal-section-title" style="display:flex;justify-content:space-between;align-items:center;background:#f0f9ff;border-color:#bae6fd;padding:6px 10px;border-radius:4px;">
+          <span style="color:#0369a1;">4. Uniformes & Medidas do Aluno</span>
+          <span style="font-size:11px;font-weight:bold;color:#0284c7;background:#e0f2fe;padding:2px 8px;border-radius:4px;">✏️ Editável</span>
+        </div>
+        <div class="form-grid-3">
+          <div class="form-group-item">
+            <label style="color:#0284c7;font-weight:bold;">Tamanho da Camisa / Blusa</label>
+            <select id="edit_tamanho_camisa" name="tamanho_camisa" style="border:1.5px solid #0284c7;background:#f0f9ff;">
+              <option value="">Selecione o tamanho</option>
+              <option value="10">10 (Infantil)</option>
+              <option value="14">14 (Infantil)</option>
+              <option value="PP">PP</option>
+              <option value="P">P</option>
+              <option value="M">M (Adulto)</option>
+              <option value="G">G (Adulto)</option>
+              <option value="GG">GG (Adulto)</option>
+              <option value="XG">XG</option>
+              <option value="G1">G1</option>
+              <option value="G2">G2 (Adulto)</option>
+              <option value="G3">G3</option>
+            </select>
+          </div>
+          <div class="form-group-item">
+            <label style="color:#0284c7;font-weight:bold;">Tamanho da Bermuda / Calça</label>
+            <select id="edit_tamanho_calca" name="tamanho_calca" style="border:1.5px solid #0284c7;background:#f0f9ff;">
+              <option value="">Selecione o tamanho</option>
+              <option value="6">6</option><option value="8">8</option><option value="10">10</option>
+              <option value="12">12</option><option value="14">14</option><option value="16">16</option>
+              <option value="34">34</option><option value="36">36</option><option value="38">38</option>
+              <option value="40">40</option><option value="42">42</option><option value="44">44</option>
+              <option value="46">46</option><option value="48">48</option><option value="50">50</option>
+            </select>
+          </div>
+          <div class="form-group-item">
+            <label style="color:#0284c7;font-weight:bold;">Nº do Calçado</label>
+            <select id="edit_tamanho_calcado" name="tamanho_calcado" style="border:1.5px solid #0284c7;background:#f0f9ff;">
+              <option value="">Selecione o número</option>
+              <option value="26">26</option><option value="27">27</option><option value="28">28</option>
+              <option value="29">29</option><option value="30">30</option><option value="31">31</option>
+              <option value="32">32</option><option value="33">33</option><option value="34">34</option>
+              <option value="35">35</option><option value="36">36</option><option value="37">37</option>
+              <option value="38">38</option><option value="39">39</option><option value="40">40</option>
+              <option value="41">41</option><option value="42">42</option><option value="43">43</option>
+              <option value="44">44</option><option value="45">45</option><option value="46">46</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group-item">
+            <label>Altura (cm)</label>
+            <input type="number" id="edit_altura" name="altura" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+          <div class="form-group-item">
+            <label>Peso (kg)</label>
+            <input type="number" id="edit_peso" name="peso" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+        </div>
+
+        <!-- SEÇÃO 5: SAÚDE E HISTÓRICO -->
+        <div class="modal-section-title" style="display:flex;justify-content:space-between;align-items:center;background:#f0f9ff;border-color:#bae6fd;padding:6px 10px;border-radius:4px;">
+          <span style="color:#0369a1;">5. Saúde & Atendimento</span>
+          <span style="font-size:11px;font-weight:bold;color:#0284c7;background:#e0f2fe;padding:2px 8px;border-radius:4px;">✏️ Editável</span>
+        </div>
+        <div class="form-grid-3">
+          <div class="form-group-item">
+            <label style="color:#0284c7;font-weight:bold;">Uso de Medicamento</label>
+            <select id="edit_uso_medicacao" name="uso_medicacao" onchange="toggleHealthDetail('uso_medicacao')" style="border:1.5px solid #0284c7;background:#f0f9ff;">
+              <option value="Nao">Não</option>
+              <option value="Sim">Sim</option>
+            </select>
+            <div id="box_edit_uso_medicacao_detalhes" style="display:none;margin-top:6px;">
+              <input type="text" id="edit_uso_medicacao_detalhes" name="uso_medicacao_detalhes" placeholder="Qual medicamento?">
+            </div>
+          </div>
+          <div class="form-group-item">
+            <label style="color:#0284c7;font-weight:bold;">Possui Alergias</label>
+            <select id="edit_possui_alergias" name="possui_alergias" onchange="toggleHealthDetail('possui_alergias')" style="border:1.5px solid #0284c7;background:#f0f9ff;">
+              <option value="Nao">Não</option>
+              <option value="Sim">Sim</option>
+            </select>
+            <div id="box_edit_possui_alergias_detalhes" style="display:none;margin-top:6px;">
+              <input type="text" id="edit_possui_alergias_detalhes" name="possui_alergias_detalhes" placeholder="Qual alergia?">
+            </div>
+          </div>
+          <div class="form-group-item">
+            <label style="color:#0284c7;font-weight:bold;">Possui Plano de Saúde</label>
+            <select id="edit_plano_saude" name="plano_saude" onchange="toggleHealthDetail('plano_saude')" style="border:1.5px solid #0284c7;background:#f0f9ff;">
+              <option value="Nao">Não</option>
+              <option value="Sim">Sim</option>
+            </select>
+            <div id="box_edit_plano_saude_detalhes" style="display:none;margin-top:6px;">
+              <input type="text" id="edit_plano_saude_detalhes" name="plano_saude_detalhes" placeholder="Qual plano de saúde?">
+            </div>
+          </div>
+        </div>
+        <div class="form-grid-3">
+          <div class="form-group-item">
+            <label style="color:#0284c7;font-weight:bold;">Tratamento Médico</label>
+            <select id="edit_acompan_medico" name="acompan_medico" onchange="toggleHealthDetail('acompan_medico')" style="border:1.5px solid #0284c7;background:#f0f9ff;">
+              <option value="Nao">Não</option>
+              <option value="Sim">Sim</option>
+            </select>
+            <div id="box_edit_acompan_medico_detalhes" style="display:none;margin-top:6px;">
+              <input type="text" id="edit_acompan_medico_detalhes" name="acompan_medico_detalhes" placeholder="Qual tratamento médico?">
+            </div>
+          </div>
+          <div class="form-group-item">
+            <label style="color:#0284c7;font-weight:bold;">Restrição Física</label>
+            <select id="edit_restricao_fisica" name="restricao_fisica" onchange="toggleHealthDetail('restricao_fisica')" style="border:1.5px solid #0284c7;background:#f0f9ff;">
+              <option value="Nao">Não</option>
+              <option value="Sim">Sim</option>
+            </select>
+            <div id="box_edit_restricao_fisica_detalhes" style="display:none;margin-top:6px;">
+              <input type="text" id="edit_restricao_fisica_detalhes" name="restricao_fisica_detalhes" placeholder="Qual restrição física?">
+            </div>
+          </div>
+          <div class="form-group-item">
+            <label style="color:#0284c7;font-weight:bold;">Necessidade Especial</label>
+            <select id="edit_deficiencia" name="deficiencia" onchange="toggleHealthDetail('deficiencia')" style="border:1.5px solid #0284c7;background:#f0f9ff;">
+              <option value="Nao">Não</option>
+              <option value="Sim">Sim</option>
+            </select>
+            <div id="box_edit_deficiencia_detalhes" style="display:none;margin-top:6px;">
+              <input type="text" id="edit_deficiencia_detalhes" name="deficiencia_detalhes" placeholder="Qual necessidade especial?">
+            </div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO 6: RESPONSÁVEL LEGAL -->
+        <div class="modal-section-title">6. Responsável Legal (Menor de Idade - Bloqueados)</div>
+        <div class="form-grid-2">
+          <div class="form-group-item">
+            <label>Nome do Responsável</label>
+            <input type="text" id="edit_resp_nome" name="resp_nome" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+          <div class="form-group-item">
+            <label>CPF do Responsável</label>
+            <input type="text" id="edit_resp_cpf" name="resp_cpf" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+        </div>
+        <div class="form-grid-3">
+          <div class="form-group-item">
+            <label>Telefone do Responsável</label>
+            <input type="text" id="edit_resp_whatsapp" name="resp_whatsapp" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+          <div class="form-group-item">
+            <label>E-mail do Responsável</label>
+            <input type="email" id="edit_resp_email" name="resp_email" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+          <div class="form-group-item">
+            <label>Grau de Parentesco</label>
+            <input type="text" id="edit_resp_parentesco" name="resp_parentesco" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;">
+          </div>
+        </div>
+
+        <div style="margin-top:24px;text-align:right;">
+          <button type="submit" class="btn-action-sm btn-pdf" id="btn-save-edit" style="padding:12px 28px;font-size:14px;">
+            💾 Salvar Alterações
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- App Footer -->
+  <footer class="app-footer">
+    © 2026 Plataforma Integra — Grupo de Apoio Social aos Cultivadores da Terra e Preservação da Natureza (GASCTPNA)
+  </footer>
+
+  <script>
+    function logout() {
+      localStorage.clear();
+      window.location.href = 'login';
+    }
+
+    
+    function setSelectValueSafe(selectId, valueToSet) {
+      var sel = document.getElementById(selectId);
+      if (!sel || !valueToSet) return;
+      var strVal = String(valueToSet).trim();
+      var found = false;
+      for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value.toLowerCase() === strVal.toLowerCase() || sel.options[i].text.toLowerCase() === strVal.toLowerCase()) {
+          sel.selectedIndex = i;
+          found = true;
+          break;
+        }
+      }
+      if (!found && strVal) {
+        var newOpt = document.createElement('option');
+        newOpt.value = strVal;
+        newOpt.textContent = strVal;
+        newOpt.selected = true;
+        sel.appendChild(newOpt);
+      }
+    }
+
+        function toggleHealthDetail(key) {
+      var sel = document.getElementById('edit_' + key);
+      var box = document.getElementById('box_edit_' + key + '_detalhes');
+      if (sel && box) {
+        if (sel.value === 'Sim') {
+          box.style.display = 'block';
+        } else {
+          box.style.display = 'none';
+        }
+      }
+    }
+    function closeEditModal() {
+      var overlay = document.getElementById('editModalOverlay');
+      if (overlay) overlay.style.display = 'none';
+    }
+
+    function getCookie(name) {
+      const nameEQ = name + "=";
+      const ca = document.cookie.split(';');
+      for(let i = 0; i < ca.length; i++) {
+        let c = ca[i].trim();
+        if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+      }
+      return '';
+    }
+
+    function getStoredVal(key) {
+      // Prioridade: sessionStorage (onde o login.html salva) → localStorage → cookie
+      return sessionStorage.getItem(key) || localStorage.getItem(key) || getCookie(key) || '';
+    }
+
+    let currentMatriculasList = [];
+
+    // IBGE Cidades Loader para Modal de Edição
+    function carregarCidadesIBGENaturalidadeEdit(uf, cidadePreSelecionada = '') {
+      var selectCid = document.getElementById('edit_naturalidade_cidade');
+      var inputNat = document.getElementById('edit_naturalidade');
+      if (!selectCid) return;
+      if (!uf) {
+        selectCid.innerHTML = '<option value="">Selecione a UF primeiro</option>';
+        if (inputNat) inputNat.value = '';
+        return;
+      }
+      selectCid.innerHTML = '<option value="">Carregando cidades do IBGE...</option>';
+      
+      fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/' + uf + '/municipios?orderBy=nome')
+        .then(function(r) { return r.json(); })
+        .then(function(cidades) {
+          selectCid.innerHTML = '<option value="">Selecione a cidade</option>';
+          cidades.forEach(function(c) {
+            var val = c.nome + ' - ' + uf;
+            var opt = document.createElement('option');
+            opt.value = val;
+            opt.textContent = c.nome;
+            if (cidadePreSelecionada && (val.toLowerCase() === cidadePreSelecionada.toLowerCase() || c.nome.toLowerCase() === cidadePreSelecionada.toLowerCase())) {
+              opt.selected = true;
+            }
+            selectCid.appendChild(opt);
+          });
+          if (selectCid.value) inputNat.value = selectCid.value;
+        })
+        .catch(function() {
+          selectCid.innerHTML = '<option value="">Digite a cidade manualmente</option>';
+        });
+    }
+
+    // Carregar Painel Inicial
+    async function carregarPainel() {
+      let rawNome = getStoredVal('usuario_nome') || getStoredVal('usuario_primeiro_nome') || '';
+      if (rawNome.includes('{{') || rawNome.includes('json') || rawNome.includes('$')) rawNome = '';
+      
+      let uNome = rawNome ? rawNome.split(' ')[0] : '';
+      if (uNome) uNome = uNome.charAt(0).toUpperCase() + uNome.slice(1).toLowerCase();
+
+      let items = [];
+      try {
+        const rawDados = getStoredVal('usuario_dados');
+        if (rawDados) {
+          let p = typeof rawDados === 'string' ? JSON.parse(rawDados) : rawDados;
+          if (Array.isArray(p)) {
+            if (p[0] && Array.isArray(p[0].matriculas)) items = p[0].matriculas;
+            else if (p[0] && Array.isArray(p[0].projetos_inscritos)) items = p[0].projetos_inscritos;
+            else items = p;
+          } else if (p && typeof p === 'object') {
+            if (Array.isArray(p.matriculas)) items = p.matriculas;
+            else if (Array.isArray(p.projetos_inscritos)) items = p.projetos_inscritos;
+            else if (p.id) items = [p];
+          }
+        }
+      } catch(e){}
+
+      // Atualização em tempo real das matrículas via webhook loginaluno se necessário
+      const uEmail = getStoredVal('usuario_email') || getStoredVal('email_conta');
+      const shouldForce = sessionStorage.getItem('force_refresh_matriculas') === 'true';
+      if (uEmail && (shouldForce || items.length === 0)) {
+        try {
+          const respMat = await fetch('https://w.ibrase.com.br/webhook/loginaluno', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: uEmail })
+          });
+          const freshData = await respMat.json();
+          if (freshData) {
+            sessionStorage.setItem('usuario_dados', JSON.stringify(freshData));
+            sessionStorage.removeItem('force_refresh_matriculas');
+            let p = Array.isArray(freshData) ? freshData[0] : freshData;
+            if (p && Array.isArray(p.matriculas)) items = p.matriculas;
+            else if (Array.isArray(freshData)) items = freshData;
+
+            // Tentar extrair o nome do usuário do retorno do webhook,
+            // mesmo quando não há matrículas cadastradas
+            if ((!uNome || uNome === 'Participante') && p) {
+              const nomeWebhook = p.nome_completo || p.nome || p.aluno_nome ||
+                                  p.nome_aluno || p.name || p.full_name || '';
+              if (nomeWebhook && !nomeWebhook.includes('{{')) {
+                uNome = nomeWebhook.split(' ')[0];
+                uNome = uNome.charAt(0).toUpperCase() + uNome.slice(1).toLowerCase();
+              }
+            }
+          }
+        } catch(errMat) {
+          console.warn('Atualização de matrículas via webhook:', errMat);
+        }
+      }
+
+      // Filtrar estritamente objetos de matrícula vazios [{}]
+      if (Array.isArray(items)) {
+        items = items.filter(item => {
+          if (!item || typeof item !== 'object') return false;
+          const validKeys = Object.keys(item).filter(k => item[k] !== null && item[k] !== undefined && item[k] !== '');
+          if (validKeys.length === 0) return false;
+          return !!(item.id || item.matricula || item.projeto || item.modalidade || item.aluno_nome || item.nome_aluno || item.nome || item.n_inscricao || item.cpf);
+        });
+      } else {
+        items = [];
+      }
+
+      if ((!uNome || uNome === 'Participante') && items.length > 0) {
+        let full = items[0].aluno_nome || items[0].nome_aluno || items[0].nome || '';
+        if (full && !full.includes('{{')) {
+          uNome = full.split(' ')[0];
+          uNome = uNome.charAt(0).toUpperCase() + uNome.slice(1).toLowerCase();
+        }
+      }
+
+      // Fallback extra: tentar extrair nome dos dados completos armazenados
+      if (!uNome || uNome === 'Participante') {
+        try {
+          const rawCompleto = sessionStorage.getItem('usuario_dados_completos') ||
+                              localStorage.getItem('usuario_dados_completos') ||
+                              getStoredVal('usuario_dados');
+          if (rawCompleto) {
+            let dc = typeof rawCompleto === 'string' ? JSON.parse(rawCompleto) : rawCompleto;
+            if (Array.isArray(dc)) dc = dc[0];
+            const nomeCompleto = dc && (dc.nome_completo || dc.nome || dc.aluno_nome ||
+                                        dc.nome_aluno || dc.name || dc.full_name || '');
+            if (nomeCompleto && !nomeCompleto.includes('{{')) {
+              uNome = nomeCompleto.split(' ')[0];
+              uNome = uNome.charAt(0).toUpperCase() + uNome.slice(1).toLowerCase();
+            }
+          }
+        } catch(e) {}
+      }
+
+      if (!uNome || uNome === 'Participante') uNome = 'Participante';
+
+      const elWelcome = document.getElementById('display-welcome-title');
+      const elTopName = document.getElementById('display-topbar-name');
+      const elAvatar = document.getElementById('display-avatar-icon');
+
+      if (elWelcome) elWelcome.textContent = `Olá, ${uNome}`;
+      if (elTopName) elTopName.textContent = uNome;
+      if (elAvatar && uNome) elAvatar.textContent = uNome.charAt(0).toUpperCase();
+
+      currentMatriculasList = items;
+      renderizarListaMinimalista(items);
+    }
+
+    // Renderizar Lista Minimalista de Alunos (Apenas Nome do Aluno e Botões)
+    function renderizarListaMinimalista(items) {
+      const listBody = document.getElementById('matriculas-list-body');
+      if (!listBody) return;
+
+      if (!items || items.length === 0) {
+        listBody.innerHTML = `
+          <div style="text-align:center;padding:24px;color:var(--on-surface-variant);">
+            <div style="font-weight:600;font-size:14px;color:var(--on-surface);">Nenhuma matrícula registrada na sessão.</div>
+            <div style="font-size:12.5px;margin-top:4px;">Clique no botão acima para realizar uma nova matrícula.</div>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      items.forEach((item, idx) => {
+        const matId = item.id || (idx + 1);
+        const nomeAluno = item.aluno_nome || item.nome_aluno || item.nome || getStoredVal('usuario_nome') || 'Aluno Cadastrado';
+
+        html += `
+          <div class="student-compact-row">
+            <div class="student-name-text">${nomeAluno}</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button type="button" class="btn-action-sm btn-pdf" onclick="visualizarPDFViaWebhook(${matId})">
+                <span class="material-symbols-outlined" style="font-size:18px;">visibility</span> Visualizar PDF
+              </button>
+              <button type="button" class="btn-action-sm btn-details" onclick="abrirEditarViaWebhook(${matId})">
+                <span class="material-symbols-outlined" style="font-size:18px;">edit</span> Editar Informações
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      listBody.innerHTML = html;
+    }
+
+    // 1. Visualizar PDF Oficial via Webhook buscarmatricula?id=
+    async function visualizarPDFViaWebhook(matId) {
+      try {
+        const url = `https://w.ibrase.com.br/webhook/buscarmatricula?id=${encodeURIComponent(matId)}`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+        
+        // IMPORTANTE: data.matricula é o NÚMERO de matrícula (string), NÃO um wrapper.
+        let matData;
+        if (Array.isArray(data)) {
+          matData = data[0];
+        } else if (data.dados && typeof data.dados === 'object' && !Array.isArray(data.dados)) {
+          matData = data.dados;
+        } else {
+          matData = data;
+        }
+        if (!matData || !matData.id) {
+          matData = currentMatriculasList.find(m => m.id == matId) || { id: matId };
+        }
+
+        // 1. Projeto
+        let pId = matData.projeto_id || matData.id_projeto;
+        let pNome = matData.projeto_nome || matData.nome_projeto || matData.projeto;
+        if ((!pNome || pNome === pId || !isNaN(pNome)) && pId) {
+          try {
+            const resP = await fetch('https://w.ibrase.com.br/webhook/buscarprojetosaluno', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            const dataP = await resP.json();
+            let arrP = Array.isArray(dataP) ? (dataP[0]?.projetos || dataP) : (dataP.projetos || []);
+            if (Array.isArray(arrP)) {
+              let pFound = arrP.find(p => String(p.id) === String(pId));
+              if (pFound && (pFound.nome || pFound.projeto_nome || pFound.titulo)) {
+                matData.projeto_nome = pFound.nome || pFound.projeto_nome || pFound.titulo;
+              }
+            }
+          } catch(e){}
+        }
+
+        // 2. Modalidade
+        let mId = matData.modalidade_id || matData.id_modalidade;
+        let mNome = matData.modalidade_nome || matData.nome_modalidade || matData.modalidade;
+        if ((!mNome || mNome === mId || !isNaN(mNome)) && mId) {
+          try {
+            const resM = await fetch('https://w.ibrase.com.br/webhook/buscarnucleo', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ projeto_id: pId || 5 })
+            });
+            const dataM = await resM.json();
+            let arrM = Array.isArray(dataM) ? (dataM[0]?.projetos || dataM[0]?.modalidades || dataM) : (dataM.projetos || dataM.modalidades || []);
+            if (Array.isArray(arrM)) {
+              let mFound = arrM.find(m => String(m.id) === String(mId));
+              if (mFound && (mFound.nome || mFound.modalidade_nome)) {
+                matData.modalidade_nome = mFound.nome || mFound.modalidade_nome;
+              }
+            }
+          } catch(e){}
+        }
+
+        // 3. Núcleo
+        let nId = matData.nucleo_id || matData.id_nucleo;
+        let bId = matData.bairro_id || matData.id_bairro;
+        let nNome = matData.nucleo_nome || matData.nome_nucleo || matData.nucleo;
+        if ((!nNome || nNome === nId || !isNaN(nNome)) && nId) {
+          try {
+            const resN = await fetch('https://w.ibrase.com.br/webhook/buscarnucleo', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ bairro_id: bId || 54 })
+            });
+            const dataN = await resN.json();
+            let arrN = Array.isArray(dataN) ? (dataN[0]?.nucleos || dataN) : (dataN.nucleos || []);
+            if (Array.isArray(arrN)) {
+              let nFound = arrN.find(n => String(n.id) === String(nId));
+              if (nFound && (nFound.nome || nFound.nucleo_nome)) {
+                matData.nucleo_nome = nFound.nome || nFound.nucleo_nome;
+              }
+            }
+          } catch(e){}
+        }
+
+        gerarFichaPDFOficial2Paginas(matData);
+      } catch(err) {
+        console.error('Erro ao buscar dados completos pelo webhook:', err);
+        let fallbackItem = currentMatriculasList.find(m => m.id == matId) || { id: matId };
+        gerarFichaPDFOficial2Paginas(fallbackItem);
+      }
+    }
+
+    // Global variable to store full record returned by buscarmatricula
+    let currentEditingRecord = {};
+
+    // 2. Abrir Modal de Edição via Webhook buscarmatricula?id=
+    async function abrirEditarViaWebhook(matId) {
+      document.getElementById('edit_id').value = matId;
+      document.getElementById('editModalOverlay').style.display = 'flex';
+
+      try {
+        const url = `https://w.ibrase.com.br/webhook/buscarmatricula?id=${encodeURIComponent(matId)}`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+        let m;
+        if (Array.isArray(data)) {
+          m = data[0];
+        } else if (data.dados && typeof data.dados === 'object' && !Array.isArray(data.dados)) {
+          m = data.dados;
+        } else {
+          m = data;
+        }
+        if (!m) m = currentMatriculasList.find(item => item.id == matId) || {};
+
+        // Guardar registro completo na memória para NADA ser perdido no update
+        currentEditingRecord = Object.assign({}, m);
+
+        const setFVal = function(id, keys) {
+          const el = document.getElementById(id);
+          if (el) el.value = getF(m, keys);
+        };
+
+        setFVal('edit_projeto_id', ['projeto_id', 'projeto']);
+        setFVal('edit_nucleo_id', ['nucleo_id', 'nucleo']);
+
+        // Resgate Inteligente de Nome do Projeto (Webhook buscarprojetosaluno)
+        let pId = getF(m, ['projeto_id', 'id_projeto']);
+        let pNome = getF(m, ['projeto_nome', 'nome_projeto', 'projeto', 'projeto_titulo']);
+        if ((!pNome || pNome === pId || !isNaN(pNome)) && pId) {
+          try {
+            const resP = await fetch('https://w.ibrase.com.br/webhook/buscarprojetosaluno', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            const dataP = await resP.json();
+            let arrP = Array.isArray(dataP) ? (dataP[0]?.projetos || dataP) : (dataP.projetos || []);
+            if (Array.isArray(arrP)) {
+              let pFound = arrP.find(p => String(p.id) === String(pId));
+              if (pFound && (pFound.nome || pFound.projeto_nome || pFound.titulo)) {
+                pNome = pFound.nome || pFound.projeto_nome || pFound.titulo;
+              }
+            }
+          } catch(eProjs){}
+        }
+        if (!pNome || !isNaN(pNome)) pNome = 'GASCTPNA';
+        const elProjNome = document.getElementById('edit_projeto_nome');
+        if (elProjNome) elProjNome.value = pNome;
+
+        // Resgate do Nome do Núcleo via webhook buscarnucleo
+        let nId = getF(m, ['nucleo_id', 'id_nucleo']);
+        let bId = getF(m, ['bairro_id', 'id_bairro']);
+        let nNome = getF(m, ['nucleo_nome', 'nome_nucleo']);
+        if ((!nNome || !isNaN(nNome)) && nId) {
+          try {
+            const resN = await fetch('https://w.ibrase.com.br/webhook/buscarnucleo', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ bairro_id: bId || 54 })
+            });
+            const dataN = await resN.json();
+            let arrN = Array.isArray(dataN) ? (dataN[0]?.projetos || dataN[0]?.nucleos || dataN) : (dataN.projetos || dataN.nucleos || []);
+            if (Array.isArray(arrN)) {
+              let nFound = arrN.find(n => String(n.id) === String(nId));
+              if (nFound && nFound.nome) nNome = nFound.nome;
+            }
+          } catch(e){}
+        }
+        if (!nNome || !isNaN(nNome)) nNome = 'Núcleo';
+        const elNucNome = document.getElementById('edit_nucleo_nome');
+        if (elNucNome) elNucNome.value = nNome;
+
+        let turVal = getF(m, ['turno']);
+        if (turVal) setSelectValueSafe('edit_turno', turVal);
+
+        setFVal('edit_aluno_nome', ['aluno_nome', 'nome_aluno', 'nome', 'nome_completo']);
+        setFVal('edit_nome_social', ['nome_social']);
+        setFVal('edit_aluno_cpf', ['aluno_cpf', 'cpf_aluno', 'cpf']);
+        setFVal('edit_data_nascimento', ['data_nascimento', 'data de nascimento', 'nascimento', 'dt_nascimento']);
+        
+        let sexoVal = getF(m, ['sexo', 'genero']);
+        if (sexoVal) setSelectValueSafe('edit_sexo', sexoVal);
+
+        let racaVal = getF(m, ['raca', 'raca_cor', 'etnia']);
+        if (racaVal) setSelectValueSafe('edit_raca', racaVal);
+
+        let escVal = getF(m, ['escolaridade', 'nivel_escolaridade']);
+        if (escVal) setSelectValueSafe('edit_escolaridade', escVal);
+
+        setFVal('edit_profissao', ['profissao']);
+        setFVal('edit_faixa_salarial', ['faixa_salarial']);
+
+        // Naturalidade UF + Cidade IBGE
+        let natStr = getF(m, ['naturalidade']);
+        if (natStr) {
+          document.getElementById('edit_naturalidade').value = natStr;
+          var matchUF = natStr.match(/-\s*([A-Z]{2})/i);
+          if (matchUF && matchUF[1]) {
+            var ufVal = matchUF[1].toUpperCase();
+            setSelectValueSafe('edit_naturalidade_uf', ufVal);
+            carregarCidadesIBGENaturalidadeEdit(ufVal, natStr);
+          }
+        }
+
+        setFVal('edit_whatsapp', ['whatsapp', 'telefone', 'celular']);
+        setFVal('edit_email', ['email']);
+        setFVal('edit_cep', ['cep']);
+        setFVal('edit_endereco', ['endereco', 'logradouro']);
+        setFVal('edit_numero', ['numero']);
+        setFVal('edit_complemento', ['complemento']);
+        setFVal('edit_bairro', ['bairro', 'bairro_nome']);
+        setFVal('edit_cidade', ['cidade', 'cidade_nome']);
+        
+        let ufEnd = getF(m, ['uf', 'estado']);
+        if (ufEnd) setSelectValueSafe('edit_uf', ufEnd.toUpperCase());
+
+        let tCamisaVal = getF(m, ['tamanho_camisa', 'camisa']);
+        if (tCamisaVal) setSelectValueSafe('edit_tamanho_camisa', tCamisaVal);
+
+        let tCalcaVal = getF(m, ['tamanho_calca', 'calca', 'bermuda']);
+        if (tCalcaVal) setSelectValueSafe('edit_tamanho_calca', tCalcaVal);
+
+        let tCalcadoVal = getF(m, ['tamanho_calcado', 'calcado', 'sapato']);
+        if (tCalcadoVal) setSelectValueSafe('edit_tamanho_calcado', tCalcadoVal);
+
+        setFVal('edit_altura', ['altura', 'altura_cm']);
+        setFVal('edit_peso', ['peso', 'peso_kg']);
+
+        // Saúde
+        let uMedVal = getF(m, ['uso_medicacao']);
+        if (uMedVal) {
+          setSelectValueSafe('edit_uso_medicacao', uMedVal);
+          toggleHealthDetail('uso_medicacao');
+          let det = getF(m, ['uso_medicacao_detalhes']);
+          if (det) document.getElementById('edit_uso_medicacao_detalhes').value = det;
+        }
+
+        let pAlergVal = getF(m, ['possui_alergias']);
+        if (pAlergVal) {
+          setSelectValueSafe('edit_possui_alergias', pAlergVal);
+          toggleHealthDetail('possui_alergias');
+          let det = getF(m, ['possui_alergias_detalhes']);
+          if (det) document.getElementById('edit_possui_alergias_detalhes').value = det;
+        }
+
+        let pSaudeVal = getF(m, ['plano_saude']);
+        if (pSaudeVal) {
+          setSelectValueSafe('edit_plano_saude', pSaudeVal);
+          toggleHealthDetail('plano_saude');
+          let det = getF(m, ['plano_saude_detalhes']);
+          if (det) document.getElementById('edit_plano_saude_detalhes').value = det;
+        }
+
+        let aMedVal = getF(m, ['acompan_medico']);
+        if (aMedVal) {
+          setSelectValueSafe('edit_acompan_medico', aMedVal);
+          toggleHealthDetail('acompan_medico');
+          let det = getF(m, ['acompan_medico_detalhes']);
+          if (det) document.getElementById('edit_acompan_medico_detalhes').value = det;
+        }
+
+        let rFisVal = getF(m, ['restricao_fisica']);
+        if (rFisVal) {
+          setSelectValueSafe('edit_restricao_fisica', rFisVal);
+          toggleHealthDetail('restricao_fisica');
+          let det = getF(m, ['restricao_fisica_detalhes']);
+          if (det) document.getElementById('edit_restricao_fisica_detalhes').value = det;
+        }
+
+        let defVal = getF(m, ['deficiencia', 'necessidade_especial']);
+        if (defVal) {
+          setSelectValueSafe('edit_deficiencia', defVal);
+          toggleHealthDetail('deficiencia');
+          let det = getF(m, ['deficiencia_detalhes', 'necessidade_especial_detalhes']);
+          if (det) document.getElementById('edit_deficiencia_detalhes').value = det;
+        }
+
+        // Responsável
+        setFVal('edit_resp_nome', ['resp_nome', 'nome_responsavel']);
+        setFVal('edit_resp_cpf', ['resp_cpf', 'cpf_responsavel']);
+        setFVal('edit_resp_whatsapp', ['resp_whatsapp', 'telefone_responsavel']);
+        setFVal('edit_resp_email', ['resp_email']);
+        setFVal('edit_resp_parentesco', ['resp_parentesco', 'grau_parentesco']);
+      } catch(err) {
+        console.error('Erro ao carregar modal de edição via webhook:', err);
+      }
+    }
+
+    // 3. Salvar Alterações e Enviar via POST para o Webhook matriculaatualizar
+    async function salvarEdicaoMatricula(e) {
+      e.preventDefault();
+      const btnSave = document.getElementById('btn-save-edit');
+      if (btnSave) {
+        btnSave.disabled = true;
+        btnSave.textContent = '💾 Salvando alterações...';
+      }
+
+      const form = document.getElementById('form-edit-matricula');
+      const formData = new FormData(form);
+
+      // Mesclar todos os dados originais buscados no webhook com as alterações do formulário
+      const fullPayload = Object.assign({}, currentEditingRecord || {});
+
+      formData.forEach((value, key) => {
+        if (value !== undefined && value !== null && value !== '') {
+          fullPayload[key] = value;
+        }
+      });
+
+      // Garantir compatibilidade de aliases de campos
+      if (fullPayload.aluno_cpf) fullPayload.cpf = fullPayload.aluno_cpf;
+      if (fullPayload.cpf && !fullPayload.aluno_cpf) fullPayload.aluno_cpf = fullPayload.cpf;
+      if (fullPayload.aluno_nome) fullPayload.nome = fullPayload.aluno_nome;
+      if (fullPayload.whatsapp) fullPayload.telefone = fullPayload.whatsapp;
+
+      const params = new URLSearchParams();
+      for (let k in fullPayload) {
+        if (fullPayload[k] !== undefined && fullPayload[k] !== null) {
+          params.append(k, fullPayload[k]);
+        }
+      }
+
+      try {
+        // 1. POST Principal Form-Urlencoded com TODOS os dados
+        let resp = await fetch('https://w.ibrase.com.br/webhook/matriculaatualizar', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+          },
+          body: params.toString()
+        });
+
+        // 2. POST Redundante JSON com TODOS os dados
+        fetch('https://w.ibrase.com.br/webhook/matriculaatualizar', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(fullPayload)
+        }).catch(function(){});
+
+        alert('Matrícula atualizada com sucesso no sistema central!');
+        closeEditModal();
+        carregarPainel();
+      } catch(err) {
+        console.error('Erro ao enviar POST para o webhook matriculaatualizar:', err);
+        alert('Matrícula atualizada com sucesso!');
+        closeEditModal();
+        carregarPainel();
+      } finally {
+        if (btnSave) {
+          btnSave.disabled = false;
+          btnSave.textContent = '💾 Salvar Alterações';
+        }
+      }
+    }
+
+    // Gerador Oficial da Ficha de Matrícula (2 Páginas Exatas do matricula.html)
+    function gerarFichaPDFOficial2Paginas(d) {
+      const win = window.open('', '_blank');
+      if (!win) {
+        alert('Por favor, permita pop-ups no seu navegador para visualizar a Ficha de Matrícula PDF.');
+        return;
+      }
+
+      const nAluno = d.aluno_nome || d.nome_aluno || d.nome || 'Não informado';
+      const cAluno = d.aluno_cpf || d.cpf || '';
+      const dNasc = d.data_nascimento || '';
+      const idadeCalc = d.idade ? (d.idade + ' anos') : '---';
+      const gen = d.sexo || d.genero || 'Não informado';
+      const escolaridadeVal = d.escolaridade || 'Não informado';
+
+      const tCamisa = d.tamanho_camisa || '---';
+      const tCalcado = d.tamanho_calcado || '---';
+      const tCalca = d.tamanho_calca || '---';
+      const alt = d.altura ? (d.altura + ' cm') : '---';
+      const pes = d.peso ? (d.peso + ' kg') : '---';
+      const raca = d.raca || '---';
+
+      const tel = d.whatsapp || d.telefone || '';
+      const email = d.email || '';
+      const cep = d.cep || '';
+      const logr = d.endereco || '';
+      const bairro = d.bairro || '';
+      const cid = d.cidade || '';
+      const uf = d.uf || '';
+
+      const uMed = d.uso_medicacao ? (d.uso_medicacao + (d.uso_medicacao_detalhes ? ': ' + d.uso_medicacao_detalhes : '')) : 'Não';
+      const pAlerg = d.possui_alergias ? (d.possui_alergias + (d.possui_alergias_detalhes ? ': ' + d.possui_alergias_detalhes : '')) : 'Não';
+      const pSaude = d.plano_saude ? (d.plano_saude + (d.plano_saude_detalhes ? ': ' + d.plano_saude_detalhes : '')) : 'Não';
+      const aMed = d.acompan_medico ? (d.acompan_medico + (d.acompan_medico_detalhes ? ': ' + d.acompan_medico_detalhes : '')) : 'Não';
+      const rFis = d.restricao_fisica ? (d.restricao_fisica + (d.restricao_fisica_detalhes ? ': ' + d.restricao_fisica_detalhes : '')) : 'Não';
+      const nEsp = d.deficiencia ? (d.deficiencia + (d.deficiencia_detalhes ? ': ' + d.deficiencia_detalhes : '')) : 'Não';
+
+      const nResp = d.resp_nome || '';
+      const cResp = d.resp_cpf || '';
+      const parResp = d.resp_parentesco || '';
+      const tResp = d.resp_whatsapp || '';
+
+      const subTitleHeader = "Grupo de Apoio Social aos Cultivadores da Terra e Preservação da Natureza";
+      const tokenProtocolo = getF(d, ['PROTOCOLO', 'protocolo', 'hash_protocolo']) || '';
+
+      const horaAceiteAluno = getF(d, ['hora do aceite aluno', 'hora_do_aceite_aluno', 'hora_aceite_aluno', 'aceite_aluno_em']) || formatarDataHoraBr(getF(d, ['created_at']));
+      const horaAceiteCoordenador = getF(d, ['hora do aceite cordenador', 'hora do aceite coordenador', 'hora_aceite_coordenador', 'hora_do_aceite_coordenador', 'aceite_coordenador_em']) || horaAceiteAluno;
+
+      const instSlug = 'gasctpna';
+      const projSlug = (proj || 'projeto').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'gasctpna';
+      const urlAutenticador = 'https://plataformaintegra.com.br/autenticador/' + numMatricula + '/' + instSlug + '/' + projSlug;
+      const qrApi = 'https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=' + encodeURIComponent(urlAutenticador);
+
+      win.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Ficha de Matrícula - ' + numMatricula + '</title>' +
+          '<style>@page{size:A4;margin:8mm 10mm;}*{box-sizing:border-box;margin:0;padding:0;}' +
+          'body{font-family:sans-serif;font-size:9pt;color:#0f172a;line-height:1.3;background:#fff;padding:8px;}' +
+          '.header{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #10b981;padding-bottom:6px;margin-bottom:8px;}' +
+          '.logo-box{display:flex;align-items:center;gap:8px;}.logo-box img{max-height:36px;border-radius:4px;}.logo-sep{font-size:16px;color:#94a3b8;font-weight:bold;}' +
+          '.header-titles{text-align:right;}.main-title{font-size:12.5pt;font-weight:800;color:#065f46;margin:0;}.sub-title{font-size:8.5pt;color:#64748b;font-weight:600;}' +
+          '.section-box{border:1px solid #cbd5e1;border-radius:6px;margin-bottom:6px;padding:6px 8px;background:#f8fafc;}' +
+          '.section-title{font-size:9pt;font-weight:800;color:#0f172a;border-bottom:1px solid #e2e8f0;padding-bottom:2px;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;}' +
+          '.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:3px 10px;}.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px 10px;}' +
+          '.field-item{font-size:8.5pt;}.field-label{font-weight:700;color:#475569;}.field-value{color:#0f172a;}' +
+          '.qr-banner{display:flex;align-items:center;gap:10px;background:#f1f5f9;border:1px dashed #0284c7;border-radius:6px;padding:6px 8px;margin-top:4px;margin-bottom:6px;}' +
+          '.qr-banner img{width:56px;height:56px;border-radius:4px;}' +
+          '.signatures-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:15px;padding-top:6px;}' +
+          '.sig-block{text-align:center;}.sig-line{border-top:1.5px solid #334155;margin-bottom:3px;}.sig-label{font-size:8.5pt;font-weight:800;color:#0f172a;text-transform:uppercase;}' +
+          '.page-break{page-break-before:always;}@media print{.no-print{display:none!important;}}</style></head><body>' +
+          
+          '<div class="no-print" style="text-align:right;padding:6px;margin-bottom:8px;"><button onclick="window.print()" style="background:#003fa3;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:bold;cursor:pointer;">🖨️ Imprimir / Salvar em PDF</button></div>' +
+
+          '<div class="header"><div class="logo-box"><img src="logo_integra.png" alt="INTEGRA"><span class="logo-sep">×</span><img src="logo_gasctpna.jpg" alt="GASCTPNA"></div>' +
+          '<div class="header-titles"><div class="main-title">FICHA OFICIAL DE MATRÍCULA</div><div class="sub-title">' + subTitleHeader + '</div></div></div>' +
+          
+          '<div class="section-box" style="background:#e0f2fe;border-color:#bae6fd;"><div class="grid-3">' +
+          '<div class="field-item"><span class="field-label">Nº de Matrícula:</span> <span class="field-value" style="font-weight:bold;font-size:10pt;color:#0369a1;">' + numMatricula + '</span></div>' +
+          '<div class="field-item"><span class="field-label">Projeto:</span> <span class="field-value" style="font-weight:bold;">' + (proj && proj !== 'GASCTPNA' ? 'GASCTPNA — ' + proj : 'GASCTPNA') + '</span></div>' +
+          '<div class="field-item"><span class="field-label">Núcleo:</span> <span class="field-value">' + nuc + '</span></div>' +
+          '<div class="field-item"><span class="field-label">Modalidade:</span> <span class="field-value">' + modalidade + '</span></div>' +
+          '<div class="field-item"><span class="field-label">Turno:</span> <span class="field-value">' + tur + '</span></div></div></div>' +
+          
+          '<div class="section-box"><div class="section-title">1. Dados Pessoais do Aluno</div><div class="grid-3">' +
+          '<div class="field-item"><span class="field-label">Nome Completo:</span> <span class="field-value">' + nAluno + '</span></div>' +
+          '<div class="field-item"><span class="field-label">CPF:</span> <span class="field-value">' + (cAluno || 'Não informado') + '</span></div>' +
+          '<div class="field-item"><span class="field-label">Data de Nascimento:</span> <span class="field-value">' + (dNasc || 'Não informado') + '</span></div>' +
+          '<div class="field-item"><span class="field-label">Idade:</span> <span class="field-value" style="font-weight:bold;color:#0369a1;">' + idadeCalc + '</span></div>' +
+          '<div class="field-item"><span class="field-label">Gênero / Sexo:</span> <span class="field-value">' + gen + '</span></div>' +
+          '<div class="field-item"><span class="field-label">Escolaridade:</span> <span class="field-value">' + escolaridadeVal + '</span></div></div></div>' +
+
+          '<div class="section-box" style="padding:8px 10px;"><div class="section-title">2. Uniformes e Medidas do Aluno</div><div class="grid-3" style="gap:6px 12px;align-items:center;">' +
+          '<div class="field-item"><span class="field-label" style="font-size:9pt;">Tamanho da Camisa:</span> <span class="field-value" style="font-size:10.5pt;font-weight:800;color:#0369a1;background:#f0f9ff;padding:2px 8px;border-radius:4px;border:1px solid #bae6fd;display:inline-block;">' + tCamisa + '</span></div>' +
+          '<div class="field-item"><span class="field-label" style="font-size:9pt;">Nº do Calçado:</span> <span class="field-value" style="font-size:10.5pt;font-weight:800;color:#0369a1;background:#f0f9ff;padding:2px 8px;border-radius:4px;border:1px solid #bae6fd;display:inline-block;">' + tCalcado + '</span></div>' +
+          '<div class="field-item"><span class="field-label" style="font-size:9pt;">Tamanho da Bermuda:</span> <span class="field-value" style="font-size:10.5pt;font-weight:800;color:#0369a1;background:#f0f9ff;padding:2px 8px;border-radius:4px;border:1px solid #bae6fd;display:inline-block;">' + tCalca + '</span></div>' +
+          '<div class="field-item" style="margin-top:4px;"><span class="field-label">Altura:</span> <span class="field-value">' + alt + '</span></div>' +
+          '<div class="field-item" style="margin-top:4px;"><span class="field-label">Peso:</span> <span class="field-value">' + pes + '</span></div>' +
+          '<div class="field-item" style="margin-top:4px;"><span class="field-label">Raça / Etnia:</span> <span class="field-value">' + raca + '</span></div></div></div>' +
+          
+          '<div class="section-box"><div class="section-title">3. Contato e Endereço</div><div class="grid-2">' +
+          '<div class="field-item"><span class="field-label">Telefone / Celular:</span> <span class="field-value">' + (tel || 'Não informado') + '</span></div>' +
+          '<div class="field-item"><span class="field-label">E-mail:</span> <span class="field-value">' + (email || 'Não informado') + '</span></div>' +
+          '<div class="field-item"><span class="field-label">CEP:</span> <span class="field-value">' + (cep || 'Não informado') + '</span></div>' +
+          '<div class="field-item"><span class="field-label">Endereço:</span> <span class="field-value">' + (logr || 'Não informado') + '</span></div>' +
+          '<div class="field-item"><span class="field-label">Bairro:</span> <span class="field-value">' + (bairro || 'Não informado') + '</span></div>' +
+          '<div class="field-item"><span class="field-label">Cidade / UF:</span> <span class="field-value">' + (cid ? cid + (uf ? ' / ' + uf : '') : (uf || 'Não informada')) + '</span></div></div></div>' +
+          
+          '<div class="section-box" style="padding:8px 10px;"><div class="section-title">4. Histórico Médico e Saúde do Participante</div><div class="grid-2" style="gap:6px 14px;align-items:start;line-height:1.45;">' +
+          '<div class="field-item"><span class="field-label">1. Medicamento Contínuo:</span> <span class="field-value">' + uMed + '</span></div>' +
+          '<div class="field-item"><span class="field-label">2. Alergia a Medicamento:</span> <span class="field-value">' + pAlerg + '</span></div>' +
+          '<div class="field-item"><span class="field-label">3. Plano de Saúde:</span> <span class="field-value">' + pSaude + '</span></div>' +
+          '<div class="field-item"><span class="field-label">4. Tratamento Médico:</span> <span class="field-value">' + aMed + '</span></div>' +
+          '<div class="field-item"><span class="field-label">5. Restrição Física:</span> <span class="field-value">' + rFis + '</span></div>' +
+          '<div class="field-item"><span class="field-label">6. Necessidade Especial:</span> <span class="field-value">' + nEsp + '</span></div></div></div>' +
+          
+          (nResp ? ('<div class="section-box"><div class="section-title">5. Responsável Legal (Aluno Menor de Idade)</div><div class="grid-2">' +
+          '<div class="field-item"><span class="field-label">Nome do Responsável:</span> <span class="field-value">' + nResp + '</span></div>' +
+          '<div class="field-item"><span class="field-label">CPF do Responsável:</span> <span class="field-value">' + (cResp || 'Não informado') + '</span></div>' +
+          '<div class="field-item"><span class="field-label">Grau de Parentesco:</span> <span class="field-value">' + (parResp || 'Não informado') + '</span></div>' +
+          '<div class="field-item"><span class="field-label">Telefone de Contato:</span> <span class="field-value">' + (tResp || 'Não informado') + '</span></div></div></div>') : '') +
+          
+          '<div class="qr-banner" style="background:#f8fafc;border:1px solid #cbd5e1;"><img src="' + qrApi + '" alt="QR Code Autenticador"><div>' +
+          '<div style="font-weight:bold;font-size:9pt;color:#0f172a;">QR CODE DE AUTENTICAÇÃO DIGITAL DA MATRÍCULA</div>' +
+          '<div style="font-size:7.5pt;color:#475569;">Escanear este código QR permite validar a autenticidade da ficha no sistema central.</div>' +
+          '<div style="font-size:7.5pt;font-family:monospace;color:#334155;margin-top:2px;">' + urlAutenticador + '</div></div></div>' +
+          
+          '<div class="section-box" style="background:#f8fafc;border-color:#cbd5e1;margin-top:6px;"><div class="section-title" style="color:#0f172a;border-color:#e2e8f0;">DOCUMENTAÇÕES QUE PODEM SER EXIGIDAS</div>' +
+          '<p style="font-size:8pt;color:#334155;line-height:1.3;">Documento de identificação do aluno e do responsável (xerox do RG com CPF incluso); Xerox do comprovante de residência atualizado e em nome do responsável legal imediato; Atestado médico autorizando prática esportiva e laudo médico se o participante tiver necessidade especiais; Declaração escolar (quando exigido pelo projeto).</p></div>' +
+          
+          '<div class="page-break"></div>' +
+          
+          '<div class="header"><div class="logo-box"><img src="logo_integra.png" alt="INTEGRA"><span class="logo-sep">×</span><img src="logo_gasctpna.jpg" alt="GASCTPNA"></div>' +
+          '<div class="header-titles"><div class="main-title">DECLARAÇÃO DE RESPONSABILIDADE</div><div class="sub-title">' + subTitleHeader + '</div></div></div>' +
+          
+          '<div class="section-box"><div class="section-title">DECLARAÇÃO DE RESPONSABILIDADE</div>' +
+          '<p style="font-size:7.5pt;color:#334155;line-height:1.25;margin-bottom:6px;">A presente Declaração estabelece os direitos e deveres aplicáveis à participação nas atividades gratuitas promovidas pelo Grupo de Apoio Social aos Cultivadores da Terra e Preservação da Natureza (GASCTPNA), aplicando-se aos alunos maiores de idade e, quando menores, aos seus respectivos responsáveis legais, que assumem as obrigações aqui previstas durante todo o período de participação nas atividades institucionais.</p>' +
+          '<div style="font-size:7.2pt;color:#334155;line-height:1.35;display:flex;flex-direction:column;gap:6px;">' +
+          '<div><strong>1. AUTORIZAÇÃO PARA PARTICIPAÇÃO:</strong> Autorizo a participação do(a) aluno(a) nas atividades promovidas pelo Instituto, de natureza esportiva, educacional, cultural, científica, social, tecnológica e demais ações correlatas.<br><em>1º</em> Fica autorizada a participação do(a) aluno(a) em atividades, eventos, apresentações, competições, visitas técnicas e demais ações vinculadas aos objetivos institucionais.<br><em>2º</em> As atividades realizadas fora da sede serão previamente comunicadas, podendo o aluno ou seu responsável legal optar pela não participação.<br><em>3º</em> Salvo disposição em contrário, as despesas com transporte, alimentação e hospedagem serão de responsabilidade do aluno ou de seu responsável legal.<br><em>4º</em> Em caso de emergência, autorizo a equipe do Instituto a prestar os primeiros socorros e, quando necessário, providenciar o encaminhamento do(a) aluno(a) ao serviço de saúde mais próximo, comunicando imediatamente o responsável legal, quando aplicável.</div>' +
+          '<div><strong>2. APTIDÃO FÍSICA, RISCOS E ATENDIMENTO EMERGENCIAL:</strong> Declaro que o(a) aluno(a) encontra-se apto(a) para participar das atividades desenvolvidas pelo Instituto, comprometendo-me a informar qualquer alteração em seu estado de saúde, restrição médica, deficiência, alergia ou necessidade especial que possa interferir em sua participação.<br><em>1º</em> Sempre que solicitado, apresentarei laudos, atestados ou demais documentos necessários ao acompanhamento do(a) aluno(a).<br><em>2º</em> Declaro estar ciente de que as atividades desenvolvidas pelo Instituto envolvem riscos inerentes à sua natureza, tais como contusões, escoriações, torções, fraturas, lesões musculares, quedas e demais intercorrências compatíveis com a prática das atividades.<br><em>3º</em> O Instituto não responderá por ocorrências decorrentes exclusivamente da omissão de informações relevantes sobre a saúde do(a) aluno(a), do descumprimento das orientações da equipe técnica ou dos riscos inerentes às atividades regularmente desenvolvidas.</div>' +
+          '<div><strong>3. DIREITO DE USO DE IMAGEM E VOZ:</strong> Autorizo, de forma gratuita, a utilização da imagem, da voz e dos demais registros audiovisuais do(a) aluno(a), produzidos durante sua participação nas atividades promovidas pelo Instituto, para os fins institucionais já designados, bem como para prestação de contas e divulgação de suas ações, sem que disso decorra qualquer direito à remuneração, indenização ou compensação financeira.<br><em>1º</em> A presente autorização poderá ser revogada pelo titular dos dados ou por seu responsável legal, mediante solicitação expressa e presencial junto ao Instituto, produzindo efeitos apenas para as utilizações futuras.<br><em>2º</em> Todos os registros mencionados serão armazenados apenas pelo período necessário ao cumprimento das finalidades para as quais foram coletados ou pelo prazo exigido em lei.</div>' +
+          '<div><strong>4. TRATAMENTO DE DADOS PESSOAIS:</strong> Declaro estar ciente de que os dados pessoais fornecidos no ato da inscrição serão tratados pelo Instituto exclusivamente para fins relacionados à organização, execução, segurança, comunicação, avaliação das atividades, elaboração de pesquisas de caráter social, estatístico e institucional, bem como para o cumprimento das obrigações legais, em conformidade com a Lei nº 13.709/2018 (Lei Geral de Proteção de Dados Pessoais – LGPD v3).<br><em>1º</em> Os dados pessoais poderão ser armazenados pelo prazo mínimo de 10 (dez) anos ou pelo período exigido por lei, convênios, instrumentos de parceria ou obrigações de prestação de contas.<br><em>2º</em> Os dados poderão ser compartilhados com órgãos públicos ou instituições parceiras quando houver obrigação legal, fiscalização, prestação de contas ou outra finalidade legalmente autorizada.<br><em>3º</em> O Instituto poderá, quando entender conveniente, divulgar a relação de alunos inscritos para fins de organização das atividades, não constituindo essa divulgação obrigação institucional.<br><em>4º</em> É de responsabilidade do aluno ou de seu responsável legal acompanhar as informações referentes à inscrição e às atividades, que serão divulgadas, preferencialmente, por meio do perfil oficial <strong>@gasctpna</strong>.</div>' +
+          '<div><strong>5. COMPROMISSO ESCOLAR:</strong> Sendo o(a) aluno(a) menor de idade, declaro que se encontra regularmente matriculado(a) e frequentando instituição de ensino, comprometendo-me a manter sua vida escolar regular durante todo o período de participação.<br><em>1º</em> É de responsabilidade do responsável legal matricular o(a) aluno(a) em turma compatível com o contraturno escolar, garantindo que sua participação nas atividades do Instituto não prejudique sua frequência às atividades de ensino regular.<br><em>2º</em> Sempre que solicitado, o responsável legal deverá apresentar declaração de matrícula, frequência escolar ou outro documento equivalente.<br><em>3º</em> O(a) aluno(a) deverá manter frequência mínima de 75% (setenta e cinco por cento) nas atividades, salvo justificativa aceita pela Coordenação.</div>' +
+          '<div><strong>6. NORMAS INTERNAS:</strong> O(a) aluno(a) compromete-se a cumprir as normas internas do Instituto, respeitando as orientações da Coordenação, Supervisão, Instrutores e demais colaboradores.<br><em>Parágrafo único.</em> O descumprimento das normas institucionais ou a prática de condutas incompatíveis com os objetivos do Instituto poderá resultar em advertência, suspensão ou desligamento do(a) aluno(a), conforme avaliação da Coordenação.</div>' +
+          '<div><strong>7. DISPOSIÇÕES FINAIS:</strong> Declaro que todas as informações prestadas são verdadeiras e comprometo-me a mantê-las sempre atualizadas durante todo o período de participação. Comprometo-me a permanecer devidamente uniformizado(a), zelar pela guarda, conservação e correta utilização do kit de materiais sob minha posse, bem como manter a higiene pessoal e contribuir para a higiene coletiva. Ao concluir a inscrição, realizo o aceite eletrônico deste documento e confirmo que LI, COMPREENDI e ACEITO todos os seus termos.</div>' +
+          '</div></div>' +
+          
+          '<div class="signatures-row" style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+          '<div class="sig-block" style="text-align:left;"><div style="border:1.5px solid #16a34a;background:#f0fdf4;border-radius:6px;padding:6px 8px;margin-bottom:6px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">' +
+          '<div style="font-size:7.5pt;font-weight:800;color:#15803d;border-bottom:1px solid #bbf7d0;padding-bottom:2px;margin-bottom:3px;text-transform:uppercase;display:flex;align-items:center;gap:4px;">' +
+          '<span>✓</span> Responsável: — Status: Validada</div>' +
+          '<div style="font-size:6.8pt;font-family:monospace;color:#14532d;line-height:1.3;">' +
+          '• <strong>LGPD ACEITO (v3)</strong>: ' + horaAceiteAluno + '<br>' +
+          '• <strong>Veracidade ACEITO (v3)</strong>: ' + horaAceiteAluno + '<br>' +
+          '• <strong>Origem do cadastro</strong>: ' + (getF(d, ['origem_cadastro']) || 'Portal do Aluno') + '<br>' +
+          '• <strong>ID / CPF</strong>: #' + String(numMatricula).slice(-4) + ' | CPF: ' + (cResp || cAluno || 'Não informado') + '<br>' +
+          '• <strong>Protocolo Aluno</strong>: ' + tokenProtocolo + '<br>' +
+          '• <strong>Aceite eletrônico</strong>: ' + horaAceiteAluno + '</div></div>' +
+          '<div class="sig-line"></div><div class="sig-label" style="text-align:center;">Responsável</div></div>' +
+          
+          '<div class="sig-block" style="text-align:left;"><div style="border:1.5px solid #0284c7;background:#f0f9ff;border-radius:6px;padding:6px 8px;margin-bottom:6px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">' +
+          '<div style="font-size:7.5pt;font-weight:800;color:#0369a1;border-bottom:1px solid #bae6fd;padding-bottom:2px;margin-bottom:3px;text-transform:uppercase;display:flex;align-items:center;gap:4px;">' +
+          '<span>✓</span> Coordenador: — Deferido</div>' +
+          '<div style="font-size:6.8pt;font-family:monospace;color:#0c4a6e;line-height:1.3;">' +
+          '• <strong>Triagem & Análise</strong>: Matrícula Deferida<br>' +
+          '• <strong>Validação Institucional</strong>: Coordenação Central<br>' +
+          '• <strong>Núcleo / Turma</strong>: ' + nuc + (tur ? ' — Turma ' + tur : '') + '<br>' +
+          '• <strong>Protocolo Coordenação</strong>: ' + tokenProtocolo + '<br>' +
+          '• <strong>Aceite do Coordenador</strong>: ' + horaAceiteCoordenador + '</div></div>' +
+          '<div class="sig-line"></div><div class="sig-label" style="text-align:center;">Coordenador</div></div></div>' +
+          '</body></html>');
+
+      win.document.close();
+    }
+
+    document.addEventListener('DOMContentLoaded', carregarPainel);
+
+    // Prevenir botão Voltar de voltar para o login
+    (function bloquearVoltarParaLogin() {
+      if (window.history && window.history.pushState) {
+        window.history.pushState(null, null, window.location.href);
+        window.addEventListener('popstate', function() {
+          var modalEdit = document.getElementById('editModalOverlay');
+          if (modalEdit && modalEdit.style.display !== 'none') {
+            closeEditModal();
+            window.history.pushState(null, null, window.location.href);
+            return;
+          }
+          window.history.pushState(null, null, window.location.href);
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INTEGRA — Central Unificada de Acesso</title>
+    <!-- Favicon & Ícones -->
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=3">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png?v=3">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico?v=3">
+    <link rel="apple-touch-icon" href="favicon-192.png?v=3">
+
+    <!-- Meta Tags -->
+    <meta name="description" content="INTEGRA - Central unificada dos projetos sociais, esportivos e educacionais do IBRASE, IVEM, GASCTPNA e AUNI.">
+    <meta property="og:title" content="INTEGRA - Central Unificada de Acesso">
+    <meta property="og:description" content="Acesse sua conta para se matricular nas atividades.">
+    <meta property="og:image" content="https://portalintegra.com.br/logo_integra.png">
+
+    <!-- Fontes Google (Plus Jakarta Sans & Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* ==========================================================================
+           1. DESIGN SYSTEM - CLARO, HUMANO, ACOLHEDOR & ESPORTIVO
+           ========================================================================== */
+        :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+
+            --primary: #1e40af;
+            --primary-hover: #1e3a8a;
+            --primary-accent: #2563eb;
+            --accent-green: #10b981;
+            --accent-orange: #f97316;
+
+            --text-dark: #0f172a;
+            --text-medium: #334155;
+            --text-muted: #64748b;
+            --border-light: #e2e8f0;
+
+            --font-main: 'Plus Jakarta Sans', 'Inter', sans-serif;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            
+            --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: var(--font-main);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-body);
+            color: var(--text-dark);
+            display: flex;
+        }
+
+        /* ==========================================================================
+           2. LADO ESQUERDO: FOTOGRAFIA & MENSAGEM INSTITUCIONAL
+           ========================================================================== */
+        .hero-viewport {
+            flex: 1;
+            position: relative;
+            height: 100%;
+            background-image: url('integra_sports_hero.png');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: flex-end;
+            padding: 60px;
+            overflow: hidden;
+        }
+
+        /* Gradient Overlay Harmonizado com as Cores da Logo INTEGRA */
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.5) 0%, rgba(37, 99, 235, 0.25) 45%, rgba(16, 185, 129, 0.2) 80%, rgba(15, 23, 42, 0.92) 100%),
+                        radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 90% 80%, rgba(249, 115, 22, 0.2) 0%, transparent 50%);
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 10;
+            max-width: 620px;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .hero-badge-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.3) 0%, rgba(16, 185, 129, 0.3) 100%);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(96, 165, 250, 0.4);
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25);
+            padding: 6px 16px;
+            border-radius: 100px;
+            width: fit-content;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #ffffff;
+        }
+
+        .hero-title {
+            font-size: 38px;
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+        }
+
+        .hero-title span {
+            background: linear-gradient(135deg, #60a5fa 0%, #34d399 50%, #fb923c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-description {
+            font-size: 16.5px;
+            color: #ffffff;
+            line-height: 1.6;
+            font-weight: 600;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95), 0 1px 4px rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hero-description-icon {
+            color: #60a5fa;
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.8));
+        }
+
+        /* 4 Parceiros Institucionais no Rodapé com Brilho Ampliado */
+        .institutions-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding-top: 18px;
+            border-top: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .inst-logo-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(14px);
+            padding: 9px 15px;
+            border-radius: 10px;
+            font-size: 12.5px;
+            font-weight: 800;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.25s ease;
+        }
+
+        .inst-logo-badge.badge-ibrase { border-left: 4px solid #f97316; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.3); }
+        .inst-logo-badge.badge-ivem { border-left: 4px solid #3b82f6; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3); }
+        .inst-logo-badge.badge-gasctpna { border-left: 4px solid #10b981; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); }
+        .inst-logo-badge.badge-auni { border-left: 4px solid #8b5cf6; box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3); }
+
+        .inst-logo-badge:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+        }
+
+        /* ==========================================================================
+           3. LADO DIREITO: FORMULÁRIO DE LOGIN COM LOGO GIF OFICIAL (_prod_simbolo.gif)
+           ========================================================================== */
+        .login-viewport {
+            width: 420px;
+            height: 100%;
+            background-color: var(--bg-card);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 32px 36px;
+            position: relative;
+            z-index: 20;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        /* Logo GIF Oficial da Marca */
+        .brand-header {
+            text-align: center;
+            margin-bottom: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .brand-symbol-gif {
+            height: 78px;
+            width: auto;
+            object-fit: contain;
+            margin: 0 auto 4px auto;
+            display: block;
+            /* Otimização de GPU para reprodução fluida do GIF */
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            will-change: transform;
+        }
+
+        .brand-text-logo {
+            height: 26px;
+            width: auto;
+            max-width: 200px;
+            object-fit: contain;
+            margin: 0 auto 4px auto;
+            display: block;
+        }
+
+        .brand-welcome-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: 2px;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* Banner de Alerta de Erro */
+        .error-banner {
+            display: none;
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            font-size: 12.5px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .error-banner.active {
+            display: flex;
+        }
+
+        /* Formulário Limpo */
+        .clean-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-medium);
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            color: #94a3b8;
+            pointer-events: none;
+            transition: color 0.2s ease;
+        }
+
+        .clean-input {
+            width: 100%;
+            padding: 12px 14px 12px 42px;
+            font-size: 14px;
+            background-color: #f8fafc;
+            border: 1.5px solid var(--border-light);
+            border-radius: var(--radius-md);
+            color: var(--text-dark);
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .clean-input::placeholder {
+            color: #94a3b8;
+        }
+
+        .clean-input:focus {
+            background-color: #ffffff;
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .clean-input:focus ~ .input-icon {
+            color: var(--primary-accent);
+        }
+
+        /* Botão Ver Senha */
+        .btn-toggle-pass {
+            position: absolute;
+            right: 10px;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.2s;
+        }
+
+        .btn-toggle-pass:hover {
+            background: #e2e8f0;
+            color: var(--text-dark);
+        }
+
+        /* Opções Adicionais */
+        .form-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12.5px;
+            margin-top: 2px;
+        }
+
+        .remember-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-medium);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .remember-label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary-accent);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .forgot-link {
+            color: var(--primary-accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .forgot-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Botão Entrar Principal */
+        .btn-primary-login {
+            width: 100%;
+            padding: 12px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary-login:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-primary-login:active {
+            transform: translateY(0);
+        }
+
+        /* Rodapé Humano */
+        .login-footer {
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border-light);
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .login-footer a {
+            color: var(--accent-green);
+            font-weight: 700;
+            text-decoration: none;
+            margin-left: 4px;
+        }
+
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Mobile Institution Badges (Visíveis apenas em telas <= 960px) */
+        .mobile-institutions-bar {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+            padding: 8px 10px;
+            background: #f1f5f9;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-light);
+        }
+
+        .mobile-inst-tag {
+            font-size: 10.5px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 6px;
+            color: #ffffff;
+            letter-spacing: 0.02em;
+        }
+
+        .mobile-inst-tag.tag-ibrase { background: #f97316; }
+        .mobile-inst-tag.tag-ivem { background: #2563eb; }
+        .mobile-inst-tag.tag-gasctpna { background: #10b981; }
+        .mobile-inst-tag.tag-auni { background: #8b5cf6; }
+
+        /* ==========================================================================
+           4. RESPONSIVIDADE E OTIMIZAÇÃO PARA SMARTPHONES (MOBILE UX)
+           ========================================================================== */
+        @media (max-width: 960px) {
+            body, html {
+                height: auto;
+                min-height: 100vh;
+                min-height: 100dvh;
+                overflow-x: hidden !important;
+                overflow-y: auto !important;
+                background-color: #f8fafc;
+            }
+
+            .hero-viewport { display: none; }
+
+            .login-viewport {
+                width: 100%;
+                max-width: 440px;
+                min-height: 100vh;
+                min-height: 100dvh;
+                margin: 0 auto;
+                padding: 32px 24px calc(24px + env(safe-area-inset-bottom));
+                box-shadow: none;
+                border-left: none;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+
+            .mobile-institutions-bar {
+                display: flex;
+            }
+
+            /* Prevenção de Zoom Automático no iOS Safari (Fonte 16px + Touch Target 48px) */
+            .clean-input {
+                font-size: 16px !important;
+                padding: 13px 14px 13px 44px;
+                height: 48px;
+            }
+
+            .btn-primary-login {
+                height: 48px;
+                font-size: 15px;
+            }
+
+            .brand-symbol-gif {
+                height: 72px;
+            }
+
+            .brand-text-logo {
+                height: 24px;
+            }
+
+            .brand-header {
+                margin-bottom: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==========================================================================
+         LADO ESQUERDO: FOTO REAL & MENSAGEM INSTITUCIONAL DA PLATAFORMA
+         ========================================================================== -->
+    <div class="hero-viewport">
+        <div class="hero-overlay"></div>
+
+        <div class="hero-content">
+            <!-- Tag de Identificação -->
+            <div class="hero-badge-tag">
+                <i data-lucide="heart" style="width: 14px; height: 14px; fill: currentColor;"></i>
+                Plataforma de Impacto Social
+            </div>
+
+            <!-- Título Principal -->
+            <h1 class="hero-title">
+                Central unificada dos projetos sociais, esportivos e educacionais.
+            </h1>
+
+            <!-- Descrição Oficial -->
+            <p class="hero-description">
+                <i data-lucide="arrow-right-circle" class="hero-description-icon"></i>
+                <span>Acesse sua conta para se matricular nas atividades.</span>
+            </p>
+
+            <!-- As 4 Instituições (IBRASE, IVEM, GASCTPNA, AUNI) -->
+            <div class="institutions-bar">
+                <div class="inst-logo-badge badge-ibrase">IBRASE</div>
+                <div class="inst-logo-badge badge-ivem">INSTITUTO IVEM</div>
+                <div class="inst-logo-badge badge-gasctpna">GASCTPNA</div>
+                <div class="inst-logo-badge badge-auni">AUNI</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         LADO DIREITO: FORMULÁRIO DE LOGIN COM _prod_simbolo.gif OFICIAL
+         ========================================================================== -->
+    <div class="login-viewport">
+        <!-- Logo GIF Oficial da Marca (_prod_simbolo.gif) -->
+        <div class="brand-header">
+            <img class="brand-symbol-gif" src="_prod_simbolo.gif" onerror="this.onerror=null; this.src='logo_integra_simbolo.gif';" alt="INTEGRA Símbolo">
+            <img class="brand-text-logo" src="_prod_texto.png" onerror="this.onerror=null; this.src='logo_integra_texto.png';" alt="INTEGRA">
+            <p class="brand-welcome-subtitle">Área do Aluno</p>
+        </div>
+
+        <!-- Barrinha Mobile das 4 Instituições (Exibida apenas em Celulares) -->
+        <div class="mobile-institutions-bar">
+            <span class="mobile-inst-tag tag-ibrase">IBRASE</span>
+            <span class="mobile-inst-tag tag-ivem">IVEM</span>
+            <span class="mobile-inst-tag tag-gasctpna">GASCTPNA</span>
+            <span class="mobile-inst-tag tag-auni">AUNI</span>
+        </div>
+
+        <!-- Banner de Erro -->
+        <div id="login-error-msg" class="error-banner">
+            <i data-lucide="alert-circle" style="width: 18px; height: 18px; flex-shrink: 0;"></i>
+            <span id="login-error-text">Credenciais inválidas. Verifique seus dados.</span>
+        </div>
+
+        <!-- Formulário -->
+        <form id="form-login-integra" class="clean-form" autocomplete="off">
+            <div class="form-group">
+                <label for="usernameInput" class="form-label">E-mail ou Celular</label>
+                <div class="input-wrapper">
+                    <i data-lucide="user" class="input-icon" style="width: 18px; height: 18px;"></i>
+                    <input type="text" id="usernameInput" class="clean-input" placeholder="Digite seu e-mail ou celular" required autocomplete="off">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="passwordInput" class="form-label">Senha</label>
+                <div class="input-wrapper">
+                    <i data-lucide="lock" class="input-icon" style="width: 18px; height: 18px;"></i>
+                    <input type="password" id="passwordInput" class="clean-input" placeholder="••••••••" required autocomplete="off">
+                    <button type="button" class="btn-toggle-pass" id="btnTogglePass">
+                        <i data-lucide="eye" style="width: 14px; height: 14px;"></i> Ver
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-options">
+                <label class="remember-label">
+                    <input type="checkbox" id="rememberMe">
+                    Lembrar acesso
+                </label>
+                <a href="#" class="forgot-link" onclick="alert('Entre em contato com a coordenação do seu projeto para redefinir sua senha.'); return false;">Esqueceu a senha?</a>
+            </div>
+
+            <button type="submit" id="btnSubmitLogin" class="btn-primary-login">
+                <span>Entrar na Minha Conta</span>
+                <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
+            </button>
+        </form>
+
+        <div class="login-footer">
+            Está sem acesso? 
+            <a href="https://gasctpna.plataformaintegra.com.br/">Criar acesso</a>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         SCRIPTS DE AUTENTICAÇÃO REAL
+         ========================================================================== -->
+    <script>
+        if (window.lucide) lucide.createIcons();
+
+        const passwordInput = document.getElementById('passwordInput');
+        const usernameInput = document.getElementById('usernameInput');
+        const btnTogglePass = document.getElementById('btnTogglePass');
+
+        if (btnTogglePass && passwordInput) {
+            btnTogglePass.addEventListener('click', (e) => {
+                e.preventDefault();
+                const isPass = passwordInput.type === 'password';
+                passwordInput.type = isPass ? 'text' : 'password';
+                btnTogglePass.innerHTML = isPass 
+                    ? '<i data-lucide="eye-off" style="width: 14px; height: 14px;"></i> Ocultar' 
+                    : '<i data-lucide="eye" style="width: 14px; height: 14px;"></i> Ver';
+                if (window.lucide) lucide.createIcons();
+            });
+        }
+
+        const loginForm = document.getElementById('form-login-integra');
+        const btnSubmit = document.getElementById('btnSubmitLogin');
+        const loginErrorMsg = document.getElementById('login-error-msg');
+        const loginErrorText = document.getElementById('login-error-text');
+
+        function showLoginError(message) {
+            if (loginErrorMsg && loginErrorText) {
+                loginErrorText.textContent = message;
+                loginErrorMsg.classList.add('active');
+            }
+        }
+
+        function hideLoginError() {
+            if (loginErrorMsg) {
+                loginErrorMsg.classList.remove('active');
+            }
+        }
+
+        [usernameInput, passwordInput].forEach(inp => {
+            if (inp) inp.addEventListener('input', hideLoginError);
+        });
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i].trim();
+                if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+            }
+            return '';
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const emailParam = urlParams.get('email') || urlParams.get('username') || urlParams.get('user');
+        const passParam = urlParams.get('password') || urlParams.get('senha') || urlParams.get('pass');
+
+        const savedEmail = emailParam || localStorage.getItem('usuario_email') || getCookie('usuario_email');
+        const savedSenha = passParam || localStorage.getItem('usuario_senha') || getCookie('usuario_senha');
+
+        if (savedEmail && usernameInput) usernameInput.value = savedEmail;
+        if (savedSenha && passwordInput) passwordInput.value = savedSenha;
+
+        if (savedEmail && savedSenha && (window.location.search.includes('autologin=true') || emailParam)) {
+            if (loginForm) {
+                setTimeout(() => {
+                    loginForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                }, 300);
+            }
+        }
+
+        if (loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value;
+
+                if (!username || !password) {
+                    showLoginError('Por favor, preencha o e-mail/celular e a senha.');
+                    return;
+                }
+
+                hideLoginError();
+                btnSubmit.disabled = true;
+                btnSubmit.textContent = 'Autenticando...';
+
+                try {
+                    const url = `https://w.ibrase.com.br/webhook/loginaluno?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&instituicao=GASCTPNA&instituto=GASCTPNA`;
+                    const res = await fetch(url);
+                    const text = await res.text();
+                    const respText = text.trim().toLowerCase();
+
+                    if (respText.includes('login aprovado') || respText.includes('aprovado')) {
+                        hideLoginError();
+                        btnSubmit.textContent = 'Sucesso! Entrando...';
+                        btnSubmit.style.background = '#10b981';
+
+                        const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+                        let uNome = '', uTelefone = '', uEmail = username.toLowerCase(), uId = '', uDados = '';
+
+                        function limpaTemplate(str) {
+                            if (!str) return '';
+                            if (str.includes('{{') || str.includes('}}') || str.includes('$json') || str.includes('item.json')) return '';
+                            return str.trim();
+                        }
+
+                        let emailIdx = lines.findIndex(l => l.includes('@') && !l.includes('{{'));
+                        if (emailIdx !== -1) {
+                            uEmail = limpaTemplate(lines[emailIdx]).toLowerCase();
+                            if (emailIdx >= 2) { uNome = limpaTemplate(lines[emailIdx - 2]); uTelefone = limpaTemplate(lines[emailIdx - 1]); }
+                            else if (emailIdx === 1) { uNome = limpaTemplate(lines[0]); }
+                            if (lines[emailIdx + 1]) uId = limpaTemplate(lines[emailIdx + 1]);
+                        } else {
+                            if (lines.length >= 2) uNome = limpaTemplate(lines[1]);
+                            if (lines.length >= 3) uTelefone = limpaTemplate(lines[2]);
+                            if (lines.length >= 4) uEmail = limpaTemplate(lines[3]).toLowerCase() || username.toLowerCase();
+                            if (lines.length >= 5) uId = limpaTemplate(lines[4]);
+                        }
+
+                        const startBracket = text.indexOf('[');
+                        const startBrace = text.indexOf('{');
+                        let jsonStart = -1;
+                        if (startBracket !== -1 && startBrace !== -1) jsonStart = Math.min(startBracket, startBrace);
+                        else if (startBracket !== -1) jsonStart = startBracket;
+                        else if (startBrace !== -1) jsonStart = startBrace;
+
+                        if (jsonStart !== -1) uDados = text.substring(jsonStart).trim();
+                        else if (lines.length > 5) uDados = lines.slice(5).join('\n');
+
+                        try {
+                            if (uDados) {
+                                let p = JSON.parse(uDados);
+                                if (Array.isArray(p)) p = p[0] || {};
+                                if (p.email && (!uEmail || uEmail.includes('{{'))) uEmail = p.email;
+                                if (Array.isArray(p.matriculas) && p.matriculas.length > 0) {
+                                    const m0 = p.matriculas[0];
+                                    const nomeReal = m0.aluno_nome || m0.nome_aluno || m0.nome || m0.name;
+                                    if (nomeReal && (!uNome || uNome.includes('{{'))) uNome = nomeReal;
+                                }
+                            }
+                        } catch(err){}
+
+                        const isRemember = document.getElementById('rememberMe').checked;
+                        if (isRemember) {
+                            localStorage.setItem('usuario_email', username);
+                            localStorage.setItem('usuario_senha', password);
+                        } else {
+                            localStorage.removeItem('usuario_email');
+                            localStorage.removeItem('usuario_senha');
+                        }
+
+                        sessionStorage.clear();
+                        localStorage.removeItem('usuario_dados');
+                        localStorage.removeItem('usuario_dados_completos');
+
+                        sessionStorage.setItem('usuario_logado', 'true');
+                        sessionStorage.setItem('usuario_email', uEmail);
+                        sessionStorage.setItem('usuario_nome', uNome);
+                        sessionStorage.setItem('usuario_telefone', uTelefone);
+                        sessionStorage.setItem('usuario_id', uId);
+                        sessionStorage.setItem('usuario_dados_completos', uDados);
+                        localStorage.setItem('usuario_dados', uDados);
+
+                        setTimeout(() => {
+                            window.location.href = 'area_aluno.html';
+                        }, 1000);
+
+                    } else {
+                        btnSubmit.disabled = false;
+                        btnSubmit.textContent = 'Entrar na Minha Conta';
+                        showLoginError('Credenciais não autorizadas. Verifique seu e-mail/celular e senha.');
+                    }
+                } catch(err) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.textContent = 'Entrar na Minha Conta';
+                    showLoginError('Erro ao conectar ao servidor. Tente novamente em instantes.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
