@@ -946,10 +946,20 @@
 
       if (uEmail || uCpf || uId) {
         try {
-          const respMat = await fetch('https://w.ibrase.com.br/webhook/loginaluno', {
+          const respMat = await fetch('https://w.ibrase.com.br/webhook/loginaluno?t=' + Date.now(), {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: uEmail || '', cpf: uCpf || '', id: uId || '' })
+            headers: { 
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache'
+            },
+            cache: 'no-store',
+            body: JSON.stringify({ 
+              username: uEmail || uCpf || uId || '',
+              email: uEmail || '', 
+              cpf: uCpf || '', 
+              id: uId || '' 
+            })
           });
           const freshData = await respMat.json();
           if (freshData) {
