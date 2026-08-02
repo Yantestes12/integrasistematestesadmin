@@ -1990,10 +1990,10 @@ window.dadosRecentesCPF = null;
         currentStep = stepNum;
         updateStepVisibility();
         
-        // Se entrou no Passo 2 e o Nome não foi preenchido pela API, libera digitação incondicionalmente
+        // Se entrou no Passo 2 e o Nome está vazio (CPF não localizado), libera preenchimento manual
         if (stepNum === 2) {
             var inputNome = document.getElementById('TextAreaNome');
-            if (inputNome && (!inputNome.value.trim() || inputNome.readOnly)) {
+            if (inputNome && !inputNome.value.trim()) {
                 ativandoManual(inputNome);
                 ativandoManual(document.getElementById('TextDataNasc'));
             }

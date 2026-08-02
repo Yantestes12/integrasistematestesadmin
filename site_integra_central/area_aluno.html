@@ -899,42 +899,28 @@
       if (uNome) uNome = uNome.charAt(0).toUpperCase() + uNome.slice(1).toLowerCase();
 
       let items = [];
-      try {
-        const rawDados = getStoredVal('usuario_dados');
-        if (rawDados) {
-          let p = typeof rawDados === 'string' ? JSON.parse(rawDados) : rawDados;
-          if (Array.isArray(p)) {
-            if (p[0] && Array.isArray(p[0].matriculas)) items = p[0].matriculas;
-            else if (p[0] && Array.isArray(p[0].projetos_inscritos)) items = p[0].projetos_inscritos;
-            else items = p;
-          } else if (p && typeof p === 'object') {
-            if (Array.isArray(p.matriculas)) items = p.matriculas;
-            else if (Array.isArray(p.projetos_inscritos)) items = p.projetos_inscritos;
-            else if (p.id) items = [p];
-          }
-        }
-      } catch(e){}
 
-      // Atualização em tempo real das matrículas via webhook loginaluno se necessário
-      const uEmail = getStoredVal('usuario_email') || getStoredVal('email_conta');
-      const shouldForce = sessionStorage.getItem('force_refresh_matriculas') === 'true';
-      if (uEmail && (shouldForce || items.length === 0)) {
+      // BUSCA EM TEMPO REAL NO BANCO DE DADOS VIA WEBHOOK (Sem depender de cache de localStorage)
+      const uEmail = getStoredVal('usuario_email') || getStoredVal('email_conta') || sessionStorage.getItem('usuario_email') || localStorage.getItem('usuario_email');
+      const uCpf = getStoredVal('usuario_cpf') || sessionStorage.getItem('usuario_cpf') || localStorage.getItem('usuario_cpf');
+      const uId = getStoredVal('usuario_id') || sessionStorage.getItem('usuario_id') || localStorage.getItem('usuario_id');
+
+      if (uEmail || uCpf || uId) {
         try {
           const respMat = await fetch('https://w.ibrase.com.br/webhook/loginaluno', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: uEmail })
+            body: JSON.stringify({ email: uEmail || '', cpf: uCpf || '', id: uId || '' })
           });
           const freshData = await respMat.json();
           if (freshData) {
             sessionStorage.setItem('usuario_dados', JSON.stringify(freshData));
-            sessionStorage.removeItem('force_refresh_matriculas');
             let p = Array.isArray(freshData) ? freshData[0] : freshData;
             if (p && Array.isArray(p.matriculas)) items = p.matriculas;
+            else if (p && Array.isArray(p.projetos_inscritos)) items = p.projetos_inscritos;
             else if (Array.isArray(freshData)) items = freshData;
+            else if (p && typeof p === 'object' && p.id) items = [p];
 
-            // Tentar extrair o nome do usuário do retorno do webhook,
-            // mesmo quando não há matrículas cadastradas
             if ((!uNome || uNome === 'Participante') && p) {
               const nomeWebhook = p.nome_completo || p.nome || p.aluno_nome ||
                                   p.nome_aluno || p.name || p.full_name || '';
@@ -945,7 +931,7 @@
             }
           }
         } catch(errMat) {
-          console.warn('Atualização de matrículas via webhook:', errMat);
+          console.warn('Erro ao atualizar matrículas do banco em tempo real:', errMat);
         }
       }
 
@@ -1002,7 +988,7 @@
       renderizarListaMinimalista(items);
     }
 
-    // Renderizar Lista Minimalista de Alunos (Apenas Nome do Aluno e Botões)
+    // Renderizar Lista Minimalista de Alunos (Puxando dados reais do Banco de Dados)
     function renderizarListaMinimalista(items) {
       const listBody = document.getElementById('matriculas-list-body');
       if (!listBody) return;
@@ -1010,7 +996,7 @@
       if (!items || items.length === 0) {
         listBody.innerHTML = `
           <div style="text-align:center;padding:24px;color:var(--on-surface-variant);">
-            <div style="font-weight:600;font-size:14px;color:var(--on-surface);">Nenhuma matrícula registrada na sessão.</div>
+            <div style="font-weight:600;font-size:14px;color:var(--on-surface);">Nenhuma matrícula encontrada no banco de dados.</div>
             <div style="font-size:12.5px;margin-top:4px;">Clique no botão acima para realizar uma nova matrícula.</div>
           </div>
         `;
@@ -1019,19 +1005,34 @@
 
       let html = '';
       items.forEach((item, idx) => {
-        const matId = item.id || (idx + 1);
-        const nomeAluno = item.aluno_nome || item.nome_aluno || item.nome || getStoredVal('usuario_nome') || 'Aluno Cadastrado';
+        const matId = item.id || item.matricula || (idx + 1);
+        const nomeAluno = item.aluno_nome || item.nome_aluno || item.nome_completo || item.nome || getStoredVal('usuario_nome') || 'Aluno Cadastrado';
+        const projNome = item.projeto_nome || item.projeto || item.nome_projeto || '';
+        const modNome = item.modalidade_nome || item.modalidade || '';
+        const nucNome = item.nucleo_nome || item.nucleo || '';
+
+        let detailsSub = [];
+        if (projNome) detailsSub.push(`<strong>Projeto:</strong> ${projNome}`);
+        if (modNome) detailsSub.push(`<strong>Modalidade:</strong> ${modNome}`);
+        if (nucNome) detailsSub.push(`<strong>Núcleo:</strong> ${nucNome}`);
+        
+        const infoHtml = detailsSub.length > 0 ? `<div style="font-size:12.5px;color:#64748b;margin-top:4px;line-height:1.4;">${detailsSub.join(' &nbsp;|&nbsp; ')}</div>` : '';
 
         html += `
-          <div class="student-compact-row">
-            <div class="student-name-text">${nomeAluno}</div>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;">
-              <button type="button" class="btn-action-sm btn-pdf" onclick="visualizarPDFViaWebhook(${matId})">
-                <span class="material-symbols-outlined" style="font-size:18px;">visibility</span> Visualizar PDF
-              </button>
-              <button type="button" class="btn-action-sm btn-details" onclick="abrirEditarViaWebhook(${matId})">
-                <span class="material-symbols-outlined" style="font-size:18px;">edit</span> Editar Informações
-              </button>
+          <div class="student-compact-row" style="padding:14px 18px;border-bottom:1px solid #f1f5f9;">
+            <div style="display:flex;justify-content:space-between;align-items:center;width:100%;flex-wrap:wrap;gap:12px;">
+              <div>
+                <div class="student-name-text" style="font-weight:700;font-size:15px;color:#1e293b;">${nomeAluno}</div>
+                ${infoHtml}
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button type="button" class="btn-action-sm btn-pdf" onclick="visualizarPDFViaWebhook(${matId})">
+                  <span class="material-symbols-outlined" style="font-size:18px;">visibility</span> Visualizar PDF
+                </button>
+                <button type="button" class="btn-action-sm btn-details" onclick="abrirEditarViaWebhook(${matId})">
+                  <span class="material-symbols-outlined" style="font-size:18px;">edit</span> Editar Informações
+                </button>
+              </div>
             </div>
           </div>
         `;
