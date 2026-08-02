@@ -730,90 +730,43 @@
 
                         let uNome = '', uTelefone = '', uEmail = username.toLowerCase(), uId = '', uDados = '';
 
-                        // ── Tenta primeiro parsear como JSON puro ──────────────────────────────
-                        let parsedJson = null;
-                        try {
-                            const jsonOnly = text.trim();
-                            // Resposta pode ser JSON direto (objeto ou array)
-                            if (jsonOnly.startsWith('{') || jsonOnly.startsWith('[')) {
-                                parsedJson = JSON.parse(jsonOnly);
-                            } else {
-                                // Resposta mista: texto + JSON. Extrai a parte JSON
-                                const jStart = Math.min(
-                                    text.indexOf('[') !== -1 ? text.indexOf('[') : Infinity,
-                                    text.indexOf('{') !== -1 ? text.indexOf('{') : Infinity
-                                );
-                                if (isFinite(jStart)) {
-                                    parsedJson = JSON.parse(text.substring(jStart).trim());
-                                }
-                            }
-                        } catch(e) { parsedJson = null; }
+                        // ── PARSER PERFEITO PARA O FORMATO N8N ──────────────────────────
+                        // Linha 0: login aprovado
+                        // Linha 1: Nome do Usuário
+                        // Linha 2: Telefone do Usuário
+                        // Linha 3: Email da Conta do Usuário
+                        // Linha 4: ID do Usuário no Portal
+                        // Linha 5+: JSON das Matrículas
 
-                        if (parsedJson) {
-                            // Normaliza: sempre trabalha com objeto simples
-                            let p = Array.isArray(parsedJson) ? (parsedJson[0] || {}) : parsedJson;
+                        function limpaTemplate(str) {
+                            if (!str) return '';
+                            if (str.includes('{{') || str.includes('}}') || str.includes('$json') || str.includes('item.json')) return '';
+                            return str.trim();
+                        }
 
-                            // Nome do usuário — campo raiz do portal_usuarios
-                            const nomeJson = p.nome || p.nome_completo || p.full_name || p.name || '';
-                            if (nomeJson && !nomeJson.includes('{{')) uNome = nomeJson;
+                        const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+                        
+                        if (lines.length >= 2) uNome = limpaTemplate(lines[1]);
+                        if (lines.length >= 3) uTelefone = limpaTemplate(lines[2]);
+                        if (lines.length >= 4 && lines[3].includes('@') && !lines[3].includes('{{')) {
+                            uEmail = limpaTemplate(lines[3]).toLowerCase();
+                        }
+                        if (lines.length >= 5 && /^\d+$/.test(lines[4])) {
+                            uId = limpaTemplate(lines[4]);
+                        }
 
-                            // Outros campos básicos
-                            if (p.telefone && !p.telefone.toString().includes('{{')) uTelefone = p.telefone;
-                            if (p.email   && !p.email.includes('{{'))   uEmail = p.email.toLowerCase();
-                            if (p.id)                                     uId   = String(p.id);
+                        // Garante que uEmail nunca seja sem_email e reverta para o username digitado
+                        if (!uEmail || uEmail === 'sem_email' || uEmail.includes('{{')) {
+                            uEmail = username.trim().toLowerCase();
+                        }
 
-                            // Nome via matrículas (prioridade sobre o raiz, quando existir)
-                            if (Array.isArray(p.matriculas) && p.matriculas.length > 0) {
-                                const m0 = p.matriculas[0];
-                                const nomeM = m0.aluno_nome || m0.nome_aluno || m0.nome || m0.name || '';
-                                if (nomeM && !nomeM.includes('{{')) uNome = nomeM;
-                            }
-
-                            // dados para sessionStorage
-                            uDados = JSON.stringify(parsedJson);
-
-                        } else {
-                            // ── Fallback: parsing linha-a-linha (formato texto do n8n) ─────────
-                            function limpaTemplate(str) {
-                                if (!str) return '';
-                                if (str.includes('{{') || str.includes('}}') || str.includes('$json') || str.includes('item.json')) return '';
-                                return str.trim();
-                            }
-
-                            const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-                            let emailIdx = lines.findIndex(l => l.includes('@') && !l.includes('{{'));
-                            if (emailIdx !== -1) {
-                                uEmail = limpaTemplate(lines[emailIdx]).toLowerCase() || username.toLowerCase();
-                                if (emailIdx >= 2) { uNome = limpaTemplate(lines[emailIdx - 2]); uTelefone = limpaTemplate(lines[emailIdx - 1]); }
-                                else if (emailIdx === 1) { uNome = limpaTemplate(lines[0]); }
-                                if (lines[emailIdx + 1]) uId = limpaTemplate(lines[emailIdx + 1]);
-                            } else {
-                                if (lines.length >= 2) uNome     = limpaTemplate(lines[1]);
-                                if (lines.length >= 3) uTelefone = limpaTemplate(lines[2]);
-                                if (lines.length >= 4) uEmail    = limpaTemplate(lines[3]).toLowerCase() || username.toLowerCase();
-                                if (lines.length >= 5) uId       = limpaTemplate(lines[4]);
-                            }
-
-                            // Parte JSON no final do texto
-                            const jStart2 = Math.min(
-                                text.indexOf('[') !== -1 ? text.indexOf('[') : Infinity,
-                                text.indexOf('{') !== -1 ? text.indexOf('{') : Infinity
-                            );
-                            if (isFinite(jStart2)) {
-                                uDados = text.substring(jStart2).trim();
-                                try {
-                                    let p2 = JSON.parse(uDados);
-                                    if (Array.isArray(p2)) p2 = p2[0] || {};
-                                    if (p2.email && (!uEmail || uEmail.includes('{{'))) uEmail = p2.email.toLowerCase();
-                                    const nomeRaiz = p2.nome || p2.nome_completo || p2.name || '';
-                                    if (nomeRaiz && !nomeRaiz.includes('{{') && (!uNome || uNome.includes('{{'))) uNome = nomeRaiz;
-                                    if (Array.isArray(p2.matriculas) && p2.matriculas.length > 0) {
-                                        const m0 = p2.matriculas[0];
-                                        const nomeM = m0.aluno_nome || m0.nome_aluno || m0.nome || '';
-                                        if (nomeM && !nomeM.includes('{{') && (!uNome || uNome.includes('{{'))) uNome = nomeM;
-                                    }
-                                } catch(e2) {}
-                            }
+                        // Extrai a parte JSON no final do texto (exclusivamente para uDados / Matrículas)
+                        const jStart = Math.min(
+                            text.indexOf('[') !== -1 ? text.indexOf('[') : Infinity,
+                            text.indexOf('{') !== -1 ? text.indexOf('{') : Infinity
+                        );
+                        if (isFinite(jStart)) {
+                            uDados = text.substring(jStart).trim();
                         }
 
                         const isRemember = document.getElementById('rememberMe').checked;
