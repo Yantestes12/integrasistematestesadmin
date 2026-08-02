@@ -803,6 +803,18 @@
     }
 
     
+    function getF(obj, keys) {
+      if (!obj || typeof obj !== 'object') return '';
+      if (typeof keys === 'string') keys = [keys];
+      for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        if (obj[k] !== undefined && obj[k] !== null && obj[k] !== '') {
+          return obj[k];
+        }
+      }
+      return '';
+    }
+
     function setSelectValueSafe(selectId, valueToSet) {
       var sel = document.getElementById(selectId);
       if (!sel || !valueToSet) return;
