@@ -917,6 +917,33 @@
       const uCpf = getStoredVal('usuario_cpf') || sessionStorage.getItem('usuario_cpf') || localStorage.getItem('usuario_cpf');
       const uId = getStoredVal('usuario_id') || sessionStorage.getItem('usuario_id') || localStorage.getItem('usuario_id');
 
+      function extrairTodasMatriculas(data) {
+        let result = [];
+        if (!data) return result;
+        let arr = Array.isArray(data) ? data : [data];
+        arr.forEach(item => {
+          if (!item) return;
+          if (Array.isArray(item.matriculas)) {
+            result.push(...item.matriculas);
+          } else if (Array.isArray(item.projetos_inscritos)) {
+            result.push(...item.projetos_inscritos);
+          } else if (typeof item === 'object') {
+            result.push(item);
+          }
+        });
+
+        let flat = [];
+        result.forEach(sub => {
+          if (!sub) return;
+          if (Array.isArray(sub.matriculas)) {
+            flat.push(...sub.matriculas);
+          } else if (typeof sub === 'object') {
+            flat.push(sub);
+          }
+        });
+        return flat;
+      }
+
       if (uEmail || uCpf || uId) {
         try {
           const respMat = await fetch('https://w.ibrase.com.br/webhook/loginaluno', {
@@ -927,12 +954,9 @@
           const freshData = await respMat.json();
           if (freshData) {
             sessionStorage.setItem('usuario_dados', JSON.stringify(freshData));
-            let p = Array.isArray(freshData) ? freshData[0] : freshData;
-            if (p && Array.isArray(p.matriculas)) items = p.matriculas;
-            else if (p && Array.isArray(p.projetos_inscritos)) items = p.projetos_inscritos;
-            else if (Array.isArray(freshData)) items = freshData;
-            else if (p && typeof p === 'object' && p.id) items = [p];
+            items = extrairTodasMatriculas(freshData);
 
+            let p = Array.isArray(freshData) ? freshData[0] : freshData;
             if ((!uNome || uNome === 'Participante') && p) {
               const nomeWebhook = p.nome_completo || p.nome || p.aluno_nome ||
                                   p.nome_aluno || p.name || p.full_name || '';
@@ -953,26 +977,9 @@
           const rawDados = getStoredVal('usuario_dados');
           if (rawDados) {
             let p = typeof rawDados === 'string' ? JSON.parse(rawDados) : rawDados;
-            if (Array.isArray(p)) items = p;
-            else if (p && typeof p === 'object') {
-              if (Array.isArray(p.matriculas)) items = p.matriculas;
-              else if (p.id || p.aluno_nome) items = [p];
-            }
+            items = extrairTodasMatriculas(p);
           }
         } catch(e){}
-      }
-
-      // Descompacta subarray de matriculas em profundidade (para suportar o agrupamento do n8n)
-      if (Array.isArray(items)) {
-        let unpacked = [];
-        items.forEach(it => {
-          if (it && Array.isArray(it.matriculas)) {
-            unpacked.push(...it.matriculas);
-          } else if (it && typeof it === 'object') {
-            unpacked.push(it);
-          }
-        });
-        items = unpacked;
       }
 
       // Filtrar estritamente objetos de matrícula vazios [{}]
@@ -1058,7 +1065,7 @@
       let html = '';
       items.forEach((item, idx) => {
         const matId = item.id || item.matricula || (idx + 1);
-        const nomeAluno = item.aluno_nome || item.nome_aluno || item.nome_completo || item.nome || getStoredVal('usuario_nome') || 'Aluno Cadastrado';
+        const nomeAluno = item.aluno_nome || item.nome_aluno || item.nome_completo || item.nome || item.aluno || (item.aluno_cpf ? ('Aluno CPF: ' + item.aluno_cpf) : '') || ('Aluno #' + matId);
         const projNome = item.projeto_nome || item.projeto || item.nome_projeto || '';
         const modNome = item.modalidade_nome || item.modalidade || '';
         const nucNome = item.nucleo_nome || item.nucleo || '';
@@ -1467,6 +1474,12 @@
       try {
         win.document.open();
       } catch(e){}
+
+      const numMatricula = String(getF(d, ['matricula', 'n_inscricao', 'id']) || '000000');
+      const proj = getF(d, ['projeto_nome', 'nome_projeto', 'projeto']) || 'GASCTPNA';
+      const nuc = getF(d, ['nucleo_nome', 'nome_nucleo', 'nucleo']) || 'Núcleo Central';
+      const modalidade = getF(d, ['modalidade_nome', 'nome_modalidade', 'modalidade']) || 'Futebol / Esportes';
+      const tur = getF(d, ['turno']) || 'Manhã';
 
       const nAluno = d.aluno_nome || d.nome_aluno || d.nome || 'Não informado';
       const cAluno = d.aluno_cpf || d.cpf || '';
