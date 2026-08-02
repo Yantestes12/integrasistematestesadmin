@@ -1095,6 +1095,15 @@
 
     // 1. Visualizar PDF Oficial via Webhook buscarmatricula?id=
     async function visualizarPDFViaWebhook(matId) {
+      // Abre a janela imediatamente no clique do usuário para evitar bloqueio de popup pelo navegador
+      const win = window.open('', '_blank');
+      if (win) {
+        try {
+          win.document.write('<!DOCTYPE html><html><head><title>Gerando PDF...</title></head><body style="font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:90vh;background:#f8fafc;"><div style="text-align:center;padding:20px;"><h2 style="color:#0f172a;margin-bottom:8px;">⏳ Gerando Ficha Oficial de Matrícula...</h2><p style="color:#64748b;font-size:14px;">Aguarde um instante enquanto buscamos as informações no sistema.</p></div></body></html>');
+          win.document.close();
+        } catch(e){}
+      }
+
       try {
         const url = `https://w.ibrase.com.br/webhook/buscarmatricula?id=${encodeURIComponent(matId)}`;
         const resp = await fetch(url);
@@ -1176,11 +1185,11 @@
           } catch(e){}
         }
 
-        gerarFichaPDFOficial2Paginas(matData);
+        gerarFichaPDFOficial2Paginas(matData, win);
       } catch(err) {
         console.error('Erro ao buscar dados completos pelo webhook:', err);
         let fallbackItem = currentMatriculasList.find(m => m.id == matId) || { id: matId };
-        gerarFichaPDFOficial2Paginas(fallbackItem);
+        gerarFichaPDFOficial2Paginas(fallbackItem, win);
       }
     }
 
@@ -1449,12 +1458,15 @@
     }
 
     // Gerador Oficial da Ficha de Matrícula (2 Páginas Exatas do matricula.html)
-    function gerarFichaPDFOficial2Paginas(d) {
-      const win = window.open('', '_blank');
+    function gerarFichaPDFOficial2Paginas(d, winTarget) {
+      const win = winTarget || window.open('', '_blank');
       if (!win) {
         alert('Por favor, permita pop-ups no seu navegador para visualizar a Ficha de Matrícula PDF.');
         return;
       }
+      try {
+        win.document.open();
+      } catch(e){}
 
       const nAluno = d.aluno_nome || d.nome_aluno || d.nome || 'Não informado';
       const cAluno = d.aluno_cpf || d.cpf || '';
