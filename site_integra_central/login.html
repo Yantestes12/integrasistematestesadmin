@@ -728,45 +728,67 @@
                         btnSubmit.textContent = 'Sucesso! Entrando...';
                         btnSubmit.style.background = '#10b981';
 
-                        let uNome = '', uTelefone = '', uEmail = username.toLowerCase(), uId = '', uDados = '';
+                        let uNome = '', uTelefone = '', uEmail = username.trim().toLowerCase(), uId = '', uDados = '';
 
-                        // ── PARSER PERFEITO PARA O FORMATO N8N ──────────────────────────
-                        // Linha 0: login aprovado
-                        // Linha 1: Nome do Usuário
-                        // Linha 2: Telefone do Usuário
-                        // Linha 3: Email da Conta do Usuário
-                        // Linha 4: ID do Usuário no Portal
-                        // Linha 5+: JSON das Matrículas
-
+                        // ── PARSER UNIVERSAL PARA O N8N (JSON PURO OU TEXTO + JSON) ─────────
                         function limpaTemplate(str) {
                             if (!str) return '';
                             if (str.includes('{{') || str.includes('}}') || str.includes('$json') || str.includes('item.json')) return '';
                             return str.trim();
                         }
 
-                        const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-                        
-                        if (lines.length >= 2) uNome = limpaTemplate(lines[1]);
-                        if (lines.length >= 3) uTelefone = limpaTemplate(lines[2]);
-                        if (lines.length >= 4 && lines[3].includes('@') && !lines[3].includes('{{')) {
-                            uEmail = limpaTemplate(lines[3]).toLowerCase();
-                        }
-                        if (lines.length >= 5 && /^\d+$/.test(lines[4])) {
-                            uId = limpaTemplate(lines[4]);
+                        let p = null;
+                        try {
+                            const trimmed = text.trim();
+                            if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                                p = JSON.parse(trimmed);
+                                if (Array.isArray(p)) p = p[0];
+                            } else {
+                                const jStart = Math.min(
+                                    text.indexOf('[') !== -1 ? text.indexOf('[') : Infinity,
+                                    text.indexOf('{') !== -1 ? text.indexOf('{') : Infinity
+                                );
+                                if (isFinite(jStart)) {
+                                    p = JSON.parse(text.substring(jStart).trim());
+                                    if (Array.isArray(p)) p = p[0];
+                                }
+                            }
+                        } catch(e) { p = null; }
+
+                        if (p && typeof p === 'object') {
+                            // Extrai os campos da CONTA do usuário do objeto raiz JSON
+                            const nomeVal = p.nome || p.nome_completo || p.name || '';
+                            if (nomeVal && !nomeVal.includes('{{')) uNome = limpaTemplate(nomeVal);
+
+                            if (p.telefone && !p.telefone.toString().includes('{{')) uTelefone = limpaTemplate(String(p.telefone));
+                            if (p.email && !p.email.includes('{{') && p.email.toLowerCase() !== 'sem_email') uEmail = limpaTemplate(p.email).toLowerCase();
+                            if (p.id) uId = limpaTemplate(String(p.id));
+
+                            // uDados salva apenas as matrículas
+                            if (p.matriculas) uDados = JSON.stringify(p.matriculas);
+                            else uDados = JSON.stringify(p);
+                        } else {
+                            // Fallback texto puro linha por linha
+                            const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+                            if (lines.length >= 2) uNome = limpaTemplate(lines[1]);
+                            if (lines.length >= 3) uTelefone = limpaTemplate(lines[2]);
+                            if (lines.length >= 4 && lines[3].includes('@') && !lines[3].includes('{{')) {
+                                uEmail = limpaTemplate(lines[3]).toLowerCase();
+                            }
+                            if (lines.length >= 5 && /^\d+$/.test(lines[4])) {
+                                uId = limpaTemplate(lines[4]);
+                            }
+
+                            const jStart2 = Math.min(
+                                text.indexOf('[') !== -1 ? text.indexOf('[') : Infinity,
+                                text.indexOf('{') !== -1 ? text.indexOf('{') : Infinity
+                            );
+                            if (isFinite(jStart2)) uDados = text.substring(jStart2).trim();
                         }
 
-                        // Garante que uEmail nunca seja sem_email e reverta para o username digitado
+                        // Proteção total contra sem_email ou template vazio no email da conta
                         if (!uEmail || uEmail === 'sem_email' || uEmail.includes('{{')) {
                             uEmail = username.trim().toLowerCase();
-                        }
-
-                        // Extrai a parte JSON no final do texto (exclusivamente para uDados / Matrículas)
-                        const jStart = Math.min(
-                            text.indexOf('[') !== -1 ? text.indexOf('[') : Infinity,
-                            text.indexOf('{') !== -1 ? text.indexOf('{') : Infinity
-                        );
-                        if (isFinite(jStart)) {
-                            uDados = text.substring(jStart).trim();
                         }
 
                         const isRemember = document.getElementById('rememberMe').checked;
