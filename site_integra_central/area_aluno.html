@@ -945,39 +945,58 @@
       }
 
       if (uEmail || uCpf || uId) {
-        try {
-          const respMat = await fetch('https://w.ibrase.com.br/webhook/loginaluno?t=' + Date.now(), {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Pragma': 'no-cache'
-            },
-            cache: 'no-store',
-            body: JSON.stringify({ 
-              username: uEmail || uCpf || uId || '',
-              email: uEmail || '', 
-              cpf: uCpf || '', 
-              id: uId || '' 
-            })
-          });
-          const freshData = await respMat.json();
-          if (freshData) {
-            sessionStorage.setItem('usuario_dados', JSON.stringify(freshData));
-            items = extrairTodasMatriculas(freshData);
+        // 1. Busca prioritária via buscarmatricula?email= (Get many rows no Supabase por email_conta)
+        if (uEmail) {
+          try {
+            const respBM = await fetch(`https://w.ibrase.com.br/webhook/buscarmatricula?email=${encodeURIComponent(uEmail)}&t=${Date.now()}`, {
+              cache: 'no-store'
+            });
+            const dataBM = await respBM.json();
+            if (dataBM && Array.isArray(dataBM) && dataBM.length > 0) {
+              sessionStorage.setItem('usuario_dados', JSON.stringify(dataBM));
+              items = extrairTodasMatriculas(dataBM);
+            }
+          } catch(errBM) {
+            console.warn('Erro ao buscar matrículas por e-mail em buscarmatricula:', errBM);
+          }
+        }
 
-            let p = Array.isArray(freshData) ? freshData[0] : freshData;
-            if ((!uNome || uNome === 'Participante') && p) {
-              const nomeWebhook = p.nome_completo || p.nome || p.aluno_nome ||
-                                  p.nome_aluno || p.name || p.full_name || '';
-              if (nomeWebhook && !nomeWebhook.includes('{{')) {
-                uNome = nomeWebhook.split(' ')[0];
-                uNome = uNome.charAt(0).toUpperCase() + uNome.slice(1).toLowerCase();
+        // 2. Se a busca por e-mail estiver vazia ou indisponível, tenta o webhook loginaluno (POST)
+        if (!items || items.length === 0) {
+          try {
+            const respMat = await fetch('https://w.ibrase.com.br/webhook/loginaluno?t=' + Date.now(), {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+              },
+              cache: 'no-store',
+              body: JSON.stringify({ 
+                username: uEmail || uCpf || uId || '',
+                email: uEmail || '', 
+                cpf: uCpf || '', 
+                id: uId || '' 
+              })
+            });
+            const freshData = await respMat.json();
+            if (freshData) {
+              sessionStorage.setItem('usuario_dados', JSON.stringify(freshData));
+              items = extrairTodasMatriculas(freshData);
+
+              let p = Array.isArray(freshData) ? freshData[0] : freshData;
+              if ((!uNome || uNome === 'Participante') && p) {
+                const nomeWebhook = p.nome_completo || p.nome || p.aluno_nome ||
+                                    p.nome_aluno || p.name || p.full_name || '';
+                if (nomeWebhook && !nomeWebhook.includes('{{')) {
+                  uNome = nomeWebhook.split(' ')[0];
+                  uNome = uNome.charAt(0).toUpperCase() + uNome.slice(1).toLowerCase();
+                }
               }
             }
+          } catch(errMat) {
+            console.warn('Erro ao atualizar matrículas do loginaluno:', errMat);
           }
-        } catch(errMat) {
-          console.warn('Erro ao atualizar matrículas do banco em tempo real:', errMat);
         }
       }
 
