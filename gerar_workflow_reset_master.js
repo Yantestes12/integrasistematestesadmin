@@ -1,6 +1,11 @@
 const fs = require('fs');
 
-const bcryptUMD = fs.readFileSync('./node_modules/bcryptjs/umd/index.js', 'utf8');
+let bcryptUMD = fs.readFileSync('./node_modules/bcryptjs/umd/index.js', 'utf8');
+
+// The UMD bundle calls require("crypto") in its factory check. If require("crypto") throws an error
+// (which it does in restricted n8n sandboxes), the factory is never executed and bcryptObj is empty.
+// This patch ensures it gracefully degrades so our Math.random fallback can actually be applied later!
+bcryptUMD = bcryptUMD.replace(/require\("crypto"\)/g, "(typeof require === 'function' ? (function(){ try{ return require('crypto'); }catch(e){ return {}; } })() : {})");
 
 const jsValidaMaster = bcryptUMD + "\n\n" + [
   "const body = $input.first().json.body || {};",
@@ -33,7 +38,7 @@ const jsValidaMaster = bcryptUMD + "\n\n" + [
   "  if (bcryptObj && bcryptObj.hashSync) {",
   "    newHash = bcryptObj.hashSync(novaSenha, 10);",
   "  } else {",
-  "    throw new Error('Bcrypt bundle não carregado.');",
+  "    throw new Error('Bcrypt bundle não foi carregado corretamente.');",
   "  }",
   "} catch(e) {",
   "  return [{ json: { status: 'erro', usuario: emailOrUser || 'invalido', message: 'Erro ao gerar o hash: ' + (e.message || e) } }];",
