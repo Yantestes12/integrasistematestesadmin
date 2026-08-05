@@ -29,6 +29,82 @@ export default function Iniciativas() {
     fetchIniciativas(savedInstitute);
   }, []);
 
+  const parseIniciativasList = (rawData: any): IniciativaItem[] => {
+    let list: any[] = [];
+
+    if (Array.isArray(rawData)) {
+      list = rawData;
+    } else if (rawData && typeof rawData === 'object') {
+      if (Array.isArray(rawData.data)) list = rawData.data;
+      else if (Array.isArray(rawData.items)) list = rawData.items;
+      else if (rawData.json) list = Array.isArray(rawData.json) ? rawData.json : [rawData.json];
+      else list = [rawData];
+    }
+
+    return list.map((entry, idx) => {
+      const item = entry.json ? entry.json : entry;
+      
+      const id = item.id || item.id_projeto || item.id_iniciativa || idx + 1;
+      const nome = 
+        item.nome || 
+        item.nome_projeto || 
+        item.nomeProjeto || 
+        item.identificacao?.nomeProjeto || 
+        item.name || 
+        item.titulo || 
+        `Iniciativa ${id}`;
+
+      const descricao = 
+        item.descricao || 
+        item.identificacao?.descricao || 
+        "";
+
+      const termo_fomento = 
+        item.termo_fomento || 
+        item.termoFomento || 
+        item.identificacao?.termoFomento || 
+        "";
+
+      const numero_proposta = 
+        item.numero_proposta || 
+        item.numeroProposta || 
+        item.identificacao?.numeroProposta || 
+        "";
+
+      const numero_processo_adm = 
+        item.numero_processo_adm || 
+        item.numeroProcessoAdm || 
+        item.identificacao?.numeroProcessoAdm || 
+        "";
+
+      const numero_transferegov = 
+        item.numero_transferegov || 
+        item.numeroTransfereGov || 
+        item.identificacao?.numeroTransfereGov || 
+        "";
+
+      const faixa_etaria = 
+        item.faixa_etaria || 
+        (item.faixaEtaria ? `${item.faixaEtaria.idadeMinima || ''} - ${item.faixaEtaria.idadeMaxima || ''}` : "") || 
+        "7 - 65";
+
+      const isAtivo = item.ativo !== false && item.status !== false && item.status !== "inativo";
+
+      return {
+        id,
+        nome,
+        descricao,
+        termo_fomento,
+        numero_proposta,
+        numero_processo_adm,
+        numero_transferegov,
+        faixa_etaria,
+        status: isAtivo,
+        ativo: isAtivo,
+      };
+    });
+  };
+
   const fetchIniciativas = async (instituteName: string) => {
     setLoading(true);
 
@@ -39,8 +115,10 @@ export default function Iniciativas() {
       const res = await fetch(n8nEndpoint, { method: 'GET' });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setIniciativas(data);
+        console.log("Dados recebidos do N8N Webhook (projetos-get):", data);
+        const parsed = parseIniciativasList(data);
+        if (parsed.length > 0) {
+          setIniciativas(parsed);
           setLoading(false);
           return;
         }
@@ -79,7 +157,7 @@ export default function Iniciativas() {
       }
 
       if (data) {
-        setIniciativas(data);
+        setIniciativas(parseIniciativasList(data));
       }
     } catch (err) {
       console.error("Erro ao carregar iniciativas do Supabase:", err);
