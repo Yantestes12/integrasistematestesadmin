@@ -2,9 +2,7 @@ const fs = require('fs');
 
 let bcryptUMD = fs.readFileSync('./node_modules/bcryptjs/umd/index.js', 'utf8');
 
-// The UMD bundle calls require("crypto") in its factory check. If require("crypto") throws an error
-// (which it does in restricted n8n sandboxes), the factory is never executed and bcryptObj is empty.
-// This patch ensures it gracefully degrades so our Math.random fallback can actually be applied later!
+// Patch require('crypto') out so the n8n sandbox doesn't die instantly
 bcryptUMD = bcryptUMD.replace(/require\("crypto"\)/g, "(typeof require === 'function' ? (function(){ try{ return require('crypto'); }catch(e){ return {}; } })() : {})");
 
 const jsValidaMaster = bcryptUMD + "\n\n" + [
@@ -58,8 +56,15 @@ const updateSupabaseNode = (table, pos, id, name) => ({
   parameters: {
     operation: 'update',
     tableId: table,
-    updateKey: "={{ ($json.usuario || '').includes('@') ? 'email' : 'username' }}",
-    updateValue: "={{ ($json.usuario || 'invalido').toLowerCase().trim() }}",
+    filters: {
+      conditions: [
+        {
+          keyName: "={{ ($json.usuario || '').includes('@') ? 'email' : 'username' }}",
+          condition: "eq",
+          keyValue: "={{ ($json.usuario || 'invalido').toLowerCase().trim() }}"
+        }
+      ]
+    },
     fieldsUi: {
       fieldValues: [
         { fieldId: 'password_hash', fieldValue: "={{ $json.novo_hash || '' }}" }

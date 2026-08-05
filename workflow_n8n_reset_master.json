@@ -52,8 +52,15 @@
       "parameters": {
         "operation": "update",
         "tableId": "GASCTPNA_admin_users",
-        "updateKey": "={{ ($json.usuario || '').includes('@') ? 'email' : 'username' }}",
-        "updateValue": "={{ ($json.usuario || 'invalido').toLowerCase().trim() }}",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "={{ ($json.usuario || '').includes('@') ? 'email' : 'username' }}",
+              "condition": "eq",
+              "keyValue": "={{ ($json.usuario || 'invalido').toLowerCase().trim() }}"
+            }
+          ]
+        },
         "fieldsUi": {
           "fieldValues": [
             {
@@ -84,8 +91,15 @@
       "parameters": {
         "operation": "update",
         "tableId": "IBRASE_admin_users",
-        "updateKey": "={{ ($json.usuario || '').includes('@') ? 'email' : 'username' }}",
-        "updateValue": "={{ ($json.usuario || 'invalido').toLowerCase().trim() }}",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "={{ ($json.usuario || '').includes('@') ? 'email' : 'username' }}",
+              "condition": "eq",
+              "keyValue": "={{ ($json.usuario || 'invalido').toLowerCase().trim() }}"
+            }
+          ]
+        },
         "fieldsUi": {
           "fieldValues": [
             {
@@ -116,8 +130,15 @@
       "parameters": {
         "operation": "update",
         "tableId": "AUNI_admin_users",
-        "updateKey": "={{ ($json.usuario || '').includes('@') ? 'email' : 'username' }}",
-        "updateValue": "={{ ($json.usuario || 'invalido').toLowerCase().trim() }}",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "={{ ($json.usuario || '').includes('@') ? 'email' : 'username' }}",
+              "condition": "eq",
+              "keyValue": "={{ ($json.usuario || 'invalido').toLowerCase().trim() }}"
+            }
+          ]
+        },
         "fieldsUi": {
           "fieldValues": [
             {
@@ -148,8 +169,15 @@
       "parameters": {
         "operation": "update",
         "tableId": "IVEM_admin_users",
-        "updateKey": "={{ ($json.usuario || '').includes('@') ? 'email' : 'username' }}",
-        "updateValue": "={{ ($json.usuario || 'invalido').toLowerCase().trim() }}",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "={{ ($json.usuario || '').includes('@') ? 'email' : 'username' }}",
+              "condition": "eq",
+              "keyValue": "={{ ($json.usuario || 'invalido').toLowerCase().trim() }}"
+            }
+          ]
+        },
         "fieldsUi": {
           "fieldValues": [
             {
