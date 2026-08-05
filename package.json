@@ -1,0 +1,14 @@
+{
+  "name": "sistema-integra-root",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "postinstall": "npm --prefix Interno_integra install",
+    "build": "npm --prefix Interno_integra run build",
+    "start": "npm --prefix Interno_integra run start",
+    "dev": "npm --prefix Interno_integra run dev"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

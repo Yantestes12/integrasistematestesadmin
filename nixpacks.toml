@@ -1,0 +1,14 @@
+[providers]
+providers = ["node"]
+
+[phases.setup]
+nixPkgs = ["nodejs_22"]
+
+[phases.install]
+cmds = ["npm --prefix Interno_integra install"]
+
+[phases.build]
+cmds = ["npm --prefix Interno_integra run build"]
+
+[start]
+cmd = "npm --prefix Interno_integra run start"
