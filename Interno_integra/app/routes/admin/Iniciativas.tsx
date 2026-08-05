@@ -41,9 +41,23 @@ export default function Iniciativas() {
       else list = [rawData];
     }
 
-    return list.map((entry, idx) => {
-      const item = entry.json ? entry.json : entry;
-      
+    // Flatten any { json: [...] } or nested arrays
+    let flatList: any[] = [];
+    list.forEach(entry => {
+      if (entry && entry.json) {
+        if (Array.isArray(entry.json)) {
+          flatList.push(...entry.json);
+        } else {
+          flatList.push(entry.json);
+        }
+      } else if (Array.isArray(entry)) {
+        flatList.push(...entry);
+      } else {
+        flatList.push(entry);
+      }
+    });
+
+    return flatList.map((item, idx) => {
       const id = item.id || item.id_projeto || item.id_iniciativa || idx + 1;
       const nome = 
         item.nome || 
