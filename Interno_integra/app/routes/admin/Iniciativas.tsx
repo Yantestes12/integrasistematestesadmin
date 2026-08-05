@@ -34,23 +34,8 @@ export default function Iniciativas() {
 
     try {
       // 1. Tentar busca via Webhook do N8N enviando o instituto pelo switch
-      let n8nEndpoint = "";
-      switch (instituteName.toUpperCase()) {
-        case "GASCTPNA":
-          n8nEndpoint = "https://w.ibrase.com.br/webhook/buscas-auxiliares?tipo=projetos&instituto=GASCTPNA";
-          break;
-        case "AUNI":
-          n8nEndpoint = "https://w.ibrase.com.br/webhook/buscas-auxiliares?tipo=projetos&instituto=AUNI";
-          break;
-        case "IVEM":
-          n8nEndpoint = "https://w.ibrase.com.br/webhook/buscas-auxiliares?tipo=projetos&instituto=IVEM";
-          break;
-        case "IBRASE":
-        default:
-          n8nEndpoint = "https://w.ibrase.com.br/webhook/buscas-auxiliares?tipo=projetos&instituto=IBRASE";
-          break;
-      }
-
+      const n8nEndpoint = `https://w.ibrase.com.br/webhook/projetos-get?instituto=${instituteName.toUpperCase()}`;
+      
       const res = await fetch(n8nEndpoint, { method: 'GET' });
       if (res.ok) {
         const data = await res.json();
@@ -103,6 +88,27 @@ export default function Iniciativas() {
     }
   };
 
+  const handleDelete = async (id: string | number) => {
+    if (!window.confirm("Deseja realmente remover/desativar esta iniciativa?")) return;
+    
+    try {
+      const res = await fetch("https://w.ibrase.com.br/webhook/projetos-delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, instituto: currentInstitute }),
+      });
+      if (res.ok) {
+        alert("Iniciativa desativada/removida com sucesso pelo n8n!");
+        fetchIniciativas(currentInstitute);
+      } else {
+        alert("Erro ao remover iniciativa via N8N.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Erro ao conectar com N8N.");
+    }
+  };
+
   const filteredIniciativas = iniciativas.filter((item) =>
     (item.nome || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.termo_fomento || "").toLowerCase().includes(searchTerm.toLowerCase())
@@ -124,7 +130,7 @@ export default function Iniciativas() {
             Iniciativas
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Gerencie os projetos e iniciativas cadastradas para o instituto <strong className="text-slate-700">{currentInstitute}</strong>.
+            Gerencie as iniciativas cadastradas para o instituto <strong className="text-slate-700">{currentInstitute}</strong>.
           </p>
         </div>
 
@@ -255,6 +261,7 @@ export default function Iniciativas() {
                             <Edit3 size={16} />
                           </Link>
                           <button
+                            onClick={() => handleDelete(item.id)}
                             className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                             title="Desativar / Ativar"
                           >

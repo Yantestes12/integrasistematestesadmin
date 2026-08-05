@@ -100,18 +100,28 @@ export default function CadastrarProjeto() {
     console.log("PAYLOAD PRONTO PARA O N8N:", JSON.stringify(payload, null, 2));
 
     try {
-      // Mock da chamada para Webhook do N8N ou API Supabase
-      /*
-      const response = await fetch("SUA_URL_DO_WEBHOOK_AQUI", {
-        method: "POST",
+      const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const editId = urlParams.get("edit");
+      
+      const webhookUrl = editId 
+        ? `https://w.ibrase.com.br/webhook/projetos-put?instituto=${authInstitute}` 
+        : `https://w.ibrase.com.br/webhook/projetos-post?instituto=${authInstitute}`;
+      
+      if (editId) {
+        (payload as any).id = editId;
+      }
+      
+      const response = await fetch(webhookUrl, {
+        method: editId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error("Erro ao enviar dados.");
-      */
+      if (!response.ok) throw new Error("Erro ao enviar dados para o N8N.");
       
-      alert("Projeto cadastrado com sucesso! (Payload gerado no Console)");
+      alert(editId ? "Iniciativa atualizada com sucesso!" : "Iniciativa cadastrada com sucesso!");
     } catch (error) {
       console.error(error);
       alert("Erro ao enviar para o N8N.");
@@ -125,7 +135,7 @@ export default function CadastrarProjeto() {
         <div>
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
             <FolderPlus className="w-7 h-7 text-blue-600" />
-            Cadastrar Projeto
+            Cadastrar Iniciativa
           </h1>
           <p className="text-slate-500 text-sm">
             Campos marcados com <span className="text-red-500 font-bold">*</span> são obrigatórios.
@@ -153,7 +163,7 @@ export default function CadastrarProjeto() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Nome do Projeto <span className="text-red-500">*</span>
+                Nome da Iniciativa <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -250,11 +260,11 @@ export default function CadastrarProjeto() {
           </div>
         </div>
 
-        {/* VIGÊNCIA DO PROJETO */}
+        {/* VIGÊNCIA DA INICIATIVA */}
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
           <h2 className="text-base font-bold text-slate-800 border-b border-slate-100 pb-3 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-blue-600" />
-            Vigência do Projeto
+            Vigência da Iniciativa
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -520,10 +530,10 @@ export default function CadastrarProjeto() {
           </div>
         </div>
 
-        {/* SEÇÃO 6: PERÍODOS DO PROJETO */}
+        {/* SEÇÃO 6: PERÍODOS DA INICIATIVA */}
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
           <div>
-            <h2 className="text-base font-bold text-slate-800">Períodos do Projeto</h2>
+            <h2 className="text-base font-bold text-slate-800">Períodos da Iniciativa</h2>
             <p className="text-xs text-slate-500 mt-0.5">
               Configure as janelas de <strong>Iniciação</strong> e <strong>Trimestre</strong>. Elas serão utilizadas para construir o histórico e a linha do tempo da ocupação das vagas. A ordem de exibição segue a sequência da tabela abaixo.
             </p>
@@ -607,7 +617,7 @@ export default function CadastrarProjeto() {
           </button>
         </div>
 
-        {/* SEÇÃO 7: STATUS DO PROJETO */}
+        {/* SEÇÃO 7: STATUS DA INICIATIVA */}
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
           <h2 className="text-base font-bold text-slate-800">Status</h2>
 
@@ -618,7 +628,7 @@ export default function CadastrarProjeto() {
               onChange={(e) => setProjetoAtivo(e.target.checked)}
               className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
             />
-            <span className="text-sm font-semibold text-slate-800">Projeto Ativo</span>
+            <span className="text-sm font-semibold text-slate-800">Iniciativa Ativa</span>
           </label>
         </div>
 
@@ -629,7 +639,7 @@ export default function CadastrarProjeto() {
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-lg shadow-sm transition-colors text-sm flex items-center gap-2"
           >
             <Check className="w-4 h-4" />
-            Cadastrar Projeto
+            Cadastrar Iniciativa
           </button>
           <button
             type="button"

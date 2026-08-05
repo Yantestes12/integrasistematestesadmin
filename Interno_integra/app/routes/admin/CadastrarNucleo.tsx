@@ -7,7 +7,7 @@ import { ArrowLeft, Save, MapPin, User, FileText, Building2 } from "lucide-react
 const cadastrarNucleoSchema = z.object({
   // Identificação
   nomeNucleo: z.string().min(1, "Nome do núcleo é obrigatório"),
-  projetoId: z.string().min(1, "Selecione um projeto"),
+  projetoId: z.string().min(1, "Selecione uma iniciativa"),
   modalidadeId: z.string().min(1, "Selecione uma modalidade"),
   cidadeId: z.string().min(1, "Selecione a cidade"),
   uf: z.string().min(1, "Selecione a UF"),
@@ -147,7 +147,7 @@ export default function CadastrarNucleo() {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Projeto (filtra modalidade e vagas) <span className="text-red-500">*</span>
+                Iniciativa (filtra modalidade e vagas) <span className="text-red-500">*</span>
               </label>
               <select
                 {...register("projetoId")}
@@ -239,7 +239,7 @@ export default function CadastrarNucleo() {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Número da Vaga Global no Projeto <span className="text-red-500">*</span>
+                Número da Vaga Global na Iniciativa <span className="text-red-500">*</span>
               </label>
               <select
                 {...register("numeroVaga")}

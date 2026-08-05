@@ -108,10 +108,16 @@ export const Topbar = () => {
                 <button
                   key={inst}
                   onClick={() => handleSwitchInstitute(inst)}
-                  className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between hover:bg-slate-50 transition-colors ${inst === institute ? 'text-blue-700 font-bold bg-blue-50/50' : 'text-slate-700 font-medium'}`}
+                  className={`w-full text-left px-4 py-2 text-sm flex items-center gap-3 hover:bg-slate-50 transition-colors ${inst === institute ? 'text-blue-700 font-bold bg-blue-50/50' : 'text-slate-700 font-medium'}`}
                 >
-                  {inst}
-                  {inst === institute && <Check size={16} className="text-blue-600" />}
+                  <img 
+                    src={`/logo_${inst.toLowerCase()}.png`} 
+                    onError={(e) => { (e.target as any).style.display = 'none'; }} 
+                    alt={inst} 
+                    className="h-5 w-auto object-contain" 
+                  />
+                  <span className="flex-1">{inst}</span>
+                  {inst === institute && <Check size={16} className="text-blue-600 shrink-0" />}
                 </button>
               ))}
             </div>
