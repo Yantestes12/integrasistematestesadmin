@@ -50,21 +50,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Resumo de Funcionalidades */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-          <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-semibold text-slate-700 text-center">
-            Matrículas &amp; Vagas
-          </div>
-          <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-semibold text-slate-700 text-center">
-            Núcleos Ativos
-          </div>
-          <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-semibold text-slate-700 text-center">
-            Diários de Presença
-          </div>
-          <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-semibold text-slate-700 text-center">
-            Equipes &amp; Relatórios
-          </div>
-        </div>
+
 
         <div className="pt-4 border-t border-slate-100 flex justify-end">
           <Link 
