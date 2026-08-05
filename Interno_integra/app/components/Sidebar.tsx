@@ -71,12 +71,12 @@ export const Sidebar = ({ onSelectMenu }) => {
 
       const levelBg =
         level === 0
-          ? isExpanded ? 'bg-[#4b5ae6]' : 'hover:bg-[#4b5ae6]'
+          ? isExpanded ? 'bg-[var(--theme-primary)]' : 'hover:bg-[var(--theme-primary-hover)]'
           : level === 1
-            ? 'bg-[#4351df] hover:bg-[#3947d1] text-blue-100'
+            ? 'bg-[var(--theme-level-1)] hover:bg-[var(--theme-level-1-hover)] text-blue-50'
             : level === 2
-              ? 'bg-[#3744cc] hover:bg-[#2f3cb8] text-blue-200'
-              : 'bg-[#2b37a8] hover:bg-[#232f91] text-blue-200';
+              ? 'bg-[var(--theme-level-2)] hover:bg-[var(--theme-level-2-hover)] text-blue-100'
+              : 'bg-[var(--theme-level-3)] hover:bg-[var(--theme-level-3-hover)] text-blue-100';
 
       return (
         <div key={index} className="w-full z-10">
@@ -127,7 +127,7 @@ export const Sidebar = ({ onSelectMenu }) => {
       {/* Botão Flutuante Mobile */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-3 left-4 z-50 p-2 rounded-xl bg-[#5d6bf6] text-white shadow-lg focus:outline-none"
+        className="lg:hidden fixed top-3 left-4 z-50 p-2 rounded-xl bg-[var(--theme-primary)] text-white shadow-lg focus:outline-none"
         aria-label="Abrir Menu"
       >
         {isOpen ? <X size={22} /> : <Menu size={22} />}
@@ -144,7 +144,7 @@ export const Sidebar = ({ onSelectMenu }) => {
       {/* Sidebar Container */}
       <aside
         className={`
-          w-80 bg-[#5d6bf6] text-white flex flex-col shadow-inner select-none
+          w-80 bg-[var(--theme-primary)] text-white flex flex-col shadow-inner select-none
           fixed lg:sticky top-0 lg:top-16 z-40 h-screen lg:h-[calc(100vh-64px)]
           transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}

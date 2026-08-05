@@ -67,7 +67,7 @@ export const Topbar = () => {
         
         {/* Integra Logo */}
         <div className="flex items-center justify-center">
-          <img src="/logo_integra_texto.png" onError={(e) => { (e.target as any).style.display = 'none'; }} alt="Integra" className="h-7 w-auto object-contain" />
+          <img src="/logo_integra_simbolo.gif" onError={(e) => { (e.target as any).style.display = 'none'; }} alt="Integra" className="h-7 w-auto object-contain" />
         </div>
 
         <div className="w-px h-8 bg-slate-200 hidden sm:block"></div>
