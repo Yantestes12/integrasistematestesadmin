@@ -1,0 +1,12 @@
+{
+  "name": "site-integra-admin",
+  "version": "1.0.0",
+  "description": "Painel Integra",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve ."
+  },
+  "dependencies": {
+    "serve": "^14.2.1"
+  }
+}
