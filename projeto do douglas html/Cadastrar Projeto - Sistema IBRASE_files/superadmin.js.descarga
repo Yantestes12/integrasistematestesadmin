@@ -1,0 +1,360 @@
+// admin/assets/superadmin.js — v2 (menu guard + overlay fix)
+// Guard: garante que este init roda UMA única vez, mesmo se o script
+// for incluído mais de uma vez ou a página tiver SPA-like navigation.
+if (window.__IBRASE_MENU_INIT__) {
+  // diagnóstico: log se tentar init duplicado
+  if (window.__IBRASE_MENU_DEBUG__) {
+    console.warn('superadmin.js: init ignorado (já executado)');
+  }
+} else {
+  window.__IBRASE_MENU_INIT__ = true;
+
+  (function () {
+
+    // ── diagnóstico (só ativo para master via data-attr no body) ──────
+    var DEBUG = document.body && document.body.dataset.ibraseDebug === '1';
+    function dbg() {
+      if (!DEBUG) return;
+      var args = Array.prototype.slice.call(arguments);
+      args.unshift('[<?= h(APP_NOME) ?> menu]');
+      console.log.apply(console, args);
+    }
+    dbg('init START');
+    if (DEBUG) console.time('[<?= h(APP_NOME) ?>] menu init');
+
+    // ── helpers ───────────────────────────────────────────────────────
+    function closest(el, sel) { return el ? el.closest(sel) : null; }
+
+    function isMobile() {
+      return window.matchMedia('(max-width: 900px)').matches;
+    }
+
+    // ── overlay ───────────────────────────────────────────────────────
+    // Garante pointer-events correto ao abrir/fechar para não bloquear
+    // cliques no conteúdo quando o overlay está invisível.
+    var overlay = document.getElementById('saOverlay');
+
+    function setOverlay(visible) {
+      if (!overlay) return;
+      var shouldShow = !!visible && isMobile();
+      if (shouldShow) {
+        overlay.style.display  = 'block';
+        overlay.style.pointerEvents = 'auto';
+      } else {
+        overlay.style.display  = 'none';
+        overlay.style.pointerEvents = 'none';
+      }
+    }
+
+    function closeMenu() {
+      document.body.classList.remove('sa-menu-open');
+      setOverlay(false);
+      dbg('menu fechado');
+    }
+
+    function syncMenuEnvironment() {
+      if (!isMobile()) {
+        document.body.classList.remove('sa-menu-open');
+        setOverlay(false);
+      } else {
+        setOverlay(document.body.classList.contains('sa-menu-open'));
+      }
+    }
+
+    // Estado inicial: normaliza overlay / body para evitar travamento
+    syncMenuEnvironment();
+
+    if (overlay) {
+      overlay.addEventListener('click', function () {
+        closeMenu();
+      });
+    }
+
+    window.addEventListener('resize', syncMenuEnvironment);
+    window.addEventListener('pageshow', syncMenuEnvironment);
+
+    // ── toggle de submenu top-level ───────────────────────────────────
+    function toggleTop(menuItem) {
+      if (!menuItem) return;
+      var isOpen = menuItem.classList.contains('open');
+      // fecha outros top-level abertos
+      document.querySelectorAll('.menu-item.open').forEach(function (x) {
+        if (x !== menuItem) x.classList.remove('open');
+      });
+      menuItem.classList.toggle('open', !isOpen);
+      dbg('toggleTop', menuItem.dataset.id, !isOpen ? 'aberto' : 'fechado');
+    }
+
+    // ── toggle de subsubmenu ──────────────────────────────────────────
+    function toggleSub(subItem) {
+      if (!subItem) return;
+      var isOpen = subItem.classList.contains('open');
+      var parent = closest(subItem, '.submenu');
+      if (parent) {
+        parent.querySelectorAll(':scope > .submenu-item.open').forEach(function (x) {
+          if (x !== subItem) x.classList.remove('open');
+        });
+      }
+      subItem.classList.toggle('open', !isOpen);
+    }
+
+    // ── listener único de clique (event delegation) ───────────────────
+    document.addEventListener('click', function (e) {
+
+      // --- botão top-level com filhos ---
+      var topBtn = e.target.closest(".m-btn[data-has-children='1']");
+      if (topBtn) {
+        e.preventDefault();
+        toggleTop(closest(topBtn, '.menu-item'));
+        return;
+      }
+
+      // --- caretToggle (subsubmenu) ---
+      var caret = e.target.closest('.caret-toggle');
+      if (caret) {
+        e.preventDefault();
+        toggleSub(closest(caret, '.submenu-item'));
+        return;
+      }
+
+      // --- botão collapse / hamburguer ---
+      var collapse = e.target.closest('#btnCollapse');
+      if (collapse) {
+        e.preventDefault();
+        if (isMobile()) {
+          var opening = !document.body.classList.contains('sa-menu-open');
+          document.body.classList.toggle('sa-menu-open');
+          setOverlay(opening);
+          dbg('mobile toggle', opening ? 'open' : 'close');
+        } else {
+          closeMenu();
+          document.body.classList.toggle('sa-collapsed');
+          dbg('desktop collapsed', document.body.classList.contains('sa-collapsed'));
+        }
+        return;
+      }
+
+      // --- clique em link do menu com href="#" (placeholder) ---
+      // Impede scroll ao topo e trata como toggle do submenu pai se houver
+      var menuLink = e.target.closest('.sa-sidebar a[href]');
+      if (menuLink) {
+        var href = menuLink.getAttribute('href') || '';
+        if (href === '#') {
+          e.preventDefault();
+          // Se este link está dentro de um s-row (tem caret-toggle irmão),
+          // faz toggle do submenu-item pai
+          var sRow = closest(menuLink, '.s-row');
+          if (sRow) {
+            var subParent = closest(sRow, '.submenu-item');
+            if (subParent) toggleSub(subParent);
+          }
+          return;
+        }
+        if (isMobile()) {
+          closeMenu();
+        } else {
+          setOverlay(false);
+        }
+        return;
+      }
+
+    }, { passive: false });
+
+    // Escape fecha o menu
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeMenu();
+    });
+
+    // ── ao carregar: abre o item pai do active ────────────────────────
+    function openActiveParents() {
+      var active = document.querySelector('.ss-btn.active, .s-btn.active, .m-btn.active');
+      if (!active) return;
+
+      var subItem = closest(active, '.submenu-item');
+      if (subItem && subItem.querySelector('.subsubmenu')) subItem.classList.add('open');
+
+      var menuItem = closest(active, '.menu-item');
+      if (menuItem && menuItem.querySelector('.submenu')) menuItem.classList.add('open');
+
+      dbg('active item encontrado e aberto');
+    }
+
+    // usa requestAnimationFrame para não bloquear o paint inicial
+    requestAnimationFrame(openActiveParents);
+
+    // bfcache: ao voltar/avançar, restaura estado correto do menu
+    window.addEventListener('pageshow', function (e) {
+      if (e.persisted) {
+        dbg('pageshow persisted — restaurando menu');
+        openActiveParents();
+      }
+    });
+
+    if (DEBUG) {
+      console.timeEnd('[<?= h(APP_NOME) ?>] menu init');
+      dbg('init DONE — listeners registrados');
+    }
+
+  })();
+}
+
+
+/* ============================================================
+   IBRASE — Perm-denied toast (RBAC V1.0 UI)
+   Intercepta cliques em elementos data-denied="1" e exibe
+   toast explicando qual permissão está faltando.
+============================================================ */
+(function () {
+  'use strict';
+
+  if (window.__IBRASE_PERM_TOAST_INIT__) return;
+  window.__IBRASE_PERM_TOAST_INIT__ = true;
+
+  function ensureToast() {
+    var t = document.getElementById('permDeniedToast');
+    if (t) return t;
+    t = document.createElement('div');
+    t.id = 'permDeniedToast';
+    t.setAttribute('role', 'alert');
+    t.setAttribute('aria-live', 'assertive');
+    t.innerHTML =
+      '<div class="pdt-icon">' +
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M10.3 3.8 2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.8a2 2 0 0 0-3.4 0Z" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>' +
+      '</div>' +
+      '<div class="pdt-body">' +
+        '<p class="pdt-title">Ação bloqueada</p>' +
+        '<p class="pdt-msg">Você não tem permissão para executar esta ação.<br><small style="font-weight:600">Fale com o administrador do sistema.</small></p>' +
+        '<p class="pdt-perm" id="permDeniedPermKey"></p>' +
+      '</div>' +
+      '<button class="pdt-close" id="permDeniedClose" title="Fechar">&#10005;</button>';
+    document.body.appendChild(t);
+    return t;
+  }
+
+  var hideTimer = null;
+
+  function showToast(permKey) {
+    var toast     = ensureToast();
+    var permKeyEl = document.getElementById('permDeniedPermKey');
+    var closeBtn  = document.getElementById('permDeniedClose');
+    if (permKeyEl) {
+      permKeyEl.textContent = permKey ? 'Permissão exigida: ' + permKey : '';
+      permKeyEl.style.display = permKey ? '' : 'none';
+    }
+    if (closeBtn && !closeBtn.__pdtBound) {
+      closeBtn.__pdtBound = true;
+      closeBtn.addEventListener('click', function (e) { e.stopPropagation(); hideToast(); });
+    }
+    toast.classList.add('pdt-show');
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(hideToast, 4000);
+  }
+
+  function hideToast() {
+    var toast = document.getElementById('permDeniedToast');
+    if (toast) toast.classList.remove('pdt-show');
+    clearTimeout(hideTimer);
+  }
+
+  /* delegação de evento — capture=true para interceptar antes de qualquer handler */
+  document.addEventListener('click', function (e) {
+    var el = e.target && e.target.closest ? e.target.closest('[data-denied="1"]') : null;
+    if (!el) return;
+    e.preventDefault();
+    e.stopPropagation();
+    showToast(el.getAttribute('data-perm') || '');
+  }, true);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') hideToast();
+  });
+
+})();
+
+
+
+  // ── Toast padrão (mensagens do sistema: sucesso/erro/info) ──────────
+  function ensureMsgToast() {
+    var t = document.getElementById('ibMsgToast');
+    if (t) return t;
+    t = document.createElement('div');
+    t.id = 'ibMsgToast';
+    t.setAttribute('role', 'status');
+    t.setAttribute('aria-live', 'polite');
+    t.innerHTML = '<button class="ibmt-close" type="button" aria-label="Fechar">&#10005;</button>' +
+                  '<p class="ibmt-title" id="ibMsgToastTitle"></p>' +
+                  '<p class="ibmt-msg" id="ibMsgToastMsg"></p>';
+    document.body.appendChild(t);
+
+    var btn = t.querySelector('.ibmt-close');
+    if (btn) btn.addEventListener('click', function(){ hideMsgToast(); });
+
+    return t;
+  }
+
+  var _msgToastTimer = null;
+
+  function hideMsgToast(){
+    var t = document.getElementById('ibMsgToast');
+    if (!t) return;
+    t.classList.remove('ib-show','ib-success','ib-error','ib-info','ib-warning');
+    t.style.display = 'none';
+    if (_msgToastTimer) { clearTimeout(_msgToastTimer); _msgToastTimer = null; }
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[c];
+    });
+  }
+
+  window.ibMsgToast = function(type, msg){
+    var t = ensureMsgToast();
+    var tt = document.getElementById('ibMsgToastTitle');
+    var tm = document.getElementById('ibMsgToastMsg');
+
+    var cls = 'ib-info';
+    var title = 'Aviso';
+    var tLower = String(type || 'info').toLowerCase();
+
+    if (tLower === 'success' || tLower === 'ok') { cls='ib-success'; title='Sucesso'; }
+    else if (tLower === 'error' || tLower === 'danger') { cls='ib-error'; title='Atenção'; }
+    else if (tLower === 'warning' || tLower === 'warn') { cls='ib-warning'; title='Aviso'; }
+
+    t.classList.remove('ib-success','ib-error','ib-info','ib-warning','ib-show');
+    t.classList.add(cls);
+
+    if (tt) tt.textContent = title;
+    if (tm) tm.innerHTML = escapeHtml(msg);
+
+    t.style.display = 'block';
+    // força reflow para animar
+    void t.offsetWidth;
+    t.classList.add('ib-show');
+
+    if (_msgToastTimer) clearTimeout(_msgToastTimer);
+    _msgToastTimer = setTimeout(function(){ hideMsgToast(); }, 3800);
+  };
+
+
+/* ============================================================
+   IBRASE — Suspender bloqueado (matrícula já inativa)
+   Intercepta cliques em span.mat-suspended-blocked e exibe
+   toast informando que a matrícula já está suspensa/inativa.
+============================================================ */
+(function () {
+  'use strict';
+  if (window.__IBRASE_SUSPENDED_TOAST_INIT__) return;
+  window.__IBRASE_SUSPENDED_TOAST_INIT__ = true;
+
+  document.addEventListener('click', function (e) {
+    var el = e.target && e.target.closest ? e.target.closest('.mat-suspended-blocked') : null;
+    if (!el) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var msg = el.getAttribute('data-suspended-msg') || 'Matrícula já está suspensa/inativa.';
+    if (typeof window.ibMsgToast === 'function') {
+      window.ibMsgToast('info', msg);
+    }
+  }, true);
+})();

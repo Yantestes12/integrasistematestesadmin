@@ -1,0 +1,300 @@
+/* ==========================================================
+   admin_ui.css — Sistema
+   Layout-mestre extraído de matriculas.php
+   Tipografia, tabela, espaçamentos, ícones, status
+   ========================================================== */
+
+/* ── Page container ── */
+.ib-page{display:flex;flex-direction:column;gap:16px;max-width:1320px;margin:0 auto}
+
+/* ── Card ── */
+.ib-card{background:#fff;border:1px solid #e6eaf2;border-radius:16px;padding:18px;box-shadow:0 1px 0 rgba(16,24,40,.04)}
+.ib-card h3{margin:0 0 6px;font-weight:900;color:#0f172a;letter-spacing:-.02em}
+.ib-card h4{margin:0 0 14px;font-weight:800;color:#0f172a;letter-spacing:-.02em}
+.ib-sub{margin:0 0 14px;color:#64748b;font-size:13px}
+.ib-muted{color:#64748b;font-size:13px}
+
+/* ── Counters ── */
+.ib-counters{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.ib-counter{display:flex;flex-direction:column;align-items:center;padding:12px 22px;border-radius:14px;border:1px solid #e6eaf2;background:#f8fafc;min-width:120px}
+.ib-counter .num{font-size:26px;font-weight:900;color:#0f172a;line-height:1}
+.ib-counter .lbl{font-size:12px;font-weight:800;color:#64748b;margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+.ib-counter.green{border-color:rgba(16,185,129,.22);background:rgba(16,185,129,.06)}
+.ib-counter.green .num{color:#065f46}
+.ib-counter.yellow{border-color:rgba(245,158,11,.22);background:rgba(245,158,11,.06)}
+.ib-counter.yellow .num{color:#92400e}
+
+/* ── Filters bar ── */
+.ib-filters{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px}
+.ib-filters .ib-field{flex:1;min-width:200px}
+.ib-filters .ib-field.sm{flex:0 0 160px;min-width:140px}
+.ib-filters .ib-field label{display:block;font-size:12px;font-weight:800;color:#334155;margin-bottom:4px}
+.ib-filters .ib-field input[type=text],
+.ib-filters .ib-field select{width:100%;border:1px solid #d8deea;border-radius:10px;padding:9px 12px;outline:none;background:#fff;font-size:13px}
+.ib-filters .ib-field input:focus,
+.ib-filters .ib-field select:focus{border-color:#93c5fd;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+
+/* ── Grid ── */
+.ib-grid{display:grid;gap:12px}
+.ib-grid.cols-3{grid-template-columns:2fr 2fr 1fr}
+.ib-grid.cols-5{grid-template-columns:1.4fr 1.2fr 1.2fr .8fr .7fr}
+.ib-grid.cols-ofertas{grid-template-columns:1.3fr 1.3fr 1.3fr 1.3fr 1fr 1fr .9fr}
+@media (max-width:1200px){.ib-grid.cols-5{grid-template-columns:1fr 1fr}}
+@media (max-width:1200px){.ib-grid.cols-ofertas{grid-template-columns:1fr 1fr 1fr}}
+@media (max-width:1100px){.ib-grid.cols-3{grid-template-columns:1fr}}
+@media (max-width:820px){.ib-grid.cols-ofertas{grid-template-columns:1fr}}
+@media (max-width:720px){.ib-grid.cols-5{grid-template-columns:1fr}}
+
+/* ── Form fields ── */
+.ib-field label{display:block;font-size:13px;font-weight:800;color:#334155;margin-bottom:6px}
+.ib-field input[type=text],
+.ib-field input[type=number],
+.ib-field select,
+.ib-field textarea{width:100%;border:1px solid #d8deea;border-radius:12px;padding:10px 12px;outline:none;background:#fff;font-size:13px}
+.ib-field textarea{min-height:110px;resize:vertical}
+.ib-field input:focus,
+.ib-field select:focus,
+.ib-field textarea:focus{border-color:#93c5fd;box-shadow:0 0 0 4px rgba(59,130,246,.14)}
+
+/* ── Checkbox wrapper ── */
+.ib-check{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #d8deea;border-radius:12px;background:#fbfdff;height:42px}
+.ib-check input{width:18px;height:18px}
+.ib-check label{margin:0;font-weight:900;color:#0f172a}
+
+/* ── Buttons ── */
+.ib-btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:12px;border:1px solid #cfd7e6;background:#fff;color:#0f172a;font-weight:900;text-decoration:none;cursor:pointer;transition:.15s;line-height:1}
+.ib-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(15,23,42,.08)}
+.ib-btn.primary{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
+.ib-btn.primary:hover{box-shadow:0 10px 20px rgba(29,78,216,.20)}
+.ib-btn.ghost{background:#f8fafc}
+.ib-btn.danger{background:#fee2e2;border-color:#fecaca;color:#7f1d1d}
+.ib-btn.sm{padding:7px 10px;border-radius:10px;font-size:13px}
+.ib-btn.active{border-color:#93c5fd;box-shadow:0 0 0 4px rgba(59,130,246,.14)}
+
+.ib-btn-filter{display:inline-flex;align-items:center;justify-content:center;padding:9px 16px;border-radius:10px;border:1px solid #1d4ed8;background:#1d4ed8;color:#fff;font-weight:800;cursor:pointer;font-size:13px;text-decoration:none;transition:.15s;align-self:flex-end}
+.ib-btn-filter:hover{box-shadow:0 6px 16px rgba(29,78,216,.18)}
+.ib-btn-clear{display:inline-flex;align-items:center;padding:9px 12px;border-radius:10px;border:1px solid #cfd7e6;background:#f8fafc;color:#64748b;font-weight:800;cursor:pointer;font-size:13px;text-decoration:none;transition:.15s;align-self:flex-end}
+
+.ib-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.ib-actions.between{justify-content:space-between}
+.ib-actions .muted{font-size:13px;color:#64748b}
+.ib-actions-row{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
+/* ── Table ── */
+.ib-table-wrap{overflow:auto;border:1px solid #e6eaf2;border-radius:14px}
+.ib-table{width:100%;border-collapse:separate;border-spacing:0;min-width:1100px}
+.ib-table thead th{position:sticky;top:0;background:#f8fafc;color:#334155;font-size:12px;letter-spacing:.08em;text-align:left;padding:12px;border-bottom:1px solid #e6eaf2}
+.ib-table tbody td{padding:10px 12px;border-bottom:1px solid #eef2f7;vertical-align:middle;color:#0f172a;font-size:13px}
+.ib-table tbody tr:hover td{background:#fbfdff}
+.ib-table tbody tr:last-child td{border-bottom:none}
+
+/* ── Tags / Pills ── */
+.ib-tag{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:900;border:1px solid transparent;text-transform:uppercase;letter-spacing:.04em}
+.ib-tag.validada{background:rgba(16,185,129,.10);color:#065f46;border-color:rgba(16,185,129,.18)}
+.ib-tag.pendente{background:rgba(245,158,11,.10);color:#92400e;border-color:rgba(245,158,11,.18)}
+.ib-tag.cancelada{background:rgba(239,68,68,.08);color:#7f1d1d;border-color:rgba(239,68,68,.14)}
+.ib-tag.inativa{background:rgba(148,163,184,.12);color:#334155;border-color:rgba(148,163,184,.22)}
+.ib-tag.on{background:rgba(16,185,129,.10);color:#065f46;border-color:rgba(16,185,129,.18)}
+.ib-tag.off{background:rgba(239,68,68,.08);color:#7f1d1d;border-color:rgba(239,68,68,.14)}
+.ib-tag.neutral{background:rgba(148,163,184,.12);color:#334155;border-color:rgba(148,163,184,.22)}
+
+.ib-pill{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:900;background:#f1f5f9;color:#334155;border:1px solid #e2e8f0}
+.ib-pill.on{background:rgba(16,185,129,.10);color:#065f46;border-color:rgba(16,185,129,.18)}
+
+/* ── Status dots (bolinhas 10px) ── */
+.status-ativo,
+.status-pendente,
+.status-inativo{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle}
+.status-ativo{background:#28a745}
+.status-pendente{background:#ffc107}
+.status-inativo{background:#dc3545}
+
+/* ── Legenda de status (rodapé) ── */
+.legenda-status{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-top:14px;padding:10px 0;font-size:12px;font-weight:800;color:#64748b}
+.legenda-status span{display:inline-flex;align-items:center;gap:6px}
+
+/* ── Action icons column ── */
+.acoes-col{white-space:nowrap}
+
+.ib-row-actions{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;white-space:nowrap}
+
+.ib-icon-btn{width:36px;height:36px;border-radius:10px;border:2px solid #cfd7e6;background:#fff;display:inline-flex;align-items:center;justify-content:center;color:#1d4ed8;cursor:pointer;transition:.15s;text-decoration:none;padding:0}
+.ib-icon-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(15,23,42,.10);border-color:#93c5fd}
+.ib-icon-btn svg{width:18px;height:18px}
+.ib-icon-btn.danger{color:#dc3545;border-color:#fecaca}
+.ib-icon-btn.danger:hover{border-color:#f87171;box-shadow:0 6px 16px rgba(239,68,68,.12)}
+.ib-icon-btn.success{color:#28a745;border-color:#bbf7d0}
+.ib-icon-btn.success:hover{border-color:#4ade80;box-shadow:0 6px 16px rgba(16,185,129,.12)}
+.ib-icon-btn.warning{color:#92400e;border-color:#fde68a}
+.ib-icon-btn.warning:hover{border-color:#fbbf24;box-shadow:0 6px 16px rgba(245,158,11,.12)}
+
+/* forms inside action rows */
+.ib-form-inline{display:inline}
+
+/* ── Pagination ── */
+.ib-pager{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px;align-items:center}
+.ib-pager a,.ib-pager span{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;padding:0 10px;border-radius:10px;border:1px solid #cfd7e6;background:#fff;font-weight:800;color:#0f172a;text-decoration:none;font-size:13px;transition:.15s}
+.ib-pager a:hover{border-color:#93c5fd;box-shadow:0 4px 12px rgba(59,130,246,.10)}
+.ib-pager .active{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
+.ib-pager .dots{border:none;background:none;color:#94a3b8}
+
+/* ── Misc ── */
+.ib-info{font-size:13px;color:#64748b;font-weight:800}
+.ib-toprow{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.ib-help{font-size:12px;color:#64748b;margin-top:6px}
+.ib-help code{background:#f1f5f9;padding:2px 6px;border-radius:8px;border:1px solid #e2e8f0}
+
+/* ── RBAC: Action disabled (ícones sem permissão) ── */
+.action-disabled,.ib-icon-btn.action-disabled{
+  opacity:.38;cursor:not-allowed;pointer-events:auto;
+  filter:grayscale(.5);
+}
+.action-disabled:hover,.ib-icon-btn.action-disabled:hover{
+  transform:none;box-shadow:none;
+}
+
+/* ── RBAC: Perm-denied toast ── */
+#permDeniedToast{
+  position:fixed;bottom:24px;right:24px;z-index:99999;
+  display:flex;align-items:flex-start;gap:12px;
+  min-width:300px;max-width:440px;
+  background:#1e293b;color:#fff;
+  padding:14px 16px;border-radius:14px;
+  box-shadow:0 12px 40px rgba(0,0,0,.3);
+  transform:translateY(30px);opacity:0;
+  pointer-events:none;
+  transition:transform .25s ease,opacity .25s ease;
+}
+#permDeniedToast.pdt-show{
+  transform:translateY(0);opacity:1;pointer-events:auto;
+}
+#permDeniedToast .pdt-icon{flex-shrink:0;margin-top:1px}
+#permDeniedToast .pdt-body{flex:1;min-width:0}
+#permDeniedToast .pdt-title{font-weight:900;font-size:14px;margin:0 0 2px}
+#permDeniedToast .pdt-msg{font-size:13px;color:#cbd5e1;margin:0 0 4px;font-weight:600}
+#permDeniedToast .pdt-perm{font-size:11px;color:#94a3b8;margin:0;font-family:monospace;word-break:break-all}
+#permDeniedToast .pdt-close{
+  flex-shrink:0;background:none;border:none;color:#94a3b8;
+  font-size:18px;cursor:pointer;padding:0 2px;line-height:1;
+  align-self:flex-start;
+}
+#permDeniedToast .pdt-close:hover{color:#fff}
+
+
+/* ── Matrículas: A / R / S (Aprovar / Reprovar / Suspender) ─────────── */
+.mat-ar-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:34px;height:34px;
+  border-radius:10px;
+  font-size:14px;
+  font-weight:400; /* sem negrito */
+  color:#fff;
+  user-select:none;
+  line-height:1;
+}
+.mat-ar-btn.mat-approve{background:#15803d;}
+.mat-ar-btn.mat-reject{background:#b91c1c;}
+.mat-ar-btn.mat-suspend{background:#ea7000;}
+/* muted: A aprovado / R reprovado */
+.mat-ar-btn.mat-muted{opacity:.22;cursor:default;}
+
+/* ── S SUSPENSO: abordagem dupla (opacity wrapper + rgba background) ── */
+/* 1) wrapper fica semi-transparente — afeta tudo dentro */
+span.mat-suspended-blocked{
+  display:inline-flex;
+  cursor:not-allowed !important;
+  opacity:0.28 !important;
+}
+/* 2) inner span: troca background para rgba (funciona mesmo se opacity for bloqueado) */
+span.mat-suspended-blocked .mat-ar-btn,
+span.mat-suspended-blocked .mat-ar-btn.mat-suspend,
+span.mat-suspended-blocked .mat-ar-btn.mat-suspend.mat-muted{
+  background:rgba(234,112,0,0.35) !important;
+  opacity:1 !important;
+  cursor:not-allowed !important;
+  pointer-events:none !important;
+  filter:none !important;
+}
+/* sem borda nos botões AR dentro de qualquer wrapper */
+a.ib-icon-btn .mat-ar-btn,
+.ib-icon-btn .mat-ar-btn,
+span.ib-icon-btn .mat-ar-btn{border:none;box-shadow:none;outline:none;}
+
+/* ── Toast padrão (mensagens do sistema) ───────────────────────────── */
+#ibMsgToast{
+  position:fixed;
+  top:74px; /* abaixo do header */
+  right:18px;
+  z-index:99999;
+  min-width:280px;
+  max-width:420px;
+  display:none;
+  border-radius:14px;
+  padding:12px 14px;
+  box-shadow:0 12px 30px rgba(15,23,42,.18);
+  border:1px solid rgba(15,23,42,.10);
+  backdrop-filter:saturate(140%) blur(6px);
+}
+#ibMsgToast.ib-show{display:block; animation: ibToastIn .18s ease-out;}
+#ibMsgToast .ibmt-title{font-weight:900; margin:0 0 4px 0; font-size:13px;}
+#ibMsgToast .ibmt-msg{margin:0; font-weight:600; font-size:13px; line-height:1.25;}
+#ibMsgToast .ibmt-close{
+  position:absolute; top:8px; right:10px;
+  border:0; background:transparent; cursor:pointer;
+  font-size:16px; line-height:1; opacity:.7;
+}
+#ibMsgToast.ib-success{background:rgba(240,253,244,.96); color:#166534;}
+#ibMsgToast.ib-success{border-color:rgba(187,247,208,.9);}
+#ibMsgToast.ib-error{background:rgba(254,242,242,.96); color:#991b1b;}
+#ibMsgToast.ib-error{border-color:rgba(254,202,202,.95);}
+#ibMsgToast.ib-info{background:rgba(239,246,255,.96); color:#1d4ed8;}
+#ibMsgToast.ib-info{border-color:rgba(191,219,254,.95);}
+#ibMsgToast.ib-warning{background:rgba(255,251,235,.96); color:#92400e;}
+#ibMsgToast.ib-warning{border-color:rgba(253,230,138,.95);}
+
+@keyframes ibToastIn{
+  from{transform:translateY(-6px); opacity:0;}
+  to{transform:translateY(0); opacity:1;}
+}
+
+/* ===== Matrículas: botões A/R/S (sem moldura) ===== */
+.ib-icon-btn.mat-ar-link{
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  border-radius: 0 !important;
+}
+.ib-icon-btn.mat-ar-link:hover,
+.ib-icon-btn.mat-ar-link:focus{
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+/* span bloqueado: sem borda/sombra do ib-icon-btn */
+span.mat-suspended-blocked.ib-icon-btn{
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+/* Base dos badges A/R/S — definição consolidada no bloco acima */
+
+/* mat-ar-btn cores: definidas em bloco acima (.mat-ar-btn.mat-suspend etc.)
+   Regras de fallback (shorthand sem .mat-ar-btn prefix) */
+.mat-approve{ background:#15803d; }
+.mat-reject { background:#b91c1c; }
+.mat-suspend{ background:#ea7000; }  /* laranja — synced com .mat-ar-btn.mat-suspend */
+.mat-muted  { opacity:.25; }
+
+/* Mantém ação bloqueada (RBAC) com aparência coerente */
+.ib-icon-btn.mat-ar-link.action-disabled .mat-ar-btn{
+  opacity:.35;
+}
