@@ -1,12 +1,8 @@
 const fs = require('fs');
 
-const bcryptUMD = fs.existsSync('./node_modules/bcryptjs/umd/index.js')
-  ? fs.readFileSync('./node_modules/bcryptjs/umd/index.js', 'utf8')
-  : '';
+const bcryptUMD = fs.readFileSync('./node_modules/bcryptjs/umd/index.js', 'utf8');
 
-const jsValidaMaster = [
-  bcryptUMD,
-  "",
+const jsValidaMaster = bcryptUMD + "\n\n" + [
   "const body = $input.first().json.body || {};",
   "const masterKey = body.chave_mestra || '';",
   "const novaSenha = body.nova_senha || '';",
@@ -20,12 +16,17 @@ const jsValidaMaster = [
   "  return [{ json: { status: 'erro', message: 'A nova senha deve ter no mínimo 4 caracteres.' } }];",
   "}",
   "",
+  "let bcryptObj = (typeof dpt_bcrypt !== 'undefined') ? dpt_bcrypt : ((typeof module !== 'undefined' && module.exports && module.exports.hashSync) ? module.exports : (typeof exports !== 'undefined' && exports.hashSync ? exports : (typeof bcrypt !== 'undefined' ? bcrypt : null)));",
+  "",
   "let newHash = '';",
   "try {",
-  "  const bcryptObj = (typeof dpt_bcrypt !== 'undefined') ? dpt_bcrypt : (typeof bcrypt !== 'undefined' ? bcrypt : null);",
-  "  newHash = bcryptObj.hashSync(novaSenha, 10);",
+  "  if (bcryptObj && bcryptObj.hashSync) {",
+  "    newHash = bcryptObj.hashSync(novaSenha, 10);",
+  "  } else {",
+  "    throw new Error('Bcrypt bundle não carregado.');",
+  "  }",
   "} catch(e) {",
-  "  return [{ json: { status: 'erro', message: 'Erro ao gerar o hash da senha.' } }];",
+  "  return [{ json: { status: 'erro', message: 'Erro ao gerar o hash: ' + (e.message || e) } }];",
   "}",
   "",
   "return [{",
@@ -55,7 +56,7 @@ const updateSupabaseNode = (table, pos, id, name) => ({
   position: pos,
   id,
   name,
-  continueOnFail: true, // Continua mesmo se não achar no instituto
+  continueOnFail: true,
   alwaysOutputData: true,
   credentials: { supabaseApi: { id: '9PCPmBxs55B86AyO', name: 'IBRASE' } }
 });
@@ -152,4 +153,4 @@ const workflowReset = {
 const jsonContent = JSON.stringify(workflowReset, null, 2);
 fs.writeFileSync('workflow_n8n_reset_master.json', jsonContent, 'utf8');
 fs.writeFileSync('Interno_integra/workflow_n8n_reset_master.json', jsonContent, 'utf8');
-console.log('Workflow de Reset Master gerado com sucesso!');
+console.log('Workflow Reset gerado com sucesso!');
