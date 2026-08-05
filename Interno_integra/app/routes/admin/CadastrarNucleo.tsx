@@ -77,21 +77,40 @@ export default function CadastrarNucleo() {
   const possuiCnpjWatch = watch("possuiCnpj");
 
   const onSubmit = async (data: CadastrarNucleoFormData) => {
-    console.log("PAYLOAD PRONTO PARA O N8N (NÚCLEO):", JSON.stringify(data, null, 2));
-
     try {
-      // Mock da chamada para Webhook do N8N ou API Supabase
-      /*
-      const response = await fetch("SUA_URL_DO_WEBHOOK_NUCLEOS_AQUI", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+      const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
+      const webhookUrl = `https://w.ibrase.com.br/webhook/nucleos-post?instituto=${authInstitute}`;
+
+      // Usa FormData para suportar os arquivos (foto, termo)
+      const formData = new FormData();
+      Object.entries(data).forEach(([key, value]) => {
+        if (value instanceof FileList) {
+          if (value.length > 0) {
+            formData.append(key, value[0]); // Pega o primeiro arquivo
+          }
+        } else if (value !== undefined && value !== null) {
+          formData.append(key, String(value));
+        }
       });
 
-      if (!response.ok) throw new Error("Erro ao enviar dados.");
-      */
+      console.log("Enviando Payload para o N8N:", data);
+
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        // Sem Content-Type manual, o navegador define multipart/form-data automaticamente
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao enviar dados.");
+      }
       
-      alert("Núcleo cadastrado com sucesso! (Payload gerado no Console)");
+      const responseData = await response.json();
+      if (responseData.message === "Workflow was started" || responseData[0]?.message === "Workflow was started") {
+         // Silencioso ou log
+      }
+      
+      alert("Núcleo cadastrado com sucesso!");
     } catch (error) {
       console.error(error);
       alert("Erro ao enviar para o N8N.");
