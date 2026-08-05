@@ -130,6 +130,14 @@ export default function Iniciativas() {
       if (res.ok) {
         const data = await res.json();
         console.log("Dados recebidos do N8N Webhook (projetos-get):", data);
+        
+        // Verifica se o N8N retornou a resposta padrão (acontece quando o Webhook não está com Respond to Webhook configurado corretamente)
+        if (data.message === "Workflow was started" || (Array.isArray(data) && data.length > 0 && data[0].message === "Workflow was started")) {
+          alert("O Webhook do N8N não retornou os dados. Ele retornou a mensagem padrão 'Workflow was started'. Vá no n8n, abra o node do Webhook e mude o campo 'Respond' para 'Using Respond to Webhook Node'.");
+          setLoading(false);
+          return;
+        }
+        
         const parsed = parseIniciativasList(data);
         if (parsed.length > 0) {
           setIniciativas(parsed);
@@ -138,46 +146,12 @@ export default function Iniciativas() {
         }
       }
     } catch (e) {
-      console.warn("Erro no Webhook N8N de Iniciativas, executando consulta direta ao Supabase...", e);
-    }
-
-    // 2. Fallback direto ao Supabase com Switch por Tabela de Instituto
-    try {
-      let targetTable = "";
-      switch (instituteName.toUpperCase()) {
-        case "GASCTPNA":
-          targetTable = "GASCTPNA_projetos";
-          break;
-        case "AUNI":
-          targetTable = "AUNI_projetos";
-          break;
-        case "IVEM":
-          targetTable = "IVEM_projetos";
-          break;
-        case "IBRASE":
-        default:
-          targetTable = "IBRASE_projetos";
-          break;
-      }
-
-      // Tenta a tabela específica do instituto ou fallback para 'projetos'
-      let { data, error } = await supabase.from(targetTable).select("*").order("id", { ascending: false });
-
-      if (error || !data || data.length === 0) {
-        const fallbackRes = await supabase.from("projetos").select("*").order("id", { ascending: false });
-        if (fallbackRes.data) {
-          data = fallbackRes.data;
-        }
-      }
-
-      if (data) {
-        setIniciativas(parseIniciativasList(data));
-      }
-    } catch (err) {
-      console.error("Erro ao carregar iniciativas do Supabase:", err);
+      console.warn("Erro no Webhook N8N de Iniciativas:", e);
+      alert("Falha ao se comunicar com o webhook do n8n para buscar as iniciativas.");
     } finally {
       setLoading(false);
     }
+
   };
 
   const handleDelete = async (id: string | number) => {

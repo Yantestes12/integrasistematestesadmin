@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   FolderPlus, ArrowLeft, Calendar, Users, Layers, ShieldAlert, Plus, Trash2, Check 
 } from "lucide-react";
@@ -26,6 +26,8 @@ export default function CadastrarProjeto() {
     coordPedagogico: 0,
     supervisores: 0,
     vagasPorNucleo: 0,
+    nucleosMaximos: 0,
+    vagasPorAluno: 0,
   });
 
   // 4. Faixa Etária
@@ -33,13 +35,9 @@ export default function CadastrarProjeto() {
   const [idadeMaxima, setIdadeMaxima] = useState("");
 
   // 5. Limites de Núcleos por Modalidade
-  const [limitesModalidade, setLimitesModalidade] = useState({
-    funcional: 0,
-    futebol: 0,
-    luta: 0,
-    projetoDeAula: 0,
-    eventos: 0,
-  });
+  const [limitesModalidade, setLimitesModalidade] = useState<any[]>([]);
+  const [modalidadesDisponiveis, setModalidadesDisponiveis] = useState<any[]>([]);
+  const [selectedModalidadeId, setSelectedModalidadeId] = useState("");
 
   // 6. Períodos do Projeto
   const [periodos, setPeriodos] = useState([
@@ -48,6 +46,180 @@ export default function CadastrarProjeto() {
 
   // 7. Status
   const [projetoAtivo, setProjetoAtivo] = useState(true);
+
+  // Carregar dados se for edição
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get("edit");
+    if (!editId) return;
+
+    const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
+    const n8nEndpoint = `https://w.ibrase.com.br/webhook/projetos-get?instituto=${authInstitute}`;
+
+    fetch(n8nEndpoint)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.message === "Workflow was started" || (Array.isArray(data) && data[0]?.message === "Workflow was started")) {
+          return; // ignora se não retornou os dados reais
+        }
+        
+        // Pega todos os itens e encontra o correto
+        let flatList: any[] = [];
+        let list = Array.isArray(data) ? data : (data.json ? (Array.isArray(data.json) ? data.json : [data.json]) : [data]);
+        list.forEach((entry: any) => {
+          if (entry && entry.json) {
+            if (Array.isArray(entry.json)) flatList.push(...entry.json);
+            else flatList.push(entry.json);
+          } else if (Array.isArray(entry)) {
+            flatList.push(...entry);
+          } else {
+            flatList.push(entry);
+          }
+        });
+
+        const item = flatList.find(i => String(i.id || i.id_projeto || i.id_iniciativa) === String(editId));
+        if (item) {
+          // Preencher campos
+          // Mapeia tanto estrutura aninhada do n8n quanto colunas planas (Supabase direto)
+          setNomeProjeto(item.identificacao?.nomeProjeto || item.nome || item.nome_projeto || item.nomeProjeto || item.name || item.titulo || "");
+          setNumeroProposta(item.identificacao?.numeroProposta || item.numero_proposta || item.numeroProposta || "");
+          setTermoFomento(item.identificacao?.termoFomento || item.termo_fomento || item.termoFomento || "");
+          setNumeroProcessoAdm(item.identificacao?.numeroProcessoAdm || item.numero_processo_adm || item.numeroProcessoAdm || "");
+          setNumeroTransfereGov(item.identificacao?.numeroTransfereGov || item.numero_transferegov || item.numeroTransfereGov || "");
+          setAplicabilidade(item.identificacao?.aplicabilidade || item.aplicabilidade || "");
+          setDescricao(item.identificacao?.descricao || item.descricao || "");
+
+          setDataInicioVigencia(item.vigencia?.dataInicio || item.data_inicio_vigencia || item.dataInicioVigencia || "");
+          setDataTerminoVigencia(item.vigencia?.dataTermino || item.data_termino_vigencia || item.dataTerminoVigencia || "");
+
+          if (item.limitesMembros) {
+            setLimites(item.limitesMembros);
+          } else {
+            setLimites({
+              instrutoresPorNucleo: item.instrutores_por_nucleo || item.instrutoresPorNucleo || 0,
+              auxiliaresPorNucleo: item.limite_auxiliares || item.auxiliares_por_nucleo || item.auxiliaresPorNucleo || 0,
+              coordGeral: item.coord_geral || item.coordGeral || 0,
+              coordNucleo: item.coord_nucleo || item.coordNucleo || 0,
+              coordPedagogico: item.qtd_coord_pedagogico || item.coord_pedagogico || item.coordPedagogico || 0,
+              supervisores: item.qtd_supervisores || item.supervisores || 0,
+              vagasPorNucleo: item.vagas_por_nucleo || item.vagasPorNucleo || 0,
+              nucleosMaximos: item.nucleos_maximos || item.nucleosMaximos || 0,
+              vagasPorAluno: item.vagas_por_aluno || item.vagasPorAluno || 0,
+            });
+          }
+
+          setIdadeMinima(item.faixaEtaria?.idadeMinima || item.idade_min || item.idade_minima || item.idadeMinima || "");
+          setIdadeMaxima(item.faixaEtaria?.idadeMaxima || item.idade_max || item.idade_maxima || item.idadeMaxima || "");
+
+          if (item.limitesModalidades && Array.isArray(item.limitesModalidades)) {
+            setLimitesModalidade(item.limitesModalidades);
+          } else if (item.limitesModalidade && Array.isArray(item.limitesModalidade)) {
+            setLimitesModalidade(item.limitesModalidade);
+          } else {
+            const legacy: any[] = [];
+            if (item.modalidade_funcional) legacy.push({ id: "legacy_1", nome: "Funcional", limite: item.modalidade_funcional });
+            if (item.modalidade_futebol) legacy.push({ id: "legacy_2", nome: "Futebol", limite: item.modalidade_futebol });
+            if (item.modalidade_luta) legacy.push({ id: "legacy_3", nome: "Luta", limite: item.modalidade_luta });
+            if (item.modalidade_projeto_de_aula) legacy.push({ id: "legacy_4", nome: "Projeto de Aula", limite: item.modalidade_projeto_de_aula });
+            if (item.modalidade_eventos) legacy.push({ id: "legacy_5", nome: "Eventos", limite: item.modalidade_eventos });
+            setLimitesModalidade(legacy);
+          }
+
+          if (item.periodos && Array.isArray(item.periodos) && item.periodos.length > 0) {
+            setPeriodos(item.periodos);
+          } else if (item.periodos_json) {
+            try {
+              const parsed = typeof item.periodos_json === 'string' ? JSON.parse(item.periodos_json) : item.periodos_json;
+              if (Array.isArray(parsed) && parsed.length > 0) setPeriodos(parsed);
+            } catch(e) {}
+          }
+
+          if (item.status?.ativo !== undefined) {
+            setProjetoAtivo(item.status.ativo);
+          } else if (item.ativo !== undefined) {
+            // Conversão caso ativo venha como 0/1, false/true, etc
+            setProjetoAtivo(item.ativo === 1 || item.ativo === "1" || item.ativo === true || item.ativo === "true");
+          }
+        }
+      })
+      .catch((err) => console.error("Erro ao buscar dados do projeto:", err));
+  }, []);
+
+  // Carregar modalidades disponíveis
+  useEffect(() => {
+    const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
+    const modEndpoint = `https://w.ibrase.com.br/webhook/modalidades-get?instituto=${authInstitute}`;
+    fetch(modEndpoint)
+      .then(res => res.json())
+      .then(data => {
+        if (data.message === "Workflow was started" || (Array.isArray(data) && data[0]?.message === "Workflow was started")) return;
+        let flatList: any[] = [];
+        let list = Array.isArray(data) ? data : (data.json ? (Array.isArray(data.json) ? data.json : [data.json]) : [data]);
+        list.forEach((entry: any) => {
+          if (entry && entry.json) {
+            if (Array.isArray(entry.json)) flatList.push(...entry.json);
+            else flatList.push(entry.json);
+          } else if (Array.isArray(entry)) {
+            flatList.push(...entry);
+          } else {
+            flatList.push(entry);
+          }
+        });
+        setModalidadesDisponiveis(flatList);
+      })
+      .catch(console.error);
+  }, []);
+
+  const handleNovaModalidade = () => {
+    const nome = prompt("Digite o nome da nova modalidade:");
+    if (!nome) return;
+    const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
+    const postEndpoint = `https://w.ibrase.com.br/webhook/modalidades-post?instituto=${authInstitute}`;
+    
+    fetch(postEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome, ativo: 1 })
+    })
+    .then(res => res.json())
+    .then(data => {
+      const newMod = { id: Date.now(), nome }; // Id temporário
+      setModalidadesDisponiveis([...modalidadesDisponiveis, newMod]);
+      setSelectedModalidadeId(String(newMod.id));
+      alert("Modalidade criada com sucesso!");
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Erro ao criar modalidade");
+    });
+  };
+
+  const handleAddLimiteModalidade = () => {
+    if (!selectedModalidadeId) return;
+    const mod = modalidadesDisponiveis.find(m => String(m.id) === selectedModalidadeId);
+    if (!mod) return;
+    
+    // Evita duplicado
+    if (limitesModalidade.find(l => String(l.id) === String(mod.id) || l.nome === mod.nome)) {
+      alert("Esta modalidade já foi adicionada!");
+      return;
+    }
+    
+    setLimitesModalidade([...limitesModalidade, { id: mod.id, nome: mod.nome, limite: 0 }]);
+    setSelectedModalidadeId("");
+  };
+
+  const handleRemoveLimiteModalidade = (index: number) => {
+    const newArr = [...limitesModalidade];
+    newArr.splice(index, 1);
+    setLimitesModalidade(newArr);
+  };
+
+  const handleUpdateLimiteModalidade = (index: number, val: number) => {
+    const newArr = [...limitesModalidade];
+    newArr[index].limite = val;
+    setLimitesModalidade(newArr);
+  };
 
   // Manipulação de Períodos
   const handleAddPeriodo = () => {
@@ -297,6 +469,93 @@ export default function CadastrarProjeto() {
           </div>
         </div>
 
+        {/* SEÇÃO 6: PERÍODOS DA INICIATIVA */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          <div>
+            <h2 className="text-base font-bold text-slate-800">Períodos da Iniciativa</h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Configure as janelas de <strong>Iniciação</strong> e <strong>Trimestre</strong>. Elas serão utilizadas para construir o histórico e a linha do tempo da ocupação das vagas. A ordem de exibição segue a sequência da tabela abaixo.
+            </p>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase">
+                  <th className="p-3">Tipo</th>
+                  <th className="p-3">Rótulo *</th>
+                  <th className="p-3">Início *</th>
+                  <th className="p-3">Fim *</th>
+                  <th className="p-3 text-center">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-sm">
+                {periodos.map((p) => (
+                  <tr key={p.id}>
+                    <td className="p-2 w-44">
+                      <select
+                        value={p.tipo}
+                        onChange={(e) => handleUpdatePeriodo(p.id, "tipo", e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="Iniciação">Iniciação</option>
+                        <option value="1º Trimestre">1º Trimestre</option>
+                        <option value="2º Trimestre">2º Trimestre</option>
+                        <option value="3º Trimestre">3º Trimestre</option>
+                        <option value="4º Trimestre">4º Trimestre</option>
+                      </select>
+                    </td>
+                    <td className="p-2">
+                      <input
+                        type="text"
+                        placeholder="Nome do período..."
+                        value={p.rotulo}
+                        onChange={(e) => handleUpdatePeriodo(p.id, "rotulo", e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </td>
+                    <td className="p-2 w-44">
+                      <input
+                        type="date"
+                        value={p.inicio}
+                        onChange={(e) => handleUpdatePeriodo(p.id, "inicio", e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </td>
+                    <td className="p-2 w-44">
+                      <input
+                        type="date"
+                        value={p.fim}
+                        onChange={(e) => handleUpdatePeriodo(p.id, "fim", e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </td>
+                    <td className="p-2 text-center w-12">
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePeriodo(p.id)}
+                        className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                        title="Remover período"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleAddPeriodo}
+            className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-semibold text-xs border border-dashed border-blue-300 px-3 py-2 rounded-lg bg-blue-50/50 hover:bg-blue-50 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Adicionar período
+          </button>
+        </div>
+
         {/* CONFIGURAÇÕES DE LIMITES DE MEMBROS DA EQUIPE */}
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
           <div>
@@ -383,24 +642,56 @@ export default function CadastrarProjeto() {
                 type="number"
                 min="0"
                 value={limites.supervisores}
-                onChange={(e) => setLimites({ ...limites, supervisores: Number(e.target.value) })}
+onChange={(e) => setLimites({ ...limites, supervisores: Number(e.target.value) })}
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Vagas por Núcleo
+          </div>
+        </div>
+
+        {/* CONFIGURAÇÕES DE VAGAS E NÚCLEOS */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          <div>
+            <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+              <Layers className="w-5 h-5 text-blue-600" />
+              Configurações de Vagas e Núcleos
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Defina a quantidade máxima de núcleos e a capacidade de alunos para esta iniciativa.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            <div className="bg-blue-50/50 p-3 rounded-lg border-2 border-blue-200">
+              <label className="block text-xs font-bold text-blue-800 mb-1">
+                Vagas de Núcleo
               </label>
               <input
                 type="number"
                 min="0"
-                value={limites.vagasPorNucleo}
-                onChange={(e) => setLimites({ ...limites, vagasPorNucleo: Number(e.target.value) })}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={limites.nucleosMaximos}
+                onChange={(e) => setLimites({ ...limites, nucleosMaximos: Number(e.target.value) })}
+                className="w-full bg-white border border-blue-300 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <span className="text-[11px] text-slate-400 mt-1 block">
-                Deixe em branco para sem limite definido.
+              <span className="text-[10px] font-medium text-blue-600 mt-1 block leading-tight">
+                * quantidade de núcleos máximos que podem ser criados
+              </span>
+            </div>
+
+            <div className="bg-emerald-50/50 p-3 rounded-lg border-2 border-emerald-200">
+              <label className="block text-xs font-bold text-emerald-800 mb-1">
+                Vagas por Aluno
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={limites.vagasPorAluno}
+                onChange={(e) => setLimites({ ...limites, vagasPorAluno: Number(e.target.value) })}
+                className="w-full bg-white border border-emerald-300 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+              <span className="text-[10px] font-medium text-emerald-600 mt-1 block leading-tight">
+                * coloque a quantidade de alunos que pode ter em cada núcleo
               </span>
             </div>
           </div>
@@ -456,165 +747,88 @@ export default function CadastrarProjeto() {
             </p>
           </div>
 
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <div className="flex-1 flex items-end gap-2">
+              <div className="flex-1">
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Selecionar Modalidade
+                </label>
+                <select
+                  value={selectedModalidadeId}
+                  onChange={(e) => setSelectedModalidadeId(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">-- Escolha uma modalidade --</option>
+                  {modalidadesDisponiveis.map((m: any) => (
+                    <option key={m.id} value={m.id}>{m.nome}</option>
+                  ))}
+                </select>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddLimiteModalidade}
+                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-sm transition-colors"
+              >
+                Adicionar
+              </button>
+            </div>
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={handleNovaModalidade}
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-sm transition-colors flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Criar Nova
+              </button>
+            </div>
+          </div>
+
           <div className="overflow-x-auto border border-slate-100 rounded-lg">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase">
                   <th className="p-3">Modalidade</th>
                   <th className="p-3 text-right">Máximo de núcleos ativos</th>
+                  <th className="p-3 w-16 text-center">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
-                <tr>
-                  <td className="p-3 font-semibold text-slate-700">Funcional</td>
-                  <td className="p-3 text-right">
-                    <input
-                      type="number"
-                      min="0"
-                      value={limitesModalidade.funcional}
-                      onChange={(e) => setLimitesModalidade({ ...limitesModalidade, funcional: Number(e.target.value) })}
-                      className="w-24 bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-right font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ml-auto"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="p-3 font-semibold text-slate-700">Futebol</td>
-                  <td className="p-3 text-right">
-                    <input
-                      type="number"
-                      min="0"
-                      value={limitesModalidade.futebol}
-                      onChange={(e) => setLimitesModalidade({ ...limitesModalidade, futebol: Number(e.target.value) })}
-                      className="w-24 bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-right font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ml-auto"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="p-3 font-semibold text-slate-700">Luta</td>
-                  <td className="p-3 text-right">
-                    <input
-                      type="number"
-                      min="0"
-                      value={limitesModalidade.luta}
-                      onChange={(e) => setLimitesModalidade({ ...limitesModalidade, luta: Number(e.target.value) })}
-                      className="w-24 bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-right font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ml-auto"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="p-3 font-semibold text-slate-700">Projeto de Aula</td>
-                  <td className="p-3 text-right">
-                    <input
-                      type="number"
-                      min="0"
-                      value={limitesModalidade.projetoDeAula}
-                      onChange={(e) => setLimitesModalidade({ ...limitesModalidade, projetoDeAula: Number(e.target.value) })}
-                      className="w-24 bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-right font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ml-auto"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="p-3 font-semibold text-slate-700">Eventos</td>
-                  <td className="p-3 text-right">
-                    <input
-                      type="number"
-                      min="0"
-                      value={limitesModalidade.eventos}
-                      onChange={(e) => setLimitesModalidade({ ...limitesModalidade, eventos: Number(e.target.value) })}
-                      className="w-24 bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-right font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ml-auto"
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* SEÇÃO 6: PERÍODOS DA INICIATIVA */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-          <div>
-            <h2 className="text-base font-bold text-slate-800">Períodos da Iniciativa</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Configure as janelas de <strong>Iniciação</strong> e <strong>Trimestre</strong>. Elas serão utilizadas para construir o histórico e a linha do tempo da ocupação das vagas. A ordem de exibição segue a sequência da tabela abaixo.
-            </p>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase">
-                  <th className="p-3">Tipo</th>
-                  <th className="p-3">Rótulo *</th>
-                  <th className="p-3">Início *</th>
-                  <th className="p-3">Fim *</th>
-                  <th className="p-3 text-center">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
-                {periodos.map((p) => (
-                  <tr key={p.id}>
-                    <td className="p-2 w-44">
-                      <select
-                        value={p.tipo}
-                        onChange={(e) => handleUpdatePeriodo(p.id, "tipo", e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="Iniciação">Iniciação</option>
-                        <option value="1º Trimestre">1º Trimestre</option>
-                        <option value="2º Trimestre">2º Trimestre</option>
-                        <option value="3º Trimestre">3º Trimestre</option>
-                        <option value="4º Trimestre">4º Trimestre</option>
-                      </select>
-                    </td>
-                    <td className="p-2">
-                      <input
-                        type="text"
-                        placeholder="Nome do período..."
-                        value={p.rotulo}
-                        onChange={(e) => handleUpdatePeriodo(p.id, "rotulo", e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </td>
-                    <td className="p-2 w-44">
-                      <input
-                        type="date"
-                        value={p.inicio}
-                        onChange={(e) => handleUpdatePeriodo(p.id, "inicio", e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </td>
-                    <td className="p-2 w-44">
-                      <input
-                        type="date"
-                        value={p.fim}
-                        onChange={(e) => handleUpdatePeriodo(p.id, "fim", e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </td>
-                    <td className="p-2 text-center w-12">
-                      <button
-                        type="button"
-                        onClick={() => handleRemovePeriodo(p.id)}
-                        className="text-slate-400 hover:text-red-500 transition-colors p-1"
-                        title="Remover período"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                {limitesModalidade.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="p-4 text-center text-slate-500 text-sm italic">
+                      Nenhuma modalidade adicionada ainda.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  limitesModalidade.map((item: any, index: number) => (
+                    <tr key={item.id}>
+                      <td className="p-3 font-semibold text-slate-700">{item.nome}</td>
+                      <td className="p-3 text-right">
+                        <input
+                          type="number"
+                          min="0"
+                          value={item.limite}
+                          onChange={(e) => handleUpdateLimiteModalidade(index, Number(e.target.value))}
+                          className="w-24 bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-right font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ml-auto"
+                        />
+                      </td>
+                      <td className="p-3 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveLimiteModalidade(index)}
+                          className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                          title="Remover"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
-
-          <button
-            type="button"
-            onClick={handleAddPeriodo}
-            className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-semibold text-xs border border-dashed border-blue-300 px-3 py-2 rounded-lg bg-blue-50/50 hover:bg-blue-50 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Adicionar período
-          </button>
         </div>
 
         {/* SEÇÃO 7: STATUS DA INICIATIVA */}
