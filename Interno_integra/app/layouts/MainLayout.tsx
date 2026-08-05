@@ -5,26 +5,18 @@ import { Topbar } from "~/components/Topbar";
 
 const themes = {
   IBRASE: {
-    "--theme-primary": "#5d6bf6",
-    "--theme-primary-hover": "#4b5ae6",
-    "--theme-level-1": "#4351df",
-    "--theme-level-1-hover": "#3947d1",
-    "--theme-level-2": "#3744cc",
-    "--theme-level-2-hover": "#2f3cb8",
-    "--theme-level-3": "#2b37a8",
-    "--theme-level-3-hover": "#232f91",
-  },
-  GASCTPNA: {
-    "--theme-primary": "#10b981",
-    "--theme-primary-hover": "#059669",
-    "--theme-level-1": "#047857",
-    "--theme-level-1-hover": "#064e3b",
-    "--theme-level-2": "#064e3b",
-    "--theme-level-2-hover": "#022c22",
-    "--theme-level-3": "#022c22",
-    "--theme-level-3-hover": "#011611",
+    // Laranja
+    "--theme-primary": "#f97316",
+    "--theme-primary-hover": "#ea580c",
+    "--theme-level-1": "#c2410c",
+    "--theme-level-1-hover": "#9a3412",
+    "--theme-level-2": "#7c2d12",
+    "--theme-level-2-hover": "#431407",
+    "--theme-level-3": "#431407",
+    "--theme-level-3-hover": "#240a02",
   },
   AUNI: {
+    // Roxo
     "--theme-primary": "#8b5cf6",
     "--theme-primary-hover": "#7c3aed",
     "--theme-level-1": "#6d28d9",
@@ -34,15 +26,27 @@ const themes = {
     "--theme-level-3": "#2e054e",
     "--theme-level-3-hover": "#200336",
   },
+  GASCTPNA: {
+    // Verde
+    "--theme-primary": "#10b981",
+    "--theme-primary-hover": "#059669",
+    "--theme-level-1": "#047857",
+    "--theme-level-1-hover": "#064e3b",
+    "--theme-level-2": "#064e3b",
+    "--theme-level-2-hover": "#022c22",
+    "--theme-level-3": "#022c22",
+    "--theme-level-3-hover": "#011611",
+  },
   IVEM: {
-    "--theme-primary": "#f97316",
-    "--theme-primary-hover": "#ea580c",
-    "--theme-level-1": "#c2410c",
-    "--theme-level-1-hover": "#9a3412",
-    "--theme-level-2": "#7c2d12",
-    "--theme-level-2-hover": "#431407",
-    "--theme-level-3": "#431407",
-    "--theme-level-3-hover": "#240a02",
+    // Azul
+    "--theme-primary": "#2563eb",
+    "--theme-primary-hover": "#1d4ed8",
+    "--theme-level-1": "#1e40af",
+    "--theme-level-1-hover": "#1e3a8a",
+    "--theme-level-2": "#1e3a8a",
+    "--theme-level-2-hover": "#172554",
+    "--theme-level-3": "#172554",
+    "--theme-level-3-hover": "#0f172a",
   }
 };
 

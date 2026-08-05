@@ -19,7 +19,7 @@ import {
 
 export const Sidebar = ({ onSelectMenu }) => {
   // Controle do drawer no Mobile
-  const [isOpen, setIsOpen] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
 
   // Armazena o caminho dos itens abertos na árvore (ex: ['Configurações', 'Avisos'])
   const [openPaths, setOpenPaths] = useState([]);
