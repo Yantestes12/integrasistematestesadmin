@@ -1,0 +1,109 @@
+{
+  "collaborators": [
+    {
+      "id": 145,
+      "usuario": "leandrooliveira",
+      "nome": "LEANDRO OLIVEIRA DA COSTA",
+      "cargo": "Instrutor",
+      "status": "Ativo"
+    },
+    {
+      "id": 144,
+      "usuario": "gleisonfidelis",
+      "nome": "GLEISON FIDELIS DE MELO",
+      "cargo": "Supervisor",
+      "status": "Ativo"
+    },
+    {
+      "id": 143,
+      "usuario": "andredejesus",
+      "nome": "ANDRE DE JESUS SILVA",
+      "cargo": "Instrutor",
+      "status": "Ativo"
+    },
+    {
+      "id": 142,
+      "usuario": "jonatanmateus",
+      "nome": "JONATAN MATEUS DE AZEVEDO",
+      "cargo": "Auxiliar",
+      "status": "Ativo"
+    },
+    {
+      "id": 141,
+      "usuario": "wellingtonalves",
+      "nome": "WELLINGTON ALVES BARBOSA",
+      "cargo": "Auxiliar",
+      "status": "Ativo"
+    },
+    {
+      "id": 140,
+      "usuario": "laudiniersantos",
+      "nome": "LAUDINIER DOS SANTOS BERNARDO DA SILVA FILHO",
+      "cargo": "Auxiliar",
+      "status": "Ativo"
+    },
+    {
+      "id": 18,
+      "usuario": "joaopaulosilva",
+      "nome": "JOAO PAULO SILVA DE VIVEIROS",
+      "cargo": "Instrutor",
+      "status": "Inativo"
+    },
+    {
+      "id": 17,
+      "usuario": "brunosirino",
+      "nome": "BRUNO SIRINO DA FONSECA",
+      "cargo": "Coordenador Pedagógico",
+      "status": "Inativo"
+    },
+    {
+      "id": 16,
+      "usuario": "masteribrase.com.br",
+      "nome": "EVANILDO PEREIRA BARBOSA",
+      "cargo": "Auxiliar",
+      "status": "Ativo"
+    },
+    {
+      "id": 15,
+      "usuario": "laissapaulino",
+      "nome": "LAISSA PAULINO PEREIRA",
+      "cargo": "Administrativo",
+      "status": "Ativo"
+    },
+    {
+      "id": 14,
+      "usuario": "dariodasilva",
+      "nome": "DARIO DA SILVA FREITAS",
+      "cargo": "Recursos Humanos",
+      "status": "Ativo"
+    },
+    {
+      "id": 13,
+      "usuario": "irglateiabruce",
+      "nome": "IRGLATEIA BRUCE GOIS",
+      "cargo": "Coordenador Pedagógico",
+      "status": "Ativo"
+    },
+    {
+      "id": 12,
+      "usuario": "joaoandre",
+      "nome": "JOAO ANDRE RISCADO BARRETO",
+      "cargo": "Coordenador Geral",
+      "status": "Ativo"
+    },
+    {
+      "id": 11,
+      "usuario": "brunodealmeida",
+      "nome": "BRUNO DE ALMEIDA FERNANDES",
+      "cargo": "Coordenador Geral",
+      "status": "Inativo"
+    },
+    {
+      "id": 10,
+      "usuario": "isabellirh",
+      "nome": "ISABELLI RODRIGUES",
+      "cargo": "Recursos Humanos",
+      "status": "Ativo"
+    }
+  ]
+}

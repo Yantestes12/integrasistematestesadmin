@@ -1,0 +1,502 @@
+
+        /* ==========================================================================
+           1. DESIGN SYSTEM - CLARO, HUMANO, ACOLHEDOR & ESPORTIVO
+           ========================================================================== */
+        :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+
+            --primary: #1e40af;
+            --primary-hover: #1e3a8a;
+            --primary-accent: #2563eb;
+            --accent-green: #10b981;
+            --accent-orange: #f97316;
+
+            --text-dark: #0f172a;
+            --text-medium: #334155;
+            --text-muted: #64748b;
+            --border-light: #e2e8f0;
+
+            --font-main: 'Plus Jakarta Sans', 'Inter', sans-serif;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            
+            --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: var(--font-main);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .login-container {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-body);
+            color: var(--text-dark);
+            display: flex;
+        }
+
+        /* ==========================================================================
+           2. LADO ESQUERDO: FOTOGRAFIA & MENSAGEM INSTITUCIONAL
+           ========================================================================== */
+        .hero-viewport {
+            flex: 1;
+            position: relative;
+            height: 100%;
+            background-image: url('/integra_sports_hero.png');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: flex-end;
+            padding: 60px;
+            overflow: hidden;
+        }
+
+        /* Gradient Overlay Harmonizado com as Cores da Logo INTEGRA */
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.5) 0%, rgba(37, 99, 235, 0.25) 45%, rgba(16, 185, 129, 0.2) 80%, rgba(15, 23, 42, 0.92) 100%),
+                        radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 90% 80%, rgba(249, 115, 22, 0.2) 0%, transparent 50%);
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 10;
+            max-width: 620px;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .hero-badge-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.3) 0%, rgba(16, 185, 129, 0.3) 100%);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(96, 165, 250, 0.4);
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25);
+            padding: 6px 16px;
+            border-radius: 100px;
+            width: fit-content;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #ffffff;
+        }
+
+        .hero-title {
+            font-size: 38px;
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+        }
+
+        .hero-title span {
+            background: linear-gradient(135deg, #60a5fa 0%, #34d399 50%, #fb923c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-description {
+            font-size: 16.5px;
+            color: #ffffff;
+            line-height: 1.6;
+            font-weight: 600;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95), 0 1px 4px rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hero-description-icon {
+            color: #60a5fa;
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.8));
+        }
+
+        /* 4 Parceiros Institucionais no Rodapé com Brilho Ampliado */
+        .institutions-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding-top: 18px;
+            border-top: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .inst-logo-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(14px);
+            padding: 9px 15px;
+            border-radius: 10px;
+            font-size: 12.5px;
+            font-weight: 800;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.25s ease;
+        }
+
+        .inst-logo-badge.badge-ibrase { border-left: 4px solid #f97316; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.3); }
+        .inst-logo-badge.badge-ivem { border-left: 4px solid #3b82f6; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3); }
+        .inst-logo-badge.badge-gasctpna { border-left: 4px solid #10b981; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); }
+        .inst-logo-badge.badge-auni { border-left: 4px solid #8b5cf6; box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3); }
+
+        .inst-logo-badge:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+        }
+
+        /* ==========================================================================
+           3. LADO DIREITO: FORMULÁRIO DE LOGIN COM LOGO GIF OFICIAL (_prod_simbolo.gif)
+           ========================================================================== */
+        .login-viewport {
+            width: 420px;
+            height: 100%;
+            background-color: var(--bg-card);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 32px 36px;
+            position: relative;
+            z-index: 20;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        /* Logo GIF Oficial da Marca */
+        .brand-header {
+            text-align: center;
+            margin-bottom: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .brand-symbol-gif {
+            height: 78px;
+            width: auto;
+            object-fit: contain;
+            margin: 0 auto 4px auto;
+            display: block;
+            /* Otimização de GPU para reprodução fluida do GIF */
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            will-change: transform;
+        }
+
+        .brand-text-logo {
+            height: 26px;
+            width: auto;
+            max-width: 200px;
+            object-fit: contain;
+            margin: 0 auto 4px auto;
+            display: block;
+        }
+
+        .brand-welcome-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: 2px;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* Banner de Alerta de Erro */
+        .error-banner {
+            display: none;
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            font-size: 12.5px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .error-banner.active {
+            display: flex;
+        }
+
+        /* Formulário Limpo */
+        .clean-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-medium);
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            color: #94a3b8;
+            pointer-events: none;
+            transition: color 0.2s ease;
+        }
+
+        .clean-input {
+            width: 100%;
+            padding: 12px 14px 12px 42px;
+            font-size: 14px;
+            background-color: #f8fafc;
+            border: 1.5px solid var(--border-light);
+            border-radius: var(--radius-md);
+            color: var(--text-dark);
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .clean-input::placeholder {
+            color: #94a3b8;
+        }
+
+        .clean-input:focus {
+            background-color: #ffffff;
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .clean-input:focus ~ .input-icon {
+            color: var(--primary-accent);
+        }
+
+        /* Botão Ver Senha */
+        .btn-toggle-pass {
+            position: absolute;
+            right: 10px;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.2s;
+        }
+
+        .btn-toggle-pass:hover {
+            background: #e2e8f0;
+            color: var(--text-dark);
+        }
+
+        /* Opções Adicionais */
+        .form-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12.5px;
+            margin-top: 2px;
+        }
+
+        .remember-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-medium);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .remember-label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary-accent);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .forgot-link {
+            color: var(--primary-accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .forgot-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Botão Entrar Principal */
+        .btn-primary-login {
+            width: 100%;
+            padding: 12px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary-login:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-primary-login:active {
+            transform: translateY(0);
+        }
+
+        /* Rodapé Humano */
+        .login-footer {
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border-light);
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .login-footer a {
+            color: var(--accent-green);
+            font-weight: 700;
+            text-decoration: none;
+            margin-left: 4px;
+        }
+
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Mobile Institution Badges (Visíveis apenas em telas <= 960px) */
+        .mobile-institutions-bar {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+            padding: 8px 10px;
+            background: #f1f5f9;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-light);
+        }
+
+        .mobile-inst-tag {
+            font-size: 10.5px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 6px;
+            color: #ffffff;
+            letter-spacing: 0.02em;
+        }
+
+        .mobile-inst-tag.tag-ibrase { background: #f97316; }
+        .mobile-inst-tag.tag-ivem { background: #2563eb; }
+        .mobile-inst-tag.tag-gasctpna { background: #10b981; }
+        .mobile-inst-tag.tag-auni { background: #8b5cf6; }
+
+        /* ==========================================================================
+           4. RESPONSIVIDADE E OTIMIZAÇÃO PARA SMARTPHONES (MOBILE UX)
+           ========================================================================== */
+        @media (max-width: 960px) {
+            .login-container {
+                height: auto;
+                min-height: 100vh;
+                min-height: 100dvh;
+                overflow-x: hidden !important;
+                overflow-y: auto !important;
+                background-color: #f8fafc;
+            }
+
+            .hero-viewport { display: none; }
+
+            .login-viewport {
+                width: 100%;
+                max-width: 440px;
+                min-height: 100vh;
+                min-height: 100dvh;
+                margin: 0 auto;
+                padding: 32px 24px calc(24px + env(safe-area-inset-bottom));
+                box-shadow: none;
+                border-left: none;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+
+            .mobile-institutions-bar {
+                display: flex;
+            }
+
+            /* Prevenção de Zoom Automático no iOS Safari (Fonte 16px + Touch Target 48px) */
+            .clean-input {
+                font-size: 16px !important;
+                padding: 13px 14px 13px 44px;
+                height: 48px;
+            }
+
+            .btn-primary-login {
+                height: 48px;
+                font-size: 15px;
+            }
+
+            .brand-symbol-gif {
+                height: 72px;
+            }
+
+            .brand-text-logo {
+                height: 24px;
+            }
+
+            .brand-header {
+                margin-bottom: 14px;
+            }
+        }
+    
