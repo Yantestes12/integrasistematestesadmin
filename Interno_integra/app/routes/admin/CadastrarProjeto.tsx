@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router";
 import { 
   FolderPlus, ArrowLeft, Calendar, Users, Layers, ShieldAlert, Plus, Trash2, Check, GripVertical, Settings2, X
 } from "lucide-react";
@@ -87,15 +88,8 @@ export default function CadastrarProjeto() {
   const [isModManagerOpen, setIsModManagerOpen] = useState(false);
   const [editingModId, setEditingModId] = useState<any>(null);
   const [newModName, setNewModName] = useState("");
-  const [editModeId, setEditModeId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const editId = params.get("edit");
-      if (editId) setEditModeId(editId);
-    }
-  }, []);
+  const [searchParams] = useSearchParams();
+  const editModeId = searchParams.get("edit");
 
   // 6. Períodos do Projeto
   const [periodos, setPeriodos] = useState([
