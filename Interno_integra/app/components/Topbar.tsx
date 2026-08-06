@@ -24,7 +24,8 @@ export const Topbar = () => {
     try {
       const allowed = JSON.parse(localStorage.getItem("auth_institutos_permitidos") || "[]");
       if (Array.isArray(allowed) && allowed.length > 0) {
-        setAllowedInstitutes(allowed);
+        const list = savedInstitute && !allowed.includes(savedInstitute) ? [...allowed, savedInstitute] : allowed;
+        setAllowedInstitutes(list);
       } else if (savedInstitute) {
         setAllowedInstitutes([savedInstitute]);
       }
