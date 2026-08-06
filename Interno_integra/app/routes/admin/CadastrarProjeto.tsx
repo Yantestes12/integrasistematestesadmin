@@ -89,7 +89,17 @@ export default function CadastrarProjeto() {
   const [editingModId, setEditingModId] = useState<any>(null);
   const [newModName, setNewModName] = useState("");
   const [searchParams] = useSearchParams();
-  const editModeId = searchParams.get("edit");
+  const editModeIdParam = searchParams.get("edit");
+  const [editModeId, setEditModeId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let id = editModeIdParam;
+    if (!id && typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      id = urlParams.get("edit");
+    }
+    setEditModeId(id);
+  }, [editModeIdParam]);
 
   // 6. Períodos do Projeto
   const [periodos, setPeriodos] = useState([
