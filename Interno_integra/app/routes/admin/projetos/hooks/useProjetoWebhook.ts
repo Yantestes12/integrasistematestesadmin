@@ -128,7 +128,7 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
               supervisores: Number(item.qtd_supervisores || item.supervisores || 0),
               vagasPorNucleo: Number(item.vagas_de_nucleo || item.vagas_por_nucleo || item.vagasPorNucleo || 0),
               nucleosMaximos: Number(item.nucleos_maximos || item.nucleosMaximos || 0),
-              vagasPorAluno: Number(item.vagas_por_aluno || item.vagas_de_aluno || item.vagasPorAluno || 0),
+              vagasPorAluno: Number(item.vagas_por_nucleos || item.vagas_por_aluno || item.vagas_de_aluno || item.vagasPorAluno || 0),
             },
             faixaEtaria: {
               idadeMinima: (item.faixaEtaria?.idadeMinima || item.idade_min || item.idade_minima || item.idadeMinima) ? Number(item.faixaEtaria?.idadeMinima || item.idade_min || item.idade_minima || item.idadeMinima) : null,

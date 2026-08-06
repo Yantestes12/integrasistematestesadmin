@@ -115,13 +115,18 @@ export default function CadastrarProjeto() {
           {/* Status Section */}
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
             <h2 className="text-base font-bold text-slate-800">Status</h2>
-            <label className="inline-flex items-center gap-3 cursor-pointer p-3 border border-slate-200 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
-              <input
-                type="checkbox"
-                {...methods.register("status.ativo")}
-                className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-              />
-              <span className="text-sm font-semibold text-slate-800">Iniciativa Ativa</span>
+            <label className="flex items-center justify-between w-full sm:max-w-xs cursor-pointer p-4 border border-slate-200 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors">
+              <span className="text-sm font-bold text-slate-700">
+                {methods.watch("status.ativo") ? "Iniciativa Ativa" : "Iniciativa Inativa"}
+              </span>
+              <div className="relative">
+                <input type="checkbox" {...methods.register("status.ativo")} className="sr-only" />
+                <div 
+                  className={`block w-14 h-8 rounded-full transition-colors ${methods.watch("status.ativo") ? "" : "bg-slate-300"}`}
+                  style={methods.watch("status.ativo") ? { backgroundColor: "var(--theme-primary)" } : {}}
+                ></div>
+                <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform shadow-sm ${methods.watch("status.ativo") ? "translate-x-6" : ""}`}></div>
+              </div>
             </label>
           </div>
 
