@@ -94,6 +94,13 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
             } catch(e) {}
           }
 
+          // Garante que as datas de início e fim venham no formato YYYY-MM-DD para o input type="date"
+          mappedPeriodos = mappedPeriodos.map((p: any) => ({
+            ...p,
+            inicio: p.inicio ? formatDateForInput(p.inicio) : "",
+            fim: p.fim ? formatDateForInput(p.fim) : ""
+          }));
+
           if (mappedPeriodos.length === 0) {
             mappedPeriodos = [
               { id: Date.now() + 1, tipo: "planejamento", rotulo: "Iniciação", inicio: "", fim: "" },
