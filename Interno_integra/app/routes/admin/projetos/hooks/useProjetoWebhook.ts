@@ -139,9 +139,9 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
               coordNucleo: Number(item.qtd_coord_nucleo || item.coord_nucleo || item.coordNucleo || 0),
               coordPedagogico: Number(item.qtd_coord_pedagogico || item.coord_pedagogico || item.coordPedagogico || 0),
               supervisores: Number(item.qtd_supervisores || item.supervisores || 0),
-              vagasPorNucleo: Number(item.vagas_de_nucleo || item.vagas_por_nucleo || item.vagasPorNucleo || 0),
               nucleosMaximos: Number(item.nucleos_maximos || item.nucleosMaximos || 0),
-              vagasPorAluno: Number(item.vagas_por_nucleos || item.vagas_por_aluno || item.vagas_de_aluno || item.vagasPorAluno || 0),
+              vagasPorAluno: Number(item.vagas_por_nucleo || item.vagas_por_nucleos || item.vagas_por_aluno || item.vagas_de_aluno || item.vagasPorAluno || 0),
+
             },
             faixaEtaria: {
               idadeMinima: (item.faixaEtaria?.idadeMinima || item.idade_min || item.idade_minima || item.idadeMinima) ? Number(item.faixaEtaria?.idadeMinima || item.idade_min || item.idade_minima || item.idadeMinima) : null,
@@ -194,8 +194,8 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
       qtd_coord_pedagogico: data.limites.coordPedagogico,
       supervisores: data.limites.supervisores,
       qtd_supervisores: data.limites.supervisores,
-      vagas_por_nucleo: data.limites.vagasPorNucleo,
-      vagas_de_nucleo: data.limites.vagasPorNucleo,
+      vagas_por_nucleo: data.limites.vagasPorAluno,
+      vagas_de_nucleo: data.limites.vagasPorAluno,
       nucleos_maximos: data.limites.nucleosMaximos,
       vagas_por_aluno: data.limites.vagasPorAluno,
       vagas_de_aluno: data.limites.vagasPorAluno,
