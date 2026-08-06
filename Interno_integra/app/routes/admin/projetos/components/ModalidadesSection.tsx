@@ -91,15 +91,14 @@ export function ModalidadesSection() {
 
       {/* SEÇÃO 2: Limites por Modalidade */}
       <div>
-        <div>
-          <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
-            <Layers className="w-5 h-5 text-emerald-600" />
-            Limites de Núcleos por Modalidade
-          </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Defina o máximo de núcleos ativos de cada modalidade neste projeto. Informe <strong>0</strong> (ou deixe em branco) para não impor limite à modalidade. A soma destes limites determina a quantidade de <strong>Vagas Globais</strong> do projeto.
-          </p>
-        </div>
+        <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+          <Layers className="w-5 h-5 text-emerald-600" />
+          Limites de Núcleos por Modalidade
+        </h2>
+        <p className="text-xs text-slate-500 mt-0.5">
+          Defina o máximo de núcleos ativos de cada modalidade neste projeto. Informe <strong>0</strong> (ou deixe em branco) para não impor limite à modalidade. A soma destes limites determina a quantidade de <strong>Vagas Globais</strong> do projeto.
+        </p>
+      </div>
 
       <div className="flex flex-col sm:flex-row gap-4 mb-4">
         <div className="flex-1 flex items-end gap-2">
