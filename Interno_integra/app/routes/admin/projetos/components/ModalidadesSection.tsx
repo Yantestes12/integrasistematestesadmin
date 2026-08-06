@@ -12,6 +12,20 @@ export function ModalidadesSection() {
 
   const [modalidadesDisponiveis, setModalidadesDisponiveis] = useState<any[]>([]);
   const [selectedModalidadeId, setSelectedModalidadeId] = useState("");
+  const [institutoColor, setInstitutoColor] = useState("bg-slate-100 text-slate-800 border-slate-200");
+
+  useEffect(() => {
+    const inst = localStorage.getItem("auth_institute") || "IBRASE";
+    if (inst === "IBRASE") {
+      setInstitutoColor("bg-orange-100 text-orange-800 border-orange-200");
+    } else if (inst === "GASCTPNA") {
+      setInstitutoColor("bg-emerald-100 text-emerald-800 border-emerald-200");
+    } else if (inst === "AUNI") {
+      setInstitutoColor("bg-blue-100 text-blue-800 border-blue-200");
+    } else if (inst === "IVEM") {
+      setInstitutoColor("bg-red-100 text-red-800 border-red-200");
+    }
+  }, []);
 
   useEffect(() => {
     const fetchUrl = `https://w.ibrase.com.br/webhook/modalidades-get?instituto=${localStorage.getItem("auth_institute") || "IBRASE"}`;
@@ -74,29 +88,6 @@ export function ModalidadesSection() {
 
   return (
     <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
-      {/* SEÇÃO 1: Vagas de Núcleo Globais */}
-      <div>
-        <div>
-          <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
-            <Layers className="w-5 h-5 text-blue-600" />
-            Configurações de Vagas e Núcleos
-          </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            O total de núcleos (Vagas Globais) é calculado automaticamente pela soma dos limites configurados por modalidade.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-4 pt-4">
-          <div className="bg-blue-50/50 p-4 rounded-lg border-2 border-blue-200 flex justify-between items-center">
-            <span className="text-sm font-bold text-blue-800">Total de Núcleos (Vagas Globais):</span>
-            <span className="text-2xl font-black text-blue-700">
-              {(useFormContext().watch("limitesModalidade") || []).reduce((acc: number, curr: any) => acc + (Number(curr.limite) || 0), 0)}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <hr className="border-slate-200" />
 
       {/* SEÇÃO 2: Limites por Modalidade */}
       <div>
@@ -189,6 +180,15 @@ export function ModalidadesSection() {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex justify-end mt-4">
+        <div className={`px-4 py-2 rounded-full border shadow-sm flex items-center gap-2 font-bold text-sm ${institutoColor}`}>
+          <span>Vagas de Núcleo:</span>
+          <span className="text-lg">
+            {(useFormContext().watch("limitesModalidade") || []).reduce((acc: number, curr: any) => acc + (Number(curr.limite) || 0), 0)}
+          </span>
+        </div>
       </div>
     </div>
   );
