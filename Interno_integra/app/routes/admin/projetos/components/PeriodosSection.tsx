@@ -38,11 +38,8 @@ export function PeriodosSection() {
                     {...register(`periodos.${index}.tipo`)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="Iniciação">Iniciação</option>
-                    <option value="1º Trimestre">1º Trimestre</option>
-                    <option value="2º Trimestre">2º Trimestre</option>
-                    <option value="3º Trimestre">3º Trimestre</option>
-                    <option value="4º Trimestre">4º Trimestre</option>
+                    <option value="planejamento">Iniciação</option>
+                    <option value="avaliacao">Trimestre</option>
                   </select>
                 </td>
                 <td className="p-2">
