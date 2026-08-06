@@ -153,41 +153,11 @@ export default function Login() {
   };
 
   return (
-    <div className="login-container w-full h-screen overflow-hidden flex bg-[#f8fafc] text-[#0f172a]">
+    <div className="login-container w-full h-screen overflow-hidden flex items-center justify-center bg-[#f8fafc] p-4 text-[#0f172a]">
       {/* ==========================================================================
-          LADO ESQUERDO: FOTOGRAFIA & MENSAGEM INSTITUCIONAL ADMINISTRATIVA
+          FORMULÁRIO DE LOGIN CENTRALIZADO
           ========================================================================== */}
-      <div className="hero-viewport hidden lg:flex">
-        <div className="hero-overlay"></div>
-        <div className="hero-content">
-          <div className="hero-badge-tag border-blue-400/40 bg-blue-950/60 backdrop-blur-md">
-            <ShieldCheck className="w-4 h-4 text-blue-400" />
-            PAINEL ADMINISTRATIVO &amp; GESTÃO
-          </div>
-          
-          <h1 className="hero-title">
-            Central Unificada de <br />
-            <span>Gestão Institucional.</span>
-          </h1>
-
-          <p className="hero-description">
-            <ShieldCheck className="hero-description-icon text-blue-400" />
-            <span>Portal de acesso exclusivo para gestores, coordenadores e colaboradores autorizados.</span>
-          </p>
-
-          <div className="institutions-bar">
-            <div className="inst-logo-badge badge-ibrase">IBRASE ADMIN</div>
-            <div className="inst-logo-badge badge-ivem">IVEM ADMIN</div>
-            <div className="inst-logo-badge badge-gasctpna">GASCTPNA ADMIN</div>
-            <div className="inst-logo-badge badge-auni">AUNI ADMIN</div>
-          </div>
-        </div>
-      </div>
-
-      {/* ==========================================================================
-          LADO DIREITO: FORMULÁRIO DE LOGIN COM IDENTIFICAÇÃO ADMIN CLARA
-          ========================================================================== */}
-      <div className="login-viewport w-full lg:w-[440px] shrink-0 h-full bg-white flex flex-col justify-center px-10 py-8 relative z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.05)] overflow-hidden">
+      <div className="login-viewport w-full max-w-[440px] bg-white flex flex-col justify-center px-10 py-10 rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50 relative z-20">
         
         {/* Logo GIF Oficial da Marca (_prod_simbolo.gif) + Badge Admin */}
         <div className="brand-header text-center mb-5 flex flex-col items-center justify-center w-full">
