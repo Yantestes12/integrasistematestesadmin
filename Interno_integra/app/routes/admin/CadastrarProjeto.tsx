@@ -343,6 +343,27 @@ export default function CadastrarProjeto() {
     }
   };
 
+  const handleAddPeriodo = () => {
+    setPeriodos([
+      ...periodos,
+      { id: Date.now(), tipo: "Trimestre", rotulo: "", inicio: "", fim: "" }
+    ]);
+  };
+
+  const handleRemovePeriodo = (id: any) => {
+    setPeriodos(periodos.filter((p: any) => p.id !== id));
+  };
+
+  const handleUpdatePeriodo = (id: any, field: string, value: string) => {
+    setPeriodos(periodos.map((p: any) => p.id === id ? { ...p, [field]: value } : p));
+  };
+
+  const handleUpdateLimiteModalidade = (index: number, val: number) => {
+    const updated = [...limitesModalidade];
+    updated[index] = { ...updated[index], limite: val };
+    setLimitesModalidade(updated);
+  };
+
   const handleDeleteModalidade = async (id: any) => {
     if (!confirm("Tem certeza que deseja deletar esta modalidade global?")) return;
     const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
@@ -481,6 +502,8 @@ export default function CadastrarProjeto() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* SEÇÃO 1: IDENTIFICAÇÃO */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
           <h2 className="text-base font-bold text-slate-800 border-b border-slate-100 pb-3">
             Identificação e Documentação
           </h2>
@@ -1039,4 +1062,5 @@ onChange={(e) => setLimites({ ...limites, supervisores: Number(e.target.value) }
       )}
     </div>
   );
+}
 }
