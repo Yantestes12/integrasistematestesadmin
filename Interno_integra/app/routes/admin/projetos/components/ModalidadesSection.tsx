@@ -73,16 +73,42 @@ export function ModalidadesSection() {
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
+      {/* SEÇÃO 1: Vagas de Núcleo Globais */}
       <div>
-        <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
-          <Layers className="w-5 h-5 text-blue-600" />
-          Limites de Núcleos por Modalidade
-        </h2>
-        <p className="text-xs text-slate-500 mt-0.5">
-          Defina o máximo de núcleos ativos de cada modalidade neste projeto. Informe <strong>0</strong> (ou deixe em branco) para não impor limite à modalidade. A soma destes limites determina a quantidade de <strong>Vagas Globais</strong> do projeto.
-        </p>
+        <div>
+          <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+            <Layers className="w-5 h-5 text-blue-600" />
+            Configurações de Vagas e Núcleos
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            O total de núcleos (Vagas Globais) é calculado automaticamente pela soma dos limites configurados por modalidade.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-4 pt-4">
+          <div className="bg-blue-50/50 p-4 rounded-lg border-2 border-blue-200 flex justify-between items-center">
+            <span className="text-sm font-bold text-blue-800">Total de Núcleos (Vagas Globais):</span>
+            <span className="text-2xl font-black text-blue-700">
+              {(useFormContext().watch("limitesModalidade") || []).reduce((acc: number, curr: any) => acc + (Number(curr.limite) || 0), 0)}
+            </span>
+          </div>
+        </div>
       </div>
+
+      <hr className="border-slate-200" />
+
+      {/* SEÇÃO 2: Limites por Modalidade */}
+      <div>
+        <div>
+          <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+            <Layers className="w-5 h-5 text-emerald-600" />
+            Limites de Núcleos por Modalidade
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Defina o máximo de núcleos ativos de cada modalidade neste projeto. Informe <strong>0</strong> (ou deixe em branco) para não impor limite à modalidade. A soma destes limites determina a quantidade de <strong>Vagas Globais</strong> do projeto.
+          </p>
+        </div>
 
       <div className="flex flex-col sm:flex-row gap-4 mb-4">
         <div className="flex-1 flex items-end gap-2">

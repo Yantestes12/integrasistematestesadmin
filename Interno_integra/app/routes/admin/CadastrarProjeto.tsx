@@ -58,7 +58,6 @@ export default function CadastrarProjeto() {
         coordPedagogico: 0,
         supervisores: 0,
         vagasPorNucleo: 0,
-        nucleosMaximos: 0,
         vagasPorAluno: 0,
       },
       limitesModalidade: [],

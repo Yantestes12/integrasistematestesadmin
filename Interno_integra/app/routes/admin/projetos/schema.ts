@@ -22,7 +22,6 @@ export const projetoSchema = z.object({
     coordPedagogico: z.number().min(0).default(0),
     supervisores: z.number().min(0).default(0),
     vagasPorNucleo: z.number().min(0).default(0),
-    nucleosMaximos: z.number().min(0).default(0),
     vagasPorAluno: z.number().min(0).default(0),
   }),
   faixaEtaria: z.object({
