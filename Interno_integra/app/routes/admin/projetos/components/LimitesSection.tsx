@@ -87,7 +87,7 @@ export function LimitesSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-4 pt-2">
           <div className="bg-blue-50/50 p-3 rounded-lg border-2 border-blue-200">
             <label className="block text-xs font-bold text-blue-800 mb-1">Vagas de Núcleo</label>
             <input
@@ -98,19 +98,6 @@ export function LimitesSection() {
             />
             <span className="text-[10px] font-medium text-blue-600 mt-1 block leading-tight">
               * quantidade de núcleos máximos que podem ser criados
-            </span>
-          </div>
-
-          <div className="bg-emerald-50/50 p-3 rounded-lg border-2 border-emerald-200">
-            <label className="block text-xs font-bold text-emerald-800 mb-1">Vagas por Aluno</label>
-            <input
-              type="number"
-              min="0"
-              {...register("limites.vagasPorAluno", { valueAsNumber: true })}
-              className="w-full bg-white border border-emerald-300 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            />
-            <span className="text-[10px] font-medium text-emerald-600 mt-1 block leading-tight">
-              * coloque a quantidade de alunos que pode ter em cada núcleo
             </span>
           </div>
         </div>

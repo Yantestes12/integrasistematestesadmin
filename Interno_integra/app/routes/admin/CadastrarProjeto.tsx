@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useSearchParams } from "react-router";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FolderPlus, ArrowLeft, Check } from "lucide-react";
+import { FolderPlus, ArrowLeft, Check, AlertTriangle } from "lucide-react";
 
 import { projetoSchema } from "./projetos/schema";
 import type { ProjetoFormData } from "./projetos/schema";
@@ -76,6 +76,15 @@ export default function CadastrarProjeto() {
     }
   };
 
+  const vagasPorAluno = methods.watch("limites.vagasPorAluno");
+  useEffect(() => {
+    if (!vagasPorAluno || vagasPorAluno <= 0) {
+      if (methods.getValues("status.ativo")) {
+        methods.setValue("status.ativo", false, { shouldDirty: true });
+      }
+    }
+  }, [vagasPorAluno, methods]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -115,18 +124,31 @@ export default function CadastrarProjeto() {
           <VigenciaSection />
           <PeriodosSection />
           <LimitesSection />
-          <FaixaEtariaSection />
           <ModalidadesSection />
+          <FaixaEtariaSection />
 
           {/* Status Section */}
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
             <h2 className="text-base font-bold text-slate-800">Status</h2>
-            <label className="flex items-center justify-between w-full sm:max-w-xs cursor-pointer p-4 border border-slate-200 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors">
+            
+            {(!vagasPorAluno || vagasPorAluno <= 0) && (
+              <div className="p-3 bg-amber-50 text-amber-700 rounded-lg text-sm border border-amber-200 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 shrink-0" />
+                <span>Para ativar a iniciativa, é necessário definir o limite de <strong>Vagas por Aluno</strong> na seção Aluno.</span>
+              </div>
+            )}
+            
+            <label className={`flex items-center justify-between w-full sm:max-w-xs p-4 border border-slate-200 rounded-xl bg-slate-50 transition-colors ${(!vagasPorAluno || vagasPorAluno <= 0) ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:bg-slate-100"}`}>
               <span className="text-sm font-bold text-slate-700">
                 {methods.watch("status.ativo") ? "Iniciativa Ativa" : "Iniciativa Inativa"}
               </span>
               <div className="relative">
-                <input type="checkbox" {...methods.register("status.ativo")} className="sr-only" />
+                <input 
+                  type="checkbox" 
+                  {...methods.register("status.ativo")} 
+                  disabled={!vagasPorAluno || vagasPorAluno <= 0}
+                  className="sr-only" 
+                />
                 <div 
                   className={`block w-14 h-8 rounded-full transition-colors ${methods.watch("status.ativo") ? "" : "bg-slate-300"}`}
                   style={methods.watch("status.ativo") ? { backgroundColor: "var(--theme-primary)" } : {}}
