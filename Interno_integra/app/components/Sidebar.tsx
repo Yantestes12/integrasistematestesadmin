@@ -90,16 +90,16 @@ export const Sidebar = ({ onSelectMenu }) => {
           <div key={index} className="w-full z-10">
             <div
               onClick={(e) => togglePath(itemKey, e, item)}
-              className={`flex items-center justify-between py-3 cursor-pointer transition-colors duration-150 ${paddingLeft} ${levelBg}`}
+              className={`flex items-center justify-between py-4 cursor-pointer transition-colors duration-150 ${paddingLeft} ${levelBg}`}
             >
               <div className="flex items-center gap-3 min-w-0 w-full pointer-events-none">
                 {item.icon && <span>{item.icon}</span>}
-                <span className={`truncate ${level === 0 ? 'text-[15px] lg:text-lg font-bold' : 'text-sm lg:text-base font-semibold'}`}>
+                <span className={`truncate ${level === 0 ? 'text-lg md:text-xl font-bold' : 'text-base md:text-lg font-semibold'}`}>
                   {item.name}
                 </span>
               </div>
               <span className="ml-2 shrink-0 pointer-events-none">
-                {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
               </span>
             </div>
 
@@ -126,13 +126,13 @@ export const Sidebar = ({ onSelectMenu }) => {
                 navigate(item.path);
               }
             }}
-            className={`flex items-center justify-between py-3.5 cursor-pointer transition-all duration-100 active:scale-[0.98] select-none ${paddingLeft} ${
+            className={`flex items-center justify-between py-4 cursor-pointer transition-all duration-100 active:scale-[0.98] select-none ${paddingLeft} ${
               isActive ? 'bg-white/25 font-bold border-l-4 border-white text-white shadow-inner' : levelBg
             } w-full text-white no-underline text-left border-none bg-transparent outline-none`}
           >
             <div className="flex items-center gap-3 min-w-0 w-full pointer-events-none">
               {item.icon && <span>{item.icon}</span>}
-              <span className={`truncate ${level === 0 ? 'text-[15px] lg:text-lg font-bold' : 'text-sm lg:text-base font-semibold'} ${isActive ? 'font-extrabold' : ''}`}>
+              <span className={`truncate ${level === 0 ? 'text-lg md:text-xl font-bold' : 'text-base md:text-lg font-semibold'} ${isActive ? 'font-extrabold' : ''}`}>
                 {level > 0 && !item.icon && '• '} {item.name}
               </span>
             </div>
