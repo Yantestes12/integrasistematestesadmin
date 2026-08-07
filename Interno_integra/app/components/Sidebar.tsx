@@ -145,7 +145,7 @@ export const Sidebar = ({ onSelectMenu }) => {
       <aside
         className={`
           w-80 bg-[var(--theme-primary)] text-white flex flex-col shadow-inner select-none
-          fixed lg:sticky top-0 lg:top-[68px] z-40 h-screen lg:h-[calc(100vh-68px)]
+          fixed lg:sticky top-0 lg:top-16 z-40 h-screen lg:h-[calc(100vh-64px)]
           transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
