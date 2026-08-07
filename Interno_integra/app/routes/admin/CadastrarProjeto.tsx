@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useSearchParams } from "react-router";
+import { useSearchParams, useNavigate } from "react-router";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FolderPlus, ArrowLeft, Check, AlertTriangle } from "lucide-react";
@@ -65,12 +65,13 @@ export default function CadastrarProjeto() {
   });
 
   const { isLoading, saveProjeto } = useProjetoWebhook(editModeId, methods.reset);
+  const navigate = useNavigate();
 
   const onSubmit = async (data: ProjetoFormData) => {
     try {
       await saveProjeto(editModeId, data);
       alert(editModeId ? "Iniciativa atualizada com sucesso!" : "Iniciativa cadastrada com sucesso!");
-      window.history.back();
+      navigate("/iniciativas");
     } catch (error) {
       alert("Erro ao enviar para o N8N.");
     }
