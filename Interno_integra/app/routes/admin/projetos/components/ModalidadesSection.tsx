@@ -64,13 +64,21 @@ export function ModalidadesSection() {
     }
   }, [deleteCountdown]);
 
+  const { getValues } = useFormContext<ProjetoFormData>();
+
   const openModal = () => {
-    setSelectedIds(new Set(fields.map(f => String(f.id))));
+    const currentItems = getValues("limitesModalidade") || [];
+    // O RHF substitui o id interno, mas podemos usar o nome para parear, ou pegar o id original do getValues
+    // A melhor forma de parear é pelo NOME, pois os nomes das modalidades são únicos, ou usar o ID original.
+    // O getValues traz o array bruto com os IDs originais preservados!
+    const activeIds = currentItems.map((item: any) => String(item.id));
+    setSelectedIds(new Set(activeIds));
     setIsModalOpen(true);
   };
 
   const handleSaveModal = () => {
-    const currentIds = fields.map(f => String(f.id));
+    const currentItems = getValues("limitesModalidade") || [];
+    const currentIds = currentItems.map((item: any) => String(item.id));
     
     // Remove as desmarcadas (de trás pra frente para não bagunçar os índices)
     for (let i = currentIds.length - 1; i >= 0; i--) {
@@ -190,12 +198,13 @@ export function ModalidadesSection() {
             <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase">
               <th className="p-3">Modalidade</th>
               <th className="p-3 text-right">Máximo de núcleos ativos</th>
+              <th className="p-3 w-16 text-center">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm">
             {fields.length === 0 ? (
               <tr>
-                <td colSpan={2} className="p-8 text-center text-slate-500 text-sm italic border-dashed border-2 border-slate-100 m-2 rounded-lg">
+                <td colSpan={3} className="p-8 text-center text-slate-500 text-sm italic border-dashed border-2 border-slate-100 m-2 rounded-lg">
                   <div className="flex flex-col items-center gap-2">
                     <Layers className="w-8 h-8 text-slate-300" />
                     <p>Nenhuma modalidade configurada no projeto.</p>
@@ -219,6 +228,16 @@ export function ModalidadesSection() {
                       {...register(`limitesModalidade.${index}.limite`, { valueAsNumber: true })}
                       className="w-24 bg-white border border-slate-200 rounded-lg p-1.5 text-right font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ml-auto shadow-sm"
                     />
+                  </td>
+                  <td className="p-3 text-center">
+                    <button
+                      type="button"
+                      onClick={() => remove(index)}
+                      className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                      title="Remover Modalidade"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </td>
                 </tr>
               ))
