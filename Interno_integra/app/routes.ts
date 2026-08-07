@@ -11,6 +11,7 @@ export default [
     // Admin / Iniciativas
     route("admin/iniciativas", "routes/admin/Iniciativas.tsx"),
     route("admin/cadastrar-projeto", "routes/admin/CadastrarProjeto.tsx"),
+    route("admin/nucleos", "routes/admin/Nucleos.tsx"),
     route("admin/cadastrar-nucleo", "routes/admin/CadastrarNucleo.tsx"),
   ]),
 ] satisfies RouteConfig;
