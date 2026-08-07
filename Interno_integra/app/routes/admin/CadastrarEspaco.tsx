@@ -265,24 +265,14 @@ export default function CadastrarEspaco() {
     finally { setIsSearchingCnpj(false); }
   };
 
-  // ─── Upload to Supabase Storage ───────────────────────────────────────────
-  const uploadFile = async (file: File, tipo: "foto" | "termo"): Promise<string> => {
-    // Upload via N8N endpoint que salva no Supabase Storage
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("instituto", institute);
-    formData.append("tipo", tipo);
-    if (editId) formData.append("espaco_id", editId);
-
-    const res = await fetch("https://w.ibrase.com.br/webhook/espacos-upload", {
-      method: "POST",
-      body: formData,
+  // ─── Convert File to Base64 ───────────────────────────────────────────────
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
     });
-    if (res.ok) {
-      const d = await res.json();
-      return d.url || d.publicUrl || d.path || "";
-    }
-    throw new Error("Upload falhou");
   };
 
   // ─── Validation ───────────────────────────────────────────────────────────
@@ -333,15 +323,15 @@ export default function CadastrarEspaco() {
       let fotoUrl = form.fotoUrl;
       let termoUrl = form.termoUrl;
 
-      // Upload de arquivos se houver
+      // Converte arquivos para Base64 se houver
       if (form.fotoFile) {
         setIsUploadingFoto(true);
-        try { fotoUrl = await uploadFile(form.fotoFile, "foto"); } catch (e) { console.warn("Upload foto falhou, continuando sem foto"); }
+        try { fotoUrl = await fileToBase64(form.fotoFile); } catch (e) { console.warn("Erro ao converter foto"); }
         setIsUploadingFoto(false);
       }
       if (form.termoFile) {
         setIsUploadingTermo(true);
-        try { termoUrl = await uploadFile(form.termoFile, "termo"); } catch (e) { console.warn("Upload termo falhou, continuando sem termo"); }
+        try { termoUrl = await fileToBase64(form.termoFile); } catch (e) { console.warn("Erro ao converter termo"); }
         setIsUploadingTermo(false);
       }
 
