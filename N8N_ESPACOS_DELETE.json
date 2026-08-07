@@ -1,0 +1,58 @@
+{
+  "name": "espacos-delete",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "espacos-delete",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-espacos-delete",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "schema": { "mode": "expression", "value": "public" },
+        "table": {
+          "mode": "expression",
+          "value": "={{ $json.body.instituto || 'GASCTPNA' }}_espacos"
+        },
+        "matchColumns": ["id"],
+        "dataToSend": "defineBelow",
+        "fieldsToSend": {
+          "values": [
+            {"fieldName": "id", "fieldValue": "={{ $json.body.id }}"}
+          ]
+        }
+      },
+      "id": "supabase-espacos-delete",
+      "name": "Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "credentials": {
+        "supabaseApi": { "id": "supabase-cred", "name": "Supabase account" }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "respond-espacos-delete",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{"node": "Supabase", "type": "main", "index": 0}]] },
+    "Supabase": { "main": [[{"node": "Respond to Webhook", "type": "main", "index": 0}]] }
+  }
+}

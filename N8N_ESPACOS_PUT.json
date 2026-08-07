@@ -1,23 +1,23 @@
 {
-  "name": "N8N_ESPACOS_POST",
+  "name": "N8N_ESPACOS_PUT",
   "nodes": [
     {
-      "id": "wh-espacos-post",
-      "name": "Webhook POST",
+      "id": "wh-espacos-put",
+      "name": "Webhook PUT",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [0, 0],
-      "webhookId": "espacos-post",
+      "webhookId": "espacos-put",
       "parameters": {
         "httpMethod": "POST",
-        "path": "espacos-post",
+        "path": "espacos-put",
         "responseMode": "responseNode",
         "options": {}
       }
     },
     {
-      "id": "switch-post",
-      "name": "Switch POST",
+      "id": "switch-put",
+      "name": "Switch PUT",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
       "position": [220, 0],
@@ -37,13 +37,15 @@
     },
     {
       "id": "sb-gasctpna",
-      "name": "SB GASCTPNA POST",
+      "name": "SB GASCTPNA PUT",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [480, -300],
       "parameters": {
-        "operation": "create",
+        "operation": "update",
         "tableId": "GASCTPNA_espacos",
+        "matchColumn": "id",
+        "matchValue": "={{ $json.body.id }}",
         "fieldsUi": {
           "fieldValues": [
             { "fieldId": "projeto_id", "fieldValue": "={{ $json.body.projeto_id }}" },
@@ -65,20 +67,22 @@
             { "fieldId": "foto_url", "fieldValue": "={{ $json.body.foto_url }}" },
             { "fieldId": "termo_url", "fieldValue": "={{ $json.body.termo_url }}" },
             { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo ? 1 : 0 }}" },
-            { "fieldId": "created_by", "fieldValue": "={{ $json.body.created_by }}" }
+            { "fieldId": "updated_by", "fieldValue": "={{ $json.body.updated_by }}" }
           ]
         }
       }
     },
     {
       "id": "sb-ibrase",
-      "name": "SB IBRASE POST",
+      "name": "SB IBRASE PUT",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [480, -100],
       "parameters": {
-        "operation": "create",
+        "operation": "update",
         "tableId": "IBRASE_espacos",
+        "matchColumn": "id",
+        "matchValue": "={{ $json.body.id }}",
         "fieldsUi": {
           "fieldValues": [
             { "fieldId": "projeto_id", "fieldValue": "={{ $json.body.projeto_id }}" },
@@ -100,20 +104,22 @@
             { "fieldId": "foto_url", "fieldValue": "={{ $json.body.foto_url }}" },
             { "fieldId": "termo_url", "fieldValue": "={{ $json.body.termo_url }}" },
             { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo ? 1 : 0 }}" },
-            { "fieldId": "created_by", "fieldValue": "={{ $json.body.created_by }}" }
+            { "fieldId": "updated_by", "fieldValue": "={{ $json.body.updated_by }}" }
           ]
         }
       }
     },
     {
       "id": "sb-auni",
-      "name": "SB AUNI POST",
+      "name": "SB AUNI PUT",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [480, 100],
       "parameters": {
-        "operation": "create",
+        "operation": "update",
         "tableId": "AUNI_espacos",
+        "matchColumn": "id",
+        "matchValue": "={{ $json.body.id }}",
         "fieldsUi": {
           "fieldValues": [
             { "fieldId": "projeto_id", "fieldValue": "={{ $json.body.projeto_id }}" },
@@ -135,20 +141,22 @@
             { "fieldId": "foto_url", "fieldValue": "={{ $json.body.foto_url }}" },
             { "fieldId": "termo_url", "fieldValue": "={{ $json.body.termo_url }}" },
             { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo ? 1 : 0 }}" },
-            { "fieldId": "created_by", "fieldValue": "={{ $json.body.created_by }}" }
+            { "fieldId": "updated_by", "fieldValue": "={{ $json.body.updated_by }}" }
           ]
         }
       }
     },
     {
       "id": "sb-ivem",
-      "name": "SB IVEM POST",
+      "name": "SB IVEM PUT",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [480, 300],
       "parameters": {
-        "operation": "create",
+        "operation": "update",
         "tableId": "IVEM_espacos",
+        "matchColumn": "id",
+        "matchValue": "={{ $json.body.id }}",
         "fieldsUi": {
           "fieldValues": [
             { "fieldId": "projeto_id", "fieldValue": "={{ $json.body.projeto_id }}" },
@@ -170,7 +178,7 @@
             { "fieldId": "foto_url", "fieldValue": "={{ $json.body.foto_url }}" },
             { "fieldId": "termo_url", "fieldValue": "={{ $json.body.termo_url }}" },
             { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo ? 1 : 0 }}" },
-            { "fieldId": "created_by", "fieldValue": "={{ $json.body.created_by }}" }
+            { "fieldId": "updated_by", "fieldValue": "={{ $json.body.updated_by }}" }
           ]
         }
       }
@@ -209,27 +217,27 @@
     }
   ],
   "connections": {
-    "Webhook POST": {
-      "main": [[{ "node": "Switch POST", "type": "main", "index": 0 }]]
+    "Webhook PUT": {
+      "main": [[{ "node": "Switch PUT", "type": "main", "index": 0 }]]
     },
-    "Switch POST": {
+    "Switch PUT": {
       "main": [
-        [{ "node": "SB GASCTPNA POST", "type": "main", "index": 0 }],
-        [{ "node": "SB IBRASE POST", "type": "main", "index": 0 }],
-        [{ "node": "SB AUNI POST", "type": "main", "index": 0 }],
-        [{ "node": "SB IVEM POST", "type": "main", "index": 0 }]
+        [{ "node": "SB GASCTPNA PUT", "type": "main", "index": 0 }],
+        [{ "node": "SB IBRASE PUT", "type": "main", "index": 0 }],
+        [{ "node": "SB AUNI PUT", "type": "main", "index": 0 }],
+        [{ "node": "SB IVEM PUT", "type": "main", "index": 0 }]
       ]
     },
-    "SB GASCTPNA POST": {
+    "SB GASCTPNA PUT": {
       "main": [[{ "node": "Respond GASCTPNA", "type": "main", "index": 0 }]]
     },
-    "SB IBRASE POST": {
+    "SB IBRASE PUT": {
       "main": [[{ "node": "Respond IBRASE", "type": "main", "index": 0 }]]
     },
-    "SB AUNI POST": {
+    "SB AUNI PUT": {
       "main": [[{ "node": "Respond AUNI", "type": "main", "index": 0 }]]
     },
-    "SB IVEM POST": {
+    "SB IVEM PUT": {
       "main": [[{ "node": "Respond IVEM", "type": "main", "index": 0 }]]
     }
   }

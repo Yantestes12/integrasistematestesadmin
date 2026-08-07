@@ -2,62 +2,147 @@
   "name": "espacos-get",
   "nodes": [
     {
+      "id": "wh-espacos-get",
+      "name": "Webhook GET",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "webhookId": "espacos-get",
       "parameters": {
         "httpMethod": "GET",
         "path": "espacos-get",
         "responseMode": "responseNode",
         "options": {}
-      },
-      "id": "webhook-espacos-get",
-      "name": "Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [240, 300]
-    },
-    {
-      "parameters": {
-        "operation": "select",
-        "schema": {
-          "mode": "expression",
-          "value": "public"
-        },
-        "table": {
-          "mode": "expression",
-          "value": "={{ $('Webhook').item.json.query.instituto || 'GASCTPNA' }}_espacos"
-        },
-        "options": {
-          "orderBy": {
-            "values": [{"column": "created_at", "direction": "DESC"}]
-          }
-        }
-      },
-      "id": "supabase-espacos-get",
-      "name": "Supabase",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [460, 300],
-      "credentials": {
-        "supabaseApi": { "id": "supabase-cred", "name": "Supabase account" }
       }
     },
     {
+      "id": "switch-get",
+      "name": "Switch Instituto",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [220, 0],
       "parameters": {
-        "respondWith": "allIncomingItems",
+        "dataType": "string",
+        "value1": "={{ $json.query.instituto }}",
+        "rules": {
+          "rules": [
+            { "value2": "GASCTPNA" },
+            { "value2": "IBRASE", "output": 1 },
+            { "value2": "AUNI", "output": 2 },
+            { "value2": "IVEM", "output": 3 }
+          ]
+        },
+        "fallbackOutput": 0
+      }
+    },
+    {
+      "id": "sb-gasctpna",
+      "name": "SB GASCTPNA GET",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [480, -300],
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "GASCTPNA_espacos",
+        "limit": 500,
         "options": {}
-      },
-      "id": "respond-espacos-get",
-      "name": "Respond to Webhook",
+      }
+    },
+    {
+      "id": "sb-ibrase",
+      "name": "SB IBRASE GET",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [480, -100],
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "IBRASE_espacos",
+        "limit": 500,
+        "options": {}
+      }
+    },
+    {
+      "id": "sb-auni",
+      "name": "SB AUNI GET",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [480, 100],
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "AUNI_espacos",
+        "limit": 500,
+        "options": {}
+      }
+    },
+    {
+      "id": "sb-ivem",
+      "name": "SB IVEM GET",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [480, 300],
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "IVEM_espacos",
+        "limit": 500,
+        "options": {}
+      }
+    },
+    {
+      "id": "resp-gasctpna",
+      "name": "Respond GASCTPNA",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [680, 300]
+      "position": [720, -300],
+      "parameters": { "respondWith": "allIncomingItems", "options": {} }
+    },
+    {
+      "id": "resp-ibrase",
+      "name": "Respond IBRASE",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [720, -100],
+      "parameters": { "respondWith": "allIncomingItems", "options": {} }
+    },
+    {
+      "id": "resp-auni",
+      "name": "Respond AUNI",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [720, 100],
+      "parameters": { "respondWith": "allIncomingItems", "options": {} }
+    },
+    {
+      "id": "resp-ivem",
+      "name": "Respond IVEM",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [720, 300],
+      "parameters": { "respondWith": "allIncomingItems", "options": {} }
     }
   ],
   "connections": {
-    "Webhook": {
-      "main": [[{"node": "Supabase", "type": "main", "index": 0}]]
+    "Webhook GET": {
+      "main": [[{ "node": "Switch Instituto", "type": "main", "index": 0 }]]
     },
-    "Supabase": {
-      "main": [[{"node": "Respond to Webhook", "type": "main", "index": 0}]]
+    "Switch Instituto": {
+      "main": [
+        [{ "node": "SB GASCTPNA GET", "type": "main", "index": 0 }],
+        [{ "node": "SB IBRASE GET", "type": "main", "index": 0 }],
+        [{ "node": "SB AUNI GET", "type": "main", "index": 0 }],
+        [{ "node": "SB IVEM GET", "type": "main", "index": 0 }]
+      ]
+    },
+    "SB GASCTPNA GET": {
+      "main": [[{ "node": "Respond GASCTPNA", "type": "main", "index": 0 }]]
+    },
+    "SB IBRASE GET": {
+      "main": [[{ "node": "Respond IBRASE", "type": "main", "index": 0 }]]
+    },
+    "SB AUNI GET": {
+      "main": [[{ "node": "Respond AUNI", "type": "main", "index": 0 }]]
+    },
+    "SB IVEM GET": {
+      "main": [[{ "node": "Respond IVEM", "type": "main", "index": 0 }]]
     }
   }
 }
