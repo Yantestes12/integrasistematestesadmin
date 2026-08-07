@@ -143,7 +143,7 @@ export default function Iniciativas() {
         
         const parsed = parseIniciativasList(data);
         if (parsed.length > 0) {
-          setIniciativas(parsed);
+          setIniciativas(parsed.sort((a, b) => Number(b.id) - Number(a.id)));
           setLoading(false);
           return;
         }
