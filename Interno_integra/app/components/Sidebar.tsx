@@ -92,13 +92,13 @@ export const Sidebar = ({ onSelectMenu }) => {
               onClick={(e) => togglePath(itemKey, e, item)}
               className={`flex items-center justify-between py-3 cursor-pointer transition-colors duration-150 ${paddingLeft} ${levelBg}`}
             >
-              <div className="flex items-center gap-3 min-w-0 w-full">
+              <div className="flex items-center gap-3 min-w-0 w-full pointer-events-none">
                 {item.icon && <span>{item.icon}</span>}
                 <span className={`truncate ${level === 0 ? 'text-[15px] font-medium' : 'text-sm'}`}>
                   {item.name}
                 </span>
               </div>
-              <span className="ml-2 shrink-0">
+              <span className="ml-2 shrink-0 pointer-events-none">
                 {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
               </span>
             </div>
@@ -130,7 +130,7 @@ export const Sidebar = ({ onSelectMenu }) => {
               isActive ? 'bg-white/25 font-bold border-l-4 border-white text-white shadow-inner' : levelBg
             } w-full text-white no-underline text-left border-none bg-transparent outline-none`}
           >
-            <div className="flex items-center gap-3 min-w-0 w-full">
+            <div className="flex items-center gap-3 min-w-0 w-full pointer-events-none">
               {item.icon && <span>{item.icon}</span>}
               <span className={`truncate ${level === 0 ? 'text-[15px] font-medium' : 'text-sm'} ${isActive ? 'font-extrabold' : ''}`}>
                 {level > 0 && !item.icon && '• '} {item.name}
