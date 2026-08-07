@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import {
   LayoutDashboard,
   Settings,
@@ -19,6 +19,7 @@ import {
 
 export const Sidebar = ({ onSelectMenu }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
   // Mantém os submenus abertos por padrão (ex: 'Administrativo')
@@ -116,15 +117,18 @@ export const Sidebar = ({ onSelectMenu }) => {
 
       return (
         <div key={index} className="w-full z-10">
-          <Link
-            to={item.path || '#'}
+          <button
+            type="button"
             onClick={() => {
               if (onSelectMenu) onSelectMenu(item.name);
               setIsOpen(false);
+              if (item.path && item.path !== '#') {
+                navigate(item.path);
+              }
             }}
             className={`flex items-center justify-between py-3 cursor-pointer transition-all duration-150 ${paddingLeft} ${
               isActive ? 'bg-white/25 font-bold border-l-4 border-white text-white shadow-inner' : levelBg
-            } w-full text-white no-underline block`}
+            } w-full text-white no-underline text-left border-none bg-transparent outline-none`}
           >
             <div className="flex items-center gap-3 min-w-0 w-full">
               {item.icon && <span>{item.icon}</span>}
@@ -132,7 +136,7 @@ export const Sidebar = ({ onSelectMenu }) => {
                 {level > 0 && !item.icon && '• '} {item.name}
               </span>
             </div>
-          </Link>
+          </button>
         </div>
       );
     });
