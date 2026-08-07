@@ -61,6 +61,7 @@ export const Sidebar = ({ onSelectMenu }) => {
       icon: <BookOpen className="w-5 h-5 md:w-7 md:h-7" />,
       children: [
         { name: 'Iniciativas', path: "/admin/iniciativas" },
+        { name: 'Espaços', path: "/admin/espacos" },
         { name: 'Núcleos', path: "/admin/nucleos" },
       ]
     }

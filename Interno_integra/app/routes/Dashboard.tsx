@@ -1,5 +1,5 @@
 import type { Route } from "./+types/Dashboard";
-import { GraduationCap, ArrowRight, Layers, Building2, ChevronRight } from "lucide-react";
+import { GraduationCap, ArrowRight, Layers, Building2, Home } from "lucide-react";
 import { Link } from "react-router";
 import { useEffect, useState } from "react";
 
@@ -40,11 +40,11 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Grid de Cards: No Celular é Retângulo (1 col), no PC vira Quadrados/Grid (2 cols) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+      {/* Grid de Cards: Celular = 1 col, md = 2 cols, lg (PC) = 3 cols */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
         {/* Card Iniciativas */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col justify-between transition-all hover:shadow-md hover:border-slate-300 group min-h-[280px] md:min-h-0 md:h-[340px]">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 flex flex-col justify-between transition-all hover:shadow-md hover:border-slate-300 group min-h-[280px] md:min-h-0 md:h-[300px]">
           <div>
             <div className="flex items-center justify-between gap-4 mb-5">
               <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-2xl bg-blue-50 text-[var(--theme-primary)] flex items-center justify-center shrink-0 border border-blue-100 group-hover:scale-105 transition-transform">
@@ -75,8 +75,40 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Card Espaços */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 flex flex-col justify-between transition-all hover:shadow-md hover:border-slate-300 group min-h-[280px] md:min-h-0 md:h-[300px]">
+          <div>
+            <div className="flex items-center justify-between gap-4 mb-5">
+              <div className="w-14 h-14 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center shrink-0 border border-violet-100 group-hover:scale-105 transition-transform">
+                <Home className="w-7 h-7" />
+              </div>
+              <span className="text-xs lg:text-sm font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full uppercase tracking-wider">
+                Módulo 02
+              </span>
+            </div>
+
+            <h2 className="text-xl font-bold text-slate-900 group-hover:text-violet-600 transition-colors">
+              Espaços
+            </h2>
+            <p className="text-slate-500 text-sm mt-2.5 leading-relaxed">
+              Cadastro dos locais físicos cedidos, responsáveis, horários de funcionamento e documentação do Termo de Uso.
+            </p>
+          </div>
+
+          <div className="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500">Locais de Atendimento</span>
+            <Link
+              to="/admin/espacos"
+              className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-3 rounded-xl shadow-sm transition-all text-sm group-hover:translate-x-1"
+            >
+              <span>Acessar</span>
+              <ArrowRight size={18} />
+            </Link>
+          </div>
+        </div>
+
         {/* Card Núcleos */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col justify-between transition-all hover:shadow-md hover:border-slate-300 group min-h-[280px] md:min-h-0 md:h-[340px]">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 flex flex-col justify-between transition-all hover:shadow-md hover:border-slate-300 group min-h-[280px] md:min-h-0 md:h-[300px]">
           <div>
             <div className="flex items-center justify-between gap-4 mb-5">
               <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100 group-hover:scale-105 transition-transform">

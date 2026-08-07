@@ -1,0 +1,78 @@
+{
+  "name": "espacos-post",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "espacos-post",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-espacos-post",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "schema": { "mode": "expression", "value": "public" },
+        "table": {
+          "mode": "expression",
+          "value": "={{ $json.body.instituto || 'GASCTPNA' }}_espacos"
+        },
+        "dataToSend": "defineBelow",
+        "fieldsToSend": {
+          "values": [
+            {"fieldName": "projeto_id", "fieldValue": "={{ $json.body.projeto_id }}"},
+            {"fieldName": "modalidade_id", "fieldValue": "={{ $json.body.modalidade_id }}"},
+            {"fieldName": "nome", "fieldValue": "={{ $json.body.nome }}"},
+            {"fieldName": "resp_cpf", "fieldValue": "={{ $json.body.resp_cpf }}"},
+            {"fieldName": "resp_cnpj", "fieldValue": "={{ $json.body.resp_cnpj }}"},
+            {"fieldName": "resp_nome", "fieldValue": "={{ $json.body.resp_nome }}"},
+            {"fieldName": "resp_email", "fieldValue": "={{ $json.body.resp_email }}"},
+            {"fieldName": "resp_telefone", "fieldValue": "={{ $json.body.resp_telefone }}"},
+            {"fieldName": "cep", "fieldValue": "={{ $json.body.cep }}"},
+            {"fieldName": "rua", "fieldValue": "={{ $json.body.rua }}"},
+            {"fieldName": "numero", "fieldValue": "={{ $json.body.numero }}"},
+            {"fieldName": "bairro", "fieldValue": "={{ $json.body.bairro }}"},
+            {"fieldName": "cidade", "fieldValue": "={{ $json.body.cidade }}"},
+            {"fieldName": "uf", "fieldValue": "={{ $json.body.uf }}"},
+            {"fieldName": "ponto_referencia", "fieldValue": "={{ $json.body.ponto_referencia }}"},
+            {"fieldName": "horarios", "fieldValue": "={{ $json.body.horarios }}"},
+            {"fieldName": "foto_url", "fieldValue": "={{ $json.body.foto_url }}"},
+            {"fieldName": "termo_url", "fieldValue": "={{ $json.body.termo_url }}"},
+            {"fieldName": "ativo", "fieldValue": "={{ $json.body.ativo ?? true }}"},
+            {"fieldName": "created_by", "fieldValue": "={{ $json.body.created_by }}"},
+            {"fieldName": "ip_cadastro", "fieldValue": "={{ $json.headers['x-forwarded-for'] || '' }}"},
+            {"fieldName": "user_agent", "fieldValue": "={{ $json.headers['user-agent'] || '' }}"}
+          ]
+        }
+      },
+      "id": "supabase-espacos-post",
+      "name": "Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "credentials": {
+        "supabaseApi": { "id": "supabase-cred", "name": "Supabase account" }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "respond-espacos-post",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{"node": "Supabase", "type": "main", "index": 0}]] },
+    "Supabase": { "main": [[{"node": "Respond to Webhook", "type": "main", "index": 0}]] }
+  }
+}
