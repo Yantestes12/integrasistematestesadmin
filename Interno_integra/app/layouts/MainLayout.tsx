@@ -8,6 +8,7 @@ const themes = {
     // Laranja
     "--theme-primary": "#f97316",
     "--theme-primary-hover": "#ea580c",
+    "--theme-topbar": "#431407", // Laranja escuro / Terracota profundo
     "--theme-level-1": "#c2410c",
     "--theme-level-1-hover": "#9a3412",
     "--theme-level-2": "#7c2d12",
@@ -19,6 +20,7 @@ const themes = {
     // Roxo
     "--theme-primary": "#8b5cf6",
     "--theme-primary-hover": "#7c3aed",
+    "--theme-topbar": "#2e054e", // Roxo bem escuro
     "--theme-level-1": "#6d28d9",
     "--theme-level-1-hover": "#5b21b6",
     "--theme-level-2": "#4c1d95",
@@ -30,6 +32,7 @@ const themes = {
     // Verde
     "--theme-primary": "#10b981",
     "--theme-primary-hover": "#059669",
+    "--theme-topbar": "#022c22", // Verde floresta bem escuro
     "--theme-level-1": "#047857",
     "--theme-level-1-hover": "#064e3b",
     "--theme-level-2": "#064e3b",
@@ -41,6 +44,7 @@ const themes = {
     // Azul
     "--theme-primary": "#2563eb",
     "--theme-primary-hover": "#1d4ed8",
+    "--theme-topbar": "#0f172a", // Azul marinho bem escuro
     "--theme-level-1": "#1e40af",
     "--theme-level-1-hover": "#1e3a8a",
     "--theme-level-2": "#1e3a8a",
@@ -82,7 +86,7 @@ export const MainLayout = () => {
         <Sidebar />
 
         {/* 2. O scroll DEVE ser nesta div <main>, sem divs com h-full por dentro */}
-        <main className="flex-1 overflow-y-auto h-[calc(100vh-64px)] w-full">
+        <main className="flex-1 overflow-y-auto h-[calc(100vh-68px)] w-full">
           
           {/* Conteúdo das rotas com o padding */}
           <div className="p-4 sm:p-6 lg:p-8 space-y-6">
