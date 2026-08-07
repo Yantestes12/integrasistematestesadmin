@@ -126,7 +126,7 @@ export const Sidebar = ({ onSelectMenu }) => {
                 navigate(item.path);
               }
             }}
-            className={`flex items-center justify-between py-3 cursor-pointer transition-all duration-150 ${paddingLeft} ${
+            className={`flex items-center justify-between py-3.5 cursor-pointer transition-all duration-100 active:scale-[0.98] select-none ${paddingLeft} ${
               isActive ? 'bg-white/25 font-bold border-l-4 border-white text-white shadow-inner' : levelBg
             } w-full text-white no-underline text-left border-none bg-transparent outline-none`}
           >
