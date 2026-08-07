@@ -218,56 +218,56 @@ export default function Nucleos() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  <th className="py-3.5 px-4 w-16 text-center">ID</th>
-                  <th className="py-3.5 px-4">Nome do Núcleo</th>
-                  <th className="py-3.5 px-4">Iniciativa / Modalidade</th>
-                  <th className="py-3.5 px-4">Localidade</th>
-                  <th className="py-3.5 px-4">Responsáveis</th>
-                  <th className="py-3.5 px-4 w-28 text-center">Status</th>
-                  <th className="py-3.5 px-4 w-28 text-center">Ações</th>
+                <tr className="bg-slate-50 border-b border-slate-100 text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <th className="py-4 px-4 lg:px-6 w-16 text-center">ID</th>
+                  <th className="py-4 px-4 lg:px-6">Nome do Núcleo</th>
+                  <th className="py-4 px-4 lg:px-6">Iniciativa / Modalidade</th>
+                  <th className="py-4 px-4 lg:px-6">Localidade</th>
+                  <th className="py-4 px-4 lg:px-6">Responsáveis</th>
+                  <th className="py-4 px-4 lg:px-6 w-28 text-center">Status</th>
+                  <th className="py-4 px-4 lg:px-6 w-28 text-center">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
+              <tbody className="divide-y divide-slate-100 text-sm lg:text-base">
                 {filteredNucleos.map((item) => {
                   return (
                     <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
-                      <td className="py-4 px-4 font-bold text-slate-400 text-center">{item.id}</td>
+                      <td className="py-4 lg:py-5 px-4 lg:px-6 font-bold text-slate-400 text-center">{item.id}</td>
                       
-                      <td className="py-4 px-4">
-                        <span className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors block">
+                      <td className="py-4 lg:py-5 px-4 lg:px-6">
+                        <span className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors block text-sm lg:text-base">
                           {item.nome}
                         </span>
                         {item.telefone && (
-                          <div className="text-[11px] text-slate-500 mt-1">
+                          <div className="text-xs text-slate-500 mt-1">
                             Tel: {item.telefone}
                           </div>
                         )}
                       </td>
 
-                      <td className="py-4 px-4">
-                        <div className="font-bold text-xs text-slate-800">
+                      <td className="py-4 lg:py-5 px-4 lg:px-6">
+                        <div className="font-bold text-xs lg:text-sm text-slate-800">
                           {item.projeto_nome || "Sem Projeto"}
                         </div>
                         {item.modalidade_nome && (
-                          <div className="text-[11px] text-slate-500 mt-0.5">
+                          <div className="text-xs text-slate-500 mt-0.5">
                             {item.modalidade_nome}
                           </div>
                         )}
                       </td>
 
-                      <td className="py-4 px-4">
-                        <div className="flex items-start gap-1.5 text-slate-700 text-xs font-medium">
-                          <MapPin size={14} className="text-slate-400 mt-0.5 shrink-0" />
+                      <td className="py-4 lg:py-5 px-4 lg:px-6">
+                        <div className="flex items-start gap-1.5 text-slate-700 text-xs lg:text-sm font-medium">
+                          <MapPin size={16} className="text-slate-400 mt-0.5 shrink-0" />
                           <div>
                             <div>{item.cidade_nome}{item.cidade_uf ? `/${item.cidade_uf}` : ""} - {item.bairro_nome}</div>
                           </div>
                         </div>
                       </td>
                       
-                      <td className="py-4 px-4">
+                      <td className="py-4 lg:py-5 px-4 lg:px-6">
                         {item.coordenador_nome_real && (
-                          <div className="text-[11px] text-slate-700">
+                          <div className="text-xs lg:text-sm text-slate-700 font-medium">
                             <span className="font-semibold text-slate-500">Coord:</span> {item.coordenador_nome_real}
                           </div>
                         )}

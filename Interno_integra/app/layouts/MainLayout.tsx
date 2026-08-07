@@ -75,9 +75,9 @@ export const MainLayout = () => {
   const themeVars = themes[institute as keyof typeof themes] || themes.IBRASE;
 
   return (
-    // 1. Container principal ocupando a altura da tela
+    // 1. Container principal ocupando a altura da tela (sem scroll duplo)
     <div 
-      className="min-h-screen bg-[#f4f6fa] font-sans flex flex-col text-slate-800"
+      className="h-screen overflow-hidden bg-[#f4f6fa] font-sans flex flex-col text-slate-800"
       style={themeVars as React.CSSProperties}
     >
       <Topbar />

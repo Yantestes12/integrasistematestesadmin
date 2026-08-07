@@ -61,7 +61,7 @@ export const Topbar = () => {
   };
 
   return (
-    <header className="bg-white text-slate-800 lg:bg-[var(--theme-topbar)] lg:text-white pl-14 sm:pl-16 lg:pl-6 pr-4 sm:pr-6 py-3 flex items-center justify-between shadow-[0_4px_20px_-10px_rgba(0,0,0,0.1)] sticky top-0 z-[60] w-full select-none min-h-[64px] border-b border-slate-100 lg:border-white/10 transition-colors duration-200">
+    <header className="bg-white text-slate-800 lg:bg-[var(--theme-topbar)] lg:text-white pl-14 sm:pl-16 lg:pl-6 pr-4 sm:pr-6 py-3 flex items-center justify-between shadow-[0_4px_20px_-10px_rgba(0,0,0,0.1)] sticky top-0 z-30 lg:z-30 w-full select-none min-h-[64px] border-b border-slate-100 lg:border-white/10 transition-colors duration-200">
 
       {/* Lado Esquerdo: Logo / Marca e Contexto do Instituto */}
       <div className="flex items-center gap-3 sm:gap-6 min-w-0">
