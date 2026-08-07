@@ -1,0 +1,1101 @@
+{
+  "nodes": [
+    {
+      "id": "webhook-put",
+      "name": "Webhook PUT",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "PUT",
+        "path": "projetos-put",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "projetos-put"
+    },
+    {
+      "id": "switch-inst",
+      "name": "Switch Instituto",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ ($json.body?.instituto || $json.query?.instituto || \"GASCTPNA\").toUpperCase().trim() }}",
+                    "rightValue": "GASCTPNA",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "GASCTPNA"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ ($json.body?.instituto || $json.query?.instituto || \"GASCTPNA\").toUpperCase().trim() }}",
+                    "rightValue": "IBRASE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "IBRASE"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ ($json.body?.instituto || $json.query?.instituto || \"GASCTPNA\").toUpperCase().trim() }}",
+                    "rightValue": "AUNI",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUNI"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ ($json.body?.instituto || $json.query?.instituto || \"GASCTPNA\").toUpperCase().trim() }}",
+                    "rightValue": "IVEM",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "IVEM"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "update-GASCTPNA",
+      "name": "Update GASCTPNA",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        500,
+        -350
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
+      "parameters": {
+        "operation": "update",
+        "tableId": "GASCTPNA_projetos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nome_projeto }}"
+            },
+            {
+              "fieldId": "numero_proposta",
+              "fieldValue": "={{ $json.body.numero_proposta }}"
+            },
+            {
+              "fieldId": "termo_fomento",
+              "fieldValue": "={{ $json.body.termo_fomento }}"
+            },
+            {
+              "fieldId": "numero_processo_adm",
+              "fieldValue": "={{ $json.body.numero_processo_adm }}"
+            },
+            {
+              "fieldId": "numero_transferegov",
+              "fieldValue": "={{ $json.body.numero_transferegov }}"
+            },
+            {
+              "fieldId": "aplicabilidade",
+              "fieldValue": "={{ $json.body.aplicabilidade }}"
+            },
+            {
+              "fieldId": "descricao",
+              "fieldValue": "={{ $json.body.descricao }}"
+            },
+            {
+              "fieldId": "vigencia_inicio",
+              "fieldValue": "={{ $json.body.vigencia_inicio }}"
+            },
+            {
+              "fieldId": "vigencia_fim",
+              "fieldValue": "={{ $json.body.vigencia_fim }}"
+            },
+            {
+              "fieldId": "vigencia_termino",
+              "fieldValue": "={{ $json.body.vigencia_termino }}"
+            },
+            {
+              "fieldId": "idade_min",
+              "fieldValue": "={{ $json.body.idade_min }}"
+            },
+            {
+              "fieldId": "idade_max",
+              "fieldValue": "={{ $json.body.idade_max }}"
+            },
+            {
+              "fieldId": "limite_auxiliares",
+              "fieldValue": "={{ $json.body.limite_auxiliares }}"
+            },
+            {
+              "fieldId": "qtd_supervisores",
+              "fieldValue": "={{ $json.body.qtd_supervisores }}"
+            },
+            {
+              "fieldId": "qtd_coord_pedagogico",
+              "fieldValue": "={{ $json.body.qtd_coord_pedagogico }}"
+            },
+            {
+              "fieldId": "qtd_coord_geral",
+              "fieldValue": "={{ $json.body.qtd_coord_geral }}"
+            },
+            {
+              "fieldId": "qtd_coord_nucleo",
+              "fieldValue": "={{ $json.body.qtd_coord_nucleo }}"
+            },
+            {
+              "fieldId": "qtd_instrutor",
+              "fieldValue": "={{ $json.body.qtd_instrutor }}"
+            },
+            {
+              "fieldId": "vagas_por_nucleo",
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
+            },
+            {
+              "fieldId": "periodos_json",
+              "fieldValue": "={{ $json.body.periodos_json }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "delete-GASCTPNA",
+      "name": "Delete GASCTPNA Limits",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        750,
+        -350
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
+      "parameters": {
+        "operation": "delete",
+        "tableId": "GASCTPNA_projeto_modalidade_limites",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "projeto_id",
+              "condition": "eq",
+              "keyValue": "={{ $(\"Webhook PUT\").first().json.body.id }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "code-GASCTPNA",
+      "name": "Map GASCTPNA Limits",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        -350
+      ],
+      "parameters": {
+        "jsCode": "const body = $(\"Webhook PUT\").first().json.body;\nconst projId = parseInt(body.id);\nconst limites = body.limites_modalidade || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
+      }
+    },
+    {
+      "id": "create-GASCTPNA",
+      "name": "Insert GASCTPNA Limits",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        -350
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
+      "parameters": {
+        "operation": "create",
+        "tableId": "GASCTPNA_projeto_modalidade_limites",
+        "dataToSend": "autoMapInputData"
+      }
+    },
+    {
+      "id": "respond-GASCTPNA",
+      "name": "Respond GASCTPNA",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        -250
+      ],
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      }
+    },
+    {
+      "id": "update-IBRASE",
+      "name": "Update IBRASE",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        500,
+        -100
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
+      "parameters": {
+        "operation": "update",
+        "tableId": "IBRASE_projetos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nome_projeto }}"
+            },
+            {
+              "fieldId": "numero_proposta",
+              "fieldValue": "={{ $json.body.numero_proposta }}"
+            },
+            {
+              "fieldId": "termo_fomento",
+              "fieldValue": "={{ $json.body.termo_fomento }}"
+            },
+            {
+              "fieldId": "numero_processo_adm",
+              "fieldValue": "={{ $json.body.numero_processo_adm }}"
+            },
+            {
+              "fieldId": "numero_transferegov",
+              "fieldValue": "={{ $json.body.numero_transferegov }}"
+            },
+            {
+              "fieldId": "aplicabilidade",
+              "fieldValue": "={{ $json.body.aplicabilidade }}"
+            },
+            {
+              "fieldId": "descricao",
+              "fieldValue": "={{ $json.body.descricao }}"
+            },
+            {
+              "fieldId": "vigencia_inicio",
+              "fieldValue": "={{ $json.body.vigencia_inicio }}"
+            },
+            {
+              "fieldId": "vigencia_fim",
+              "fieldValue": "={{ $json.body.vigencia_fim }}"
+            },
+            {
+              "fieldId": "vigencia_termino",
+              "fieldValue": "={{ $json.body.vigencia_termino }}"
+            },
+            {
+              "fieldId": "idade_min",
+              "fieldValue": "={{ $json.body.idade_min }}"
+            },
+            {
+              "fieldId": "idade_max",
+              "fieldValue": "={{ $json.body.idade_max }}"
+            },
+            {
+              "fieldId": "limite_auxiliares",
+              "fieldValue": "={{ $json.body.limite_auxiliares }}"
+            },
+            {
+              "fieldId": "qtd_supervisores",
+              "fieldValue": "={{ $json.body.qtd_supervisores }}"
+            },
+            {
+              "fieldId": "qtd_coord_pedagogico",
+              "fieldValue": "={{ $json.body.qtd_coord_pedagogico }}"
+            },
+            {
+              "fieldId": "qtd_coord_geral",
+              "fieldValue": "={{ $json.body.qtd_coord_geral }}"
+            },
+            {
+              "fieldId": "qtd_coord_nucleo",
+              "fieldValue": "={{ $json.body.qtd_coord_nucleo }}"
+            },
+            {
+              "fieldId": "qtd_instrutor",
+              "fieldValue": "={{ $json.body.qtd_instrutor }}"
+            },
+            {
+              "fieldId": "vagas_por_nucleo",
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
+            },
+            {
+              "fieldId": "periodos_json",
+              "fieldValue": "={{ $json.body.periodos_json }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "delete-IBRASE",
+      "name": "Delete IBRASE Limits",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        750,
+        -100
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
+      "parameters": {
+        "operation": "delete",
+        "tableId": "IBRASE_projeto_modalidade_limites",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "projeto_id",
+              "condition": "eq",
+              "keyValue": "={{ $(\"Webhook PUT\").first().json.body.id }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "code-IBRASE",
+      "name": "Map IBRASE Limits",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        -100
+      ],
+      "parameters": {
+        "jsCode": "const body = $(\"Webhook PUT\").first().json.body;\nconst projId = parseInt(body.id);\nconst limites = body.limites_modalidade || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
+      }
+    },
+    {
+      "id": "create-IBRASE",
+      "name": "Insert IBRASE Limits",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        -100
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
+      "parameters": {
+        "operation": "create",
+        "tableId": "IBRASE_projeto_modalidade_limites",
+        "dataToSend": "autoMapInputData"
+      }
+    },
+    {
+      "id": "respond-IBRASE",
+      "name": "Respond IBRASE",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      }
+    },
+    {
+      "id": "update-AUNI",
+      "name": "Update AUNI",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        500,
+        150
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
+      "parameters": {
+        "operation": "update",
+        "tableId": "AUNI_projetos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nome_projeto }}"
+            },
+            {
+              "fieldId": "numero_proposta",
+              "fieldValue": "={{ $json.body.numero_proposta }}"
+            },
+            {
+              "fieldId": "termo_fomento",
+              "fieldValue": "={{ $json.body.termo_fomento }}"
+            },
+            {
+              "fieldId": "numero_processo_adm",
+              "fieldValue": "={{ $json.body.numero_processo_adm }}"
+            },
+            {
+              "fieldId": "numero_transferegov",
+              "fieldValue": "={{ $json.body.numero_transferegov }}"
+            },
+            {
+              "fieldId": "aplicabilidade",
+              "fieldValue": "={{ $json.body.aplicabilidade }}"
+            },
+            {
+              "fieldId": "descricao",
+              "fieldValue": "={{ $json.body.descricao }}"
+            },
+            {
+              "fieldId": "vigencia_inicio",
+              "fieldValue": "={{ $json.body.vigencia_inicio }}"
+            },
+            {
+              "fieldId": "vigencia_fim",
+              "fieldValue": "={{ $json.body.vigencia_fim }}"
+            },
+            {
+              "fieldId": "vigencia_termino",
+              "fieldValue": "={{ $json.body.vigencia_termino }}"
+            },
+            {
+              "fieldId": "idade_min",
+              "fieldValue": "={{ $json.body.idade_min }}"
+            },
+            {
+              "fieldId": "idade_max",
+              "fieldValue": "={{ $json.body.idade_max }}"
+            },
+            {
+              "fieldId": "limite_auxiliares",
+              "fieldValue": "={{ $json.body.limite_auxiliares }}"
+            },
+            {
+              "fieldId": "qtd_supervisores",
+              "fieldValue": "={{ $json.body.qtd_supervisores }}"
+            },
+            {
+              "fieldId": "qtd_coord_pedagogico",
+              "fieldValue": "={{ $json.body.qtd_coord_pedagogico }}"
+            },
+            {
+              "fieldId": "qtd_coord_geral",
+              "fieldValue": "={{ $json.body.qtd_coord_geral }}"
+            },
+            {
+              "fieldId": "qtd_coord_nucleo",
+              "fieldValue": "={{ $json.body.qtd_coord_nucleo }}"
+            },
+            {
+              "fieldId": "qtd_instrutor",
+              "fieldValue": "={{ $json.body.qtd_instrutor }}"
+            },
+            {
+              "fieldId": "vagas_por_nucleo",
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
+            },
+            {
+              "fieldId": "periodos_json",
+              "fieldValue": "={{ $json.body.periodos_json }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "delete-AUNI",
+      "name": "Delete AUNI Limits",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        750,
+        150
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
+      "parameters": {
+        "operation": "delete",
+        "tableId": "AUNI_projeto_modalidade_limites",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "projeto_id",
+              "condition": "eq",
+              "keyValue": "={{ $(\"Webhook PUT\").first().json.body.id }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "code-AUNI",
+      "name": "Map AUNI Limits",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        150
+      ],
+      "parameters": {
+        "jsCode": "const body = $(\"Webhook PUT\").first().json.body;\nconst projId = parseInt(body.id);\nconst limites = body.limites_modalidade || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
+      }
+    },
+    {
+      "id": "create-AUNI",
+      "name": "Insert AUNI Limits",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        150
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
+      "parameters": {
+        "operation": "create",
+        "tableId": "AUNI_projeto_modalidade_limites",
+        "dataToSend": "autoMapInputData"
+      }
+    },
+    {
+      "id": "respond-AUNI",
+      "name": "Respond AUNI",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        250
+      ],
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      }
+    },
+    {
+      "id": "update-IVEM",
+      "name": "Update IVEM",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        500,
+        400
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
+      "parameters": {
+        "operation": "update",
+        "tableId": "IVEM_projetos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nome_projeto }}"
+            },
+            {
+              "fieldId": "numero_proposta",
+              "fieldValue": "={{ $json.body.numero_proposta }}"
+            },
+            {
+              "fieldId": "termo_fomento",
+              "fieldValue": "={{ $json.body.termo_fomento }}"
+            },
+            {
+              "fieldId": "numero_processo_adm",
+              "fieldValue": "={{ $json.body.numero_processo_adm }}"
+            },
+            {
+              "fieldId": "numero_transferegov",
+              "fieldValue": "={{ $json.body.numero_transferegov }}"
+            },
+            {
+              "fieldId": "aplicabilidade",
+              "fieldValue": "={{ $json.body.aplicabilidade }}"
+            },
+            {
+              "fieldId": "descricao",
+              "fieldValue": "={{ $json.body.descricao }}"
+            },
+            {
+              "fieldId": "vigencia_inicio",
+              "fieldValue": "={{ $json.body.vigencia_inicio }}"
+            },
+            {
+              "fieldId": "vigencia_fim",
+              "fieldValue": "={{ $json.body.vigencia_fim }}"
+            },
+            {
+              "fieldId": "vigencia_termino",
+              "fieldValue": "={{ $json.body.vigencia_termino }}"
+            },
+            {
+              "fieldId": "idade_min",
+              "fieldValue": "={{ $json.body.idade_min }}"
+            },
+            {
+              "fieldId": "idade_max",
+              "fieldValue": "={{ $json.body.idade_max }}"
+            },
+            {
+              "fieldId": "limite_auxiliares",
+              "fieldValue": "={{ $json.body.limite_auxiliares }}"
+            },
+            {
+              "fieldId": "qtd_supervisores",
+              "fieldValue": "={{ $json.body.qtd_supervisores }}"
+            },
+            {
+              "fieldId": "qtd_coord_pedagogico",
+              "fieldValue": "={{ $json.body.qtd_coord_pedagogico }}"
+            },
+            {
+              "fieldId": "qtd_coord_geral",
+              "fieldValue": "={{ $json.body.qtd_coord_geral }}"
+            },
+            {
+              "fieldId": "qtd_coord_nucleo",
+              "fieldValue": "={{ $json.body.qtd_coord_nucleo }}"
+            },
+            {
+              "fieldId": "qtd_instrutor",
+              "fieldValue": "={{ $json.body.qtd_instrutor }}"
+            },
+            {
+              "fieldId": "vagas_por_nucleo",
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
+            },
+            {
+              "fieldId": "periodos_json",
+              "fieldValue": "={{ $json.body.periodos_json }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "delete-IVEM",
+      "name": "Delete IVEM Limits",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        750,
+        400
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
+      "parameters": {
+        "operation": "delete",
+        "tableId": "IVEM_projeto_modalidade_limites",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "projeto_id",
+              "condition": "eq",
+              "keyValue": "={{ $(\"Webhook PUT\").first().json.body.id }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "code-IVEM",
+      "name": "Map IVEM Limits",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        400
+      ],
+      "parameters": {
+        "jsCode": "const body = $(\"Webhook PUT\").first().json.body;\nconst projId = parseInt(body.id);\nconst limites = body.limites_modalidade || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
+      }
+    },
+    {
+      "id": "create-IVEM",
+      "name": "Insert IVEM Limits",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        400
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
+      "parameters": {
+        "operation": "create",
+        "tableId": "IVEM_projeto_modalidade_limites",
+        "dataToSend": "autoMapInputData"
+      }
+    },
+    {
+      "id": "respond-IVEM",
+      "name": "Respond IVEM",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        500
+      ],
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook PUT": {
+      "main": [
+        [
+          {
+            "node": "Switch Instituto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Instituto": {
+      "main": [
+        [
+          {
+            "node": "Update GASCTPNA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update IBRASE",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update AUNI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update IVEM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update GASCTPNA": {
+      "main": [
+        [
+          {
+            "node": "Delete GASCTPNA Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete GASCTPNA Limits": {
+      "main": [
+        [
+          {
+            "node": "Map GASCTPNA Limits",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond GASCTPNA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map GASCTPNA Limits": {
+      "main": [
+        [
+          {
+            "node": "Insert GASCTPNA Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update IBRASE": {
+      "main": [
+        [
+          {
+            "node": "Delete IBRASE Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete IBRASE Limits": {
+      "main": [
+        [
+          {
+            "node": "Map IBRASE Limits",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond IBRASE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map IBRASE Limits": {
+      "main": [
+        [
+          {
+            "node": "Insert IBRASE Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update AUNI": {
+      "main": [
+        [
+          {
+            "node": "Delete AUNI Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete AUNI Limits": {
+      "main": [
+        [
+          {
+            "node": "Map AUNI Limits",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond AUNI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map AUNI Limits": {
+      "main": [
+        [
+          {
+            "node": "Insert AUNI Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update IVEM": {
+      "main": [
+        [
+          {
+            "node": "Delete IVEM Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete IVEM Limits": {
+      "main": [
+        [
+          {
+            "node": "Map IVEM Limits",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond IVEM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map IVEM Limits": {
+      "main": [
+        [
+          {
+            "node": "Insert IVEM Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

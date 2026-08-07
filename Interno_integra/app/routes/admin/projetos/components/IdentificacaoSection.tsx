@@ -75,8 +75,8 @@ export function IdentificacaoSection() {
             className={`w-full bg-slate-50 border ${errors.identificacao?.aplicabilidade ? 'border-red-500' : 'border-slate-200'} rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500`}
           >
             <option value="">Selecione...</option>
-            <option value="aula">Aula</option>
-            <option value="eventos">Eventos</option>
+            <option value="projeto de aula">Projeto de Aula</option>
+            <option value="evento">Evento</option>
           </select>
           {errors.identificacao?.aplicabilidade && <span className="text-red-500 text-xs mt-1">{errors.identificacao.aplicabilidade.message}</span>}
         </div>

@@ -298,8 +298,8 @@ export function ModalidadesSection() {
                     <div className="flex-1">
                       <h4 className="text-sm font-bold text-red-800">Cuidado! Ação destrutiva.</h4>
                       <p className="text-xs text-red-600 mt-1">
-                        Se algum projeto estiver usando esta modalidade, você poderá causar erros no sistema. 
-                        Tem certeza que deseja apagar a modalidade permanentemente do banco de dados?
+                        Se alguma iniciativa estiver usando esta modalidade, você poderá causar erros no sistema. 
+                        Tem certeza que deseja apagar a modalidade <strong>{modalidadesDisponiveis.find(m => String(m.id) === deleteModId)?.nome || "selecionada"}</strong> permanentemente do banco de dados?
                       </p>
                       <div className="mt-3 flex items-center gap-2">
                         <button

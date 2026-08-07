@@ -70,6 +70,7 @@ export default function CadastrarProjeto() {
     try {
       await saveProjeto(editModeId, data);
       alert(editModeId ? "Iniciativa atualizada com sucesso!" : "Iniciativa cadastrada com sucesso!");
+      window.history.back();
     } catch (error) {
       alert("Erro ao enviar para o N8N.");
     }

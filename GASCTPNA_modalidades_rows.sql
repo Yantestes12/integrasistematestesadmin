@@ -1,0 +1,1 @@
+INSERT INTO "public"."GASCTPNA_modalidades" ("id", "nome", "descricao", "ativo", "formulario_id") VALUES (5, 'Futebol', null, true, null), (6, 'Jiu Jitsu', null, true, null), (7, 'Luta', null, true, null), (8, 'Funcional', null, true, null);

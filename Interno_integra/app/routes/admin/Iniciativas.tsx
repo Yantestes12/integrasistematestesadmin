@@ -103,6 +103,8 @@ export default function Iniciativas() {
         "7 - 65";
 
       const isAtivo = item.ativo !== false && item.status !== false && item.status !== "inativo";
+      
+      const aplicabilidade = item.aplicabilidade || item.identificacao?.aplicabilidade || "";
 
       return {
         id,
@@ -115,6 +117,7 @@ export default function Iniciativas() {
         faixa_etaria,
         status: isAtivo,
         ativo: isAtivo,
+        aplicabilidade
       };
     });
   };
@@ -277,9 +280,13 @@ export default function Iniciativas() {
                         <span className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors block">
                           {item.nome}
                         </span>
-                        {item.descricao && (
-                          <span className="text-xs text-slate-500 line-clamp-1 mt-0.5">
-                            {item.descricao}
+                        {item.aplicabilidade && (
+                          <span className={`inline-block mt-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                            (item.aplicabilidade.toLowerCase() === 'evento' || item.aplicabilidade.toLowerCase() === 'eventos')
+                              ? 'bg-orange-100 text-orange-700' 
+                              : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {item.aplicabilidade.toLowerCase() === 'aula' ? 'Projeto de Aula' : item.aplicabilidade}
                           </span>
                         )}
                       </td>
