@@ -71,10 +71,10 @@ export default function Nucleos() {
       return {
         id,
         nome,
-        projeto_nome: item.projeto_nome || item.iniciativa || "",
-        modalidade_nome: item.modalidade_nome || item.modalidade || "",
+        projeto_nome: item.projeto_nome || item.iniciativa || item.projetos?.nome || `Projeto ID ${item.projeto_id || ''}`,
+        modalidade_nome: item.modalidade_nome || item.modalidade || item.modalidades?.nome || "",
         cidade_nome: item.cidade_nome || item.cidade || "",
-        bairro_nome: item.bairro_nome || item.bairro || "",
+        bairro_nome: item.bairro_nome || item.bairro || item.bairros?.nome || "",
         cidade_uf: item.cidade_uf || item.uf || "",
         endereco: item.endereco || item.end_label || "",
         coordenador_nome_real: item.coordenador_nome_real || item.coordenador || "",
