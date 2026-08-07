@@ -55,10 +55,10 @@ export const Sidebar = ({ onSelectMenu }) => {
 
   // Estrutura hierárquica atualizada com as rotas reais do app/routes.ts
   const menuTree = [
-    { name: 'Dashboard', path: "/", icon: <LayoutDashboard size={20} /> },
+    { name: 'Dashboard', path: "/", icon: <LayoutDashboard className="w-5 h-5 md:w-7 md:h-7" /> },
     {
       name: 'Administrativo',
-      icon: <BookOpen size={20} />,
+      icon: <BookOpen className="w-5 h-5 md:w-7 md:h-7" />,
       children: [
         { name: 'Iniciativas', path: "/admin/iniciativas" },
         { name: 'Núcleos', path: "/admin/nucleos" },
@@ -87,19 +87,19 @@ export const Sidebar = ({ onSelectMenu }) => {
 
       if (hasChildren) {
         return (
-          <div key={index} className="w-full z-10">
+          <div key={index} className="w-full">
             <div
               onClick={(e) => togglePath(itemKey, e, item)}
-              className={`flex items-center justify-between py-4 cursor-pointer transition-colors duration-150 ${paddingLeft} ${levelBg}`}
+              className={`flex items-center justify-between py-4 md:py-6 cursor-pointer ${paddingLeft} ${levelBg}`}
             >
               <div className="flex items-center gap-3 min-w-0 w-full pointer-events-none">
                 {item.icon && <span>{item.icon}</span>}
-                <span className={`truncate ${level === 0 ? 'text-lg md:text-xl font-bold' : 'text-base md:text-lg font-semibold'}`}>
+                <span className={`truncate ${level === 0 ? 'text-lg md:text-[1.65rem] font-bold' : 'text-base md:text-[1.35rem] font-semibold'}`}>
                   {item.name}
                 </span>
               </div>
               <span className="ml-2 shrink-0 pointer-events-none">
-                {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                {isExpanded ? <ChevronDown className="w-5 h-5 md:w-7 md:h-7" /> : <ChevronRight className="w-5 h-5 md:w-7 md:h-7" />}
               </span>
             </div>
 
@@ -116,20 +116,20 @@ export const Sidebar = ({ onSelectMenu }) => {
       const isActive = item.path && location.pathname === item.path;
 
       return (
-        <div key={index} className="w-full z-10">
+        <div key={index} className="w-full">
           <Link
             to={item.path || '#'}
             onClick={() => {
               if (onSelectMenu) onSelectMenu(item.name);
               setIsOpen(false);
             }}
-            className={`flex items-center justify-between py-4 cursor-pointer select-none ${paddingLeft} ${
+            className={`flex items-center justify-between py-4 md:py-6 cursor-pointer select-none ${paddingLeft} ${
               isActive ? 'bg-white/25 font-bold border-l-4 border-white text-white shadow-inner' : levelBg
             } w-full text-white no-underline text-left block`}
           >
             <div className="flex items-center gap-3 min-w-0 w-full pointer-events-none">
               {item.icon && <span className="pointer-events-none">{item.icon}</span>}
-              <span className={`truncate pointer-events-none ${level === 0 ? 'text-lg md:text-xl font-bold' : 'text-base md:text-lg font-semibold'} ${isActive ? 'font-extrabold' : ''}`}>
+              <span className={`truncate pointer-events-none ${level === 0 ? 'text-lg md:text-[1.65rem] font-bold' : 'text-base md:text-[1.35rem] font-semibold'} ${isActive ? 'font-extrabold' : ''}`}>
                 {level > 0 && !item.icon && '• '} {item.name}
               </span>
             </div>

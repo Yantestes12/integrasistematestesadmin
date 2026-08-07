@@ -1,0 +1,67 @@
+{
+  "name": "N8N_CONSULTAR_CEP",
+  "nodes": [
+    {
+      "id": "wh-consultarcep",
+      "name": "Webhook CEP",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "webhookId": "consultarcep",
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "consultarcep",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "http-hub-desenvolvedor",
+      "name": "Hub do Desenvolvedor CEP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [220, 0],
+      "parameters": {
+        "url": "=http://ws.hubdodesenvolvedor.com.br/v2/cep3/?cep={{ $json.query.cep }}&token=193160880WeLPJqFrMT348746112",
+        "options": {}
+      }
+    },
+    {
+      "id": "respond-cep",
+      "name": "Respond Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [440, 0],
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook CEP": {
+      "main": [
+        [
+          {
+            "node": "Hub do Desenvolvedor CEP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hub do Desenvolvedor CEP": {
+      "main": [
+        [
+          {
+            "node": "Respond Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {}
+}

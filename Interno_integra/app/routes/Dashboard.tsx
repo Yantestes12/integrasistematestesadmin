@@ -44,7 +44,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
         
         {/* Card Iniciativas */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col justify-between transition-all hover:shadow-md hover:border-slate-300 group min-h-[280px] lg:min-h-[320px]">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col justify-between transition-all hover:shadow-md hover:border-slate-300 group min-h-[280px] md:aspect-square">
           <div>
             <div className="flex items-center justify-between gap-4 mb-5">
               <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-2xl bg-blue-50 text-[var(--theme-primary)] flex items-center justify-center shrink-0 border border-blue-100 group-hover:scale-105 transition-transform">
@@ -76,7 +76,7 @@ export default function Dashboard() {
         </div>
 
         {/* Card Núcleos */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col justify-between transition-all hover:shadow-md hover:border-slate-300 group min-h-[280px] lg:min-h-[320px]">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col justify-between transition-all hover:shadow-md hover:border-slate-300 group min-h-[280px] md:aspect-square">
           <div>
             <div className="flex items-center justify-between gap-4 mb-5">
               <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100 group-hover:scale-105 transition-transform">

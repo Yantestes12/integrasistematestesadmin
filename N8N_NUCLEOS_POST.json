@@ -1,0 +1,182 @@
+{
+  "name": "N8N_NUCLEOS_POST",
+  "nodes": [
+    {
+      "id": "wh-nucleos-post",
+      "name": "Webhook POST",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "webhookId": "nucleos-post",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nucleos-post",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "switch-post",
+      "name": "Switch POST",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [220, 0],
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.query.instituto || $json.body.instituto }}",
+        "rules": {
+          "rules": [
+            { "value2": "GASCTPNA" },
+            { "value2": "IBRASE", "output": 1 },
+            { "value2": "AUNI", "output": 2 },
+            { "value2": "IVEM", "output": 3 }
+          ]
+        },
+        "fallbackOutput": 1
+      }
+    },
+    {
+      "id": "sb-gasctpna",
+      "name": "SB GASCTPNA POST",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [480, -300],
+      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } },
+      "parameters": {
+        "operation": "create",
+        "tableId": "GASCTPNA_nucleos",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "nome", "fieldValue": "={{ $json.body.nomeNucleo }}" },
+            { "fieldId": "modalidade_id", "fieldValue": "={{ $json.body.modalidadeId }}" },
+            { "fieldId": "bairro_id", "fieldValue": "={{ $json.body.bairroId }}" },
+            { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}" },
+            { "fieldId": "endereco", "fieldValue": "={{ $json.body.rua }}, {{ $json.body.numero }} - {{ $json.body.bairroEnd }} | CEP {{ $json.body.cep }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sb-ibrase",
+      "name": "SB IBRASE POST",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [480, -100],
+      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } },
+      "parameters": {
+        "operation": "create",
+        "tableId": "IBRASE_nucleos",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "nome", "fieldValue": "={{ $json.body.nomeNucleo }}" },
+            { "fieldId": "modalidade_id", "fieldValue": "={{ $json.body.modalidadeId }}" },
+            { "fieldId": "bairro_id", "fieldValue": "={{ $json.body.bairroId }}" },
+            { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}" },
+            { "fieldId": "endereco", "fieldValue": "={{ $json.body.rua }}, {{ $json.body.numero }} - {{ $json.body.bairroEnd }} | CEP {{ $json.body.cep }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sb-auni",
+      "name": "SB AUNI POST",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [480, 100],
+      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } },
+      "parameters": {
+        "operation": "create",
+        "tableId": "AUNI_nucleos",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "nome", "fieldValue": "={{ $json.body.nomeNucleo }}" },
+            { "fieldId": "modalidade_id", "fieldValue": "={{ $json.body.modalidadeId }}" },
+            { "fieldId": "bairro_id", "fieldValue": "={{ $json.body.bairroId }}" },
+            { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}" },
+            { "fieldId": "endereco", "fieldValue": "={{ $json.body.rua }}, {{ $json.body.numero }} - {{ $json.body.bairroEnd }} | CEP {{ $json.body.cep }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sb-ivem",
+      "name": "SB IVEM POST",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [480, 300],
+      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } },
+      "parameters": {
+        "operation": "create",
+        "tableId": "IVEM_nucleos",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "nome", "fieldValue": "={{ $json.body.nomeNucleo }}" },
+            { "fieldId": "modalidade_id", "fieldValue": "={{ $json.body.modalidadeId }}" },
+            { "fieldId": "bairro_id", "fieldValue": "={{ $json.body.bairroId }}" },
+            { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}" },
+            { "fieldId": "endereco", "fieldValue": "={{ $json.body.rua }}, {{ $json.body.numero }} - {{ $json.body.bairroEnd }} | CEP {{ $json.body.cep }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "resp-gasctpna",
+      "name": "Respond GASCTPNA",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [720, -300],
+      "parameters": { "respondWith": "allIncomingItems", "options": {} }
+    },
+    {
+      "id": "resp-ibrase",
+      "name": "Respond IBRASE",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [720, -100],
+      "parameters": { "respondWith": "allIncomingItems", "options": {} }
+    },
+    {
+      "id": "resp-auni",
+      "name": "Respond AUNI",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [720, 100],
+      "parameters": { "respondWith": "allIncomingItems", "options": {} }
+    },
+    {
+      "id": "resp-ivem",
+      "name": "Respond IVEM",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [720, 300],
+      "parameters": { "respondWith": "allIncomingItems", "options": {} }
+    }
+  ],
+  "connections": {
+    "Webhook POST": {
+      "main": [[{ "node": "Switch POST", "type": "main", "index": 0 }]]
+    },
+    "Switch POST": {
+      "main": [
+        [{ "node": "SB GASCTPNA POST", "type": "main", "index": 0 }],
+        [{ "node": "SB IBRASE POST", "type": "main", "index": 0 }],
+        [{ "node": "SB AUNI POST", "type": "main", "index": 0 }],
+        [{ "node": "SB IVEM POST", "type": "main", "index": 0 }]
+      ]
+    },
+    "SB GASCTPNA POST": {
+      "main": [[{ "node": "Respond GASCTPNA", "type": "main", "index": 0 }]]
+    },
+    "SB IBRASE POST": {
+      "main": [[{ "node": "Respond IBRASE", "type": "main", "index": 0 }]]
+    },
+    "SB AUNI POST": {
+      "main": [[{ "node": "Respond AUNI", "type": "main", "index": 0 }]]
+    },
+    "SB IVEM POST": {
+      "main": [[{ "node": "Respond IVEM", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {},
+  "meta": {}
+}

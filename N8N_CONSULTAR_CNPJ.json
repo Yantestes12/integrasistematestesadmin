@@ -1,0 +1,67 @@
+{
+  "name": "N8N_CONSULTAR_CNPJ",
+  "nodes": [
+    {
+      "id": "wh-consultarcnpj",
+      "name": "Webhook CNPJ",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "webhookId": "consultarcnpj",
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "consultarcnpj",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "http-hub-cnpj",
+      "name": "Hub do Desenvolvedor CNPJ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [220, 0],
+      "parameters": {
+        "url": "=http://ws.hubdodesenvolvedor.com.br/v2/cnpj/?cnpj={{ $json.query.cnpj }}&token=193160880WeLPJqFrMT348746112",
+        "options": {}
+      }
+    },
+    {
+      "id": "respond-cnpj",
+      "name": "Respond Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [440, 0],
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook CNPJ": {
+      "main": [
+        [
+          {
+            "node": "Hub do Desenvolvedor CNPJ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hub do Desenvolvedor CNPJ": {
+      "main": [
+        [
+          {
+            "node": "Respond Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {}
+}

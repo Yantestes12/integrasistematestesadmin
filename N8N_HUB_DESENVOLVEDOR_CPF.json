@@ -1,0 +1,67 @@
+{
+  "name": "N8N_HUB_DESENVOLVEDOR_CPF",
+  "nodes": [
+    {
+      "id": "wh-hub-cpf",
+      "name": "Webhook API CPF",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "webhookId": "api-hub-cpf",
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "api-hub-cpf",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "http-hub-cpf-req",
+      "name": "Requisição Hub Desenvolvedor (CPF)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [220, 0],
+      "parameters": {
+        "url": "=http://ws.hubdodesenvolvedor.com.br/v2/cpf/?cpf={{ $json.query.cpf }}&token=193160880WeLPJqFrMT348746112",
+        "options": {}
+      }
+    },
+    {
+      "id": "respond-hub-cpf",
+      "name": "Retornar Dados CPF",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [440, 0],
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook API CPF": {
+      "main": [
+        [
+          {
+            "node": "Requisição Hub Desenvolvedor (CPF)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Requisição Hub Desenvolvedor (CPF)": {
+      "main": [
+        [
+          {
+            "node": "Retornar Dados CPF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {}
+}

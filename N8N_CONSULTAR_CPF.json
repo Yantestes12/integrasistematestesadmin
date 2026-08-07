@@ -1,0 +1,67 @@
+{
+  "name": "N8N_CONSULTAR_CPF",
+  "nodes": [
+    {
+      "id": "wh-consultarcpf",
+      "name": "Webhook CPF",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "webhookId": "consultarcpf",
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "consultarcpf",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "http-hub-cpf",
+      "name": "Hub do Desenvolvedor CPF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [220, 0],
+      "parameters": {
+        "url": "=http://ws.hubdodesenvolvedor.com.br/v2/cpf/?cpf={{ $json.query.cpf }}&token=193160880WeLPJqFrMT348746112",
+        "options": {}
+      }
+    },
+    {
+      "id": "respond-cpf",
+      "name": "Respond Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [440, 0],
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook CPF": {
+      "main": [
+        [
+          {
+            "node": "Hub do Desenvolvedor CPF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hub do Desenvolvedor CPF": {
+      "main": [
+        [
+          {
+            "node": "Respond Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {}
+}
