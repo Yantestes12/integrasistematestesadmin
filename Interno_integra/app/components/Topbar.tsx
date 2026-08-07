@@ -61,7 +61,7 @@ export const Topbar = () => {
   };
 
   return (
-    <header className="bg-white text-slate-800 lg:bg-[var(--theme-topbar)] lg:text-white pl-14 sm:pl-16 lg:pl-6 pr-4 sm:pr-6 py-3 flex items-center justify-between shadow-[0_4px_20px_-10px_rgba(0,0,0,0.1)] sticky top-0 z-30 w-full select-none min-h-[64px] border-b border-slate-100 lg:border-white/10 transition-colors duration-200">
+    <header className="bg-white text-slate-800 lg:bg-[var(--theme-topbar)] lg:text-white pl-14 sm:pl-16 lg:pl-6 pr-4 sm:pr-6 py-3 flex items-center justify-between shadow-[0_4px_20px_-10px_rgba(0,0,0,0.1)] sticky top-0 z-[60] w-full select-none min-h-[64px] border-b border-slate-100 lg:border-white/10 transition-colors duration-200">
 
       {/* Lado Esquerdo: Logo / Marca e Contexto do Instituto */}
       <div className="flex items-center gap-3 sm:gap-6 min-w-0">
@@ -117,9 +117,9 @@ export const Topbar = () => {
             )}
           </button>
 
-          {/* Menu Dropdown de Múltiplos Institutos (Centralizado no PC para não ser cortado ou tampado) */}
+          {/* Menu Dropdown de Múltiplos Institutos (Sobrepõe a barra lateral com z-[100]) */}
           {isDropdownOpen && allowedInstitutes.length > 1 && (
-            <div className="absolute top-full left-0 lg:left-1/2 lg:-translate-x-1/2 mt-2 w-60 bg-white text-slate-800 border border-slate-200 shadow-2xl rounded-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
+            <div className="absolute top-full left-0 mt-2 w-60 bg-white text-slate-800 border border-slate-200 shadow-2xl rounded-xl py-2 z-[100] animate-in fade-in slide-in-from-top-2">
               <div className="px-3 pb-2 mb-2 border-b border-slate-100 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Trocar Instituto
               </div>
