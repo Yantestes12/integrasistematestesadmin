@@ -263,29 +263,29 @@ export default function Iniciativas() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  <th className="py-3.5 px-4 w-16 text-center">ID</th>
-                  <th className="py-3.5 px-4">Nome da Iniciativa</th>
-                  <th className="py-3.5 px-4">Documentação</th>
-                  <th className="py-3.5 px-4 w-32">Faixa Etária</th>
-                  <th className="py-3.5 px-4 w-28 text-center">Status</th>
-                  <th className="py-3.5 px-4 w-28 text-center">Ações</th>
+                <tr className="bg-slate-50 border-b border-slate-100 text-[11px] lg:text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <th className="py-3.5 lg:py-4 px-4 lg:px-6 w-16 text-center">ID</th>
+                  <th className="py-3.5 lg:py-4 px-4 lg:px-6">Nome da Iniciativa</th>
+                  <th className="py-3.5 lg:py-4 px-4 lg:px-6">Documentação</th>
+                  <th className="py-3.5 lg:py-4 px-4 lg:px-6 w-32">Faixa Etária</th>
+                  <th className="py-3.5 lg:py-4 px-4 lg:px-6 w-28 text-center">Status</th>
+                  <th className="py-3.5 lg:py-4 px-4 lg:px-6 w-28 text-center">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
+              <tbody className="divide-y divide-slate-100 text-sm lg:text-base">
                 {filteredIniciativas.map((item) => {
                   const isAtivo = item.ativo !== false && item.status !== "inativo" && item.status !== false;
 
                   return (
                     <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
-                      <td className="py-4 px-4 font-bold text-slate-400 text-center">{item.id}</td>
+                      <td className="py-4 lg:py-5 px-4 lg:px-6 font-bold text-slate-400 text-center text-sm lg:text-base">{item.id}</td>
                       
-                      <td className="py-4 px-4">
-                        <span className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors block">
+                      <td className="py-4 lg:py-5 px-4 lg:px-6">
+                        <span className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors block text-sm lg:text-lg">
                           {item.nome}
                         </span>
                         {item.aplicabilidade && (
-                          <span className={`inline-block mt-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          <span className={`inline-block mt-1.5 px-2.5 py-0.5 rounded text-[10px] lg:text-xs font-bold uppercase tracking-wider ${
                             (item.aplicabilidade.toLowerCase() === 'evento' || item.aplicabilidade.toLowerCase() === 'eventos')
                               ? 'bg-orange-100 text-orange-700' 
                               : 'bg-blue-100 text-blue-700'
@@ -295,30 +295,30 @@ export default function Iniciativas() {
                         )}
                       </td>
 
-                      <td className="py-4 px-4">
+                      <td className="py-4 lg:py-5 px-4 lg:px-6">
                         {item.termo_fomento && (
-                          <div className="font-bold text-xs text-slate-800">
+                          <div className="font-bold text-xs lg:text-sm text-slate-800">
                             Termo: {item.termo_fomento}
                           </div>
                         )}
                         {item.numero_proposta && (
-                          <div className="text-[11px] text-slate-500">Prop: {item.numero_proposta}</div>
+                          <div className="text-[11px] lg:text-xs text-slate-500 font-medium">Prop: {item.numero_proposta}</div>
                         )}
                         {item.numero_processo_adm && (
-                          <div className="text-[11px] text-slate-500">Proc: {item.numero_processo_adm}</div>
+                          <div className="text-[11px] lg:text-xs text-slate-500 font-medium">Proc: {item.numero_processo_adm}</div>
                         )}
                         {item.numero_transferegov && (
-                          <div className="text-[11px] text-slate-500">Transf: {item.numero_transferegov}</div>
+                          <div className="text-[11px] lg:text-xs text-slate-500 font-medium">Transf: {item.numero_transferegov}</div>
                         )}
                       </td>
 
-                      <td className="py-4 px-4 font-medium text-slate-600">
+                      <td className="py-4 lg:py-5 px-4 lg:px-6 font-semibold text-slate-700 text-xs lg:text-base">
                         {item.faixa_etaria || "7 - 65"}
                       </td>
 
-                      <td className="py-4 px-4 text-center">
+                      <td className="py-4 lg:py-5 px-4 lg:px-6 text-center">
                         <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${
+                          className={`inline-flex items-center px-2.5 lg:px-3.5 py-1 rounded-full text-xs lg:text-sm font-bold border ${
                             isAtivo
                               ? "bg-emerald-50 text-emerald-700 border-emerald-200/80"
                               : "bg-red-50 text-red-700 border-red-200/80"

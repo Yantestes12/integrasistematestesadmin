@@ -94,12 +94,12 @@ export const Sidebar = ({ onSelectMenu }) => {
             >
               <div className="flex items-center gap-3 min-w-0 w-full pointer-events-none">
                 {item.icon && <span>{item.icon}</span>}
-                <span className={`truncate ${level === 0 ? 'text-[15px] font-medium' : 'text-sm'}`}>
+                <span className={`truncate ${level === 0 ? 'text-[15px] lg:text-lg font-bold' : 'text-sm lg:text-base font-semibold'}`}>
                   {item.name}
                 </span>
               </div>
               <span className="ml-2 shrink-0 pointer-events-none">
-                {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
               </span>
             </div>
 
@@ -132,7 +132,7 @@ export const Sidebar = ({ onSelectMenu }) => {
           >
             <div className="flex items-center gap-3 min-w-0 w-full pointer-events-none">
               {item.icon && <span>{item.icon}</span>}
-              <span className={`truncate ${level === 0 ? 'text-[15px] font-medium' : 'text-sm'} ${isActive ? 'font-extrabold' : ''}`}>
+              <span className={`truncate ${level === 0 ? 'text-[15px] lg:text-lg font-bold' : 'text-sm lg:text-base font-semibold'} ${isActive ? 'font-extrabold' : ''}`}>
                 {level > 0 && !item.icon && '• '} {item.name}
               </span>
             </div>
