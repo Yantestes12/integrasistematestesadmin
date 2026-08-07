@@ -15,15 +15,15 @@ export const projetoSchema = z.object({
     dataTermino: z.string().optional(),
   }),
   limites: z.object({
-    instrutoresPorNucleo: z.number().min(0).default(0),
-    auxiliaresPorNucleo: z.number().min(0).default(0),
-    coordGeral: z.number().min(0).default(0),
-    coordNucleo: z.number().min(0).default(0),
-    coordPedagogico: z.number().min(0).default(0),
-    supervisores: z.number().min(0).default(0),
     vagasPorNucleo: z.number().min(0).default(0),
     vagasPorAluno: z.number().min(0).default(0),
   }),
+  limitesCargos: z.array(
+    z.object({
+      nome: z.string(),
+      limite: z.number().min(0).default(0)
+    })
+  ).default([]),
   faixaEtaria: z.object({
     idadeMinima: z.number().nullable().optional(),
     idadeMaxima: z.number().nullable().optional(),

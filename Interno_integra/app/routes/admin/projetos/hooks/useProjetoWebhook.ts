@@ -118,6 +118,23 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
             ativo = (item.ativo === 1 || item.ativo === "1" || item.ativo === true || item.ativo === "true");
           }
 
+          let mappedLimitesCargos = [];
+          if (item.limites_cargos && Array.isArray(item.limites_cargos)) {
+            mappedLimitesCargos = item.limites_cargos;
+          } else if (typeof item.limites_cargos === 'string') {
+            try { mappedLimitesCargos = JSON.parse(item.limites_cargos); } catch(e) {}
+          } else {
+            // Se for um projeto antigo sem limites_cargos salvo, inicializamos os hardcoded para ele poder editar
+            mappedLimitesCargos = [
+              { nome: "Instrutor", limite: Number(item.qtd_instrutor || 0) },
+              { nome: "Auxiliar", limite: Number(item.limite_auxiliares || 0) },
+              { nome: "Coordenador Geral", limite: Number(item.qtd_coord_geral || 0) },
+              { nome: "Coordenador de Núcleo", limite: Number(item.qtd_coord_nucleo || 0) },
+              { nome: "Coordenador Pedagógico", limite: Number(item.qtd_coord_pedagogico || 0) },
+              { nome: "Supervisor", limite: Number(item.qtd_supervisores || 0) }
+            ];
+          }
+
           const defaultValues: Partial<ProjetoFormData> = {
             identificacao: {
               nomeProjeto: item.identificacao?.nomeProjeto || item.nome || item.nome_projeto || item.nomeProjeto || item.name || item.titulo || "",
@@ -132,16 +149,10 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
               dataInicio: formatDateForInput(rawInicio),
               dataTermino: formatDateForInput(rawTermino),
             },
-            limites: item.limitesMembros ? { ...item.limitesMembros } : {
-              instrutoresPorNucleo: Number(item.qtd_instrutor || item.instrutores_por_nucleo || item.instrutoresPorNucleo || 0),
-              auxiliaresPorNucleo: Number(item.limite_auxiliares || item.auxiliares_por_nucleo || item.auxiliaresPorNucleo || 0),
-              coordGeral: Number(item.qtd_coord_geral || item.coord_geral || item.coordGeral || 0),
-              coordNucleo: Number(item.qtd_coord_nucleo || item.coord_nucleo || item.coordNucleo || 0),
-              coordPedagogico: Number(item.qtd_coord_pedagogico || item.coord_pedagogico || item.coordPedagogico || 0),
-              supervisores: Number(item.qtd_supervisores || item.supervisores || 0),
+            limites: {
               vagasPorAluno: Number(item.vagas_por_nucleo || item.vagas_por_nucleos || item.vagas_por_aluno || item.vagas_de_aluno || item.vagasPorAluno || 0),
-
             },
+            limitesCargos: mappedLimitesCargos,
             faixaEtaria: {
               idadeMinima: (item.faixaEtaria?.idadeMinima || item.idade_min || item.idade_minima || item.idadeMinima) ? Number(item.faixaEtaria?.idadeMinima || item.idade_min || item.idade_minima || item.idadeMinima) : null,
               idadeMaxima: (item.faixaEtaria?.idadeMaxima || item.idade_max || item.idade_maxima || item.idadeMaxima) ? Number(item.faixaEtaria?.idadeMaxima || item.idade_max || item.idade_maxima || item.idadeMaxima) : null,
@@ -181,18 +192,6 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
       vigencia_termino: data.vigencia.dataTermino,
       vigencia_fim: data.vigencia.dataTermino,
       
-      instrutores_por_nucleo: data.limites.instrutoresPorNucleo,
-      qtd_instrutor: data.limites.instrutoresPorNucleo,
-      auxiliares_por_nucleo: data.limites.auxiliaresPorNucleo,
-      limite_auxiliares: data.limites.auxiliaresPorNucleo,
-      coord_geral: data.limites.coordGeral,
-      qtd_coord_geral: data.limites.coordGeral,
-      coord_nucleo: data.limites.coordNucleo,
-      qtd_coord_nucleo: data.limites.coordNucleo,
-      coord_pedagogico: data.limites.coordPedagogico,
-      qtd_coord_pedagogico: data.limites.coordPedagogico,
-      supervisores: data.limites.supervisores,
-      qtd_supervisores: data.limites.supervisores,
       vagas_por_nucleo: data.limites.vagasPorAluno,
       vagas_por_aluno: data.limites.vagasPorAluno,
       vagas_de_aluno: data.limites.vagasPorAluno,
@@ -202,6 +201,7 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
       idade_min: data.faixaEtaria.idadeMinima,
       idade_max: data.faixaEtaria.idadeMaxima,
       
+      limites_cargos: data.limitesCargos,
       limites_modalidade: data.limitesModalidade,
       limites_modalidades: data.limitesModalidade,
       periodos_json: data.periodos,

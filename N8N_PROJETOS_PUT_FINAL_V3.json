@@ -199,28 +199,8 @@
               "fieldValue": "={{ $json.body.idade_max }}"
             },
             {
-              "fieldId": "limite_auxiliares",
-              "fieldValue": "={{ $json.body.limite_auxiliares }}"
-            },
-            {
-              "fieldId": "qtd_supervisores",
-              "fieldValue": "={{ $json.body.qtd_supervisores }}"
-            },
-            {
-              "fieldId": "qtd_coord_pedagogico",
-              "fieldValue": "={{ $json.body.qtd_coord_pedagogico }}"
-            },
-            {
-              "fieldId": "qtd_coord_geral",
-              "fieldValue": "={{ $json.body.qtd_coord_geral }}"
-            },
-            {
-              "fieldId": "qtd_coord_nucleo",
-              "fieldValue": "={{ $json.body.qtd_coord_nucleo }}"
-            },
-            {
-              "fieldId": "qtd_instrutor",
-              "fieldValue": "={{ $json.body.qtd_instrutor }}"
+              "fieldId": "limites_cargos",
+              "fieldValue": "={{ $json.body.limites_cargos }}"
             },
             {
               "fieldId": "vagas_por_nucleo",
@@ -393,28 +373,8 @@
               "fieldValue": "={{ $json.body.idade_max }}"
             },
             {
-              "fieldId": "limite_auxiliares",
-              "fieldValue": "={{ $json.body.limite_auxiliares }}"
-            },
-            {
-              "fieldId": "qtd_supervisores",
-              "fieldValue": "={{ $json.body.qtd_supervisores }}"
-            },
-            {
-              "fieldId": "qtd_coord_pedagogico",
-              "fieldValue": "={{ $json.body.qtd_coord_pedagogico }}"
-            },
-            {
-              "fieldId": "qtd_coord_geral",
-              "fieldValue": "={{ $json.body.qtd_coord_geral }}"
-            },
-            {
-              "fieldId": "qtd_coord_nucleo",
-              "fieldValue": "={{ $json.body.qtd_coord_nucleo }}"
-            },
-            {
-              "fieldId": "qtd_instrutor",
-              "fieldValue": "={{ $json.body.qtd_instrutor }}"
+              "fieldId": "limites_cargos",
+              "fieldValue": "={{ $json.body.limites_cargos }}"
             },
             {
               "fieldId": "vagas_por_nucleo",
@@ -587,28 +547,8 @@
               "fieldValue": "={{ $json.body.idade_max }}"
             },
             {
-              "fieldId": "limite_auxiliares",
-              "fieldValue": "={{ $json.body.limite_auxiliares }}"
-            },
-            {
-              "fieldId": "qtd_supervisores",
-              "fieldValue": "={{ $json.body.qtd_supervisores }}"
-            },
-            {
-              "fieldId": "qtd_coord_pedagogico",
-              "fieldValue": "={{ $json.body.qtd_coord_pedagogico }}"
-            },
-            {
-              "fieldId": "qtd_coord_geral",
-              "fieldValue": "={{ $json.body.qtd_coord_geral }}"
-            },
-            {
-              "fieldId": "qtd_coord_nucleo",
-              "fieldValue": "={{ $json.body.qtd_coord_nucleo }}"
-            },
-            {
-              "fieldId": "qtd_instrutor",
-              "fieldValue": "={{ $json.body.qtd_instrutor }}"
+              "fieldId": "limites_cargos",
+              "fieldValue": "={{ $json.body.limites_cargos }}"
             },
             {
               "fieldId": "vagas_por_nucleo",
@@ -781,28 +721,8 @@
               "fieldValue": "={{ $json.body.idade_max }}"
             },
             {
-              "fieldId": "limite_auxiliares",
-              "fieldValue": "={{ $json.body.limite_auxiliares }}"
-            },
-            {
-              "fieldId": "qtd_supervisores",
-              "fieldValue": "={{ $json.body.qtd_supervisores }}"
-            },
-            {
-              "fieldId": "qtd_coord_pedagogico",
-              "fieldValue": "={{ $json.body.qtd_coord_pedagogico }}"
-            },
-            {
-              "fieldId": "qtd_coord_geral",
-              "fieldValue": "={{ $json.body.qtd_coord_geral }}"
-            },
-            {
-              "fieldId": "qtd_coord_nucleo",
-              "fieldValue": "={{ $json.body.qtd_coord_nucleo }}"
-            },
-            {
-              "fieldId": "qtd_instrutor",
-              "fieldValue": "={{ $json.body.qtd_instrutor }}"
+              "fieldId": "limites_cargos",
+              "fieldValue": "={{ $json.body.limites_cargos }}"
             },
             {
               "fieldId": "vagas_por_nucleo",
