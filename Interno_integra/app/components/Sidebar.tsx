@@ -78,45 +78,51 @@ export const Sidebar = ({ onSelectMenu }) => {
               ? 'bg-[var(--theme-level-2)] hover:bg-[var(--theme-level-2-hover)] text-blue-100'
               : 'bg-[var(--theme-level-3)] hover:bg-[var(--theme-level-3-hover)] text-blue-100';
 
-      return (
-        <div key={index} className="w-full z-10">
-          <div
-            onClick={(e) => {
-              if (hasChildren) {
-                togglePath(itemKey, e, item);
-              } else {
-                handleItemClick(item, e);
-              }
-            }}
-            className={`flex items-center justify-between py-3 cursor-pointer transition-colors duration-150 ${paddingLeft} ${levelBg}`}
-          >
-            <div className="flex items-center gap-3 min-w-0 w-full">
-              {item.icon && <span>{item.icon}</span>}
-              {item.path ? (
-                <Link to={item.path} className="w-full">
-                  <span className={`truncate block ${level === 0 ? 'text-[15px] font-medium' : 'text-sm'}`}>
-                    {level > 0 && !item.icon && '• '} {item.name}
-                  </span>
-                </Link>
-              ) : (
+      if (hasChildren) {
+        return (
+          <div key={index} className="w-full z-10">
+            <div
+              onClick={(e) => togglePath(itemKey, e, item)}
+              className={`flex items-center justify-between py-3 cursor-pointer transition-colors duration-150 ${paddingLeft} ${levelBg}`}
+            >
+              <div className="flex items-center gap-3 min-w-0 w-full">
+                {item.icon && <span>{item.icon}</span>}
                 <span className={`truncate ${level === 0 ? 'text-[15px] font-medium' : 'text-sm'}`}>
-                  {level > 0 && !item.icon && '• '} {item.name}
+                  {item.name}
                 </span>
-              )}
-            </div>
-            {hasChildren && (
+              </div>
               <span className="ml-2 shrink-0">
                 {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
               </span>
+            </div>
+
+            {/* Renderiza os filhos de forma recursiva */}
+            {isExpanded && (
+              <div className="w-full">
+                {renderMenuItems(item.children, level + 1, itemKey)}
+              </div>
             )}
           </div>
+        );
+      }
 
-          {/* Renderiza os filhos de forma recursiva */}
-          {hasChildren && isExpanded && (
-            <div className="w-full">
-              {renderMenuItems(item.children, level + 1, itemKey)}
+      return (
+        <div key={index} className="w-full z-10">
+          <Link
+            to={item.path || '#'}
+            onClick={() => {
+              if (onSelectMenu) onSelectMenu(item.name);
+              setIsOpen(false);
+            }}
+            className={`flex items-center justify-between py-3 cursor-pointer transition-colors duration-150 ${paddingLeft} ${levelBg} w-full text-white no-underline block`}
+          >
+            <div className="flex items-center gap-3 min-w-0 w-full">
+              {item.icon && <span>{item.icon}</span>}
+              <span className={`truncate ${level === 0 ? 'text-[15px] font-medium' : 'text-sm'}`}>
+                {level > 0 && !item.icon && '• '} {item.name}
+              </span>
             </div>
-          )}
+          </Link>
         </div>
       );
     });
