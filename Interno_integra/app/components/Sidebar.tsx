@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router'; // No React Router v7 a importação vem direto de 'react-router'
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router';
 import {
   LayoutDashboard,
   Settings,
@@ -18,13 +18,19 @@ import {
 } from 'lucide-react';
 
 export const Sidebar = ({ onSelectMenu }) => {
-  // Controle do drawer no Mobile
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Armazena o caminho dos itens abertos na árvore (ex: ['Configurações', 'Avisos'])
-  const [openPaths, setOpenPaths] = useState([]);
+  // Mantém os submenus abertos por padrão (ex: 'Administrativo')
+  const [openPaths, setOpenPaths] = useState<string[]>(['Administrativo']);
 
-  // Função para alternar expansão/recolhimento de submenus
+  // Atualiza os submenus abertos com base na rota atual para que NUNCA fechem sozinhos ao clicar
+  useEffect(() => {
+    if (location.pathname.startsWith('/admin')) {
+      setOpenPaths((prev) => prev.includes('Administrativo') ? prev : [...prev, 'Administrativo']);
+    }
+  }, [location.pathname]);
+
   const togglePath = (itemPath, e, item) => {
     if (!item.path) e.preventDefault();
 
@@ -106,6 +112,8 @@ export const Sidebar = ({ onSelectMenu }) => {
         );
       }
 
+      const isActive = item.path && location.pathname === item.path;
+
       return (
         <div key={index} className="w-full z-10">
           <Link
@@ -114,11 +122,13 @@ export const Sidebar = ({ onSelectMenu }) => {
               if (onSelectMenu) onSelectMenu(item.name);
               setIsOpen(false);
             }}
-            className={`flex items-center justify-between py-3 cursor-pointer transition-colors duration-150 ${paddingLeft} ${levelBg} w-full text-white no-underline block`}
+            className={`flex items-center justify-between py-3 cursor-pointer transition-all duration-150 ${paddingLeft} ${
+              isActive ? 'bg-white/25 font-bold border-l-4 border-white text-white shadow-inner' : levelBg
+            } w-full text-white no-underline block`}
           >
             <div className="flex items-center gap-3 min-w-0 w-full">
               {item.icon && <span>{item.icon}</span>}
-              <span className={`truncate ${level === 0 ? 'text-[15px] font-medium' : 'text-sm'}`}>
+              <span className={`truncate ${level === 0 ? 'text-[15px] font-medium' : 'text-sm'} ${isActive ? 'font-extrabold' : ''}`}>
                 {level > 0 && !item.icon && '• '} {item.name}
               </span>
             </div>
