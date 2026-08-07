@@ -117,26 +117,23 @@ export const Sidebar = ({ onSelectMenu }) => {
 
       return (
         <div key={index} className="w-full z-10">
-          <button
-            type="button"
+          <Link
+            to={item.path || '#'}
             onClick={() => {
               if (onSelectMenu) onSelectMenu(item.name);
               setIsOpen(false);
-              if (item.path && item.path !== '#') {
-                navigate(item.path);
-              }
             }}
-            className={`flex items-center justify-between py-4 cursor-pointer transition-all duration-100 active:scale-[0.98] select-none ${paddingLeft} ${
+            className={`flex items-center justify-between py-4 cursor-pointer select-none ${paddingLeft} ${
               isActive ? 'bg-white/25 font-bold border-l-4 border-white text-white shadow-inner' : levelBg
-            } w-full text-white no-underline text-left border-none bg-transparent outline-none`}
+            } w-full text-white no-underline text-left block`}
           >
             <div className="flex items-center gap-3 min-w-0 w-full pointer-events-none">
-              {item.icon && <span>{item.icon}</span>}
-              <span className={`truncate ${level === 0 ? 'text-lg md:text-xl font-bold' : 'text-base md:text-lg font-semibold'} ${isActive ? 'font-extrabold' : ''}`}>
+              {item.icon && <span className="pointer-events-none">{item.icon}</span>}
+              <span className={`truncate pointer-events-none ${level === 0 ? 'text-lg md:text-xl font-bold' : 'text-base md:text-lg font-semibold'} ${isActive ? 'font-extrabold' : ''}`}>
                 {level > 0 && !item.icon && '• '} {item.name}
               </span>
             </div>
-          </button>
+          </Link>
         </div>
       );
     });
