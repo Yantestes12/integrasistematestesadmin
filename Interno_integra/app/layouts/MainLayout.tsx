@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from "react-router";
+import { Outlet, useNavigate, useNavigation } from "react-router";
 import { useEffect, useState } from "react";
 import { Sidebar } from "~/components/Sidebar";
 import { Topbar } from "~/components/Topbar";
@@ -56,6 +56,7 @@ const themes = {
 
 export const MainLayout = () => {
   const navigate = useNavigate();
+  const navigation = useNavigation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [institute, setInstitute] = useState("IBRASE");
 
@@ -73,11 +74,12 @@ export const MainLayout = () => {
   if (!isAuthenticated) return null; // Avoid flashing the dashboard before redirect
 
   const themeVars = themes[institute as keyof typeof themes] || themes.IBRASE;
+  const isNavigating = navigation.state === "loading";
 
   return (
     // 1. Container principal ocupando a altura da tela (sem scroll duplo)
     <div 
-      className="h-screen overflow-hidden bg-[#f4f6fa] font-sans flex flex-col text-slate-800"
+      className="h-screen overflow-hidden bg-[#f4f6fa] font-sans flex flex-col text-slate-800 relative"
       style={themeVars as React.CSSProperties}
     >
       <Topbar />
@@ -86,8 +88,20 @@ export const MainLayout = () => {
         <Sidebar />
 
         {/* 2. O scroll DEVE ser nesta div <main>, sem divs com h-full por dentro */}
-        <main className="flex-1 overflow-y-auto h-[calc(100vh-64px)] w-full">
+        <main className="flex-1 overflow-y-auto h-[calc(100vh-64px)] w-full relative">
           
+          {/* Indicador de Bolinhas Carregando durante a navegação entre páginas */}
+          {isNavigating && (
+            <div className="sticky top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm border-b border-slate-200 py-3 px-4 flex items-center justify-center gap-3 shadow-sm animate-in fade-in">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-[var(--theme-primary)] animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2.5 h-2.5 rounded-full bg-[var(--theme-primary)] animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2.5 h-2.5 rounded-full bg-[var(--theme-primary)] animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+              <span className="text-xs font-bold text-slate-700">Carregando página...</span>
+            </div>
+          )}
+
           {/* Conteúdo das rotas com o padding */}
           <div className="p-4 sm:p-6 lg:p-8 space-y-6">
             <Outlet />

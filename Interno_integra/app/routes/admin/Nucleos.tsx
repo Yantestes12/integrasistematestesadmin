@@ -192,11 +192,15 @@ export default function Nucleos() {
           </div>
         </div>
 
-        {/* Tabela de Dados Reais */}
+        {/* Tabela de Dados Reais com Bolinhas Carregando */}
         {loading ? (
-          <div className="py-20 text-center flex flex-col items-center justify-center gap-3">
-            <Loader2 className="animate-spin text-blue-600" size={32} />
-            <p className="text-slate-500 text-sm font-medium">Buscando núcleos no backend do N8N...</p>
+          <div className="py-20 text-center flex flex-col items-center justify-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-3.5 h-3.5 rounded-full bg-[var(--theme-primary)] animate-bounce" style={{ animationDelay: '0ms' }} />
+              <div className="w-3.5 h-3.5 rounded-full bg-[var(--theme-primary)] animate-bounce" style={{ animationDelay: '150ms' }} />
+              <div className="w-3.5 h-3.5 rounded-full bg-[var(--theme-primary)] animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+            <p className="text-slate-600 text-sm font-bold animate-pulse">Carregando núcleos do instituto...</p>
           </div>
         ) : filteredNucleos.length === 0 ? (
           <div className="py-16 text-center px-4">
