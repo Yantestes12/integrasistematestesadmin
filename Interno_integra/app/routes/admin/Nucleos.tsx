@@ -1,21 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Plus, Search, Edit3, Power, Loader2, FileText, Layers, Building2, MapPin } from "lucide-react";
+import { Plus, Search, Edit3, Power, Loader2, Layers, Building2 } from "lucide-react";
 
 export interface NucleoItem {
   id: string | number;
   nome: string;
+  projeto_id?: number;
   projeto_nome?: string;
+  modalidade_id?: number;
   modalidade_nome?: string;
-  cidade_nome?: string;
-  bairro_nome?: string;
-  cidade_uf?: string;
-  endereco?: string;
-  coordenador_nome_real?: string;
-  instrutor_nome_real?: string;
-  telefone?: string;
-  ativo?: boolean;
+  bairro: string;
+  bairro_id?: number;
+  ativo: boolean;
+  aceitando_vagas: boolean;
 }
+
+// Mapa de IDs de projetos -> nomes (preenchido via fetch de iniciativas)
+let projetosCache: Record<number, string> = {};
+// Mapa de IDs de modalidades -> nomes
+let modalidadesCache: Record<number, string> = {};
 
 export default function Nucleos() {
   const [nucleos, setNucleos] = useState<NucleoItem[]>([]);
@@ -27,12 +30,56 @@ export default function Nucleos() {
     const savedInstitute = localStorage.getItem("auth_institute") || "IBRASE";
     setCurrentInstitute(savedInstitute);
 
-    fetchNucleos(savedInstitute);
+    // Busca projetos (iniciativas) e modalidades em paralelo com os núcleos
+    Promise.all([
+      fetchProjetos(savedInstitute),
+      fetchModalidades(savedInstitute),
+    ]).then(() => {
+      fetchNucleos(savedInstitute);
+    });
   }, []);
 
-  const parseNucleosList = (rawData: any): NucleoItem[] => {
-    let list: any[] = [];
+  // Busca a lista de projetos/iniciativas para mapear projeto_id -> nome
+  const fetchProjetos = async (instituteName: string) => {
+    try {
+      const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${instituteName.toUpperCase()}`);
+      if (res.ok) {
+        const data = await res.json();
+        const list = flattenResponse(data);
+        projetosCache = {};
+        list.forEach((p: any) => {
+          if (p.id && p.nome) {
+            projetosCache[Number(p.id)] = p.nome;
+          }
+        });
+      }
+    } catch (e) {
+      console.warn("Erro ao buscar projetos para mapear nomes:", e);
+    }
+  };
 
+  // Busca a lista de modalidades para mapear modalidade_id -> nome
+  const fetchModalidades = async (instituteName: string) => {
+    try {
+      const res = await fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${instituteName.toUpperCase()}`);
+      if (res.ok) {
+        const data = await res.json();
+        const list = flattenResponse(data);
+        modalidadesCache = {};
+        list.forEach((m: any) => {
+          if (m.id && m.nome) {
+            modalidadesCache[Number(m.id)] = m.nome;
+          }
+        });
+      }
+    } catch (e) {
+      console.warn("Erro ao buscar modalidades para mapear nomes:", e);
+    }
+  };
+
+  // Achata a resposta do N8N (pode vir como [{json: ...}] ou array direto)
+  const flattenResponse = (rawData: any): any[] => {
+    let list: any[] = [];
     if (Array.isArray(rawData)) {
       list = rawData;
     } else if (rawData && typeof rawData === 'object') {
@@ -42,7 +89,6 @@ export default function Nucleos() {
       else list = [rawData];
     }
 
-    // Flatten any { json: [...] } or nested arrays
     let flatList: any[] = [];
     list.forEach(entry => {
       if (entry && entry.json) {
@@ -57,30 +103,60 @@ export default function Nucleos() {
         flatList.push(entry);
       }
     });
+    return flatList;
+  };
+
+  const parseNucleosList = (rawData: any): NucleoItem[] => {
+    const flatList = flattenResponse(rawData);
 
     return flatList.map((item, idx) => {
       const id = item.id || item.id_nucleo || idx + 1;
-      const nome = 
-        item.nome || 
-        item.nome_nucleo || 
-        item.nucleo_label || 
-        `Núcleo ${id}`;
-
+      const nome = item.nome || item.nome_nucleo || `Núcleo ${id}`;
       const isAtivo = item.ativo !== false && item.ativo !== 0 && item.ativo !== "0";
+      const isAceitandoVagas = item.aceitando_vagas === true;
+
+      // Resolver nome do projeto: tenta objeto Supabase, depois cache, depois fallback
+      let projetoNome = "";
+      if (item.projetos?.nome) {
+        projetoNome = item.projetos.nome;
+      } else if (item.projeto_nome || item.iniciativa) {
+        projetoNome = item.projeto_nome || item.iniciativa;
+      } else if (item.projeto_id && projetosCache[Number(item.projeto_id)]) {
+        projetoNome = projetosCache[Number(item.projeto_id)];
+      } else if (item.projeto_id) {
+        projetoNome = `ID ${item.projeto_id}`;
+      } else {
+        projetoNome = "—";
+      }
+
+      // Resolver nome da modalidade: tenta objeto Supabase, depois cache, depois fallback
+      let modalidadeNome = "";
+      if (item.modalidades?.nome) {
+        modalidadeNome = item.modalidades.nome;
+      } else if (item.modalidade_nome || item.modalidade) {
+        modalidadeNome = item.modalidade_nome || item.modalidade;
+      } else if (item.modalidade_id && modalidadesCache[Number(item.modalidade_id)]) {
+        modalidadeNome = modalidadesCache[Number(item.modalidade_id)];
+      } else if (item.modalidade_id) {
+        modalidadeNome = `ID ${item.modalidade_id}`;
+      } else {
+        modalidadeNome = "—";
+      }
+
+      // Bairro: campo direto da tabela
+      const bairro = item.bairro || item.bairros?.nome || "";
 
       return {
         id,
         nome,
-        projeto_nome: item.projeto_nome || item.iniciativa || item.projetos?.nome || `Projeto ID ${item.projeto_id || ''}`,
-        modalidade_nome: item.modalidade_nome || item.modalidade || item.modalidades?.nome || "",
-        cidade_nome: item.cidade_nome || item.cidade || "",
-        bairro_nome: item.bairro_nome || item.bairro || item.bairros?.nome || "",
-        cidade_uf: item.cidade_uf || item.uf || "",
-        endereco: item.endereco || item.end_label || "",
-        coordenador_nome_real: item.coordenador_nome_real || item.coordenador || "",
-        instrutor_nome_real: item.instrutor_nome_real || item.instrutor || "",
-        telefone: item.telefone || item.telefone_label || "",
-        ativo: isAtivo
+        projeto_id: item.projeto_id,
+        projeto_nome: projetoNome,
+        modalidade_id: item.modalidade_id,
+        modalidade_nome: modalidadeNome,
+        bairro,
+        bairro_id: item.bairro_id,
+        ativo: isAtivo,
+        aceitando_vagas: isAceitandoVagas,
       };
     });
   };
@@ -138,8 +214,9 @@ export default function Nucleos() {
 
   const filteredNucleos = nucleos.filter((item) =>
     (item.nome || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.cidade_nome || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.projeto_nome || "").toLowerCase().includes(searchTerm.toLowerCase())
+    (item.bairro || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.projeto_nome || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.modalidade_nome || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -149,22 +226,22 @@ export default function Nucleos() {
       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-blue-100">
+            <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-md text-xs md:text-sm font-bold uppercase tracking-wider flex items-center gap-1.5 border border-blue-100">
               <Building2 size={14} /> {currentInstitute}
             </span>
-            <span className="text-slate-400 text-xs">• Módulo Administrativo</span>
+            <span className="text-slate-400 text-xs md:text-sm">• Módulo Administrativo</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-800 tracking-tight">
             Núcleos
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-slate-500 text-sm md:text-base mt-1">
             Gerencie os núcleos de atendimento cadastrados para o instituto <strong className="text-slate-700">{currentInstitute}</strong>.
           </p>
         </div>
 
         <Link
           to="/admin/cadastrar-nucleo"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-3 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 text-sm shrink-0"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-3 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 text-sm md:text-base shrink-0"
         >
           <Plus size={18} />
           <span>Novo Núcleo</span>
@@ -176,23 +253,23 @@ export default function Nucleos() {
         
         {/* Barra de Filtros e Busca */}
         <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50/50">
-          <div className="relative w-full sm:w-80">
+          <div className="relative w-full sm:w-96">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input
               type="text"
-              placeholder="Buscar por nome, cidade ou projeto..."
+              placeholder="Buscar por nome, bairro, iniciativa..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-xl text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             />
           </div>
 
-          <div className="text-xs text-slate-500 font-medium">
+          <div className="text-xs md:text-sm text-slate-500 font-medium">
             Exibindo <strong className="text-slate-800">{filteredNucleos.length}</strong> núcleos
           </div>
         </div>
 
-        {/* Tabela de Dados Reais com Bolinhas Carregando */}
+        {/* Tabela de Dados com Bolinhas Carregando */}
         {loading ? (
           <div className="py-20 text-center flex flex-col items-center justify-center gap-4">
             <div className="flex items-center gap-2">
@@ -200,91 +277,89 @@ export default function Nucleos() {
               <div className="w-3.5 h-3.5 rounded-full bg-[var(--theme-primary)] animate-bounce" style={{ animationDelay: '150ms' }} />
               <div className="w-3.5 h-3.5 rounded-full bg-[var(--theme-primary)] animate-bounce" style={{ animationDelay: '300ms' }} />
             </div>
-            <p className="text-slate-600 text-sm font-bold animate-pulse">Carregando núcleos do instituto...</p>
+            <p className="text-slate-600 text-sm md:text-base font-bold animate-pulse">Carregando núcleos do instituto...</p>
           </div>
         ) : filteredNucleos.length === 0 ? (
           <div className="py-16 text-center px-4">
             <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Layers size={32} />
             </div>
-            <h3 className="text-lg font-bold text-slate-800">Nenhum núcleo encontrado</h3>
-            <p className="text-slate-500 text-sm mt-1 max-w-md mx-auto">
+            <h3 className="text-lg md:text-xl font-bold text-slate-800">Nenhum núcleo encontrado</h3>
+            <p className="text-slate-500 text-sm md:text-base mt-1 max-w-md mx-auto">
               Não existem registros de núcleos cadastrados para o instituto {currentInstitute} no momento.
             </p>
             <Link
               to="/admin/cadastrar-nucleo"
-              className="inline-flex items-center gap-2 mt-6 text-sm font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-4 py-2.5 rounded-xl border border-blue-100 transition-colors"
+              className="inline-flex items-center gap-2 mt-6 text-sm md:text-base font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-4 py-2.5 rounded-xl border border-blue-100 transition-colors"
             >
               <Plus size={16} /> Cadastrar o primeiro núcleo
             </Link>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[800px]">
+            <table className="w-full text-left border-collapse min-w-[900px]">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-100 text-xs font-bold uppercase tracking-wider text-slate-500">
-                  <th className="py-4 px-4 lg:px-6 w-16 text-center">ID</th>
-                  <th className="py-4 px-4 lg:px-6">Nome do Núcleo</th>
-                  <th className="py-4 px-4 lg:px-6">Iniciativa / Modalidade</th>
-                  <th className="py-4 px-4 lg:px-6">Localidade</th>
-                  <th className="py-4 px-4 lg:px-6">Responsáveis</th>
-                  <th className="py-4 px-4 lg:px-6 w-28 text-center">Status</th>
-                  <th className="py-4 px-4 lg:px-6 w-28 text-center">Ações</th>
+                <tr className="bg-slate-50 border-b border-slate-200 text-xs sm:text-sm md:text-base font-black uppercase tracking-wider text-slate-700">
+                  <th className="py-4 px-4 md:px-6">Núcleo</th>
+                  <th className="py-4 px-4 md:px-6">Iniciativa</th>
+                  <th className="py-4 px-4 md:px-6">Bairro</th>
+                  <th className="py-4 px-4 md:px-6">Modalidade</th>
+                  <th className="py-4 px-4 md:px-6 text-center">Status Alocação</th>
+                  <th className="py-4 px-4 md:px-6 text-center">Status Físico</th>
+                  <th className="py-4 px-4 md:px-6 w-28 text-center">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-sm lg:text-base">
+              <tbody className="divide-y divide-slate-100 text-base md:text-lg">
                 {filteredNucleos.map((item) => {
                   return (
                     <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
-                      <td className="py-4 lg:py-5 px-4 lg:px-6 font-bold text-slate-400 text-center">{item.id}</td>
                       
-                      <td className="py-4 lg:py-5 px-4 lg:px-6">
-                        <span className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors block text-sm lg:text-base">
+                      {/* Núcleo */}
+                      <td className="py-4 md:py-5 px-4 md:px-6">
+                        <span className="font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors block text-base sm:text-lg md:text-xl">
                           {item.nome}
                         </span>
-                        {item.telefone && (
-                          <div className="text-xs text-slate-500 mt-1">
-                            Tel: {item.telefone}
-                          </div>
-                        )}
+                        <span className="text-xs md:text-sm text-slate-400 font-medium">ID {item.id}</span>
                       </td>
 
-                      <td className="py-4 lg:py-5 px-4 lg:px-6">
-                        <div className="font-bold text-xs lg:text-sm text-slate-800">
-                          {item.projeto_nome || "Sem Projeto"}
-                        </div>
-                        {item.modalidade_nome && (
-                          <div className="text-xs text-slate-500 mt-0.5">
-                            {item.modalidade_nome}
-                          </div>
-                        )}
+                      {/* Iniciativa (nome do projeto) */}
+                      <td className="py-4 md:py-5 px-4 md:px-6">
+                        <span className="font-bold text-slate-800 text-sm md:text-base">
+                          {item.projeto_nome}
+                        </span>
                       </td>
 
-                      <td className="py-4 lg:py-5 px-4 lg:px-6">
-                        <div className="flex items-start gap-1.5 text-slate-700 text-xs lg:text-sm font-medium">
-                          <MapPin size={16} className="text-slate-400 mt-0.5 shrink-0" />
-                          <div>
-                            <div>{item.cidade_nome}{item.cidade_uf ? `/${item.cidade_uf}` : ""} - {item.bairro_nome}</div>
-                          </div>
-                        </div>
-                      </td>
-                      
-                      <td className="py-4 lg:py-5 px-4 lg:px-6">
-                        {item.coordenador_nome_real && (
-                          <div className="text-xs lg:text-sm text-slate-700 font-medium">
-                            <span className="font-semibold text-slate-500">Coord:</span> {item.coordenador_nome_real}
-                          </div>
-                        )}
-                        {item.instrutor_nome_real && (
-                          <div className="text-[11px] text-slate-700 mt-0.5">
-                            <span className="font-semibold text-slate-500">Instru:</span> {item.instrutor_nome_real}
-                          </div>
-                        )}
+                      {/* Bairro */}
+                      <td className="py-4 md:py-5 px-4 md:px-6">
+                        <span className="font-semibold text-slate-700 text-sm md:text-base">
+                          {item.bairro || "—"}
+                        </span>
                       </td>
 
-                      <td className="py-4 px-4 text-center">
+                      {/* Modalidade */}
+                      <td className="py-4 md:py-5 px-4 md:px-6">
+                        <span className="font-semibold text-slate-700 text-sm md:text-base">
+                          {item.modalidade_nome}
+                        </span>
+                      </td>
+
+                      {/* Status da Alocação (aceitando_vagas) */}
+                      <td className="py-4 md:py-5 px-4 md:px-6 text-center">
                         <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${
+                          className={`inline-flex items-center px-3 md:px-4 py-1.5 rounded-full text-xs md:text-sm font-extrabold border ${
+                            item.aceitando_vagas
+                              ? "bg-blue-50 text-blue-700 border-blue-200/80"
+                              : "bg-amber-50 text-amber-700 border-amber-200/80"
+                          }`}
+                        >
+                          {item.aceitando_vagas ? "Aberto" : "Fechado"}
+                        </span>
+                      </td>
+
+                      {/* Status Físico (ativo) */}
+                      <td className="py-4 md:py-5 px-4 md:px-6 text-center">
+                        <span
+                          className={`inline-flex items-center px-3 md:px-4 py-1.5 rounded-full text-xs md:text-sm font-extrabold border ${
                             item.ativo
                               ? "bg-emerald-50 text-emerald-700 border-emerald-200/80"
                               : "bg-red-50 text-red-700 border-red-200/80"
@@ -294,21 +369,22 @@ export default function Nucleos() {
                         </span>
                       </td>
 
-                      <td className="py-4 px-4 text-center">
+                      {/* Ações */}
+                      <td className="py-4 px-4 md:px-6 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <Link
                             to={`/admin/cadastrar-nucleo?edit=${item.id}`}
                             className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                             title="Editar"
                           >
-                            <Edit3 size={16} />
+                            <Edit3 size={18} />
                           </Link>
                           <button
                             onClick={() => handleDelete(item.id)}
                             className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                             title="Desativar / Ativar"
                           >
-                            <Power size={16} />
+                            <Power size={18} />
                           </button>
                         </div>
                       </td>
