@@ -61,47 +61,65 @@ export const Topbar = () => {
   };
 
   return (
-    <header className="bg-white text-slate-800 pl-14 sm:pl-16 lg:pl-6 pr-4 sm:pr-6 py-3 flex items-center justify-between shadow-[0_4px_20px_-10px_rgba(0,0,0,0.1)] sticky top-0 z-30 w-full select-none min-h-[64px] border-b border-slate-100">
+    <header className="bg-white text-slate-800 lg:bg-[var(--theme-topbar)] lg:text-white pl-14 sm:pl-16 lg:pl-6 pr-4 sm:pr-6 py-3 flex items-center justify-between shadow-[0_4px_20px_-10px_rgba(0,0,0,0.1)] sticky top-0 z-30 w-full select-none min-h-[64px] border-b border-slate-100 lg:border-white/10 transition-colors duration-200">
 
       {/* Lado Esquerdo: Logo / Marca e Contexto do Instituto */}
       <div className="flex items-center gap-3 sm:gap-6 min-w-0">
         
         {/* Integra Logo */}
-        <div className="flex items-center justify-center">
-          <img src="/logo_integra_simbolo.gif" onError={(e) => { (e.target as any).style.display = 'none'; }} alt="Integra" className="h-7 w-auto object-contain" />
+        <div className="flex items-center justify-center lg:bg-white/10 lg:p-1.5 lg:rounded-lg lg:border lg:border-white/15">
+          <img 
+            src="/logo_integra_simbolo.gif" 
+            onError={(e) => { (e.target as any).style.display = 'none'; }} 
+            alt="Integra" 
+            className="h-7 w-auto object-contain lg:brightness-0 lg:invert" 
+          />
         </div>
 
-        <div className="w-px h-8 bg-slate-200 hidden sm:block"></div>
+        <div className="w-px h-8 bg-slate-200 lg:bg-white/20 hidden sm:block"></div>
 
         {/* Info do Instituto Selecionado & Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button 
             onClick={() => allowedInstitutes.length > 1 && setIsDropdownOpen(!isDropdownOpen)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${allowedInstitutes.length > 1 ? 'hover:bg-slate-50 cursor-pointer border-slate-200' : 'cursor-default border-transparent'}`}
+            className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg border transition-all ${
+              allowedInstitutes.length > 1 
+                ? 'hover:bg-slate-50 lg:hover:bg-white/15 cursor-pointer border-slate-200 lg:border-white/20 lg:bg-white/10' 
+                : 'cursor-default border-transparent lg:bg-white/10'
+            }`}
           >
-            <img 
-              src={`/logo_${institute.toLowerCase()}.png`} 
-              onError={(e) => { 
-                (e.target as any).style.display = 'none'; 
-                (e.target as any).nextElementSibling.style.display = 'flex';
-              }} 
-              alt={institute} 
-              className="h-8 w-auto object-contain" 
-            />
-            {/* Fallback de texto se a imagem não carregar */}
-            <div className="hidden items-center gap-1.5 text-slate-700 font-bold">
-              <Building2 size={18} className="text-blue-600" />
-              <span>{institute}</span>
+            {/* Wrapper da Logo com fundo escuro exclusivo para a logo da AUNI */}
+            <div className={`flex items-center justify-center p-1 rounded-md transition-colors ${
+              institute.toUpperCase() === 'AUNI' 
+                ? 'bg-slate-900 border border-slate-700 shadow-sm' 
+                : 'bg-transparent'
+            }`}>
+              <img 
+                src={`/logo_${institute.toLowerCase()}.png`} 
+                onError={(e) => { 
+                  (e.target as any).style.display = 'none'; 
+                  if ((e.target as any).nextElementSibling) {
+                    (e.target as any).nextElementSibling.style.display = 'flex';
+                  }
+                }} 
+                alt={institute} 
+                className="h-8 w-auto object-contain" 
+              />
+              {/* Fallback de texto se a imagem não carregar */}
+              <div className="hidden items-center gap-1.5 text-slate-700 lg:text-white font-bold">
+                <Building2 size={18} className="text-blue-600 lg:text-white" />
+                <span>{institute}</span>
+              </div>
             </div>
-            
+
             {allowedInstitutes.length > 1 && (
-              <ChevronDown size={16} className={`text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown size={16} className={`text-slate-400 lg:text-white/70 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
             )}
           </button>
 
-          {/* Menu Dropdown de Múltiplos Institutos */}
+          {/* Menu Dropdown de Múltiplos Institutos (Centralizado no PC para não ser cortado ou tampado) */}
           {isDropdownOpen && allowedInstitutes.length > 1 && (
-            <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-slate-100 shadow-xl rounded-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
+            <div className="absolute top-full left-0 lg:left-1/2 lg:-translate-x-1/2 mt-2 w-60 bg-white text-slate-800 border border-slate-200 shadow-2xl rounded-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
               <div className="px-3 pb-2 mb-2 border-b border-slate-100 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Trocar Instituto
               </div>
@@ -109,14 +127,21 @@ export const Topbar = () => {
                 <button
                   key={inst}
                   onClick={() => handleSwitchInstitute(inst)}
-                  className={`w-full text-left px-4 py-2 text-sm flex items-center gap-3 hover:bg-slate-50 transition-colors ${inst === institute ? 'text-blue-700 font-bold bg-blue-50/50' : 'text-slate-700 font-medium'}`}
+                  className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 hover:bg-slate-50 transition-colors ${
+                    inst === institute ? 'text-blue-700 font-bold bg-blue-50/50' : 'text-slate-700 font-medium'
+                  }`}
                 >
-                  <img 
-                    src={`/logo_${inst.toLowerCase()}.png`} 
-                    onError={(e) => { (e.target as any).style.display = 'none'; }} 
-                    alt={inst} 
-                    className="h-5 w-auto object-contain" 
-                  />
+                  {/* Container da logo no dropdown com fundo escuro exclusivo para AUNI */}
+                  <div className={`p-1 rounded-md flex items-center justify-center ${
+                    inst.toUpperCase() === 'AUNI' ? 'bg-slate-900 border border-slate-700' : 'bg-transparent'
+                  }`}>
+                    <img 
+                      src={`/logo_${inst.toLowerCase()}.png`} 
+                      onError={(e) => { (e.target as any).style.display = 'none'; }} 
+                      alt={inst} 
+                      className="h-5 w-auto object-contain" 
+                    />
+                  </div>
                   <span className="flex-1">{inst}</span>
                   {inst === institute && <Check size={16} className="text-blue-600 shrink-0" />}
                 </button>
@@ -131,25 +156,25 @@ export const Topbar = () => {
         
         {/* User Info */}
         <div className="flex flex-col items-end mr-2 hidden sm:flex">
-          <span className="text-sm font-bold text-slate-800 truncate">Olá, {userName}</span>
-          <span className="text-[11px] font-semibold text-blue-600 bg-blue-100 px-2 py-0.5 rounded uppercase tracking-wider">
+          <span className="text-sm font-bold text-slate-800 lg:text-white truncate">Olá, {userName}</span>
+          <span className="text-[11px] font-semibold text-blue-600 bg-blue-100 lg:bg-white/20 lg:text-white px-2 py-0.5 rounded uppercase tracking-wider">
             {userRole}
           </span>
         </div>
 
         <button
           aria-label="Ajuda"
-          className="p-2 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors hidden sm:block"
+          className="p-2 rounded-xl text-slate-400 lg:text-white/80 hover:text-blue-600 lg:hover:text-white hover:bg-blue-50 lg:hover:bg-white/10 transition-colors hidden sm:block"
         >
           <HelpCircle size={18} />
         </button>
 
-        <div className="w-px h-6 bg-slate-200 mx-1 hidden sm:block"></div>
+        <div className="w-px h-6 bg-slate-200 lg:bg-white/20 mx-1 hidden sm:block"></div>
 
         <button
           onClick={handleLogout}
           aria-label="Sair / Fechar"
-          className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+          className="p-2 rounded-xl text-slate-400 lg:text-white/80 hover:text-red-600 lg:hover:text-red-300 hover:bg-red-50 lg:hover:bg-red-500/20 transition-colors flex items-center gap-2"
           title="Sair"
         >
           <LogOut size={18} />
