@@ -122,8 +122,8 @@ export default function CadastrarProjeto() {
           <IdentificacaoSection />
           <VigenciaSection />
           <PeriodosSection />
-          <LimitesSection />
           <ModalidadesSection />
+          <LimitesSection />
           <FaixaEtariaSection />
 
           {/* Status Section */}
