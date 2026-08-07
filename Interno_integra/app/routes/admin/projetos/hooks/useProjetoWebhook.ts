@@ -118,21 +118,23 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
             ativo = (item.ativo === 1 || item.ativo === "1" || item.ativo === true || item.ativo === "true");
           }
 
-          let mappedLimitesCargos = [];
-          if (item.limites_cargos && Array.isArray(item.limites_cargos)) {
-            mappedLimitesCargos = item.limites_cargos;
-          } else if (typeof item.limites_cargos === 'string') {
+          let mappedLimitesCargos: Array<{nome: string, limite: number}> = [];
+          if (item.limites_cargos && typeof item.limites_cargos === 'string') {
             try { mappedLimitesCargos = JSON.parse(item.limites_cargos); } catch(e) {}
-          } else {
-            // Se for um projeto antigo sem limites_cargos salvo, inicializamos os hardcoded para ele poder editar
-            mappedLimitesCargos = [
-              { nome: "Instrutor", limite: Number(item.qtd_instrutor || 0) },
-              { nome: "Auxiliar", limite: Number(item.limite_auxiliares || 0) },
-              { nome: "Coordenador Geral", limite: Number(item.qtd_coord_geral || 0) },
-              { nome: "Coordenador de Núcleo", limite: Number(item.qtd_coord_nucleo || 0) },
-              { nome: "Coordenador Pedagógico", limite: Number(item.qtd_coord_pedagogico || 0) },
-              { nome: "Supervisor", limite: Number(item.qtd_supervisores || 0) }
-            ];
+          } else if (item.limites_cargos && Array.isArray(item.limites_cargos)) {
+            mappedLimitesCargos = item.limites_cargos;
+          }
+          
+          // Se o JSON está vazio, tenta puxar das colunas antigas (projetos legados)
+          if (mappedLimitesCargos.length === 0) {
+            const fallback: Array<{nome: string, limite: number}> = [];
+            if (item.qtd_instrutor) fallback.push({ nome: "Instrutor", limite: Number(item.qtd_instrutor) });
+            if (item.limite_auxiliares) fallback.push({ nome: "Auxiliar", limite: Number(item.limite_auxiliares) });
+            if (item.qtd_coord_geral) fallback.push({ nome: "Coordenador Geral", limite: Number(item.qtd_coord_geral) });
+            if (item.qtd_coord_nucleo) fallback.push({ nome: "Coordenador de Núcleo", limite: Number(item.qtd_coord_nucleo) });
+            if (item.qtd_coord_pedagogico) fallback.push({ nome: "Coordenador Pedagógico", limite: Number(item.qtd_coord_pedagogico) });
+            if (item.qtd_supervisores) fallback.push({ nome: "Supervisor", limite: Number(item.qtd_supervisores) });
+            if (fallback.length > 0) mappedLimitesCargos = fallback;
           }
 
           const defaultValues: Partial<ProjetoFormData> = {

@@ -36,7 +36,7 @@ export function LimitesSection() {
         
         setCargosDisponiveis(list.map((c: any) => ({
           id: String(c.id),
-          nome: c.nome || c.cargo || c.name || "Cargo Sem Nome"
+          nome: c.label || c.nome || c.cargo || c.name || "Cargo Sem Nome"
         })));
       }
     } catch (e) {
