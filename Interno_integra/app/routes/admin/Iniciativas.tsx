@@ -16,6 +16,18 @@ export interface IniciativaItem {
   ativo?: boolean;
 }
 
+const parseModalidadesHelper = (raw: any) => {
+  if (!raw) return null;
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    } catch(e) {}
+  }
+  return null;
+};
+
 export default function Iniciativas() {
   const [iniciativas, setIniciativas] = useState<IniciativaItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,6 +118,19 @@ export default function Iniciativas() {
       
       const aplicabilidade = item.aplicabilidade || item.identificacao?.aplicabilidade || "";
 
+      let modalidadesList = parseModalidadesHelper(item.limites_modalidade) || 
+        parseModalidadesHelper(item.limites_modalidades) || 
+        parseModalidadesHelper(item.limitesModalidade);
+
+      if (!modalidadesList || modalidadesList.length === 0) {
+        modalidadesList = [];
+        if (item.modalidade_funcional) modalidadesList.push({ nome: "Funcional", limite: item.modalidade_funcional });
+        if (item.modalidade_futebol) modalidadesList.push({ nome: "Futebol", limite: item.modalidade_futebol });
+        if (item.modalidade_luta) modalidadesList.push({ nome: "Luta", limite: item.modalidade_luta });
+        if (item.modalidade_projeto_de_aula) modalidadesList.push({ nome: "Projeto de Aula", limite: item.modalidade_projeto_de_aula });
+        if (item.modalidade_eventos) modalidadesList.push({ nome: "Eventos", limite: item.modalidade_eventos });
+      }
+
       return {
         id,
         nome,
@@ -117,7 +142,8 @@ export default function Iniciativas() {
         faixa_etaria,
         status: isAtivo,
         ativo: isAtivo,
-        aplicabilidade
+        aplicabilidade,
+        modalidadesList
       };
     });
   };
@@ -292,6 +318,18 @@ export default function Iniciativas() {
                           }`}>
                             {item.aplicabilidade.toLowerCase() === 'aula' ? 'Projeto de Aula' : item.aplicabilidade}
                           </span>
+                        )}
+
+                        {item.modalidadesList && item.modalidadesList.length > 0 && (
+                          <div className="flex items-center gap-1.5 flex-wrap mt-2.5">
+                            <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider block w-full">Modalidades / Vagas:</span>
+                            {item.modalidadesList.map((m: any, idx: number) => (
+                              <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                                {m.nome || m.modalidade} {m.limite ? `(${m.limite} vagas)` : ''}
+                              </span>
+                            ))}
+                          </div>
                         )}
                       </td>
 
