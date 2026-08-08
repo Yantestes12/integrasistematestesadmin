@@ -59,12 +59,12 @@ export default function Dashboard() {
               Iniciativas
             </h2>
             <p className="text-slate-500 text-sm lg:text-base mt-2.5 leading-relaxed">
-              Gerenciamento completo dos núcleos educacionais e esportivos, controle de matrículas, turmas, presenças e registros.
+              Crie e gerencie projetos de aula, eventos e iniciativas educacionais ou esportivas da instituição.
             </p>
           </div>
 
           <div className="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-xs lg:text-sm font-semibold text-slate-500">Projetos & Atividades</span>
+            <span className="text-xs lg:text-sm font-semibold text-slate-500">Projetos & Eventos</span>
             <Link 
               to="/admin/iniciativas"
               className="inline-flex items-center gap-2 bg-[var(--theme-primary)] hover:opacity-90 text-white font-bold px-6 py-3 rounded-xl shadow-sm transition-all text-sm lg:text-base group-hover:translate-x-1"
@@ -91,12 +91,12 @@ export default function Dashboard() {
               Espaços
             </h2>
             <p className="text-slate-500 text-sm mt-2.5 leading-relaxed">
-              Cadastro dos locais físicos cedidos, responsáveis, horários de funcionamento e documentação do Termo de Uso.
+              Mapeamento dos locais físicos nos bairros, dados do cedente/responsável e termos de uso.
             </p>
           </div>
 
           <div className="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Locais de Atendimento</span>
+            <span className="text-xs font-semibold text-slate-500">Locais Físicos de Atendimento</span>
             <Link
               to="/admin/espacos"
               className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-3 rounded-xl shadow-sm transition-all text-sm group-hover:translate-x-1"
@@ -115,7 +115,7 @@ export default function Dashboard() {
                 <Building2 className="w-7 h-7 lg:w-8 lg:h-8" />
               </div>
               <span className="text-xs lg:text-sm font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full uppercase tracking-wider">
-                Módulo 02
+                Módulo 03
               </span>
             </div>
 
@@ -123,12 +123,12 @@ export default function Dashboard() {
               Núcleos
             </h2>
             <p className="text-slate-500 text-sm lg:text-base mt-2.5 leading-relaxed">
-              Cadastro e manutenção das unidades físicas, locais de atendimento, endereços, coordenadores e instrutores vinculados.
+              Gestão das unidades operacionais, alocação de equipe (coordenadores/instrutores), vagas e grade horária de turmas.
             </p>
           </div>
 
           <div className="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-xs lg:text-sm font-semibold text-slate-500">Unidades de Atendimento</span>
+            <span className="text-xs lg:text-sm font-semibold text-slate-500">Unidades Operacionais & Turmas</span>
             <Link 
               to="/admin/nucleos"
               className="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white font-bold px-6 py-3 rounded-xl shadow-sm transition-all text-sm lg:text-base group-hover:translate-x-1"
