@@ -7,9 +7,9 @@ import { ArrowLeft, Save, MapPin, User, FileText, Building2, Search, Loader2 } f
 // 1. Schemas de Validação (Zod)
 const cadastrarNucleoSchema = z.object({
   // Identificação
-  nomeNucleo: z.string().min(1, "Nome do núcleo é obrigatório"),
-  espacoId: z.string().optional(),
-  projetoId: z.string().min(1, "Selecione o projeto de aula ou evento"),
+  nomeNucleo: z.string().optional(),
+  espacoId: z.string().min(1, "Selecione o espaço físico"),
+  projetoId: z.string().min(1, "Selecione o projeto de aula/evento"),
   modalidadeId: z.string().optional(),
   cidadeId: z.string().optional(),
   uf: z.string().optional(),
@@ -131,6 +131,12 @@ export default function CadastrarNucleo() {
     if (!espacoIdWatch) return null;
     return espacos.find(e => String(e.id) === String(espacoIdWatch));
   }, [espacos, espacoIdWatch]);
+
+  useEffect(() => {
+    if (selectedEspaco?.nome) {
+      setFormValue("nomeNucleo", selectedEspaco.nome);
+    }
+  }, [selectedEspaco, setFormValue]);
 
   useEffect(() => {
     if (editId) {
@@ -379,28 +385,13 @@ export default function CadastrarNucleo() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Nome do Núcleo <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                {...register("nomeNucleo")}
-                placeholder="Ex.: Núcleo Esperança"
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-              {errors.nomeNucleo && (
-                <span className="text-[11px] text-red-500 mt-1 block">{errors.nomeNucleo.message}</span>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Projeto de Aula ou Evento <span className="text-red-500">*</span>
               </label>
               <select
                 {...register("projetoId")}
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                <option value="">Selecione o projeto de aula ou evento...</option>
+                <option value="">Selecione o projeto de aula/evento</option>
                 {projetos.map(p => (
                   <option key={p.id} value={p.id}>{p.nome}</option>
                 ))}
@@ -409,9 +400,7 @@ export default function CadastrarNucleo() {
                 <span className="text-[11px] text-red-500 mt-1 block">{errors.projetoId.message}</span>
               )}
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Selecione o Espaço (Local Físico Cadastrado) <span className="text-red-500">*</span>
@@ -433,9 +422,9 @@ export default function CadastrarNucleo() {
                   </option>
                 ))}
               </select>
-              <span className="text-[11px] text-slate-400 mt-1 block">
-                Filtra os espaços físicos cadastrados para este Projeto de Aula ou Evento.
-              </span>
+              {errors.espacoId && (
+                <span className="text-[11px] text-red-500 mt-1 block">{errors.espacoId.message}</span>
+              )}
             </div>
           </div>
 
@@ -447,7 +436,12 @@ export default function CadastrarNucleo() {
                 <span>Informações Herdadas do Espaço Físico</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div className="bg-white p-3 rounded-lg border border-indigo-100 shadow-2xs">
+                  <span className="text-slate-400 font-semibold block text-[10px] uppercase">Nome do Núcleo:</span>
+                  <span className="font-extrabold text-indigo-700 text-sm">{selectedEspaco.nome}</span>
+                </div>
+
                 <div className="bg-white p-3 rounded-lg border border-indigo-100 shadow-2xs">
                   <span className="text-slate-400 font-semibold block text-[10px] uppercase">Modalidade:</span>
                   <span className="font-extrabold text-slate-800 text-sm">{selectedEspaco.modalidade_nome || selectedEspaco.modalidade || "Geral"}</span>
