@@ -185,13 +185,13 @@ export default function Espacos() {
             onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-3 text-xs font-semibold">
-          <span className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <div className="flex items-center gap-2 sm:gap-3 text-xs font-semibold flex-wrap">
+          <span className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5 whitespace-nowrap">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
             Em Uso ({espacos.filter(e => e.nucleo_nome).length})
           </span>
-          <span className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+          <span className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1.5 whitespace-nowrap">
+            <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
             Disponíveis ({espacos.filter(e => !e.nucleo_nome).length})
           </span>
         </div>
@@ -219,17 +219,17 @@ export default function Espacos() {
             return (
               <div 
                 key={espaco.id}
-                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between aspect-square relative group"
+                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between min-h-[240px] sm:aspect-square relative group"
               >
-                {/* Header do Card Quadrado */}
+                {/* Header do Card */}
                 <div>
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-start justify-between gap-2 mb-3 flex-wrap sm:flex-nowrap">
+                    <div className="flex items-center gap-2 min-w-0">
                       <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-[var(--theme-primary)] font-bold shrink-0">
                         <Building2 className="w-5 h-5" />
                       </div>
-                      <div>
-                        <h3 className="font-extrabold text-slate-800 text-base leading-tight group-hover:text-[var(--theme-primary)] transition-colors">
+                      <div className="min-w-0">
+                        <h3 className="font-extrabold text-slate-800 text-base leading-tight group-hover:text-[var(--theme-primary)] transition-colors break-words">
                           {espaco.nome}
                         </h3>
                         {espaco.bairro && (
@@ -244,13 +244,13 @@ export default function Espacos() {
                     {/* Tag de Status Em Uso / Disponível */}
                     <div className="shrink-0">
                       {emUso ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-2xs">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-2xs whitespace-nowrap">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
                           Em Uso
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                          <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+                          <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
                           Disponível
                         </span>
                       )}
