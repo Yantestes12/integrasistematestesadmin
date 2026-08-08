@@ -404,7 +404,7 @@ export default function CadastrarEspaco() {
   }
 
   // ─── Field helper ─────────────────────────────────────────────────────────
-  const Field = ({ label, error, children, required }: { label: string; error?: string; children: React.ReactNode; required?: boolean }) => (
+  const Field = ({ label, error, children, required }: { label: React.ReactNode; error?: string; children: React.ReactNode; required?: boolean }) => (
     <div className="flex flex-col gap-1.5">
       <label className="text-sm font-semibold text-slate-700">
         {label} {required && <span className="text-red-500">*</span>}
@@ -426,9 +426,17 @@ export default function CadastrarEspaco() {
       case 0:
         return (
           <div className="space-y-5">
-            <Field label="Qual iniciativa/projeto?" error={errors.projetoId} required>
+            <Field 
+              label={
+                <span>
+                  Qual Projeto/Evento? <span className="text-slate-400 font-normal text-xs opacity-70 ml-1.5">* Iniciativa</span>
+                </span>
+              } 
+              error={errors.projetoId} 
+              required
+            >
               <select className={inputCls(errors.projetoId)} value={form.projetoId} onChange={e => set("projetoId", e.target.value)}>
-                <option value="">Selecione uma iniciativa...</option>
+                <option value="">Selecione um projeto/evento...</option>
                 {projetos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
               </select>
             </Field>
