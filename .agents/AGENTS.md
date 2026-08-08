@@ -54,6 +54,12 @@
 - `Interno_integra/app/routes/admin/CadastrarNucleo.tsx` - Cadastro/edição de núcleo
 - `Interno_integra/app/routes/admin/CadastrarProjeto.tsx` - Cadastro/edição de projeto
 
+## 🔴 REGRA CRÍTICA: Raciocínio Profundo & Validação de Código (Deep Think Mode)
+- **Zero Suposições**: NUNCA assumir que um erro ou falta de atualização é culpa de cache/servidor sem antes inspecionar logs, conferir compilação, testar localmente ou verificar git diff.
+- **Raciocínio Passo a Passo**: Antes de responder ou entregar código, analise criticamente a arquitetura, tipos, importações e dependências.
+- **Verificação Rigorosa**: Teste builds (`npm run build`), verifique sintaxe e garanta alinhamento perfeito com os esquemas do N8N e Supabase antes de declarar concluído.
+
 ## Último Commit
-- Hash: `0767eb2` (sincronizado em `main` E `master`)
-- Conteúdo: Todas as correções de sidebar, fontes, bolinhas de loading, e reescrita do Nucleos.tsx
+- Hash: `a9ed004` (sincronizado em `main` E `master`)
+- Conteúdo: Módulo Espaço completo (Espacos.tsx, CadastrarEspaco.tsx, N8N JSONs e SQL Migration)
+
