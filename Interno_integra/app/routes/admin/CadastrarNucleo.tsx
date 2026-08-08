@@ -53,6 +53,59 @@ export default function CadastrarNucleo() {
   const editId = searchParams.get("edit");
   const [isLoadingData, setIsLoadingData] = useState(!!editId);
 
+  const [espacos, setEspacos] = useState<any[]>([]);
+  const [projetos, setProjetos] = useState<any[]>([]);
+  const [modalidades, setModalidades] = useState<any[]>([]);
+
+  useEffect(() => {
+    const savedInst = localStorage.getItem("auth_institute") || "IBRASE";
+    fetchEspacos(savedInst);
+    fetchProjetos(savedInst);
+    fetchModalidades(savedInst);
+  }, []);
+
+  const fetchEspacos = async (inst: string) => {
+    try {
+      const [resE, resN] = await Promise.all([
+        fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${inst.toUpperCase()}`),
+        fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst.toUpperCase()}`).catch(() => null)
+      ]);
+      let nMap: Record<string, string> = {};
+      if (resN && resN.ok) {
+        const nData = await resN.json();
+        const list = Array.isArray(nData) ? nData : nData.data || [nData];
+        list.forEach((n: any) => { if (n.espaco_id) nMap[String(n.espaco_id)] = n.nome; });
+      }
+      if (resE.ok) {
+        const data = await resE.json();
+        const list = Array.isArray(data) ? data : data.data || [data];
+        setEspacos(list.map((e: any) => ({ ...e, nucleo_nome: nMap[String(e.id)] })));
+      }
+    } catch (e) { console.warn("Erro espacos:", e); }
+  };
+
+  const fetchProjetos = async (inst: string) => {
+    try {
+      const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${inst.toUpperCase()}`);
+      if (res.ok) {
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : data.data || [data];
+        setProjetos(list);
+      }
+    } catch (e) { console.warn("Erro projetos:", e); }
+  };
+
+  const fetchModalidades = async (inst: string) => {
+    try {
+      const res = await fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${inst.toUpperCase()}`);
+      if (res.ok) {
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : data.data || [data];
+        setModalidades(list);
+      }
+    } catch (e) { console.warn("Erro modalidades:", e); }
+  };
+
   const [isSearchingCep, setIsSearchingCep] = useState(false);
   const [isSearchingCnpj, setIsSearchingCnpj] = useState(false);
   const [isSearchingCpf, setIsSearchingCpf] = useState(false);
@@ -335,9 +388,10 @@ export default function CadastrarNucleo() {
                 {...register("projetoId")}
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                <option value="">Selecione...</option>
-                <option value="1">PROMOV 2026</option>
-                <option value="2">Projeto Educar</option>
+                <option value="">Selecione uma iniciativa...</option>
+                {projetos.map(p => (
+                  <option key={p.id} value={p.id}>{p.nome}</option>
+                ))}
               </select>
               {errors.projetoId && (
                 <span className="text-[11px] text-red-500 mt-1 block">{errors.projetoId.message}</span>
@@ -345,95 +399,40 @@ export default function CadastrarNucleo() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Modalidade <span className="text-red-500">*</span>
+                Selecione o Espaço (Local Físico Cadastrado) <span className="text-red-500">*</span>
+              </label>
+              <select
+                {...register("espacoId")}
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">Selecione um espaço físico...</option>
+                {espacos.map(e => (
+                  <option key={e.id} value={e.id}>
+                    {e.nome} {e.bairro ? `(${e.bairro})` : ""} {e.nucleo_nome ? "— 🟢 Em Uso" : "— ⚪ Disponível"}
+                  </option>
+                ))}
+              </select>
+              <span className="text-[11px] text-slate-400 mt-1 block">
+                O endereço, CEP e responsável são vinculados automaticamente a partir do Espaço.
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Modalidade (Opcional)
               </label>
               <select
                 {...register("modalidadeId")}
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                <option value="">Selecione...</option>
-                <option value="futebol">Futebol</option>
-                <option value="funcional">Funcional</option>
-                <option value="lutas">Lutas</option>
-                <option value="projeto_aula">Projeto de Aula</option>
-                <option value="eventos">Eventos</option>
+                <option value="">Selecione uma modalidade...</option>
+                {modalidades.map(m => (
+                  <option key={m.id} value={m.id}>{m.nome}</option>
+                ))}
               </select>
-              {errors.modalidadeId && (
-                <span className="text-[11px] text-red-500 mt-1 block">{errors.modalidadeId.message}</span>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Cidade <span className="text-red-500">*</span>
-              </label>
-              <select
-                {...register("cidadeId")}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Selecione...</option>
-                <option value="1">Brasília</option>
-                <option value="2">São Paulo</option>
-              </select>
-              {errors.cidadeId && (
-                <span className="text-[11px] text-red-500 mt-1 block">{errors.cidadeId.message}</span>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                UF da Nova Cidade <span className="text-red-500">*</span>
-              </label>
-              <select
-                {...register("uf")}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Selecione...</option>
-                <option value="DF">DF</option>
-                <option value="SP">SP</option>
-              </select>
-              {errors.uf && (
-                <span className="text-[11px] text-red-500 mt-1 block">{errors.uf.message}</span>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Bairro <span className="text-red-500">*</span>
-              </label>
-              <select
-                {...register("bairroId")}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Selecione...</option>
-                <option value="1">Asa Norte</option>
-                <option value="2">Taguatinga</option>
-              </select>
-              {errors.bairroId && (
-                <span className="text-[11px] text-red-500 mt-1 block">{errors.bairroId.message}</span>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Número da Vaga Global na Iniciativa <span className="text-red-500">*</span>
-              </label>
-              <select
-                {...register("numeroVaga")}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Selecione...</option>
-                <option value="1">Vaga 01</option>
-                <option value="2">Vaga 02</option>
-              </select>
-              {errors.numeroVaga && (
-                <span className="text-[11px] text-red-500 mt-1 block">{errors.numeroVaga.message}</span>
-              )}
             </div>
           </div>
         </div>
