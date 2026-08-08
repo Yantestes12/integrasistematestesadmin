@@ -138,8 +138,8 @@ export default function Espacos() {
             </span>
             <span className="text-slate-400 text-xs font-medium">• Módulo Administrativo</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 flex items-center gap-2">
-            <Home className="w-7 h-7 text-[var(--theme-primary)]" />
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 flex items-center gap-2">
+            <Home className="w-6 h-6 text-[var(--theme-primary)]" />
             Espaços
           </h1>
           <p className="text-slate-500 text-sm mt-1">

@@ -231,7 +231,7 @@ export default function Nucleos() {
             </span>
             <span className="text-slate-400 text-xs md:text-sm">• Módulo Administrativo</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-800 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight">
             Núcleos
           </h1>
           <p className="text-slate-500 text-sm md:text-base mt-1">

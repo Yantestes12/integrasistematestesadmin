@@ -55,10 +55,10 @@ export const Sidebar = ({ onSelectMenu }) => {
 
   // Estrutura hierárquica atualizada com as rotas reais do app/routes.ts
   const menuTree = [
-    { name: 'Dashboard', path: "/", icon: <LayoutDashboard className="w-5 h-5 md:w-7 md:h-7" /> },
+    { name: 'Dashboard', path: "/", icon: <LayoutDashboard className="w-5 h-5" /> },
     {
       name: 'Administrativo',
-      icon: <BookOpen className="w-5 h-5 md:w-7 md:h-7" />,
+      icon: <BookOpen className="w-5 h-5" />,
       children: [
         { name: 'Iniciativas', path: "/admin/iniciativas" },
         { name: 'Espaços', path: "/admin/espacos" },
@@ -75,7 +75,7 @@ export const Sidebar = ({ onSelectMenu }) => {
       const isExpanded = openPaths.includes(itemKey);
 
       // Estilos dinâmicos baseados na profundidade da árvore (level)
-      const paddingLeft = level === 0 ? 'px-6' : level === 1 ? 'pl-10 pr-6' : level === 2 ? 'pl-14 pr-6' : 'pl-18 pr-6';
+      const paddingLeft = level === 0 ? 'px-5' : level === 1 ? 'pl-8 pr-5' : level === 2 ? 'pl-12 pr-5' : 'pl-14 pr-5';
 
       const levelBg =
         level === 0
@@ -91,16 +91,16 @@ export const Sidebar = ({ onSelectMenu }) => {
           <div key={index} className="w-full">
             <div
               onClick={(e) => togglePath(itemKey, e, item)}
-              className={`flex items-center justify-between py-4 md:py-6 cursor-pointer ${paddingLeft} ${levelBg}`}
+              className={`flex items-center justify-between py-3 cursor-pointer ${paddingLeft} ${levelBg}`}
             >
               <div className="flex items-center gap-3 min-w-0 w-full pointer-events-none">
                 {item.icon && <span>{item.icon}</span>}
-                <span className={`truncate ${level === 0 ? 'text-lg md:text-[1.65rem] font-bold' : 'text-base md:text-[1.35rem] font-semibold'}`}>
+                <span className={`truncate ${level === 0 ? 'text-base md:text-lg font-bold' : 'text-sm md:text-base font-semibold'}`}>
                   {item.name}
                 </span>
               </div>
               <span className="ml-2 shrink-0 pointer-events-none">
-                {isExpanded ? <ChevronDown className="w-5 h-5 md:w-7 md:h-7" /> : <ChevronRight className="w-5 h-5 md:w-7 md:h-7" />}
+                {isExpanded ? <ChevronDown className="w-4 h-4 md:w-5 md:h-5" /> : <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />}
               </span>
             </div>
 
@@ -124,13 +124,13 @@ export const Sidebar = ({ onSelectMenu }) => {
               if (onSelectMenu) onSelectMenu(item.name);
               setIsOpen(false);
             }}
-            className={`flex items-center justify-between py-4 md:py-6 cursor-pointer select-none ${paddingLeft} ${
+            className={`flex items-center justify-between py-3 cursor-pointer select-none ${paddingLeft} ${
               isActive ? 'bg-white/25 font-bold border-l-4 border-white text-white shadow-inner' : levelBg
             } w-full text-white no-underline text-left block`}
           >
             <div className="flex items-center gap-3 min-w-0 w-full pointer-events-none">
               {item.icon && <span className="pointer-events-none">{item.icon}</span>}
-              <span className={`truncate pointer-events-none ${level === 0 ? 'text-lg md:text-[1.65rem] font-bold' : 'text-base md:text-[1.35rem] font-semibold'} ${isActive ? 'font-extrabold' : ''}`}>
+              <span className={`truncate pointer-events-none ${level === 0 ? 'text-base md:text-lg font-bold' : 'text-sm md:text-base font-medium'} ${isActive ? 'font-bold' : ''}`}>
                 {level > 0 && !item.icon && '• '} {item.name}
               </span>
             </div>
@@ -162,7 +162,7 @@ export const Sidebar = ({ onSelectMenu }) => {
       {/* Sidebar Container */}
       <aside
         className={`
-          w-80 bg-[var(--theme-primary)] text-white flex flex-col shadow-inner select-none
+          w-64 bg-[var(--theme-primary)] text-white flex flex-col shadow-inner select-none
           fixed lg:sticky top-0 lg:top-16 z-50 lg:z-20 h-screen lg:h-[calc(100vh-64px)]
           transition-transform duration-300 ease-in-out lg:transition-none
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}

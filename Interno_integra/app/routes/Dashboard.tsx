@@ -30,8 +30,8 @@ export default function Dashboard() {
             </span>
             <span className="text-slate-400 text-xs lg:text-sm font-medium">• Módulo Principal</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-800 tracking-tight flex items-center gap-3">
-            <Layers className="w-8 h-8 lg:w-9 lg:h-9 text-[var(--theme-primary)]" />
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2.5">
+            <Layers className="w-6 h-6 text-[var(--theme-primary)]" />
             Módulo de Gestão
           </h1>
           <p className="text-slate-500 text-sm lg:text-base mt-2">
