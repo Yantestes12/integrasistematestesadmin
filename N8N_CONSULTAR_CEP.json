@@ -2,22 +2,22 @@
   "name": "N8N_CONSULTAR_CEP",
   "nodes": [
     {
-      "id": "wh-consultarcep",
+      "id": "wh-consultar-cep",
       "name": "Webhook CEP",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [0, 0],
-      "webhookId": "consultarcep",
+      "webhookId": "consultar-cep",
       "parameters": {
         "httpMethod": "GET",
-        "path": "consultarcep",
+        "path": "consultar-cep",
         "responseMode": "responseNode",
         "options": {}
       }
     },
     {
-      "id": "http-hub-desenvolvedor",
-      "name": "Hub do Desenvolvedor CEP",
+      "id": "http-hub-cep",
+      "name": "Hub do Desenvolvedor (CEP)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
       "position": [220, 0],
@@ -28,7 +28,7 @@
     },
     {
       "id": "respond-cep",
-      "name": "Respond Webhook",
+      "name": "Retornar Dados CEP",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [440, 0],
@@ -43,18 +43,18 @@
       "main": [
         [
           {
-            "node": "Hub do Desenvolvedor CEP",
+            "node": "Hub do Desenvolvedor (CEP)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Hub do Desenvolvedor CEP": {
+    "Hub do Desenvolvedor (CEP)": {
       "main": [
         [
           {
-            "node": "Respond Webhook",
+            "node": "Retornar Dados CEP",
             "type": "main",
             "index": 0
           }

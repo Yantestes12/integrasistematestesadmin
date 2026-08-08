@@ -115,6 +115,43 @@ const formatPhone = (v: string) => {
   return d.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
 };
 
+const toRoman = (num: number): string => {
+  const map: [number, string][] = [[10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]];
+  let res = "";
+  let n = num;
+  for (const [val, letter] of map) {
+    while (n >= val) { res += letter; n -= val; }
+  }
+  return res;
+};
+
+const calculateNomeEspaco = (bairroName: string, list: any[], currentEditId: string | null) => {
+  if (!bairroName.trim()) return "";
+  const cleanBairro = bairroName.trim();
+  const sameBairroCount = list.filter(
+    e => String(e.id) !== String(currentEditId) && (e.bairro?.trim().toLowerCase() === cleanBairro.toLowerCase() || e.nome?.trim().toLowerCase().startsWith(cleanBairro.toLowerCase()))
+  ).length;
+
+  if (sameBairroCount === 0) return cleanBairro;
+  return `${cleanBairro} ${toRoman(sameBairroCount + 1)}`;
+};
+
+// ─── Field helper (FORA DO COMPONENTE PARA PREVENIR TECLADO MOBILE DE DESCER) ────────
+const Field = ({ label, error, children, required }: { label: React.ReactNode; error?: string; children: React.ReactNode; required?: boolean }) => (
+  <div className="flex flex-col gap-1.5">
+    <label className="text-sm font-semibold text-slate-700">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    {children}
+    {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
+  </div>
+);
+
+const inputCls = (err?: string) =>
+  `w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-colors ${
+    err ? "border-red-300 focus:ring-red-200" : "border-slate-200 focus:ring-[var(--theme-primary)]/25 focus:border-[var(--theme-primary)]"
+  }`;
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function CadastrarEspaco() {
@@ -127,6 +164,7 @@ export default function CadastrarEspaco() {
   const [errors, setErrors] = useState<Partial<Record<keyof FormData | string, string>>>({});
   const [projetos, setProjetos] = useState<{ id: string; nome: string }[]>([]);
   const [modalidades, setModalidades] = useState<{ id: string; nome: string }[]>([]);
+  const [existingEspacos, setExistingEspacos] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(!!editId);
   const [isSaving, setIsSaving] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -140,13 +178,14 @@ export default function CadastrarEspaco() {
 
   const institute = localStorage.getItem("auth_institute") || "IBRASE";
 
-  // ─── Load projetos + modalidades ─────────────────────────────────────────
+  // ─── Load projetos + modalidades + espacos existentes ─────────────────────
   useEffect(() => {
     const loadOptions = async () => {
       try {
-        const [rProjetos, rModal] = await Promise.all([
+        const [rProjetos, rModal, rEspacos] = await Promise.all([
           fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${institute.toUpperCase()}`),
           fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${institute.toUpperCase()}`),
+          fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${institute.toUpperCase()}`),
         ]);
         if (rProjetos.ok) {
           const d = await rProjetos.json();
@@ -156,10 +195,14 @@ export default function CadastrarEspaco() {
           const d = await rModal.json();
           setModalidades(flattenResponse(d).map((m: any) => ({ id: String(m.id), nome: m.nome || "" })).filter(m => m.nome));
         }
+        if (rEspacos.ok) {
+          const d = await rEspacos.json();
+          setExistingEspacos(flattenResponse(d));
+        }
       } catch (e) { console.warn("Erro ao carregar opções:", e); }
     };
     loadOptions();
-  }, []);
+  }, [institute]);
 
   // ─── Load edit data ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -208,25 +251,28 @@ export default function CadastrarEspaco() {
     setErrors(e => { const n = { ...e }; delete n[field]; return n; });
   };
 
-  // ─── APIs ─────────────────────────────────────────────────────────────────
+  // ─── APIs de Consulta N8N ─────────────────────────────────────────────────
   const buscarCep = async () => {
     const clean = form.cep.replace(/\D/g, "");
     if (clean.length !== 8) { setErrors(e => ({ ...e, cep: "CEP deve ter 8 dígitos" })); return; }
     setIsSearchingCep(true);
     try {
-      const res = await fetch(`https://w.ibrase.com.br/webhook/consultarcep?cep=${clean}`);
+      const res = await fetch(`https://w.ibrase.com.br/webhook/consultar-cep?cep=${clean}`);
       if (res.ok) {
         const d = await res.json();
-        const addr = d.result || d;
+        const addr = d.result || d.data || d;
         if (addr && !addr.erro) {
+          const novoBairro = addr.bairro || form.bairro;
+          const autoNome = calculateNomeEspaco(novoBairro, existingEspacos, editId);
           setForm(f => ({
             ...f,
             rua: addr.logradouro || f.rua,
-            bairro: addr.bairro || f.bairro,
+            bairro: novoBairro,
             cidade: addr.localidade || addr.cidade || f.cidade,
             uf: addr.uf || f.uf,
+            nomeEspaco: autoNome || f.nomeEspaco || novoBairro,
           }));
-          setErrors(e => { const n = { ...e }; delete n.cep; return n; });
+          setErrors(e => { const n = { ...e }; delete n.cep; delete n.bairro; return n; });
         } else { setErrors(e => ({ ...e, cep: "CEP não encontrado" })); }
       }
     } catch { setErrors(e => ({ ...e, cep: "Erro ao buscar CEP" })); }
@@ -238,10 +284,11 @@ export default function CadastrarEspaco() {
     if (clean.length !== 11) { setErrors(e => ({ ...e, respCpf: "CPF deve ter 11 dígitos" })); return; }
     setIsSearchingCpf(true);
     try {
-      const res = await fetch(`https://w.ibrase.com.br/webhook/api-hub-cpf?cpf=${clean}&token=193160880WeLPJqFrMT348746112`);
+      const res = await fetch(`https://w.ibrase.com.br/webhook/consultar-cpf?cpf=${clean}`);
       if (res.ok) {
         const d = await res.json();
-        const nome = d?.nome || d?.result?.nome || d?.data?.nome || "";
+        const info = d?.result || d?.data || d;
+        const nome = info?.nome || info?.nome_razao_social || d?.nome || "";
         if (nome) { set("respNome", nome); }
       }
     } catch { console.warn("Erro CPF"); }
@@ -253,12 +300,12 @@ export default function CadastrarEspaco() {
     if (clean.length !== 14) { setErrors(e => ({ ...e, respCnpj: "CNPJ deve ter 14 dígitos" })); return; }
     setIsSearchingCnpj(true);
     try {
-      const res = await fetch(`https://w.ibrase.com.br/webhook/consultarcnpj?cnpj=${clean}`);
+      const res = await fetch(`https://w.ibrase.com.br/webhook/consultar-cnpj?cnpj=${clean}`);
       if (res.ok) {
         const d = await res.json();
-        const info = d?.result || d;
-        if (info?.nome || info?.razao_social) {
-          set("respNome", info.nome || info.razao_social || form.respNome);
+        const info = d?.result || d?.data || d;
+        if (info?.nome || info?.razao_social || info?.nome_fantasia) {
+          set("respNome", info.nome || info.razao_social || info.nome_fantasia || form.respNome);
         }
       }
     } catch { console.warn("Erro CNPJ"); }
@@ -281,7 +328,6 @@ export default function CadastrarEspaco() {
 
     if (step === 0) {
       if (!form.projetoId) errs.projetoId = "Selecione uma iniciativa";
-      if (!form.nomeEspaco.trim()) errs.nomeEspaco = "Nome do espaço é obrigatório";
     }
 
     if (step === 1) {
@@ -335,11 +381,13 @@ export default function CadastrarEspaco() {
         setIsUploadingTermo(false);
       }
 
+      const nomeFinal = form.nomeEspaco || calculateNomeEspaco(form.bairro, existingEspacos, editId) || form.bairro || "Espaço";
+
       const payload = {
-        instituto: institute,
+        instituto: institute.toUpperCase(),
         projeto_id: form.projetoId ? Number(form.projetoId) : null,
         modalidade_id: form.modalidadeId ? Number(form.modalidadeId) : null,
-        nome: form.nomeEspaco,
+        nome: nomeFinal,
         resp_cpf: form.respCpf.replace(/\D/g, ""),
         resp_cnpj: form.possuiCnpj === "S" ? form.respCnpj.replace(/\D/g, "") : null,
         resp_nome: form.respNome,
@@ -403,22 +451,6 @@ export default function CadastrarEspaco() {
     );
   }
 
-  // ─── Field helper ─────────────────────────────────────────────────────────
-  const Field = ({ label, error, children, required }: { label: React.ReactNode; error?: string; children: React.ReactNode; required?: boolean }) => (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-semibold text-slate-700">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      {children}
-      {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
-    </div>
-  );
-
-  const inputCls = (err?: string) =>
-    `w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-colors ${
-      err ? "border-red-300 focus:ring-red-200" : "border-slate-200 focus:ring-[var(--theme-primary)]/25 focus:border-[var(--theme-primary)]"
-    }`;
-
   // ─── Step content ─────────────────────────────────────────────────────────
   const renderStep = () => {
     switch (step) {
@@ -446,16 +478,6 @@ export default function CadastrarEspaco() {
                 <option value="">Selecione uma modalidade... (opcional)</option>
                 {modalidades.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
               </select>
-            </Field>
-
-            <Field label="Nome do Espaço" error={errors.nomeEspaco} required>
-              <input
-                type="text"
-                placeholder="Ex: Casa de Cultura do Bairro, Quadra Municipal..."
-                className={inputCls(errors.nomeEspaco)}
-                value={form.nomeEspaco}
-                onChange={e => set("nomeEspaco", e.target.value)}
-              />
             </Field>
           </div>
         );
@@ -598,7 +620,18 @@ export default function CadastrarEspaco() {
                 <input type="text" placeholder="S/N ou número" className={inputCls(errors.numero)} value={form.numero} onChange={e => set("numero", e.target.value)} />
               </Field>
               <Field label="Bairro" error={errors.bairro} required>
-                <input type="text" placeholder="Bairro" className={inputCls(errors.bairro)} value={form.bairro} onChange={e => set("bairro", e.target.value)} />
+                <input 
+                  type="text" 
+                  placeholder="Bairro (usado como nome do espaço)" 
+                  className={inputCls(errors.bairro)} 
+                  value={form.bairro} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    const autoNome = calculateNomeEspaco(val, existingEspacos, editId);
+                    setForm(f => ({ ...f, bairro: val, nomeEspaco: autoNome || val }));
+                    setErrors(err => { const n = { ...err }; delete n.bairro; return n; });
+                  }} 
+                />
               </Field>
             </div>
 

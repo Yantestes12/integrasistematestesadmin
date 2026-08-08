@@ -2,22 +2,22 @@
   "name": "N8N_CONSULTAR_CNPJ",
   "nodes": [
     {
-      "id": "wh-consultarcnpj",
+      "id": "wh-consultar-cnpj",
       "name": "Webhook CNPJ",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [0, 0],
-      "webhookId": "consultarcnpj",
+      "webhookId": "consultar-cnpj",
       "parameters": {
         "httpMethod": "GET",
-        "path": "consultarcnpj",
+        "path": "consultar-cnpj",
         "responseMode": "responseNode",
         "options": {}
       }
     },
     {
       "id": "http-hub-cnpj",
-      "name": "Hub do Desenvolvedor CNPJ",
+      "name": "Hub do Desenvolvedor (CNPJ)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
       "position": [220, 0],
@@ -28,7 +28,7 @@
     },
     {
       "id": "respond-cnpj",
-      "name": "Respond Webhook",
+      "name": "Retornar Dados CNPJ",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [440, 0],
@@ -43,18 +43,18 @@
       "main": [
         [
           {
-            "node": "Hub do Desenvolvedor CNPJ",
+            "node": "Hub do Desenvolvedor (CNPJ)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Hub do Desenvolvedor CNPJ": {
+    "Hub do Desenvolvedor (CNPJ)": {
       "main": [
         [
           {
-            "node": "Respond Webhook",
+            "node": "Retornar Dados CNPJ",
             "type": "main",
             "index": 0
           }

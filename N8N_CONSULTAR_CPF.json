@@ -2,22 +2,22 @@
   "name": "N8N_CONSULTAR_CPF",
   "nodes": [
     {
-      "id": "wh-consultarcpf",
+      "id": "wh-consultar-cpf",
       "name": "Webhook CPF",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [0, 0],
-      "webhookId": "consultarcpf",
+      "webhookId": "consultar-cpf",
       "parameters": {
         "httpMethod": "GET",
-        "path": "consultarcpf",
+        "path": "consultar-cpf",
         "responseMode": "responseNode",
         "options": {}
       }
     },
     {
-      "id": "http-hub-cpf",
-      "name": "Hub do Desenvolvedor CPF",
+      "id": "http-hub-cpf-req",
+      "name": "Hub do Desenvolvedor (CPF)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
       "position": [220, 0],
@@ -27,8 +27,8 @@
       }
     },
     {
-      "id": "respond-cpf",
-      "name": "Respond Webhook",
+      "id": "respond-hub-cpf",
+      "name": "Retornar Dados CPF",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [440, 0],
@@ -43,18 +43,18 @@
       "main": [
         [
           {
-            "node": "Hub do Desenvolvedor CPF",
+            "node": "Hub do Desenvolvedor (CPF)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Hub do Desenvolvedor CPF": {
+    "Hub do Desenvolvedor (CPF)": {
       "main": [
         [
           {
-            "node": "Respond Webhook",
+            "node": "Retornar Dados CPF",
             "type": "main",
             "index": 0
           }
