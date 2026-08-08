@@ -120,11 +120,17 @@ export default function CadastrarNucleo() {
 
   const possuiCnpjWatch = watch("possuiCnpj");
   const projetoIdWatch = watch("projetoId");
+  const espacoIdWatch = watch("espacoId");
 
   const filteredEspacos = useMemo(() => {
     if (!projetoIdWatch) return espacos;
     return espacos.filter(e => String(e.projeto_id) === String(projetoIdWatch));
   }, [espacos, projetoIdWatch]);
+
+  const selectedEspaco = useMemo(() => {
+    if (!espacoIdWatch) return null;
+    return espacos.find(e => String(e.id) === String(espacoIdWatch));
+  }, [espacos, espacoIdWatch]);
 
   useEffect(() => {
     if (editId) {
@@ -432,6 +438,33 @@ export default function CadastrarNucleo() {
               </span>
             </div>
           </div>
+
+          {/* CARD DE INFORMAÇÕES AUTOMÁTICAS HERDADAS DO ESPAÇO */}
+          {selectedEspaco && (
+            <div className="bg-indigo-50/70 border border-indigo-200/80 rounded-xl p-4 space-y-3 mt-3 animate-fadeIn">
+              <div className="flex items-center gap-2 text-xs font-bold text-indigo-900 uppercase tracking-wider">
+                <Building2 className="w-4 h-4 text-indigo-600 shrink-0" />
+                <span>Informações Herdadas do Espaço Físico</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+                <div className="bg-white p-3 rounded-lg border border-indigo-100 shadow-2xs">
+                  <span className="text-slate-400 font-semibold block text-[10px] uppercase">Modalidade:</span>
+                  <span className="font-extrabold text-slate-800 text-sm">{selectedEspaco.modalidade_nome || selectedEspaco.modalidade || "Geral"}</span>
+                </div>
+
+                <div className="bg-white p-3 rounded-lg border border-indigo-100 shadow-2xs">
+                  <span className="text-slate-400 font-semibold block text-[10px] uppercase">Local / Bairro:</span>
+                  <span className="font-extrabold text-slate-800 text-sm">{[selectedEspaco.bairro, selectedEspaco.cidade].filter(Boolean).join(" · ") || "—"}</span>
+                </div>
+
+                <div className="bg-white p-3 rounded-lg border border-indigo-100 shadow-2xs">
+                  <span className="text-slate-400 font-semibold block text-[10px] uppercase">Responsável Cedente:</span>
+                  <span className="font-extrabold text-slate-800 text-sm">{selectedEspaco.resp_nome || "—"}</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* EQUIPE DO NÚCLEO */}
