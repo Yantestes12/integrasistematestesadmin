@@ -31,6 +31,7 @@ interface FormData {
   cep: string;
   rua: string;
   numero: string;
+  semNumero: boolean;
   bairro: string;
   cidade: string;
   uf: string;
@@ -40,6 +41,7 @@ interface FormData {
   horarios: Record<string, HorarioDia>;
 
   // Passo 5 — Documentos
+  docsPendentes: boolean;
   fotoUrl: string;
   termoUrl: string;
   fotoFile: File | null;
@@ -63,14 +65,15 @@ const DEFAULT_HORARIOS: Record<string, HorarioDia> = Object.fromEntries(
 const INITIAL_FORM: FormData = {
   projetoId: "", modalidadeId: "", nomeEspaco: "",
   respCpf: "", respCnpj: "", possuiCnpj: "N", respNome: "", respEmail: "", respTelefone: "",
-  cep: "", rua: "", numero: "", bairro: "", cidade: "", uf: "", pontoReferencia: "",
+  cep: "", rua: "", numero: "", semNumero: false, bairro: "", cidade: "", uf: "", pontoReferencia: "",
   horarios: DEFAULT_HORARIOS,
+  docsPendentes: false,
   fotoUrl: "", termoUrl: "", fotoFile: null, termoFile: null,
 };
 
 const STEPS = [
   { label: "Identificação", icon: Home },
-  { label: "Responsável", icon: User },
+  { label: "Responsável pelo Espaço", icon: User },
   { label: "Endereço", icon: MapPin },
   { label: "Horários", icon: Clock },
   { label: "Documentos", icon: FileUp },
@@ -260,7 +263,8 @@ export default function CadastrarEspaco() {
       const res = await fetch(`https://w.ibrase.com.br/webhook/consultar-cep?cep=${clean}`);
       if (res.ok) {
         const d = await res.json();
-        const addr = d.result || d.data || d;
+        const item = Array.isArray(d) ? d[0] : d;
+        const addr = item?.result || item?.data || item;
         if (addr && !addr.erro) {
           const novoBairro = addr.bairro || form.bairro;
           const autoNome = calculateNomeEspaco(novoBairro, existingEspacos, editId);
@@ -287,8 +291,9 @@ export default function CadastrarEspaco() {
       const res = await fetch(`https://w.ibrase.com.br/webhook/consultar-cpf?cpf=${clean}`);
       if (res.ok) {
         const d = await res.json();
-        const info = d?.result || d?.data || d;
-        const nome = info?.nome || info?.nome_razao_social || d?.nome || "";
+        const item = Array.isArray(d) ? d[0] : d;
+        const info = item?.result || item?.data || item;
+        const nome = info?.nome_da_pf || info?.nome || info?.nome_razao_social || d?.nome || "";
         if (nome) { set("respNome", nome); }
       }
     } catch { console.warn("Erro CPF"); }
@@ -303,7 +308,8 @@ export default function CadastrarEspaco() {
       const res = await fetch(`https://w.ibrase.com.br/webhook/consultar-cnpj?cnpj=${clean}`);
       if (res.ok) {
         const d = await res.json();
-        const info = d?.result || d?.data || d;
+        const item = Array.isArray(d) ? d[0] : d;
+        const info = item?.result || item?.data || item;
         if (info?.nome || info?.razao_social || info?.nome_fantasia) {
           set("respNome", info.nome || info.razao_social || info.nome_fantasia || form.respNome);
         }
@@ -342,9 +348,15 @@ export default function CadastrarEspaco() {
       if (!form.cep.replace(/\D/g, "").length) errs.cep = "CEP é obrigatório";
       if (!form.rua.trim()) errs.rua = "Rua/Logradouro é obrigatório";
       if (!form.bairro.trim()) errs.bairro = "Bairro é obrigatório";
-      if (!form.numero.trim() && !form.pontoReferencia.trim()) {
-        errs.numero = "Informe o número OU o ponto de referência";
-        errs.pontoReferencia = "Informe o número OU o ponto de referência";
+      
+      if (form.semNumero) {
+        if (!form.pontoReferencia.trim()) {
+          errs.pontoReferencia = "Ponto de referência é obrigatório quando não houver número";
+        }
+      } else {
+        if (!form.numero.trim()) {
+          errs.numero = "Informe o número ou marque 'Sem número'";
+        }
       }
     }
 
@@ -616,13 +628,37 @@ export default function CadastrarEspaco() {
               <Field label="Rua / Logradouro" error={errors.rua} required>
                 <input type="text" placeholder="Nome da rua" className={inputCls(errors.rua)} value={form.rua} onChange={e => set("rua", e.target.value)} />
               </Field>
-              <Field label="Número" error={errors.numero}>
-                <input type="text" placeholder="S/N ou número" className={inputCls(errors.numero)} value={form.numero} onChange={e => set("numero", e.target.value)} />
+
+              <Field label="Número" error={errors.numero} required={!form.semNumero}>
+                <div className="space-y-1.5">
+                  <input 
+                    type="text" 
+                    placeholder={form.semNumero ? "S/N" : "Número"} 
+                    disabled={form.semNumero}
+                    className={inputCls(errors.numero) + (form.semNumero ? " bg-slate-100 text-slate-500 cursor-not-allowed" : "")} 
+                    value={form.semNumero ? "S/N" : form.numero} 
+                    onChange={e => set("numero", e.target.value)} 
+                  />
+                  <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-600 font-medium pt-0.5">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-400"
+                      checked={form.semNumero}
+                      onChange={e => {
+                        const checked = e.target.checked;
+                        setForm(f => ({ ...f, semNumero: checked, numero: checked ? "S/N" : "" }));
+                        setErrors(err => { const n = { ...err }; delete n.numero; delete n.pontoReferencia; return n; });
+                      }}
+                    />
+                    <span>Sem número</span>
+                  </label>
+                </div>
               </Field>
+
               <Field label="Bairro" error={errors.bairro} required>
                 <input 
                   type="text" 
-                  placeholder="Bairro (usado como nome do espaço)" 
+                  placeholder="Bairro" 
                   className={inputCls(errors.bairro)} 
                   value={form.bairro} 
                   onChange={e => {
@@ -644,10 +680,18 @@ export default function CadastrarEspaco() {
               </Field>
             </div>
 
-            <Field label="Ponto de Referência" error={errors.pontoReferencia}>
+            <Field 
+              label={
+                <span>
+                  Ponto de Referência {form.semNumero ? <span className="text-red-500 font-bold">*</span> : <span className="text-slate-400 font-normal text-xs">(Opcional)</span>}
+                </span>
+              } 
+              error={errors.pontoReferencia} 
+              required={form.semNumero}
+            >
               <input
                 type="text"
-                placeholder="Obrigatório se não houver número"
+                placeholder={form.semNumero ? "Obrigatório quando não houver número (ex: Próximo à praça)" : "Ex: Próximo à praça central"}
                 className={inputCls(errors.pontoReferencia)}
                 value={form.pontoReferencia}
                 onChange={e => set("pontoReferencia", e.target.value)}
@@ -734,7 +778,27 @@ export default function CadastrarEspaco() {
       case 4:
         return (
           <div className="space-y-6">
-            <p className="text-sm text-slate-500 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+            {/* Banner de Status Pendente */}
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold shrink-0">!</div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800">Documentação Pendente?</h4>
+                  <p className="text-xs text-slate-500">Marque a opção ao lado se for anexar a foto ou o termo de uso posteriormente.</p>
+                </div>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer bg-white px-3.5 py-2 rounded-lg border border-amber-300 shadow-sm hover:bg-amber-100 transition-colors shrink-0">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+                  checked={form.docsPendentes}
+                  onChange={e => set("docsPendentes", e.target.checked)}
+                />
+                <span className="text-xs font-bold text-slate-700">Preencher Depois (Pendente)</span>
+              </label>
+            </div>
+
+            <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5">
               ℹ️ <strong>Obs:</strong> Somente o arquivo mais recente é mantido. Enviar um novo arquivo substitui o anterior.
             </p>
 
