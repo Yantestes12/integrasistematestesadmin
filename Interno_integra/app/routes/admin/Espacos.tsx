@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Plus, Search, Edit3, Power, Loader2, MapPin, Home } from "lucide-react";
+import { Plus, Search, Edit3, Power, Loader2, MapPin, Home, Building2, User, Calendar, CheckCircle2, Circle } from "lucide-react";
 
 export interface EspacoItem {
   id: string | number;
@@ -14,6 +14,7 @@ export interface EspacoItem {
   cidade?: string;
   uf?: string;
   ativo: boolean;
+  nucleo_nome?: string; // Nome do núcleo se estiver em uso
 }
 
 let projetosCache: Record<number, string> = {};
@@ -45,7 +46,10 @@ export default function Espacos() {
   useEffect(() => {
     const savedInstitute = localStorage.getItem("auth_institute") || "IBRASE";
     setCurrentInstitute(savedInstitute);
-    Promise.all([fetchProjetos(savedInstitute), fetchModalidades(savedInstitute)]).then(() => {
+    Promise.all([
+      fetchProjetos(savedInstitute),
+      fetchModalidades(savedInstitute)
+    ]).then(() => {
       fetchEspacos(savedInstitute);
     });
   }, []);
@@ -75,9 +79,22 @@ export default function Espacos() {
   const fetchEspacos = async (inst: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${inst.toUpperCase()}`);
-      if (res.ok) {
-        const data = await res.json();
+      // Fetch espacos e nucleos em paralelo para saber o status "Em Uso"
+      const [resEspacos, resNucleos] = await Promise.all([
+        fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${inst.toUpperCase()}`),
+        fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst.toUpperCase()}`).catch(() => null)
+      ]);
+
+      let nucleosMap: Record<string, string> = {};
+      if (resNucleos && resNucleos.ok) {
+        const nData = await resNucleos.json();
+        flattenResponse(nData).forEach((n: any) => {
+          if (n.espaco_id) nucleosMap[String(n.espaco_id)] = n.nome || `Núcleo #${n.id}`;
+        });
+      }
+
+      if (resEspacos.ok) {
+        const data = await resEspacos.json();
         const list = flattenResponse(data);
         setEspacos(list.map((e: any) => ({
           id: e.id,
@@ -91,6 +108,7 @@ export default function Espacos() {
           cidade: e.cidade || "",
           uf: e.uf || "",
           ativo: e.ativo !== false && e.ativo !== 0 && e.ativo !== "0",
+          nucleo_nome: nucleosMap[String(e.id)] || undefined,
         })));
       }
     } catch (e) {
@@ -130,133 +148,190 @@ export default function Espacos() {
   return (
     <div className="space-y-6 font-sans">
       {/* Header */}
-      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border border-slate-200">
+            <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider border border-slate-200">
               {currentInstitute}
             </span>
             <span className="text-slate-400 text-xs font-medium">• Módulo Administrativo</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 flex items-center gap-2">
-            <Home className="w-6 h-6 text-[var(--theme-primary)]" />
-            Espaços
+            <Building2 className="w-6 h-6 text-[var(--theme-primary)]" />
+            Espaços Físicos
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Gerencie os espaços físicos cadastrados para o instituto <strong className="text-slate-800">{currentInstitute}</strong>.
+          <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
+            Locais cadastrados nos bairros para o instituto <strong className="text-slate-800">{currentInstitute}</strong>.
           </p>
         </div>
         <Link
           to="/admin/cadastrar-espaco"
-          className="inline-flex items-center gap-2 bg-[var(--theme-primary)] hover:opacity-90 text-white font-bold px-5 py-3 rounded-xl shadow-sm transition-all text-sm shrink-0"
+          className="inline-flex items-center gap-2 bg-[var(--theme-primary)] hover:opacity-90 text-white font-bold px-4 py-2.5 rounded-xl shadow-sm transition-all text-sm shrink-0"
         >
           <Plus size={18} />
-          Novo Espaço
+          Cadastrar Espaço
         </Link>
       </div>
 
-      {/* Busca e Tabela */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between gap-4 flex-wrap">
-          <div className="relative flex-1 min-w-[200px] max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Buscar por nome, responsável ou bairro..."
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)]/30 focus:border-[var(--theme-primary)]"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <span className="text-xs font-semibold text-slate-400 whitespace-nowrap">
-            Exibindo {filtered.length} espaço{filtered.length !== 1 ? "s" : ""}
+      {/* Busca e Barra de Estatísticas */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-4 flex-wrap">
+        <div className="relative flex-1 min-w-[200px] max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Buscar por bairro, nome ou responsável..."
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)]/30 focus:border-[var(--theme-primary)]"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center gap-3 text-xs font-semibold">
+          <span className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Em Uso ({espacos.filter(e => e.nucleo_nome).length})
+          </span>
+          <span className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+            Disponíveis ({espacos.filter(e => !e.nucleo_nome).length})
           </span>
         </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-20 gap-3 text-slate-500">
-            <Loader2 className="animate-spin w-5 h-5" />
-            <span className="text-sm font-medium">Carregando espaços...</span>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-            <Home className="w-12 h-12 mb-3 opacity-30" />
-            <p className="text-sm font-medium">Nenhum espaço encontrado.</p>
-            <Link to="/admin/cadastrar-espaco" className="mt-4 text-sm font-bold text-[var(--theme-primary)] hover:underline">
-              + Cadastrar primeiro espaço
-            </Link>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/60">
-                  <th className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">ID</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Nome do Espaço</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Iniciativa / Modalidade</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Responsável</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Localização</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="text-right px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {filtered.map(espaco => (
-                  <tr key={espaco.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-4 py-4 text-slate-400 font-mono text-xs">{espaco.id}</td>
-                    <td className="px-4 py-4">
-                      <span className="font-bold text-slate-800">{espaco.nome}</span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="text-slate-700 font-medium">{espaco.projeto_nome}</div>
-                      <div className="text-slate-400 text-xs mt-0.5">{espaco.modalidade_nome}</div>
-                    </td>
-                    <td className="px-4 py-4 text-slate-600">{espaco.resp_nome}</td>
-                    <td className="px-4 py-4">
-                      {(espaco.bairro || espaco.cidade) ? (
-                        <div className="flex items-center gap-1 text-slate-500 text-xs">
-                          <MapPin className="w-3 h-3 shrink-0" />
-                          <span>{[espaco.bairro, espaco.cidade, espaco.uf].filter(Boolean).join(" · ")}</span>
-                        </div>
-                      ) : <span className="text-slate-300 text-xs">—</span>}
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
-                        espaco.ativo ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
-                      }`}>
-                        {espaco.ativo ? "Ativo" : "Inativo"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          to={`/admin/cadastrar-espaco?edit=${espaco.id}`}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-[var(--theme-primary)] hover:bg-slate-100 transition-colors"
-                          title="Editar"
-                        >
-                          <Edit3 size={15} />
-                        </Link>
-                        <button
-                          onClick={() => handleToggleAtivo(espaco)}
-                          disabled={togglingId === espaco.id}
-                          className={`p-1.5 rounded-lg transition-colors ${
-                            espaco.ativo
-                              ? "text-slate-400 hover:text-red-500 hover:bg-red-50"
-                              : "text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"
-                          }`}
-                          title={espaco.ativo ? "Desativar" : "Ativar"}
-                        >
-                          {togglingId === espaco.id ? <Loader2 size={15} className="animate-spin" /> : <Power size={15} />}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
+
+      {/* Grid de Cards Quadrados */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20 gap-3 text-slate-500 bg-white rounded-2xl border border-slate-200 shadow-sm">
+          <Loader2 className="animate-spin w-5 h-5 text-[var(--theme-primary)]" />
+          <span className="text-sm font-medium">Carregando espaços...</span>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-white rounded-2xl border border-slate-200 shadow-sm">
+          <Building2 className="w-12 h-12 mb-3 opacity-30" />
+          <p className="text-sm font-medium">Nenhum espaço encontrado.</p>
+          <Link to="/admin/cadastrar-espaco" className="mt-4 text-sm font-bold text-[var(--theme-primary)] hover:underline">
+            + Cadastrar primeiro espaço
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+          {filtered.map(espaco => {
+            const emUso = Boolean(espaco.nucleo_nome);
+
+            return (
+              <div 
+                key={espaco.id}
+                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between aspect-square relative group"
+              >
+                {/* Header do Card Quadrado */}
+                <div>
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-[var(--theme-primary)] font-bold shrink-0">
+                        <Building2 className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-slate-800 text-base leading-tight group-hover:text-[var(--theme-primary)] transition-colors">
+                          {espaco.nome}
+                        </h3>
+                        {espaco.bairro && (
+                          <div className="flex items-center gap-1 text-slate-400 text-xs mt-0.5">
+                            <MapPin className="w-3 h-3 shrink-0" />
+                            <span className="truncate">{[espaco.bairro, espaco.cidade].filter(Boolean).join(" · ")}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Tag de Status Em Uso / Disponível */}
+                    <div className="shrink-0">
+                      {emUso ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-2xs">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                          Em Uso
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                          <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+                          Disponível
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Informações Centrais do Card */}
+                  <div className="space-y-2.5 mt-4 pt-3 border-t border-slate-100 text-xs">
+                    {emUso ? (
+                      <div className="bg-emerald-50/70 border border-emerald-200/60 p-2.5 rounded-xl text-emerald-900">
+                        <span className="font-bold text-[11px] text-emerald-700 uppercase tracking-wider block mb-0.5">Operando Núcleo:</span>
+                        <span className="font-extrabold text-xs flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          {espaco.nucleo_nome}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-slate-500">
+                        <span className="font-medium text-xs flex items-center gap-1.5">
+                          <Circle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          Pronto para receber novo núcleo
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 text-slate-600 pt-1">
+                      <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span className="truncate">Resp: <strong>{espaco.resp_nome}</strong></span>
+                    </div>
+
+                    {espaco.projeto_nome !== "—" && (
+                      <div className="flex items-center gap-2 text-slate-500">
+                        <span className="px-2 py-0.5 rounded bg-slate-100 font-semibold text-[11px] text-slate-700">
+                          {espaco.projeto_nome}
+                        </span>
+                        {espaco.modalidade_nome !== "—" && (
+                          <span className="text-[11px] text-slate-400 truncate">
+                            • {espaco.modalidade_nome}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Footer do Card Quadrado com Ações */}
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-auto">
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                    espaco.ativo ? "text-emerald-700 bg-emerald-50" : "text-slate-400 bg-slate-100"
+                  }`}>
+                    {espaco.ativo ? "Ativo" : "Inativo"}
+                  </span>
+
+                  <div className="flex items-center gap-1.5">
+                    <Link
+                      to={`/admin/cadastrar-espaco?edit=${espaco.id}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                      title="Editar Espaço"
+                    >
+                      <Edit3 size={13} />
+                      Editar
+                    </Link>
+                    <button
+                      onClick={() => handleToggleAtivo(espaco)}
+                      disabled={togglingId === espaco.id}
+                      className={`p-1.5 rounded-lg transition-colors ${
+                        espaco.ativo
+                          ? "text-slate-400 hover:text-red-500 hover:bg-red-50"
+                          : "text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"
+                      }`}
+                      title={espaco.ativo ? "Desativar" : "Ativar"}
+                    >
+                      {togglingId === espaco.id ? <Loader2 size={14} className="animate-spin" /> : <Power size={14} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

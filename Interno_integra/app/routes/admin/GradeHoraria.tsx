@@ -1,0 +1,330 @@
+import React, { useEffect, useState } from "react";
+import { Link, useSearchParams, useNavigate } from "react-router";
+import { ArrowLeft, Save, Clock, CheckCircle2, AlertCircle, Loader2, Sparkles } from "lucide-react";
+
+interface SlotData {
+  inicio: string; // "08:00"
+  fim: string;    // "10:00"
+}
+
+interface DiaGrade {
+  ativo: boolean;
+  slots: {
+    A: SlotData;
+    B: SlotData;
+    C: SlotData;
+    D: SlotData;
+    P: SlotData;
+  };
+}
+
+type DiasSemana = "1" | "2" | "3" | "4" | "5" | "6";
+
+const DIAS_MAP: Record<DiasSemana, string> = {
+  "1": "Segunda",
+  "2": "Terça",
+  "3": "Quarta",
+  "4": "Quinta",
+  "5": "Sexta",
+  "6": "Sábado",
+};
+
+export default function GradeHoraria() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const nucleoId = searchParams.get("nucleo_id");
+
+  const [nucleoNome, setNucleoNome] = useState("Carregando...");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Estado dos dias da semana e horários
+  const [diasGrade, setDiasGrade] = useState<Record<DiasSemana, DiaGrade>>({
+    "1": { ativo: false, slots: { A: { inicio: "", fim: "" }, B: { inicio: "", fim: "" }, C: { inicio: "", fim: "" }, D: { inicio: "", fim: "" }, P: { inicio: "", fim: "" } } },
+    "2": { ativo: true, slots: { A: { inicio: "08:00", fim: "10:00" }, B: { inicio: "10:00", fim: "12:00" }, C: { inicio: "14:00", fim: "16:00" }, D: { inicio: "16:00", fim: "18:00" }, P: { inicio: "18:00", fim: "20:00" } } },
+    "3": { ativo: false, slots: { A: { inicio: "", fim: "" }, B: { inicio: "", fim: "" }, C: { inicio: "", fim: "" }, D: { inicio: "", fim: "" }, P: { inicio: "", fim: "" } } },
+    "4": { ativo: true, slots: { A: { inicio: "08:00", fim: "10:00" }, B: { inicio: "10:00", fim: "12:00" }, C: { inicio: "14:00", fim: "16:00" }, D: { inicio: "16:00", fim: "18:00" }, P: { inicio: "18:00", fim: "20:00" } } },
+    "5": { ativo: false, slots: { A: { inicio: "", fim: "" }, B: { inicio: "", fim: "" }, C: { inicio: "", fim: "" }, D: { inicio: "", fim: "" }, P: { inicio: "", fim: "" } } },
+    "6": { ativo: false, slots: { A: { inicio: "", fim: "" }, B: { inicio: "", fim: "" }, C: { inicio: "", fim: "" }, D: { inicio: "", fim: "" }, P: { inicio: "", fim: "" } } },
+  });
+
+  useEffect(() => {
+    const savedInstitute = localStorage.getItem("auth_institute") || "IBRASE";
+    if (nucleoId) {
+      fetchNucleo(savedInstitute, nucleoId);
+    } else {
+      setNucleoNome("Núcleo Geral");
+      setLoading(false);
+    }
+  }, [nucleoId]);
+
+  const fetchNucleo = async (inst: string, id: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst.toUpperCase()}`);
+      if (res.ok) {
+        const data = await res.json();
+        let list: any[] = Array.isArray(data) ? data : data.data || data.items || (Array.isArray(data.json) ? data.json : [data]);
+        let flat: any[] = [];
+        list.forEach((e: any) => {
+          if (e?.json) {
+            Array.isArray(e.json) ? flat.push(...e.json) : flat.push(e.json);
+          } else {
+            flat.push(e);
+          }
+        });
+
+        const found = flat.find((n: any) => String(n.id || n.id_nucleo) === String(id));
+        if (found) {
+          setNucleoNome(found.nome || found.nome_nucleo || `Núcleo #${id}`);
+          if (found.grade_horaria) {
+            try {
+              const parsed = typeof found.grade_horaria === "string" ? JSON.parse(found.grade_horaria) : found.grade_horaria;
+              if (parsed) setDiasGrade(parsed);
+            } catch (e) { console.warn("Erro ao parsear grade:", e); }
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Erro ao carregar núcleo:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calcularHorarioFim = (horaInicio: string): string => {
+    if (!horaInicio || !horaInicio.includes(":")) return "";
+    const [h, m] = horaInicio.split(":").map(Number);
+    if (isNaN(h) || isNaN(m)) return "";
+    const hFim = (h + 2) % 24;
+    return `${String(hFim).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  };
+
+  const handleHoraChange = (dia: DiasSemana, slotKey: "A" | "B" | "C" | "D" | "P", inicio: string) => {
+    const fim = calcularHorarioFim(inicio);
+    setDiasGrade(prev => ({
+      ...prev,
+      [dia]: {
+        ...prev[dia],
+        slots: {
+          ...prev[dia].slots,
+          [slotKey]: { inicio, fim }
+        }
+      }
+    }));
+  };
+
+  const handleToggleDia = (dia: DiasSemana) => {
+    setDiasGrade(prev => ({
+      ...prev,
+      [dia]: {
+        ...prev[dia],
+        ativo: !prev[dia].ativo
+      }
+    }));
+  };
+
+  // Turnos calculados
+  const turnosSet = new Set<string>();
+  Object.values(diasGrade).forEach(dia => {
+    if (dia.ativo) {
+      Object.values(dia.slots).forEach(slot => {
+        if (slot.inicio) {
+          const h = parseInt(slot.inicio.split(":")[0], 10);
+          if (h >= 6 && h < 12) turnosSet.add("Manhã");
+          else if (h >= 12 && h < 18) turnosSet.add("Tarde");
+          else if (h >= 18) turnosSet.add("Noite");
+        }
+      });
+    }
+  });
+
+  const turnosCalculados = Array.from(turnosSet);
+
+  const handleSalvar = async () => {
+    setSaving(true);
+    setStatusMsg(null);
+    try {
+      const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
+      const res = await fetch("https://w.ibrase.com.br/webhook/nucleos-put", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: nucleoId,
+          instituto: authInstitute,
+          grade_horaria: JSON.stringify(diasGrade),
+          turnos_calculados: turnosCalculados.join(", "),
+        }),
+      });
+
+      if (res.ok) {
+        setStatusMsg({ type: "success", text: "Grade horária salva com sucesso!" });
+      } else {
+        setStatusMsg({ type: "error", text: "Erro ao salvar grade horária via webhook N8N." });
+      }
+    } catch (e) {
+      console.error(e);
+      setStatusMsg({ type: "error", text: "Erro de conexão ao salvar grade." });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6 max-w-5xl mx-auto pb-12 font-sans">
+      {/* Header */}
+      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <Link to="/admin/nucleos" className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[var(--theme-primary)] transition-colors mb-2">
+            <ArrowLeft size={14} /> Voltar aos Núcleos
+          </Link>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800">
+              Grade Horária
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+              OK
+            </span>
+            {turnosCalculados.map(t => (
+              <span key={t} className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                t === "Manhã" ? "bg-amber-100 text-amber-800" :
+                t === "Tarde" ? "bg-orange-100 text-orange-800" :
+                "bg-indigo-100 text-indigo-800"
+              }`}>
+                {t}
+              </span>
+            ))}
+          </div>
+          <p className="text-slate-500 text-xs sm:text-sm mt-1">
+            Núcleo: <strong className="text-slate-800">{nucleoNome}</strong> — 4 turmas (2h) + 1 planejamento (2h).
+          </p>
+        </div>
+
+        <button
+          onClick={handleSalvar}
+          disabled={saving}
+          className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-3 rounded-xl shadow-sm transition-all text-sm disabled:opacity-50"
+        >
+          {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+          Salvar Grade
+        </button>
+      </div>
+
+      {statusMsg && (
+        <div className={`p-4 rounded-xl font-bold text-sm flex items-center gap-2 border ${
+          statusMsg.type === "success" ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-red-50 text-red-800 border-red-200"
+        }`}>
+          {statusMsg.type === "success" ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+          {statusMsg.text}
+        </div>
+      )}
+
+      {/* Dica da Grade */}
+      <div className="bg-indigo-50/80 border border-indigo-200/80 p-4 rounded-xl text-indigo-900 text-xs sm:text-sm flex items-start gap-3">
+        <Sparkles className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+        <div>
+          <strong>Dica da Grade Horária:</strong> Selecione os dias de funcionamento. Cada dia possui 4 aulas de 2 horas (Turmas A, B, C, D) + 1 período de Planejamento (P). Ao alterar a hora inicial, o término (+2h) é calculado automaticamente!
+        </div>
+      </div>
+
+      {/* Seletor dos Dias da Semana */}
+      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-3">Dias de Funcionamento do Núcleo:</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+          {(["1", "2", "3", "4", "5", "6"] as DiasSemana[]).map(d => {
+            const ativo = diasGrade[d]?.ativo;
+            return (
+              <button
+                key={d}
+                type="button"
+                onClick={() => handleToggleDia(d)}
+                className={`py-2.5 px-3 rounded-xl font-bold text-xs border transition-all flex items-center justify-between ${
+                  ativo
+                    ? "bg-[var(--theme-primary)] text-white border-[var(--theme-primary)] shadow-sm"
+                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                }`}
+              >
+                <span>{DIAS_MAP[d]}</span>
+                <span className={`w-2 h-2 rounded-full ${ativo ? "bg-white" : "bg-slate-300"}`} />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Tabela de Turmas por Dia */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20 gap-3 text-slate-500 bg-white rounded-2xl border border-slate-200">
+          <Loader2 className="animate-spin w-5 h-5 text-[var(--theme-primary)]" />
+          <span className="text-sm font-medium">Carregando dados da grade...</span>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  <th className="text-left px-5 py-3">Bloco</th>
+                  {(["1", "2", "3", "4", "5", "6"] as DiasSemana[]).map(d => (
+                    <th key={d} className={`text-center px-3 py-3 ${!diasGrade[d]?.ativo ? "opacity-30" : ""}`}>
+                      {DIAS_MAP[d]}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {[
+                  { key: "A", name: "Turma A", desc: "Aula · 2h", badgeBg: "bg-blue-100 text-blue-800" },
+                  { key: "B", name: "Turma B", desc: "Aula · 2h", badgeBg: "bg-emerald-100 text-emerald-800" },
+                  { key: "C", name: "Turma C", desc: "Aula · 2h", badgeBg: "bg-amber-100 text-amber-800" },
+                  { key: "D", name: "Turma D", desc: "Aula · 2h", badgeBg: "bg-rose-100 text-rose-800" },
+                  { key: "P", name: "Planejamento", desc: "2h · Sem Turma", badgeBg: "bg-purple-100 text-purple-800" },
+                ].map(slot => (
+                  <tr key={slot.key} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <span className={`w-8 h-8 rounded-xl flex items-center justify-center font-extrabold text-xs shrink-0 ${slot.badgeBg}`}>
+                          {slot.key}
+                        </span>
+                        <div>
+                          <div className="font-bold text-slate-800">{slot.name}</div>
+                          <div className="text-[11px] text-slate-400">{slot.desc}</div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {(["1", "2", "3", "4", "5", "6"] as DiasSemana[]).map(d => {
+                      const diaAtivo = diasGrade[d]?.ativo;
+                      const slotVal = diasGrade[d]?.slots[slot.key as "A" | "B" | "C" | "D" | "P"];
+
+                      return (
+                        <td key={d} className={`px-3 py-4 text-center ${!diaAtivo ? "bg-slate-50/50 opacity-40" : ""}`}>
+                          {diaAtivo ? (
+                            <div className="flex flex-col items-center gap-1">
+                              <input
+                                type="time"
+                                className="w-24 px-2 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-800 text-center focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)]"
+                                value={slotVal?.inicio || ""}
+                                onChange={e => handleHoraChange(d, slot.key as "A" | "B" | "C" | "D" | "P", e.target.value)}
+                              />
+                              <span className="text-[11px] font-semibold text-slate-400">
+                                {slotVal?.fim ? `até ${slotVal.fim}` : "--:--"}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-300 font-mono">—</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

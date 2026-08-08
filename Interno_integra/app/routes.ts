@@ -17,5 +17,6 @@ export default [
     // Admin / Núcleos
     route("admin/nucleos", "routes/admin/Nucleos.tsx"),
     route("admin/cadastrar-nucleo", "routes/admin/CadastrarNucleo.tsx"),
+    route("admin/grade-horaria", "routes/admin/GradeHoraria.tsx"),
   ]),
 ] satisfies RouteConfig;

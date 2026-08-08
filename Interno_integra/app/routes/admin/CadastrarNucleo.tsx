@@ -8,44 +8,22 @@ import { ArrowLeft, Save, MapPin, User, FileText, Building2, Search, Loader2 } f
 const cadastrarNucleoSchema = z.object({
   // Identificação
   nomeNucleo: z.string().min(1, "Nome do núcleo é obrigatório"),
+  espacoId: z.string().optional(),
   projetoId: z.string().min(1, "Selecione uma iniciativa"),
-  modalidadeId: z.string().min(1, "Selecione uma modalidade"),
-  cidadeId: z.string().min(1, "Selecione a cidade"),
-  uf: z.string().min(1, "Selecione a UF"),
-  bairroId: z.string().min(1, "Selecione o bairro"),
-  numeroVaga: z.string().min(1, "Selecione o número da vaga global"),
+  modalidadeId: z.string().optional(),
+  cidadeId: z.string().optional(),
+  uf: z.string().optional(),
+  bairroId: z.string().optional(),
+  numeroVaga: z.string().optional(),
   
   // Vigência e Status
-  dataInicio: z.string().optional(),
-  dataFim: z.string().optional(),
   ativo: z.boolean().default(true),
+  aceitandoVagas: z.boolean().default(true),
 
-  // Dados do Responsável
-  respNome: z.string().min(1, "Nome do responsável é obrigatório"),
-  respCpf: z.string().min(1, "CPF do responsável é obrigatório"),
-  respEmail: z.string().email("E-mail inválido").min(1, "E-mail é obrigatório"),
-  respTelefone: z.string().min(1, "Telefone é obrigatório"),
-
-  // Local de Execução
-  possuiCnpj: z.enum(["S", "N"]).default("N"),
-  cnpj: z.string().optional(),
-  cep: z.string().min(1, "CEP é obrigatório"),
-  rua: z.string().min(1, "Rua/Logradouro é obrigatório"),
-  numero: z.string().min(1, "Número é obrigatório"),
-  bairroEnd: z.string().min(1, "Bairro (Endereço) é obrigatório"),
-  referencia: z.string().optional(),
-  numeroVaga: z.string().min(1, "Número da vaga global é obrigatório"),
-  
   // Vínculos da Equipe
   coordenadorId: z.string().optional(),
   instrutorId: z.string().optional(),
   auxiliaresIds: z.array(z.string()).optional(),
-
-  dataInicio: z.string().optional(),
-
-  // Documentos
-  fotoLocalizacao: z.custom<FileList>().optional(),
-  termoUso: z.custom<FileList>().optional(),
 });
 
 type CadastrarNucleoFormData = z.infer<typeof cadastrarNucleoSchema>;

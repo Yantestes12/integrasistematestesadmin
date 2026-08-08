@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Plus, Search, Edit3, Power, Loader2, Layers, Building2 } from "lucide-react";
+import { Plus, Search, Edit3, Power, Loader2, Layers, Building2, Calendar } from "lucide-react";
 
 export interface NucleoItem {
   id: string | number;
@@ -371,18 +371,25 @@ export default function Nucleos() {
 
                       {/* Ações */}
                       <td className="py-4 px-4 md:px-6 text-center">
-                        <div className="flex items-center justify-center gap-1">
+                        <div className="flex items-center justify-center gap-1.5">
                           <Link
                             to={`/admin/cadastrar-nucleo?edit=${item.id}`}
                             className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                            title="Editar"
+                            title="Editar Núcleo / Equipe / Vagas"
                           >
                             <Edit3 size={18} />
+                          </Link>
+                          <Link
+                            to={`/admin/grade-horaria?nucleo_id=${item.id}`}
+                            className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-colors"
+                            title="Grade Horária"
+                          >
+                            <Calendar size={18} />
                           </Link>
                           <button
                             onClick={() => handleDelete(item.id)}
                             className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                            title="Desativar / Ativar"
+                            title="Desativar / Ativar Núcleo"
                           >
                             <Power size={18} />
                           </button>
