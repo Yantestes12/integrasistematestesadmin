@@ -337,11 +337,23 @@ export default function CadastrarEspaco() {
     }
 
     if (step === 1) {
-      if (!form.respCpf.replace(/\D/g, "").length) errs.respCpf = "CPF é obrigatório";
-      if (!form.respNome.trim()) errs.respNome = "Nome do responsável é obrigatório";
+      const cleanCpf = form.respCpf.replace(/\D/g, "");
+      const cleanCnpj = form.respCnpj.replace(/\D/g, "");
+      const hasCpf = cleanCpf.length === 11;
+      const hasCnpj = form.possuiCnpj === "S" && cleanCnpj.length === 14;
+
+      if (!hasCpf && !hasCnpj) {
+        if (form.possuiCnpj === "S") {
+          errs.respCnpj = "Informe o CNPJ ou o CPF do responsável";
+          errs.respCpf = "Informe pelo menos o CPF ou o CNPJ";
+        } else {
+          errs.respCpf = "CPF é obrigatório (ou marque Possui CNPJ e informe o CNPJ)";
+        }
+      }
+
+      if (!form.respNome.trim()) errs.respNome = "Nome do responsável ou da empresa é obrigatório";
       if (!form.respEmail.trim() || !form.respEmail.includes("@")) errs.respEmail = "E-mail inválido";
       if (!form.respTelefone.trim()) errs.respTelefone = "Telefone é obrigatório";
-      if (form.possuiCnpj === "S" && !form.respCnpj.replace(/\D/g, "").length) errs.respCnpj = "CNPJ é obrigatório";
     }
 
     if (step === 2) {
@@ -473,7 +485,7 @@ export default function CadastrarEspaco() {
             <Field 
               label={
                 <span>
-                  Qual Projeto/Evento? <span className="text-slate-400 font-normal text-xs opacity-70 ml-1.5">* Iniciativa</span>
+                  Qual Projeto/Evento? <span className="text-slate-400 font-normal text-xs opacity-75 ml-1.5">(Iniciativa)</span>
                 </span>
               } 
               error={errors.projetoId} 
@@ -494,12 +506,23 @@ export default function CadastrarEspaco() {
           </div>
         );
 
-      // ── PASSO 2: Responsável ──────────────────────────────────────────────
+      // ── PASSO 2: Responsável pelo Espaço ──────────────────────────────────
       case 1:
+        const cleanCnpjVal = form.respCnpj.replace(/\D/g, "");
+        const temCnpjValido = form.possuiCnpj === "S" && cleanCnpjVal.length === 14;
+
         return (
           <div className="space-y-5">
             {/* CPF */}
-            <Field label="CPF do Responsável" error={errors.respCpf} required>
+            <Field 
+              label={
+                <span>
+                  CPF do Responsável {temCnpjValido ? <span className="text-slate-400 font-normal text-xs ml-1">(Opcional se houver CNPJ)</span> : null}
+                </span>
+              } 
+              error={errors.respCpf} 
+              required={!temCnpjValido}
+            >
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -521,14 +544,17 @@ export default function CadastrarEspaco() {
             </Field>
 
             {/* CNPJ toggle */}
-            <div className="flex items-center gap-3">
-              <label className="text-sm font-semibold text-slate-700">Possui CNPJ?</label>
+            <div className="flex items-center gap-3 pt-1">
+              <label className="text-sm font-semibold text-slate-700">Possui CNPJ (Pessoa Jurídica)?</label>
               <div className="flex gap-2">
                 {(["S", "N"] as const).map(v => (
                   <button
                     key={v}
                     type="button"
-                    onClick={() => set("possuiCnpj", v)}
+                    onClick={() => {
+                      set("possuiCnpj", v);
+                      if (v === "N") set("respCnpj", "");
+                    }}
                     className={`px-4 py-2 rounded-lg text-sm font-bold border transition-colors ${
                       form.possuiCnpj === v
                         ? "bg-[var(--theme-primary)] text-white border-[var(--theme-primary)]"
@@ -543,7 +569,15 @@ export default function CadastrarEspaco() {
 
             {/* CNPJ field */}
             {form.possuiCnpj === "S" && (
-              <Field label="CNPJ" error={errors.respCnpj} required>
+              <Field 
+                label={
+                  <span>
+                    CNPJ da Empresa <span className="text-slate-400 font-normal text-xs ml-1">(Pessoa Jurídica)</span>
+                  </span>
+                } 
+                error={errors.respCnpj} 
+                required={!form.respCpf.replace(/\D/g, "").length}
+              >
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -565,10 +599,14 @@ export default function CadastrarEspaco() {
               </Field>
             )}
 
-            <Field label="Nome completo" error={errors.respNome} required>
+            <Field 
+              label={form.possuiCnpj === "S" ? "Nome do Responsável / Razão Social da Empresa" : "Nome do Responsável pelo Espaço"} 
+              error={errors.respNome} 
+              required
+            >
               <input
                 type="text"
-                placeholder="Nome do responsável pelo espaço"
+                placeholder={form.possuiCnpj === "S" ? "Nome do responsável ou Razão Social da empresa" : "Nome completo do responsável"}
                 className={inputCls(errors.respNome)}
                 value={form.respNome}
                 onChange={e => set("respNome", e.target.value)}
