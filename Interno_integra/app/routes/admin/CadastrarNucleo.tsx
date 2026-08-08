@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams, useNavigate } from "react-router";
 import * as z from "zod";
@@ -9,7 +9,7 @@ const cadastrarNucleoSchema = z.object({
   // Identificação
   nomeNucleo: z.string().min(1, "Nome do núcleo é obrigatório"),
   espacoId: z.string().optional(),
-  projetoId: z.string().min(1, "Selecione uma iniciativa"),
+  projetoId: z.string().min(1, "Selecione o projeto de aula ou evento"),
   modalidadeId: z.string().optional(),
   cidadeId: z.string().optional(),
   uf: z.string().optional(),
@@ -119,6 +119,12 @@ export default function CadastrarNucleo() {
   });
 
   const possuiCnpjWatch = watch("possuiCnpj");
+  const projetoIdWatch = watch("projetoId");
+
+  const filteredEspacos = useMemo(() => {
+    if (!projetoIdWatch) return espacos;
+    return espacos.filter(e => String(e.projeto_id) === String(projetoIdWatch));
+  }, [espacos, projetoIdWatch]);
 
   useEffect(() => {
     if (editId) {
@@ -382,13 +388,13 @@ export default function CadastrarNucleo() {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Iniciativa (filtra modalidade e vagas) <span className="text-red-500">*</span>
+                Projeto de Aula ou Evento <span className="text-red-500">*</span>
               </label>
               <select
                 {...register("projetoId")}
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                <option value="">Selecione uma iniciativa...</option>
+                <option value="">Selecione o projeto de aula ou evento...</option>
                 {projetos.map(p => (
                   <option key={p.id} value={p.id}>{p.nome}</option>
                 ))}
@@ -408,15 +414,21 @@ export default function CadastrarNucleo() {
                 {...register("espacoId")}
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                <option value="">Selecione um espaço físico...</option>
-                {espacos.map(e => (
+                {!projetoIdWatch ? (
+                  <option value="">Selecione primeiro o Projeto de Aula ou Evento acima...</option>
+                ) : filteredEspacos.length === 0 ? (
+                  <option value="">Nenhum espaço cadastrado para este projeto</option>
+                ) : (
+                  <option value="">Selecione um espaço físico para este projeto...</option>
+                )}
+                {filteredEspacos.map(e => (
                   <option key={e.id} value={e.id}>
                     {e.nome} {e.bairro ? `(${e.bairro})` : ""} {e.nucleo_nome ? "— 🟢 Em Uso" : "— ⚪ Disponível"}
                   </option>
                 ))}
               </select>
               <span className="text-[11px] text-slate-400 mt-1 block">
-                O endereço, CEP e responsável são vinculados automaticamente a partir do Espaço.
+                Filtra os espaços físicos cadastrados para este Projeto de Aula ou Evento.
               </span>
             </div>
 
