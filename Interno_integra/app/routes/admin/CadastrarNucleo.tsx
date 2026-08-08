@@ -132,6 +132,19 @@ export default function CadastrarNucleo() {
     return espacos.find(e => String(e.id) === String(espacoIdWatch));
   }, [espacos, espacoIdWatch]);
 
+  const getModalidadeNome = (espaco: any) => {
+    if (!espaco) return "—";
+    if (espaco.modalidade_nome && espaco.modalidade_nome !== "—") return espaco.modalidade_nome;
+    if (espaco.modalidades?.nome) return espaco.modalidades.nome;
+    if (espaco.modalidade) return espaco.modalidade;
+    if (espaco.modalidade_id) {
+      const mod = modalidades.find(m => String(m.id) === String(espaco.modalidade_id));
+      if (mod?.nome) return mod.nome;
+      return `Modalidade ID ${espaco.modalidade_id}`;
+    }
+    return "—";
+  };
+
   useEffect(() => {
     if (selectedEspaco?.nome) {
       setFormValue("nomeNucleo", selectedEspaco.nome);
@@ -444,7 +457,7 @@ export default function CadastrarNucleo() {
 
                 <div className="bg-white p-3 rounded-lg border border-indigo-100 shadow-2xs">
                   <span className="text-slate-400 font-semibold block text-[10px] uppercase">Modalidade:</span>
-                  <span className="font-extrabold text-slate-800 text-sm">{selectedEspaco.modalidade_nome || selectedEspaco.modalidade || "Geral"}</span>
+                  <span className="font-extrabold text-slate-800 text-sm">{getModalidadeNome(selectedEspaco)}</span>
                 </div>
 
                 <div className="bg-white p-3 rounded-lg border border-indigo-100 shadow-2xs">
