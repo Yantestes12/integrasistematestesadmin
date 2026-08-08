@@ -109,7 +109,9 @@ export default function Nucleos() {
   const parseNucleosList = (rawData: any): NucleoItem[] => {
     const flatList = flattenResponse(rawData);
 
-    return flatList.map((item, idx) => {
+    return flatList
+      .filter((item: any) => item.resp_nome !== "temp" && item.resp_email !== "temp@temp.temp")
+      .map((item, idx) => {
       const id = item.id || item.id_nucleo || idx + 1;
       const nome = item.nome || item.nome_nucleo || `Núcleo ${id}`;
       const isAtivo = item.ativo !== false && item.ativo !== 0 && item.ativo !== "0";
