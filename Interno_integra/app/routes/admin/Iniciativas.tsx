@@ -22,7 +22,7 @@ export default function Iniciativas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentInstitute, setCurrentInstitute] = useState("IBRASE");
 
-  // Estado do Modal de Confirmação com Contagem de 10 Segundos e Animação de Papel Rasgando caindo na Lixeira
+  // Estado do Modal de Confirmação com Contagem de 10 Segundos e Animação FÍSICA de Papel Rasgando por clip-path
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedIniciativa, setSelectedIniciativa] = useState<IniciativaItem | null>(null);
   const [countdown, setCountdown] = useState(10);
@@ -154,7 +154,7 @@ export default function Iniciativas() {
   const handleConfirmDelete = async () => {
     if (!selectedIniciativa || countdown > 0 || isDeleting) return;
     setIsDeleting(true);
-    setIsTearing(true); // Inicia animação visual de rasgar e cair na lixeira
+    setIsTearing(true); // Inicia animação de rasgo físico com corte exato por clip-path
 
     setTimeout(async () => {
       try {
@@ -175,7 +175,7 @@ export default function Iniciativas() {
           setDeleteModalOpen(false);
           setSelectedIniciativa(null);
         } else {
-          alert("Erro ao excluir iniciativa via N8N. Importe o novo fluxo N8N_PROJETOS_DELETE no seu N8N.");
+          alert("Erro ao excluir iniciativa via N8N. Certifique-se de importar o fluxo N8N_PROJETOS_DELETE.");
         }
       } catch (e) {
         console.error(e);
@@ -192,30 +192,58 @@ export default function Iniciativas() {
     (item.termo_fomento || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Componente interno da Ficha em Papel (Única e física)
+  const RenderFichaCard = ({ item }: { item: IniciativaItem }) => (
+    <div className="w-full bg-amber-50/95 border-2 border-amber-200/90 rounded-2xl p-4 shadow-md relative select-none">
+      {/* Fita adesiva / Durex no topo */}
+      <div className="w-14 h-3.5 bg-amber-200/70 backdrop-blur-xs absolute -top-2 left-1/2 -translate-x-1/2 rounded-xs shadow-2xs border border-amber-300/50" />
+      
+      <div className="flex items-center gap-2 text-amber-900/80 text-[11px] font-bold uppercase tracking-wider mb-1">
+        <FileText size={14} className="text-amber-600 shrink-0" />
+        <span>{currentInstitute} • Ficha Oficial do Projeto</span>
+      </div>
+
+      <h4 className="text-slate-900 font-black text-base md:text-lg border-b border-amber-200/80 pb-2 mb-2 leading-snug">
+        {item.nome}
+      </h4>
+
+      <div className="flex items-center justify-between text-xs text-amber-900/80 font-medium">
+        <span>{item.termo_fomento ? `Termo: ${item.termo_fomento}` : 'Projeto Cadastrado'}</span>
+        <span className="font-extrabold text-amber-800">ID #{item.id}</span>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans">
       
-      {/* Estilos customizados para a animação do papel rasgando e CAINDO DIRETO NA LIXEIRA */}
+      {/* Keyframes da Rasgadura FÍSICA por CLIP-PATH zig-zag cortando as letras ao meio */}
       <style>{`
-        @keyframes tearLeftAnim {
-          0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
-          35% { transform: translateY(15px) translateX(15px) rotate(-10deg) scale(0.9); opacity: 0.95; }
-          100% { transform: translateY(90px) translateX(55px) rotate(-25deg) scale(0.2); opacity: 0; }
+        .clip-tear-left {
+          clip-path: polygon(0 0, 52% 0, 47% 20%, 53% 40%, 46% 60%, 52% 80%, 48% 100%, 0 100%);
         }
-        @keyframes tearRightAnim {
-          0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
-          35% { transform: translateY(15px) translateX(-15px) rotate(10deg) scale(0.9); opacity: 0.95; }
-          100% { transform: translateY(90px) translateX(-55px) rotate(25deg) scale(0.2); opacity: 0; }
+        .clip-tear-right {
+          clip-path: polygon(52% 0, 100% 0, 100% 100%, 48% 100%, 52% 80%, 46% 60%, 53% 40%, 47% 20%);
         }
-        @keyframes trashLidAnim {
+        @keyframes physicalTearLeft {
+          0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+          30% { transform: translateY(10px) translateX(-8px) rotate(-8deg) scale(0.95); opacity: 0.95; }
+          100% { transform: translateY(110px) translateX(-20px) rotate(-22deg) scale(0.3); opacity: 0; }
+        }
+        @keyframes physicalTearRight {
+          0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+          30% { transform: translateY(10px) translateX(8px) rotate(8deg) scale(0.95); opacity: 0.95; }
+          100% { transform: translateY(110px) translateX(20px) rotate(22deg) scale(0.3); opacity: 0; }
+        }
+        @keyframes trashLidPhysical {
           0% { transform: rotate(0deg); }
-          30% { transform: rotate(-40deg) translateY(-8px); }
-          75% { transform: rotate(-40deg) translateY(-8px); }
+          30% { transform: rotate(-45deg) translateY(-10px); }
+          75% { transform: rotate(-45deg) translateY(-10px); }
           100% { transform: rotate(0deg); }
         }
-        .anim-tear-left { animation: tearLeftAnim 1.1s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-        .anim-tear-right { animation: tearRightAnim 1.1s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-        .anim-trash-lid { animation: trashLidAnim 1.1s ease-in-out forwards; transform-origin: left bottom; }
+        .anim-physical-left { animation: physicalTearLeft 1.1s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .anim-physical-right { animation: physicalTearRight 1.1s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .anim-trash-lid-open { animation: trashLidPhysical 1.1s ease-in-out forwards; transform-origin: left bottom; }
       `}</style>
 
       {/* Top Banner / Breadcrumb */}
@@ -385,7 +413,7 @@ export default function Iniciativas() {
         )}
       </div>
 
-      {/* Modal de Confirmação com Animação de Folha de Papel Rasgando CAINDO DIRETO NA LIXEIRA */}
+      {/* Modal de Confirmação com Rasgadura FÍSICA por CLIP-PATH e Lixeira */}
       {deleteModalOpen && selectedIniciativa && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in duration-200">
@@ -408,46 +436,31 @@ export default function Iniciativas() {
               </button>
             </div>
 
-            {/* ÁREA DA ANIMAÇÃO DO PAPEL RASGANDO E CAINDO DENTRO DA LIXEIRA */}
-            <div className="relative py-4 flex flex-col items-center justify-center min-h-[200px] overflow-hidden">
+            {/* ÁREA DA ANIMAÇÃO DA RASGADURA FÍSICA DENTRO DA LIXEIRA */}
+            <div className="relative py-2 flex flex-col items-center justify-between min-h-[220px] overflow-hidden">
               
               {!isTearing ? (
-                /* Papel Inteiro antes de rasgar */
-                <div className="w-full max-w-[280px] bg-amber-50/90 border-2 border-amber-200/80 rounded-xl p-4 shadow-sm relative rotate-[-1deg] transition-all hover:rotate-0">
-                  {/* Fita adesiva / Durex no topo */}
-                  <div className="w-12 h-3 bg-amber-200/60 backdrop-blur-xs absolute -top-1.5 left-1/2 -translate-x-1/2 rounded-xs shadow-2xs border border-amber-300/40" />
-                  
-                  <div className="flex items-center gap-2 text-amber-800 text-xs font-bold uppercase tracking-wider mb-1">
-                    <FileText size={14} className="text-amber-600" />
-                    <span>{currentInstitute} • Ficha do Projeto</span>
-                  </div>
-
-                  <h4 className="text-slate-900 font-black text-base line-clamp-2 border-b border-amber-200/60 pb-2 mb-2">
-                    {selectedIniciativa.nome}
-                  </h4>
-
-                  <p className="text-xs text-amber-900/70 font-medium">
-                    {selectedIniciativa.termo_fomento ? `Termo: ${selectedIniciativa.termo_fomento}` : 'Iniciativa cadastrada no sistema'}
-                  </p>
+                /* Ficha Inteira Antes do Rasgo */
+                <div className="w-full px-2">
+                  <RenderFichaCard item={selectedIniciativa} />
                 </div>
               ) : (
-                /* Papel Rasgando em 2 metades e caindo exatamente DENTRO da lixeira */
-                <div className="relative w-full h-[190px] flex flex-col items-center justify-end">
-                  {/* Metade Esquerda do Papel (Cai para a direita, entrando na lixeira) */}
-                  <div className="absolute left-[12%] top-1 w-[120px] bg-amber-50 border-2 border-amber-200 rounded-l-xl p-3 shadow-md anim-tear-left overflow-hidden z-10">
-                    <div className="text-[10px] text-amber-800 font-bold uppercase">Projeto</div>
-                    <div className="text-xs font-black text-slate-800 truncate">{selectedIniciativa.nome}</div>
+                /* EFEITO FÍSICO REAL: A mesma Ficha é dividida por clip-path zig-zag cortando o texto exato */
+                <div className="relative w-full h-[210px] flex flex-col items-center justify-between">
+                  
+                  {/* Metade Esquerda Físicamente Cortada */}
+                  <div className="absolute inset-x-2 top-0 clip-tear-left anim-physical-left z-10">
+                    <RenderFichaCard item={selectedIniciativa} />
                   </div>
 
-                  {/* Metade Direita do Papel (Cai para a esquerda, entrando na lixeira) */}
-                  <div className="absolute right-[12%] top-1 w-[120px] bg-amber-50 border-2 border-amber-200 rounded-r-xl p-3 shadow-md anim-tear-right overflow-hidden border-l-dashed border-l-amber-300 z-10">
-                    <div className="text-[10px] text-amber-800 font-bold uppercase">Excluindo...</div>
-                    <div className="text-xs font-black text-slate-800 truncate">{selectedIniciativa.nome}</div>
+                  {/* Metade Direita Físicamente Cortada */}
+                  <div className="absolute inset-x-2 top-0 clip-tear-right anim-physical-right z-10">
+                    <RenderFichaCard item={selectedIniciativa} />
                   </div>
 
-                  {/* Lixeira Central com a Tampa Abrindo */}
+                  {/* Lixeira no fundo abrindo a tampa para receber os pedaços cortados */}
                   <div className="mt-auto flex flex-col items-center text-red-500 z-20 pb-1">
-                    <div className="anim-trash-lid mb-0.5">
+                    <div className="anim-trash-lid-open mb-0.5">
                       <div className="w-14 h-2.5 bg-red-500 rounded-t-md shadow-xs mx-auto" />
                     </div>
                     <div className="w-16 h-16 bg-red-600 text-white rounded-b-2xl flex items-center justify-center shadow-xl border-2 border-red-700">
