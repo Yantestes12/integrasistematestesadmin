@@ -123,11 +123,11 @@
             },
             {
               "fieldId": "numero_vaga",
-              "fieldValue": "={{ .body.numero_vaga }}"
+              "fieldValue": "={{ $json.body.numero_vaga }}"
             },
             {
               "fieldId": "vagas",
-              "fieldValue": "={{ .body.vagas }}"
+              "fieldValue": "={{ $json.body.vagas }}"
             }
           ]
         }
@@ -218,11 +218,11 @@
             },
             {
               "fieldId": "numero_vaga",
-              "fieldValue": "={{ .body.numero_vaga }}"
+              "fieldValue": "={{ $json.body.numero_vaga }}"
             },
             {
               "fieldId": "vagas",
-              "fieldValue": "={{ .body.vagas }}"
+              "fieldValue": "={{ $json.body.vagas }}"
             }
           ]
         }
@@ -313,11 +313,11 @@
             },
             {
               "fieldId": "numero_vaga",
-              "fieldValue": "={{ .body.numero_vaga }}"
+              "fieldValue": "={{ $json.body.numero_vaga }}"
             },
             {
               "fieldId": "vagas",
-              "fieldValue": "={{ .body.vagas }}"
+              "fieldValue": "={{ $json.body.vagas }}"
             }
           ]
         }
@@ -408,11 +408,11 @@
             },
             {
               "fieldId": "numero_vaga",
-              "fieldValue": "={{ .body.numero_vaga }}"
+              "fieldValue": "={{ $json.body.numero_vaga }}"
             },
             {
               "fieldId": "vagas",
-              "fieldValue": "={{ .body.vagas }}"
+              "fieldValue": "={{ $json.body.vagas }}"
             }
           ]
         }
@@ -616,11 +616,11 @@
             },
             {
               "fieldId": "numero_vaga",
-              "fieldValue": "={{ .body.numero_vaga }}"
+              "fieldValue": "={{ $json.body.numero_vaga }}"
             },
             {
               "fieldId": "vagas",
-              "fieldValue": "={{ .body.vagas }}"
+              "fieldValue": "={{ $json.body.vagas }}"
             }
           ]
         }
@@ -717,11 +717,11 @@
             },
             {
               "fieldId": "numero_vaga",
-              "fieldValue": "={{ .body.numero_vaga }}"
+              "fieldValue": "={{ $json.body.numero_vaga }}"
             },
             {
               "fieldId": "vagas",
-              "fieldValue": "={{ .body.vagas }}"
+              "fieldValue": "={{ $json.body.vagas }}"
             }
           ]
         }
@@ -818,11 +818,11 @@
             },
             {
               "fieldId": "numero_vaga",
-              "fieldValue": "={{ .body.numero_vaga }}"
+              "fieldValue": "={{ $json.body.numero_vaga }}"
             },
             {
               "fieldId": "vagas",
-              "fieldValue": "={{ .body.vagas }}"
+              "fieldValue": "={{ $json.body.vagas }}"
             }
           ]
         }
@@ -919,11 +919,11 @@
             },
             {
               "fieldId": "numero_vaga",
-              "fieldValue": "={{ .body.numero_vaga }}"
+              "fieldValue": "={{ $json.body.numero_vaga }}"
             },
             {
               "fieldId": "vagas",
-              "fieldValue": "={{ .body.vagas }}"
+              "fieldValue": "={{ $json.body.vagas }}"
             }
           ]
         }

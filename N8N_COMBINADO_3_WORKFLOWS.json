@@ -9,7 +9,7 @@
         "options": {}
       },
       "id": "wh-post",
-      "name": "Webhook POST",
+      "name": "NÚCLEOS - Webhook POST",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
@@ -44,7 +44,7 @@
         "fallbackOutput": 1
       },
       "id": "sw-post",
-      "name": "Switch POST",
+      "name": "NÚCLEOS - Switch POST",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
       "position": [
@@ -123,17 +123,17 @@
             },
             {
               "fieldId": "numero_vaga",
-              "fieldValue": "={{ .body.numero_vaga }}"
+              "fieldValue": "={{ $json.body.numero_vaga }}"
             },
             {
               "fieldId": "vagas",
-              "fieldValue": "={{ .body.vagas }}"
+              "fieldValue": "={{ $json.body.vagas }}"
             }
           ]
         }
       },
       "id": "sb-gas-post",
-      "name": "SB GASCTPNA POST",
+      "name": "NÚCLEOS - SB GASCTPNA POST",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
@@ -218,17 +218,17 @@
             },
             {
               "fieldId": "numero_vaga",
-              "fieldValue": "={{ .body.numero_vaga }}"
+              "fieldValue": "={{ $json.body.numero_vaga }}"
             },
             {
               "fieldId": "vagas",
-              "fieldValue": "={{ .body.vagas }}"
+              "fieldValue": "={{ $json.body.vagas }}"
             }
           ]
         }
       },
       "id": "sb-ib-post",
-      "name": "SB IBRASE POST",
+      "name": "NÚCLEOS - SB IBRASE POST",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
@@ -313,17 +313,17 @@
             },
             {
               "fieldId": "numero_vaga",
-              "fieldValue": "={{ .body.numero_vaga }}"
+              "fieldValue": "={{ $json.body.numero_vaga }}"
             },
             {
               "fieldId": "vagas",
-              "fieldValue": "={{ .body.vagas }}"
+              "fieldValue": "={{ $json.body.vagas }}"
             }
           ]
         }
       },
       "id": "sb-au-post",
-      "name": "SB AUNI POST",
+      "name": "NÚCLEOS - SB AUNI POST",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
@@ -408,17 +408,17 @@
             },
             {
               "fieldId": "numero_vaga",
-              "fieldValue": "={{ .body.numero_vaga }}"
+              "fieldValue": "={{ $json.body.numero_vaga }}"
             },
             {
               "fieldId": "vagas",
-              "fieldValue": "={{ .body.vagas }}"
+              "fieldValue": "={{ $json.body.vagas }}"
             }
           ]
         }
       },
       "id": "sb-iv-post",
-      "name": "SB IVEM POST",
+      "name": "NÚCLEOS - SB IVEM POST",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
@@ -438,7 +438,7 @@
         "options": {}
       },
       "id": "res-gas-post",
-      "name": "Respond GASCTPNA POST",
+      "name": "NÚCLEOS - Respond GASCTPNA POST",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
@@ -452,7 +452,7 @@
         "options": {}
       },
       "id": "res-ib-post",
-      "name": "Respond IBRASE POST",
+      "name": "NÚCLEOS - Respond IBRASE POST",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
@@ -466,7 +466,7 @@
         "options": {}
       },
       "id": "res-au-post",
-      "name": "Respond AUNI POST",
+      "name": "NÚCLEOS - Respond AUNI POST",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
@@ -480,7 +480,7 @@
         "options": {}
       },
       "id": "res-iv-post",
-      "name": "Respond IVEM POST",
+      "name": "NÚCLEOS - Respond IVEM POST",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
@@ -496,7 +496,7 @@
         "options": {}
       },
       "id": "wh-put",
-      "name": "Webhook PUT",
+      "name": "NÚCLEOS - Webhook PUT",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
@@ -531,7 +531,7 @@
         "fallbackOutput": 1
       },
       "id": "sw-put",
-      "name": "Switch PUT",
+      "name": "NÚCLEOS - Switch PUT",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
       "position": [
@@ -616,17 +616,17 @@
             },
             {
               "fieldId": "numero_vaga",
-              "fieldValue": "={{ .body.numero_vaga }}"
+              "fieldValue": "={{ $json.body.numero_vaga }}"
             },
             {
               "fieldId": "vagas",
-              "fieldValue": "={{ .body.vagas }}"
+              "fieldValue": "={{ $json.body.vagas }}"
             }
           ]
         }
       },
       "id": "sb-gas-put",
-      "name": "SB GASCTPNA PUT",
+      "name": "NÚCLEOS - SB GASCTPNA PUT",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
@@ -717,17 +717,17 @@
             },
             {
               "fieldId": "numero_vaga",
-              "fieldValue": "={{ .body.numero_vaga }}"
+              "fieldValue": "={{ $json.body.numero_vaga }}"
             },
             {
               "fieldId": "vagas",
-              "fieldValue": "={{ .body.vagas }}"
+              "fieldValue": "={{ $json.body.vagas }}"
             }
           ]
         }
       },
       "id": "sb-ib-put",
-      "name": "SB IBRASE PUT",
+      "name": "NÚCLEOS - SB IBRASE PUT",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
@@ -818,17 +818,17 @@
             },
             {
               "fieldId": "numero_vaga",
-              "fieldValue": "={{ .body.numero_vaga }}"
+              "fieldValue": "={{ $json.body.numero_vaga }}"
             },
             {
               "fieldId": "vagas",
-              "fieldValue": "={{ .body.vagas }}"
+              "fieldValue": "={{ $json.body.vagas }}"
             }
           ]
         }
       },
       "id": "sb-au-put",
-      "name": "SB AUNI PUT",
+      "name": "NÚCLEOS - SB AUNI PUT",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
@@ -919,17 +919,17 @@
             },
             {
               "fieldId": "numero_vaga",
-              "fieldValue": "={{ .body.numero_vaga }}"
+              "fieldValue": "={{ $json.body.numero_vaga }}"
             },
             {
               "fieldId": "vagas",
-              "fieldValue": "={{ .body.vagas }}"
+              "fieldValue": "={{ $json.body.vagas }}"
             }
           ]
         }
       },
       "id": "sb-iv-put",
-      "name": "SB IVEM PUT",
+      "name": "NÚCLEOS - SB IVEM PUT",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
@@ -949,7 +949,7 @@
         "options": {}
       },
       "id": "res-gas-put",
-      "name": "Respond GASCTPNA PUT",
+      "name": "NÚCLEOS - Respond GASCTPNA PUT",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
@@ -963,7 +963,7 @@
         "options": {}
       },
       "id": "res-ib-put",
-      "name": "Respond IBRASE PUT",
+      "name": "NÚCLEOS - Respond IBRASE PUT",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
@@ -977,7 +977,7 @@
         "options": {}
       },
       "id": "res-au-put",
-      "name": "Respond AUNI PUT",
+      "name": "NÚCLEOS - Respond AUNI PUT",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
@@ -991,7 +991,7 @@
         "options": {}
       },
       "id": "res-iv-put",
-      "name": "Respond IVEM PUT",
+      "name": "NÚCLEOS - Respond IVEM PUT",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
@@ -1001,12 +1001,12 @@
     },
     {
       "id": "bdebf561-7104-496d-a5b4-d4124773563f",
-      "name": "Webhook POST",
+      "name": "PROJETOS POST - Webhook POST",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
         0,
-        600
+        650
       ],
       "webhookId": "projetos-post",
       "parameters": {
@@ -1018,12 +1018,12 @@
     },
     {
       "id": "ff34f812-3830-4296-b3f5-adbbd27fbdd5",
-      "name": "Switch POST",
+      "name": "PROJETOS POST - Switch POST",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
       "position": [
         220,
-        600
+        650
       ],
       "parameters": {
         "dataType": "string",
@@ -1052,12 +1052,12 @@
     },
     {
       "id": "ins-gasctpna",
-      "name": "SB GASCTPNA POST",
+      "name": "PROJETOS POST - SB GASCTPNA POST",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         480,
-        300
+        350
       ],
       "credentials": {
         "supabaseApi": {
@@ -1140,12 +1140,12 @@
     },
     {
       "id": "code-gasctpna",
-      "name": "Map GASCTPNA Limits",
+      "name": "PROJETOS POST - Map GASCTPNA Limits",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         720,
-        300
+        350
       ],
       "parameters": {
         "jsCode": "const projId = $input.first().json.id;\nconst body = $('Webhook POST').first().json.body;\nconst limites = body.limites_modalidade || body.limites_modalidades || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
@@ -1153,12 +1153,12 @@
     },
     {
       "id": "ins-lim-gasctpna",
-      "name": "Ins GASCTPNA Limits",
+      "name": "PROJETOS POST - Ins GASCTPNA Limits",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         960,
-        300
+        350
       ],
       "credentials": {
         "supabaseApi": {
@@ -1185,7 +1185,7 @@
             },
             {
               "fieldId": "vagas_por_nucleo",
-              "fieldValue": "={{ .body.vagas_por_nucleo }}"
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
             }
           ]
         }
@@ -1193,12 +1193,12 @@
     },
     {
       "id": "respond-gasctpna",
-      "name": "Respond GASCTPNA",
+      "name": "PROJETOS POST - Respond GASCTPNA",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
         720,
-        420
+        470
       ],
       "parameters": {
         "respondWith": "allIncomingItems",
@@ -1207,12 +1207,12 @@
     },
     {
       "id": "ins-ibrase",
-      "name": "SB IBRASE POST",
+      "name": "PROJETOS POST - SB IBRASE POST",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         480,
-        550
+        600
       ],
       "credentials": {
         "supabaseApi": {
@@ -1295,12 +1295,12 @@
     },
     {
       "id": "code-ibrase",
-      "name": "Map IBRASE Limits",
+      "name": "PROJETOS POST - Map IBRASE Limits",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         720,
-        550
+        600
       ],
       "parameters": {
         "jsCode": "const projId = $input.first().json.id;\nconst body = $('Webhook POST').first().json.body;\nconst limites = body.limites_modalidade || body.limites_modalidades || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
@@ -1308,12 +1308,12 @@
     },
     {
       "id": "ins-lim-ibrase",
-      "name": "Ins IBRASE Limits",
+      "name": "PROJETOS POST - Ins IBRASE Limits",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         960,
-        550
+        600
       ],
       "credentials": {
         "supabaseApi": {
@@ -1340,7 +1340,7 @@
             },
             {
               "fieldId": "vagas_por_nucleo",
-              "fieldValue": "={{ .body.vagas_por_nucleo }}"
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
             }
           ]
         }
@@ -1348,12 +1348,12 @@
     },
     {
       "id": "respond-ibrase",
-      "name": "Respond IBRASE",
+      "name": "PROJETOS POST - Respond IBRASE",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
         720,
-        670
+        720
       ],
       "parameters": {
         "respondWith": "allIncomingItems",
@@ -1362,12 +1362,12 @@
     },
     {
       "id": "ins-auni",
-      "name": "SB AUNI POST",
+      "name": "PROJETOS POST - SB AUNI POST",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         480,
-        800
+        850
       ],
       "credentials": {
         "supabaseApi": {
@@ -1450,12 +1450,12 @@
     },
     {
       "id": "code-auni",
-      "name": "Map AUNI Limits",
+      "name": "PROJETOS POST - Map AUNI Limits",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         720,
-        800
+        850
       ],
       "parameters": {
         "jsCode": "const projId = $input.first().json.id;\nconst body = $('Webhook POST').first().json.body;\nconst limites = body.limites_modalidade || body.limites_modalidades || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
@@ -1463,12 +1463,12 @@
     },
     {
       "id": "ins-lim-auni",
-      "name": "Ins AUNI Limits",
+      "name": "PROJETOS POST - Ins AUNI Limits",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         960,
-        800
+        850
       ],
       "credentials": {
         "supabaseApi": {
@@ -1495,7 +1495,7 @@
             },
             {
               "fieldId": "vagas_por_nucleo",
-              "fieldValue": "={{ .body.vagas_por_nucleo }}"
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
             }
           ]
         }
@@ -1503,12 +1503,12 @@
     },
     {
       "id": "respond-auni",
-      "name": "Respond AUNI",
+      "name": "PROJETOS POST - Respond AUNI",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
         720,
-        920
+        970
       ],
       "parameters": {
         "respondWith": "allIncomingItems",
@@ -1517,12 +1517,12 @@
     },
     {
       "id": "ins-ivem",
-      "name": "SB IVEM POST",
+      "name": "PROJETOS POST - SB IVEM POST",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         480,
-        1050
+        1100
       ],
       "credentials": {
         "supabaseApi": {
@@ -1605,12 +1605,12 @@
     },
     {
       "id": "code-ivem",
-      "name": "Map IVEM Limits",
+      "name": "PROJETOS POST - Map IVEM Limits",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         720,
-        1050
+        1100
       ],
       "parameters": {
         "jsCode": "const projId = $input.first().json.id;\nconst body = $('Webhook POST').first().json.body;\nconst limites = body.limites_modalidade || body.limites_modalidades || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
@@ -1618,12 +1618,12 @@
     },
     {
       "id": "ins-lim-ivem",
-      "name": "Ins IVEM Limits",
+      "name": "PROJETOS POST - Ins IVEM Limits",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         960,
-        1050
+        1100
       ],
       "credentials": {
         "supabaseApi": {
@@ -1650,7 +1650,7 @@
             },
             {
               "fieldId": "vagas_por_nucleo",
-              "fieldValue": "={{ .body.vagas_por_nucleo }}"
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
             }
           ]
         }
@@ -1658,12 +1658,12 @@
     },
     {
       "id": "respond-ivem",
-      "name": "Respond IVEM",
+      "name": "PROJETOS POST - Respond IVEM",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
         720,
-        1170
+        1220
       ],
       "parameters": {
         "respondWith": "allIncomingItems",
@@ -1672,12 +1672,12 @@
     },
     {
       "id": "webhook-put",
-      "name": "Webhook PUT",
+      "name": "PROJETOS PUT - Webhook PUT",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
         0,
-        1200
+        1300
       ],
       "parameters": {
         "httpMethod": "PUT",
@@ -1689,12 +1689,12 @@
     },
     {
       "id": "switch-inst",
-      "name": "Switch Instituto",
+      "name": "PROJETOS PUT - Switch Instituto",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3,
       "position": [
         200,
-        1200
+        1300
       ],
       "parameters": {
         "rules": {
@@ -1793,12 +1793,12 @@
     },
     {
       "id": "update-GASCTPNA",
-      "name": "Update GASCTPNA",
+      "name": "PROJETOS PUT - Update GASCTPNA",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         500,
-        850
+        950
       ],
       "credentials": {
         "supabaseApi": {
@@ -1890,12 +1890,12 @@
     },
     {
       "id": "delete-GASCTPNA",
-      "name": "Delete GASCTPNA Limits",
+      "name": "PROJETOS PUT - Delete GASCTPNA Limits",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         750,
-        850
+        950
       ],
       "credentials": {
         "supabaseApi": {
@@ -1919,12 +1919,12 @@
     },
     {
       "id": "code-GASCTPNA",
-      "name": "Map GASCTPNA Limits",
+      "name": "PROJETOS PUT - Map GASCTPNA Limits",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         1000,
-        850
+        950
       ],
       "parameters": {
         "jsCode": "const body = $(\"Webhook PUT\").first().json.body;\nconst projId = parseInt(body.id);\nconst limites = body.limites_modalidade || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
@@ -1932,12 +1932,12 @@
     },
     {
       "id": "create-GASCTPNA",
-      "name": "Insert GASCTPNA Limits",
+      "name": "PROJETOS PUT - Insert GASCTPNA Limits",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         1250,
-        850
+        950
       ],
       "credentials": {
         "supabaseApi": {
@@ -1953,12 +1953,12 @@
     },
     {
       "id": "respond-GASCTPNA",
-      "name": "Respond GASCTPNA",
+      "name": "PROJETOS PUT - Respond GASCTPNA",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
         1000,
-        950
+        1050
       ],
       "parameters": {
         "respondWith": "allIncomingItems",
@@ -1967,12 +1967,12 @@
     },
     {
       "id": "update-IBRASE",
-      "name": "Update IBRASE",
+      "name": "PROJETOS PUT - Update IBRASE",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         500,
-        1100
+        1200
       ],
       "credentials": {
         "supabaseApi": {
@@ -2064,12 +2064,12 @@
     },
     {
       "id": "delete-IBRASE",
-      "name": "Delete IBRASE Limits",
+      "name": "PROJETOS PUT - Delete IBRASE Limits",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         750,
-        1100
+        1200
       ],
       "credentials": {
         "supabaseApi": {
@@ -2093,12 +2093,12 @@
     },
     {
       "id": "code-IBRASE",
-      "name": "Map IBRASE Limits",
+      "name": "PROJETOS PUT - Map IBRASE Limits",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         1000,
-        1100
+        1200
       ],
       "parameters": {
         "jsCode": "const body = $(\"Webhook PUT\").first().json.body;\nconst projId = parseInt(body.id);\nconst limites = body.limites_modalidade || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
@@ -2106,12 +2106,12 @@
     },
     {
       "id": "create-IBRASE",
-      "name": "Insert IBRASE Limits",
+      "name": "PROJETOS PUT - Insert IBRASE Limits",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         1250,
-        1100
+        1200
       ],
       "credentials": {
         "supabaseApi": {
@@ -2127,12 +2127,12 @@
     },
     {
       "id": "respond-IBRASE",
-      "name": "Respond IBRASE",
+      "name": "PROJETOS PUT - Respond IBRASE",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
         1000,
-        1200
+        1300
       ],
       "parameters": {
         "respondWith": "allIncomingItems",
@@ -2141,12 +2141,12 @@
     },
     {
       "id": "update-AUNI",
-      "name": "Update AUNI",
+      "name": "PROJETOS PUT - Update AUNI",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         500,
-        1350
+        1450
       ],
       "credentials": {
         "supabaseApi": {
@@ -2238,12 +2238,12 @@
     },
     {
       "id": "delete-AUNI",
-      "name": "Delete AUNI Limits",
+      "name": "PROJETOS PUT - Delete AUNI Limits",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         750,
-        1350
+        1450
       ],
       "credentials": {
         "supabaseApi": {
@@ -2267,12 +2267,12 @@
     },
     {
       "id": "code-AUNI",
-      "name": "Map AUNI Limits",
+      "name": "PROJETOS PUT - Map AUNI Limits",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         1000,
-        1350
+        1450
       ],
       "parameters": {
         "jsCode": "const body = $(\"Webhook PUT\").first().json.body;\nconst projId = parseInt(body.id);\nconst limites = body.limites_modalidade || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
@@ -2280,12 +2280,12 @@
     },
     {
       "id": "create-AUNI",
-      "name": "Insert AUNI Limits",
+      "name": "PROJETOS PUT - Insert AUNI Limits",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         1250,
-        1350
+        1450
       ],
       "credentials": {
         "supabaseApi": {
@@ -2301,12 +2301,12 @@
     },
     {
       "id": "respond-AUNI",
-      "name": "Respond AUNI",
+      "name": "PROJETOS PUT - Respond AUNI",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
         1000,
-        1450
+        1550
       ],
       "parameters": {
         "respondWith": "allIncomingItems",
@@ -2315,12 +2315,12 @@
     },
     {
       "id": "update-IVEM",
-      "name": "Update IVEM",
+      "name": "PROJETOS PUT - Update IVEM",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         500,
-        1600
+        1700
       ],
       "credentials": {
         "supabaseApi": {
@@ -2412,12 +2412,12 @@
     },
     {
       "id": "delete-IVEM",
-      "name": "Delete IVEM Limits",
+      "name": "PROJETOS PUT - Delete IVEM Limits",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         750,
-        1600
+        1700
       ],
       "credentials": {
         "supabaseApi": {
@@ -2441,12 +2441,12 @@
     },
     {
       "id": "code-IVEM",
-      "name": "Map IVEM Limits",
+      "name": "PROJETOS PUT - Map IVEM Limits",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         1000,
-        1600
+        1700
       ],
       "parameters": {
         "jsCode": "const body = $(\"Webhook PUT\").first().json.body;\nconst projId = parseInt(body.id);\nconst limites = body.limites_modalidade || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
@@ -2454,12 +2454,12 @@
     },
     {
       "id": "create-IVEM",
-      "name": "Insert IVEM Limits",
+      "name": "PROJETOS PUT - Insert IVEM Limits",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
         1250,
-        1600
+        1700
       ],
       "credentials": {
         "supabaseApi": {
@@ -2475,12 +2475,12 @@
     },
     {
       "id": "respond-IVEM",
-      "name": "Respond IVEM",
+      "name": "PROJETOS PUT - Respond IVEM",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
         1000,
-        1700
+        1800
       ],
       "parameters": {
         "respondWith": "allIncomingItems",
@@ -2489,378 +2489,520 @@
     }
   ],
   "connections": {
-    "Webhook POST": {
+    "NÚCLEOS - Webhook POST": {
       "main": [
         [
           {
-            "node": "Switch POST",
+            "node": "NÚCLEOS - Switch POST",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Switch POST": {
+    "NÚCLEOS - Switch POST": {
       "main": [
         [
           {
-            "node": "SB GASCTPNA POST",
+            "node": "NÚCLEOS - SB GASCTPNA POST",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "SB IBRASE POST",
+            "node": "NÚCLEOS - SB IBRASE POST",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "SB AUNI POST",
+            "node": "NÚCLEOS - SB AUNI POST",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "SB IVEM POST",
+            "node": "NÚCLEOS - SB IVEM POST",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "SB GASCTPNA POST": {
+    "NÚCLEOS - SB GASCTPNA POST": {
       "main": [
         [
           {
-            "node": "Map GASCTPNA Limits",
+            "node": "NÚCLEOS - Respond GASCTPNA POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NÚCLEOS - SB IBRASE POST": {
+      "main": [
+        [
+          {
+            "node": "NÚCLEOS - Respond IBRASE POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NÚCLEOS - SB AUNI POST": {
+      "main": [
+        [
+          {
+            "node": "NÚCLEOS - Respond AUNI POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NÚCLEOS - SB IVEM POST": {
+      "main": [
+        [
+          {
+            "node": "NÚCLEOS - Respond IVEM POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NÚCLEOS - Webhook PUT": {
+      "main": [
+        [
+          {
+            "node": "NÚCLEOS - Switch PUT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NÚCLEOS - Switch PUT": {
+      "main": [
+        [
+          {
+            "node": "NÚCLEOS - SB GASCTPNA PUT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "NÚCLEOS - SB IBRASE PUT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "NÚCLEOS - SB AUNI PUT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "NÚCLEOS - SB IVEM PUT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NÚCLEOS - SB GASCTPNA PUT": {
+      "main": [
+        [
+          {
+            "node": "NÚCLEOS - Respond GASCTPNA PUT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NÚCLEOS - SB IBRASE PUT": {
+      "main": [
+        [
+          {
+            "node": "NÚCLEOS - Respond IBRASE PUT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NÚCLEOS - SB AUNI PUT": {
+      "main": [
+        [
+          {
+            "node": "NÚCLEOS - Respond AUNI PUT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NÚCLEOS - SB IVEM PUT": {
+      "main": [
+        [
+          {
+            "node": "NÚCLEOS - Respond IVEM PUT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PROJETOS POST - Webhook POST": {
+      "main": [
+        [
+          {
+            "node": "PROJETOS POST - Switch POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PROJETOS POST - Switch POST": {
+      "main": [
+        [
+          {
+            "node": "PROJETOS POST - SB GASCTPNA POST",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "PROJETOS POST - SB IBRASE POST",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "PROJETOS POST - SB AUNI POST",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "PROJETOS POST - SB IVEM POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PROJETOS POST - SB GASCTPNA POST": {
+      "main": [
+        [
+          {
+            "node": "PROJETOS POST - Map GASCTPNA Limits",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Respond GASCTPNA",
+            "node": "PROJETOS POST - Respond GASCTPNA",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "SB IBRASE POST": {
+    "PROJETOS POST - Map GASCTPNA Limits": {
       "main": [
         [
           {
-            "node": "Map IBRASE Limits",
+            "node": "PROJETOS POST - Ins GASCTPNA Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PROJETOS POST - SB IBRASE POST": {
+      "main": [
+        [
+          {
+            "node": "PROJETOS POST - Map IBRASE Limits",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Respond IBRASE",
+            "node": "PROJETOS POST - Respond IBRASE",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "SB AUNI POST": {
+    "PROJETOS POST - Map IBRASE Limits": {
       "main": [
         [
           {
-            "node": "Map AUNI Limits",
+            "node": "PROJETOS POST - Ins IBRASE Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PROJETOS POST - SB AUNI POST": {
+      "main": [
+        [
+          {
+            "node": "PROJETOS POST - Map AUNI Limits",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Respond AUNI",
+            "node": "PROJETOS POST - Respond AUNI",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "SB IVEM POST": {
+    "PROJETOS POST - Map AUNI Limits": {
       "main": [
         [
           {
-            "node": "Map IVEM Limits",
+            "node": "PROJETOS POST - Ins AUNI Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PROJETOS POST - SB IVEM POST": {
+      "main": [
+        [
+          {
+            "node": "PROJETOS POST - Map IVEM Limits",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Respond IVEM",
+            "node": "PROJETOS POST - Respond IVEM",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Webhook PUT": {
+    "PROJETOS POST - Map IVEM Limits": {
       "main": [
         [
           {
-            "node": "Switch Instituto",
+            "node": "PROJETOS POST - Ins IVEM Limits",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Switch PUT": {
+    "PROJETOS PUT - Webhook PUT": {
       "main": [
         [
           {
-            "node": "SB GASCTPNA PUT",
+            "node": "PROJETOS PUT - Switch Instituto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PROJETOS PUT - Switch Instituto": {
+      "main": [
+        [
+          {
+            "node": "PROJETOS PUT - Update GASCTPNA",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "SB IBRASE PUT",
+            "node": "PROJETOS PUT - Update IBRASE",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "SB AUNI PUT",
+            "node": "PROJETOS PUT - Update AUNI",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "SB IVEM PUT",
+            "node": "PROJETOS PUT - Update IVEM",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "SB GASCTPNA PUT": {
+    "PROJETOS PUT - Update GASCTPNA": {
       "main": [
         [
           {
-            "node": "Respond GASCTPNA PUT",
+            "node": "PROJETOS PUT - Delete GASCTPNA Limits",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "SB IBRASE PUT": {
+    "PROJETOS PUT - Delete GASCTPNA Limits": {
       "main": [
         [
           {
-            "node": "Respond IBRASE PUT",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "SB AUNI PUT": {
-      "main": [
-        [
-          {
-            "node": "Respond AUNI PUT",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "SB IVEM PUT": {
-      "main": [
-        [
-          {
-            "node": "Respond IVEM PUT",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Map GASCTPNA Limits": {
-      "main": [
-        [
-          {
-            "node": "Insert GASCTPNA Limits",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Map IBRASE Limits": {
-      "main": [
-        [
-          {
-            "node": "Insert IBRASE Limits",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Map AUNI Limits": {
-      "main": [
-        [
-          {
-            "node": "Insert AUNI Limits",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Map IVEM Limits": {
-      "main": [
-        [
-          {
-            "node": "Insert IVEM Limits",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Switch Instituto": {
-      "main": [
-        [
-          {
-            "node": "Update GASCTPNA",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Update IBRASE",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Update AUNI",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Update IVEM",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update GASCTPNA": {
-      "main": [
-        [
-          {
-            "node": "Delete GASCTPNA Limits",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Delete GASCTPNA Limits": {
-      "main": [
-        [
-          {
-            "node": "Map GASCTPNA Limits",
+            "node": "PROJETOS PUT - Map GASCTPNA Limits",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Respond GASCTPNA",
+            "node": "PROJETOS PUT - Respond GASCTPNA",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Update IBRASE": {
+    "PROJETOS PUT - Map GASCTPNA Limits": {
       "main": [
         [
           {
-            "node": "Delete IBRASE Limits",
+            "node": "PROJETOS PUT - Insert GASCTPNA Limits",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Delete IBRASE Limits": {
+    "PROJETOS PUT - Update IBRASE": {
       "main": [
         [
           {
-            "node": "Map IBRASE Limits",
+            "node": "PROJETOS PUT - Delete IBRASE Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PROJETOS PUT - Delete IBRASE Limits": {
+      "main": [
+        [
+          {
+            "node": "PROJETOS PUT - Map IBRASE Limits",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Respond IBRASE",
+            "node": "PROJETOS PUT - Respond IBRASE",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Update AUNI": {
+    "PROJETOS PUT - Map IBRASE Limits": {
       "main": [
         [
           {
-            "node": "Delete AUNI Limits",
+            "node": "PROJETOS PUT - Insert IBRASE Limits",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Delete AUNI Limits": {
+    "PROJETOS PUT - Update AUNI": {
       "main": [
         [
           {
-            "node": "Map AUNI Limits",
+            "node": "PROJETOS PUT - Delete AUNI Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PROJETOS PUT - Delete AUNI Limits": {
+      "main": [
+        [
+          {
+            "node": "PROJETOS PUT - Map AUNI Limits",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Respond AUNI",
+            "node": "PROJETOS PUT - Respond AUNI",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Update IVEM": {
+    "PROJETOS PUT - Map AUNI Limits": {
       "main": [
         [
           {
-            "node": "Delete IVEM Limits",
+            "node": "PROJETOS PUT - Insert AUNI Limits",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Delete IVEM Limits": {
+    "PROJETOS PUT - Update IVEM": {
       "main": [
         [
           {
-            "node": "Map IVEM Limits",
+            "node": "PROJETOS PUT - Delete IVEM Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PROJETOS PUT - Delete IVEM Limits": {
+      "main": [
+        [
+          {
+            "node": "PROJETOS PUT - Map IVEM Limits",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Respond IVEM",
+            "node": "PROJETOS PUT - Respond IVEM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PROJETOS PUT - Map IVEM Limits": {
+      "main": [
+        [
+          {
+            "node": "PROJETOS PUT - Insert IVEM Limits",
             "type": "main",
             "index": 0
           }

@@ -186,7 +186,7 @@
             },
             {
               "fieldId": "vagas_por_nucleo",
-              "fieldValue": "={{ .body.vagas_por_nucleo }}"
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
             }
           ]
         }
@@ -341,7 +341,7 @@
             },
             {
               "fieldId": "vagas_por_nucleo",
-              "fieldValue": "={{ .body.vagas_por_nucleo }}"
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
             }
           ]
         }
@@ -496,7 +496,7 @@
             },
             {
               "fieldId": "vagas_por_nucleo",
-              "fieldValue": "={{ .body.vagas_por_nucleo }}"
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
             }
           ]
         }
@@ -651,7 +651,7 @@
             },
             {
               "fieldId": "vagas_por_nucleo",
-              "fieldValue": "={{ .body.vagas_por_nucleo }}"
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
             }
           ]
         }
