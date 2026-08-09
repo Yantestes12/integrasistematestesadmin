@@ -114,46 +114,80 @@ export default function Espacos() {
     try {
       const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
       
-      // Busca Espaços e Núcleos em paralelo para detectar "Em Uso" e "Vinculado ao Núcleo"
-      const [resE, resN] = await Promise.all([
+      let rawList: any[] = [];
+      let nMap: Record<number, string> = {};
+
+      const [resE, resN] = await Promise.allSettled([
         fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${authInstitute.toUpperCase()}`),
-        fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${authInstitute.toUpperCase()}`).catch(() => null)
+        fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${authInstitute.toUpperCase()}`)
       ]);
 
-      let nMap: Record<number, string> = {};
-      if (resN && resN.ok) {
-        const nData = await resN.json();
-        const nList = flattenResponse(nData);
-        nList.forEach((n: any) => {
-          if (n.espaco_id) {
-            nMap[Number(n.espaco_id)] = n.nome || `Núcleo #${n.id}`;
-          }
-        });
+      let nDataList: any[] = [];
+      if (resN.status === "fulfilled" && resN.value && resN.value.ok) {
+        try {
+          const nData = await resN.value.json();
+          nDataList = flattenResponse(nData);
+          nDataList.forEach((n: any) => {
+            if (n.espaco_id) {
+              nMap[Number(n.espaco_id)] = n.nome || `Núcleo #${n.id}`;
+            }
+          });
+        } catch (err) {
+          console.warn("Erro ao ler núcleos:", err);
+        }
       }
 
-      if (resE.ok) {
-        const data = await resE.json();
-        const rawList = flattenResponse(data);
-        
-        const list = rawList.map((item: any) => {
-          const status = (item.status_aprovacao || "aprovado").toString().toLowerCase().trim();
-          const fotoOk = !!(item.foto_url && item.foto_url.trim().length > 0);
-          const termoOk = !!(item.termo_url && item.termo_url.trim().length > 0);
-          const docsPerto = item.docs_pendentes === true || (!fotoOk || !termoOk);
-
-          const linkedNucleo = nMap[Number(item.id)] || item.nucleo_nome || (item.projeto_nome ? `Núcleo ${item.nome}` : null);
-
-          return {
-            ...item,
-            status_aprovacao: status,
-            docs_pendentes: docsPerto,
-            nucleo_nome: linkedNucleo,
-            em_uso: !!linkedNucleo,
-          };
-        });
-
-        setEspacos(list);
+      if (resE.status === "fulfilled" && resE.value && resE.value.ok) {
+        try {
+          const data = await resE.value.json();
+          rawList = flattenResponse(data);
+        } catch (err) {
+          console.warn("Erro ao ler espaços:", err);
+        }
       }
+
+      // Fallback: se a tabela de espaços do N8N não retornou itens, gera a lista a partir dos núcleos legados
+      if (rawList.length === 0 && nDataList.length > 0) {
+        rawList = nDataList.map((n: any) => ({
+          id: n.espaco_id || n.id,
+          nome: n.nome || `Espaço ${n.bairro || n.id}`,
+          bairro: n.bairro,
+          resp_nome: n.resp_nome,
+          resp_cpf: n.resp_cpf,
+          resp_telefone: n.resp_telefone,
+          resp_email: n.resp_email,
+          cep: n.cep,
+          rua: n.rua,
+          numero: n.numero,
+          ponto_referencia: n.ponto_referencia,
+          foto_url: n.foto_url,
+          termo_url: n.termo_url,
+          status_aprovacao: n.status_aprovacao || "aprovado",
+          docs_pendentes: n.docs_pendentes,
+          ativo: n.ativo !== false,
+          nucleo_nome: n.nome,
+          em_uso: true,
+        }));
+      }
+
+      const list = rawList.map((item: any) => {
+        const status = (item.status_aprovacao || "aprovado").toString().toLowerCase().trim();
+        const fotoOk = !!(item.foto_url && item.foto_url.trim().length > 0);
+        const termoOk = !!(item.termo_url && item.termo_url.trim().length > 0);
+        const docsPerto = item.docs_pendentes === true || (!fotoOk || !termoOk);
+
+        const linkedNucleo = nMap[Number(item.id)] || item.nucleo_nome || (item.projeto_nome ? `Núcleo ${item.nome}` : null);
+
+        return {
+          ...item,
+          status_aprovacao: status,
+          docs_pendentes: docsPerto,
+          nucleo_nome: linkedNucleo,
+          em_uso: !!linkedNucleo,
+        };
+      });
+
+      setEspacos(list);
     } catch (e) {
       console.error("Erro ao buscar espaços:", e);
       addToast("error", "Erro de Conexão", "Não foi possível carregar os espaços do servidor.");

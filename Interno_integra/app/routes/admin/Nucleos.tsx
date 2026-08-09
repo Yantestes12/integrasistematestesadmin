@@ -47,14 +47,16 @@ export default function Nucleos() {
     const savedInstitute = localStorage.getItem("auth_institute") || "IBRASE";
     setCurrentInstitute(savedInstitute);
 
-    // Busca projetos, modalidades e espaços em paralelo para enriquecer os dados dos núcleos
-    Promise.all([
-      fetchProjetos(savedInstitute),
-      fetchModalidades(savedInstitute),
-      fetchEspacos(savedInstitute),
-    ]).then(() => {
+    async function loadAll() {
+      await Promise.allSettled([
+        fetchProjetos(savedInstitute),
+        fetchModalidades(savedInstitute),
+        fetchEspacos(savedInstitute),
+      ]);
       fetchNucleos(savedInstitute);
-    });
+    }
+
+    loadAll();
   }, []);
 
   const fetchProjetos = async (instituteName: string) => {
