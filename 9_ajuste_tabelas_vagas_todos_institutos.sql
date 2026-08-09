@@ -33,43 +33,70 @@ UPDATE "IBRASE_nucleos" SET numero_vaga = id::TEXT WHERE numero_vaga IS NULL OR 
 UPDATE "AUNI_nucleos" SET numero_vaga = id::TEXT WHERE numero_vaga IS NULL OR numero_vaga = '';
 UPDATE "IVEM_nucleos" SET numero_vaga = id::TEXT WHERE numero_vaga IS NULL OR numero_vaga = '';
 
--- 4. CONVERTER E POVOAR MODALIDADES EXISTENTES DAS TABELAS RELACIONAIS PARA O CAMPO JSON DA TABELA PRINCIPAL
-UPDATE "GASCTPNA_projetos" p
-SET limites_modalidades = (
-  SELECT json_agg(json_build_object('id', l.modalidade_id, 'nome', COALESCE(m.nome, 'Modalidade ' || l.modalidade_id), 'limite', l.limite))::text
-  FROM "GASCTPNA_projeto_modalidade_limites" l
-  LEFT JOIN modalidades m ON m.id = l.modalidade_id
-  WHERE l.projeto_id = p.id
-)
-WHERE (limites_modalidades IS NULL OR limites_modalidades = '' OR limites_modalidades = '[]')
-  AND EXISTS (SELECT 1 FROM "GASCTPNA_projeto_modalidade_limites" WHERE projeto_id = p.id);
+-- 4. CONVERTER E POVOAR MODALIDADES EXISTENTES PARA O CAMPO JSON DA TABELA PRINCIPAL
+DO $$
+BEGIN
+  -- GASCTPNA
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'GASCTPNA_projeto_modalidade_limites') THEN
+    UPDATE "GASCTPNA_projetos" p
+    SET limites_modalidades = (
+      SELECT json_agg(json_build_object(
+        'id', l.modalidade_id, 
+        'nome', COALESCE((SELECT nome FROM "GASCTPNA_modalidades" WHERE id = l.modalidade_id LIMIT 1), 'Modalidade ' || l.modalidade_id), 
+        'limite', l.limite
+      ))::text
+      FROM "GASCTPNA_projeto_modalidade_limites" l
+      WHERE l.projeto_id = p.id
+    )
+    WHERE (limites_modalidades IS NULL OR limites_modalidades = '' OR limites_modalidades = '[]')
+      AND EXISTS (SELECT 1 FROM "GASCTPNA_projeto_modalidade_limites" WHERE projeto_id = p.id);
+  END IF;
 
-UPDATE "IBRASE_projetos" p
-SET limites_modalidades = (
-  SELECT json_agg(json_build_object('id', l.modalidade_id, 'nome', COALESCE(m.nome, 'Modalidade ' || l.modalidade_id), 'limite', l.limite))::text
-  FROM "IBRASE_projeto_modalidade_limites" l
-  LEFT JOIN modalidades m ON m.id = l.modalidade_id
-  WHERE l.projeto_id = p.id
-)
-WHERE (limites_modalidades IS NULL OR limites_modalidades = '' OR limites_modalidades = '[]')
-  AND EXISTS (SELECT 1 FROM "IBRASE_projeto_modalidade_limites" WHERE projeto_id = p.id);
+  -- IBRASE
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'IBRASE_projeto_modalidade_limites') THEN
+    UPDATE "IBRASE_projetos" p
+    SET limites_modalidades = (
+      SELECT json_agg(json_build_object(
+        'id', l.modalidade_id, 
+        'nome', COALESCE((SELECT nome FROM "IBRASE_modalidades" WHERE id = l.modalidade_id LIMIT 1), 'Modalidade ' || l.modalidade_id), 
+        'limite', l.limite
+      ))::text
+      FROM "IBRASE_projeto_modalidade_limites" l
+      WHERE l.projeto_id = p.id
+    )
+    WHERE (limites_modalidades IS NULL OR limites_modalidades = '' OR limites_modalidades = '[]')
+      AND EXISTS (SELECT 1 FROM "IBRASE_projeto_modalidade_limites" WHERE projeto_id = p.id);
+  END IF;
 
-UPDATE "AUNI_projetos" p
-SET limites_modalidades = (
-  SELECT json_agg(json_build_object('id', l.modalidade_id, 'nome', COALESCE(m.nome, 'Modalidade ' || l.modalidade_id), 'limite', l.limite))::text
-  FROM "AUNI_projeto_modalidade_limites" l
-  LEFT JOIN modalidades m ON m.id = l.modalidade_id
-  WHERE l.projeto_id = p.id
-)
-WHERE (limites_modalidades IS NULL OR limites_modalidades = '' OR limites_modalidades = '[]')
-  AND EXISTS (SELECT 1 FROM "AUNI_projeto_modalidade_limites" WHERE projeto_id = p.id);
+  -- AUNI
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'AUNI_projeto_modalidade_limites') THEN
+    UPDATE "AUNI_projetos" p
+    SET limites_modalidades = (
+      SELECT json_agg(json_build_object(
+        'id', l.modalidade_id, 
+        'nome', COALESCE((SELECT nome FROM "AUNI_modalidades" WHERE id = l.modalidade_id LIMIT 1), 'Modalidade ' || l.modalidade_id), 
+        'limite', l.limite
+      ))::text
+      FROM "AUNI_projeto_modalidade_limites" l
+      WHERE l.projeto_id = p.id
+    )
+    WHERE (limites_modalidades IS NULL OR limites_modalidades = '' OR limites_modalidades = '[]')
+      AND EXISTS (SELECT 1 FROM "AUNI_projeto_modalidade_limites" WHERE projeto_id = p.id);
+  END IF;
 
-UPDATE "IVEM_projetos" p
-SET limites_modalidades = (
-  SELECT json_agg(json_build_object('id', l.modalidade_id, 'nome', COALESCE(m.nome, 'Modalidade ' || l.modalidade_id), 'limite', l.limite))::text
-  FROM "IVEM_projeto_modalidade_limites" l
-  LEFT JOIN modalidades m ON m.id = l.modalidade_id
-  WHERE l.projeto_id = p.id
-)
-WHERE (limites_modalidades IS NULL OR limites_modalidades = '' OR limites_modalidades = '[]')
-  AND EXISTS (SELECT 1 FROM "IVEM_projeto_modalidade_limites" WHERE projeto_id = p.id);
+  -- IVEM
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'IVEM_projeto_modalidade_limites') THEN
+    UPDATE "IVEM_projetos" p
+    SET limites_modalidades = (
+      SELECT json_agg(json_build_object(
+        'id', l.modalidade_id, 
+        'nome', COALESCE((SELECT nome FROM "IVEM_modalidades" WHERE id = l.modalidade_id LIMIT 1), 'Modalidade ' || l.modalidade_id), 
+        'limite', l.limite
+      ))::text
+      FROM "IVEM_projeto_modalidade_limites" l
+      WHERE l.projeto_id = p.id
+    )
+    WHERE (limites_modalidades IS NULL OR limites_modalidades = '' OR limites_modalidades = '[]')
+      AND EXISTS (SELECT 1 FROM "IVEM_projeto_modalidade_limites" WHERE projeto_id = p.id);
+  END IF;
+END $$;
