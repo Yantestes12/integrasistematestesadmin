@@ -43,13 +43,7 @@ export default function CadastrarProjeto() {
     resolver: zodResolver(projetoSchema),
     defaultValues: {
       status: { ativo: true },
-      periodos: [
-        { id: Date.now() + 1, tipo: "planejamento", rotulo: "Iniciação", inicio: "", fim: "" },
-        { id: Date.now() + 2, tipo: "avaliacao", rotulo: "1º Trimestre", inicio: "", fim: "" },
-        { id: Date.now() + 3, tipo: "avaliacao", rotulo: "2º Trimestre", inicio: "", fim: "" },
-        { id: Date.now() + 4, tipo: "avaliacao", rotulo: "3º Trimestre", inicio: "", fim: "" },
-        { id: Date.now() + 5, tipo: "avaliacao", rotulo: "4º Trimestre", inicio: "", fim: "" }
-      ],
+      periodos: [],
       limites: {
         instrutoresPorNucleo: 0,
         auxiliaresPorNucleo: 0,
@@ -71,7 +65,7 @@ export default function CadastrarProjeto() {
     try {
       await saveProjeto(editModeId, data);
       alert(editModeId ? "Iniciativa atualizada com sucesso!" : "Iniciativa cadastrada com sucesso!");
-      navigate("/iniciativas");
+      navigate("/admin/iniciativas");
     } catch (error) {
       alert("Erro ao enviar para o N8N.");
     }

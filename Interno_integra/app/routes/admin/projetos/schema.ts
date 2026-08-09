@@ -38,10 +38,10 @@ export const projetoSchema = z.object({
   periodos: z.array(
     z.object({
       id: z.union([z.string(), z.number()]),
-      tipo: z.string(),
-      rotulo: z.string().min(1, "O rótulo é obrigatório"),
-      inicio: z.string().min(1, "A data de início é obrigatória"),
-      fim: z.string().min(1, "A data de fim é obrigatória"),
+      tipo: z.string().optional().default("planejamento"),
+      rotulo: z.string().optional().default(""),
+      inicio: z.string().optional().default(""),
+      fim: z.string().optional().default(""),
     })
   ).default([]),
   status: z.object({
