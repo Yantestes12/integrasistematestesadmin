@@ -11,13 +11,13 @@ export const FilterCard = () => {
   const inputFinalRef = useRef(null);
 
   // Formata YYYY-MM-DD para DD/MM/YYYY no texto da direita
-  const formatarDataBR = (dataString) => {
+  const formatarDataBR = (dataString: any) => {
     if (!dataString) return '';
     const [ano, mes, dia] = dataString.split('-');
     return `${dia}/${mes}/${ano}`;
   };
 
-  const handleOpenPicker = (ref) => {
+  const handleOpenPicker = (ref: any) => {
     if (ref.current && typeof ref.current.showPicker === 'function') {
       ref.current.showPicker();
     } else if (ref.current) {

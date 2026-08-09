@@ -276,6 +276,7 @@ export default function CadastrarEspaco() {
               cep: espaco.cep || "",
               rua: espaco.rua || "",
               numero: espaco.numero || "",
+              semNumero: Boolean(espaco.sem_numero),
               bairro: espaco.bairro || "",
               cidade: espaco.cidade || "",
               uf: espaco.uf || "",

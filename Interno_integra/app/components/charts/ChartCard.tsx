@@ -60,7 +60,7 @@ const dataNucleo = [
 ];
 
 export const ChartCard = () => {
-  const handleBarClick = (data, tipo) => {
+  const handleBarClick = (data: any, tipo: any) => {
     console.log(`Clicou em ${tipo}:`, data);
   };
 

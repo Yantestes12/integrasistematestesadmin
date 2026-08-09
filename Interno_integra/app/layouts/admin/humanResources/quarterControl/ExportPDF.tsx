@@ -22,12 +22,12 @@ export const ExportPDF = () => {
     // Estado para controlar se a visualização foi gerada
     const [hasApplied, setHasApplied] = useState(false);
 
-    const handleChange = (e) => {
+    const handleChange = (e: any) => {
         const { name, value } = e.target;
         setFilters((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleApply = (e) => {
+    const handleApply = (e: any) => {
         e.preventDefault();
         setHasApplied(true);
         // Aqui você pode adicionar a chamada de API passando 'filters'

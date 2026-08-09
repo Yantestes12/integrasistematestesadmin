@@ -17,7 +17,7 @@ import {
   X
 } from 'lucide-react';
 
-export const Sidebar = ({ onSelectMenu }) => {
+export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
@@ -32,7 +32,7 @@ export const Sidebar = ({ onSelectMenu }) => {
     }
   }, [location.pathname]);
 
-  const togglePath = (itemPath, e, item) => {
+  const togglePath = (itemPath: any, e: any, item: any) => {
     if (!item.path) e.preventDefault();
 
     setOpenPaths((prev) => {
@@ -44,7 +44,7 @@ export const Sidebar = ({ onSelectMenu }) => {
     });
   };
 
-  const handleItemClick = (item, e) => {
+  const handleItemClick = (item: any, e: any) => {
     if (!item.path) e.preventDefault();
     if (onSelectMenu) {
       onSelectMenu(item.name);
@@ -68,8 +68,8 @@ export const Sidebar = ({ onSelectMenu }) => {
   ];
 
   // Componente recursivo para renderizar N níveis de submenus
-  const renderMenuItems = (items, level = 0, currentPath = '') => {
-    return items.map((item, index) => {
+  const renderMenuItems = (items: any, level = 0, currentPath = '') => {
+    return items.map((item: any, index: any) => {
       const itemKey = currentPath ? `${currentPath}>${item.name}` : item.name;
       const hasChildren = item.children && item.children.length > 0;
       const isExpanded = openPaths.includes(itemKey);

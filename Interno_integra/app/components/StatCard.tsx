@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const StatCard = ({ title, value, footer }) => {
+export const StatCard = ({ title, value, footer }: { title: any; value: any; footer?: any }) => {
   return (
     <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between min-h-[110px] w-full h-full">
       <div>

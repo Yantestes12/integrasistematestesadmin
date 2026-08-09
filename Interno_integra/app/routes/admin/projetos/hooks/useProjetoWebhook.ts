@@ -155,7 +155,8 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
               dataTermino: formatDateForInput(rawTermino),
             },
             limites: {
-              vagasPorAluno: Number(item.vagas_por_nucleo || item.vagas_por_nucleos || item.vagas_por_aluno || item.vagas_de_aluno || item.vagasPorAluno || 0),
+              vagasPorNucleo: Number(item.vagas_por_nucleo || item.vagas_por_nucleos || item.vagasPorNucleo || 0),
+              vagasPorAluno: Number(item.vagas_por_aluno || item.vagas_de_aluno || item.vagasPorAluno || 0),
             },
             limitesCargos: mappedLimitesCargos,
             faixaEtaria: {
