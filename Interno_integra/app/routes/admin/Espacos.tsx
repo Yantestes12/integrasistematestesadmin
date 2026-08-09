@@ -361,17 +361,149 @@ export default function Espacos() {
     };
   };
 
-  // Função para Baixar Ficha Oficial diretamente em PDF sem popup
+  // Função para Baixar Ficha Oficial diretamente em PDF sem página em branco
   const handleOpenPrintFicha = (espaco: EspacoItem) => {
-    setSelectedPrintEspaco(espaco);
-    const now = new Date();
-    const formatted = `${now.toLocaleDateString("pt-BR")} às ${now.toLocaleTimeString("pt-BR")}`;
-    setPrintTimestamp(formatted);
+    const printWin = window.open("", "_blank", "width=850,height=1000");
+    if (!printWin) {
+      alert("Por favor, permita popups neste navegador para visualizar e baixar a Ficha PDF.");
+      return;
+    }
 
-    // Dispara a impressão/salvamento em PDF direto
-    setTimeout(() => {
-      window.print();
-    }, 150);
+    const now = new Date();
+    const formattedDate = `${now.toLocaleDateString("pt-BR")} às ${now.toLocaleTimeString("pt-BR")}`;
+    const instituteLogo = getInstituteLogo(authInstitute);
+
+    const docContent = `
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+        <head>
+          <meta charset="utf-8" />
+          <title>Ficha Técnica - ${espaco.nome}</title>
+          <style>
+            @page { size: A4; margin: 15mm; }
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #0f172a; margin: 0; padding: 24px; background: #fff; }
+            .header { border-bottom: 3px solid #0f172a; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; }
+            .logo-area { display: flex; align-items: center; gap: 16px; }
+            .logo { height: 52px; object-fit: contain; }
+            .tag { background: #0f172a; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 6px; }
+            .title { font-size: 20px; font-weight: 900; margin: 0; text-transform: uppercase; color: #0f172a; }
+            .subtitle { font-size: 11px; color: #64748b; margin: 2px 0 0 0; font-weight: 500; }
+            .code-box { text-align: right; border-left: 2px solid #e2e8f0; padding-left: 16px; }
+            .code-label { font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase; display: block; }
+            .code-val { font-size: 18px; font-weight: 900; color: #0f172a; }
+            .section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 18px; }
+            .section-title { font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 12px 0; padding-bottom: 6px; border-bottom: 1px solid #cbd5e1; color: #1e293b; }
+            .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+            .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+            .field-label { font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 800; margin-bottom: 2px; }
+            .field-value { font-size: 12px; font-weight: 800; color: #0f172a; }
+            .status-badge { background: #dcfce7; color: #166534; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; display: inline-block; }
+            .footer { margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 10px; color: #94a3b8; display: flex; justify-content: space-between; font-weight: 600; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo-area">
+              <img src="${instituteLogo}" class="logo" alt="Logo" />
+              <div>
+                <span class="tag">INSTITUTO ${authInstitute} • PLATAFORMA INTEGRA</span>
+                <h1 class="title">Ficha Técnica de Espaço Físico</h1>
+                <p class="subtitle">Documento Oficial de Cadastramento e Infraestrutura Operacional</p>
+              </div>
+            </div>
+            <div class="code-box">
+              <span class="code-label">Código do Espaço</span>
+              <div class="code-val">#ESP-${espaco.id}</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">1. Identificação da Instalação Física</div>
+            <div class="grid-2">
+              <div>
+                <div class="field-label">Nome do Espaço Físico</div>
+                <div class="field-value" style="font-size: 14px;">${espaco.nome}</div>
+              </div>
+              <div>
+                <div class="field-label">Status da Instalação</div>
+                <div><span class="status-badge">✓ Cadastrado e Operacional</span></div>
+              </div>
+            </div>
+            ${espaco.nucleo_nome ? `
+              <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #cbd5e1;">
+                <div class="field-label">Núcleo Operacional Vinculado</div>
+                <div class="field-value">${espaco.nucleo_nome}</div>
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="section">
+            <div class="section-title">2. Endereço e Localização</div>
+            <div class="grid-3">
+              <div>
+                <div class="field-label">Logradouro / Rua</div>
+                <div class="field-value">${espaco.rua || "Não informado"}</div>
+              </div>
+              <div>
+                <div class="field-label">Número</div>
+                <div class="field-value">${espaco.numero || "S/N"}</div>
+              </div>
+              <div>
+                <div class="field-label">Bairro</div>
+                <div class="field-value">${espaco.bairro || "—"}</div>
+              </div>
+              <div>
+                <div class="field-label">Cidade / UF</div>
+                <div class="field-value">${[espaco.cidade, espaco.uf].filter(Boolean).join(" / ") || "—"}</div>
+              </div>
+              <div>
+                <div class="field-label">CEP</div>
+                <div class="field-value">${espaco.cep || "—"}</div>
+              </div>
+              <div>
+                <div class="field-label">Ponto de Referência</div>
+                <div class="field-value">${espaco.ponto_referencia || "—"}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">3. Responsável pelo Espaço / Cedente</div>
+            <div class="grid-3">
+              <div>
+                <div class="field-label">Nome / Razão Social</div>
+                <div class="field-value">${espaco.resp_nome || "—"}</div>
+              </div>
+              <div>
+                <div class="field-label">CPF / CNPJ</div>
+                <div class="field-value">${espaco.resp_cpf || espaco.resp_cnpj || "—"}</div>
+              </div>
+              <div>
+                <div class="field-label">Contato (Telefone / E-mail)</div>
+                <div class="field-value">${[espaco.resp_telefone, espaco.resp_email].filter(Boolean).join(" · ") || "—"}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer">
+            <span>Gerado em ${formattedDate} • Plataforma Integra</span>
+            <span>Documento Autêntico • Instituto ${authInstitute}</span>
+          </div>
+
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 300);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWin.document.open();
+    printWin.document.write(docContent);
+    printWin.document.close();
   };
 
   const isIncompleto = (e: EspacoItem) => {

@@ -41,7 +41,7 @@ const DIA_KEY_MAP: Record<DiasSemana, string> = {
 export default function GradeHoraria() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const nucleoId = searchParams.get("nucleo_id");
+  const nucleoId = searchParams.get("nucleoId") || searchParams.get("nucleo_id");
 
   const [nucleoNome, setNucleoNome] = useState("Carregando...");
   const [espacoNome, setEspacoNome] = useState<string | null>(null);
