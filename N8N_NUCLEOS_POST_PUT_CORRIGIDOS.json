@@ -12,7 +12,10 @@
       "name": "Webhook POST",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "webhookId": "nucleos-post"
     },
     {
@@ -21,10 +24,21 @@
         "value1": "={{ $json.query.instituto || $json.body.instituto }}",
         "rules": {
           "rules": [
-            { "value2": "GASCTPNA" },
-            { "value2": "IBRASE", "output": 1 },
-            { "value2": "AUNI", "output": 2 },
-            { "value2": "IVEM", "output": 3 }
+            {
+              "value2": "GASCTPNA"
+            },
+            {
+              "value2": "IBRASE",
+              "output": 1
+            },
+            {
+              "value2": "AUNI",
+              "output": 2
+            },
+            {
+              "value2": "IVEM",
+              "output": 3
+            }
           ]
         },
         "fallbackOutput": 1
@@ -33,29 +47,88 @@
       "name": "Switch POST",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
-      "position": [220, 0]
+      "position": [
+        220,
+        0
+      ]
     },
     {
       "parameters": {
         "tableId": "GASCTPNA_nucleos",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "nome", "fieldValue": "={{ $json.body.nomeNucleo }}" },
-            { "fieldId": "projeto_id", "fieldValue": "={{ $json.body.projetoId }}" },
-            { "fieldId": "modalidade_id", "fieldValue": "={{ $json.body.modalidadeId }}" },
-            { "fieldId": "bairro_id", "fieldValue": "={{ $json.body.bairroId }}" },
-            { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}" },
-            { "fieldId": "resp_nome", "fieldValue": "={{ $json.body.respNome }}" },
-            { "fieldId": "resp_cpf", "fieldValue": "={{ $json.body.respCpf }}" },
-            { "fieldId": "resp_email", "fieldValue": "={{ $json.body.respEmail }}" },
-            { "fieldId": "resp_telefone", "fieldValue": "={{ $json.body.respTelefone }}" },
-            { "fieldId": "possui_cnpj", "fieldValue": "={{ $json.body.possuiCnpj === 'S' ? 1 : 0 }}" },
-            { "fieldId": "cnpj", "fieldValue": "={{ $json.body.cnpj }}" },
-            { "fieldId": "cep", "fieldValue": "={{ $json.body.cep }}" },
-            { "fieldId": "rua", "fieldValue": "={{ $json.body.rua }}" },
-            { "fieldId": "numero", "fieldValue": "={{ $json.body.numero }}" },
-            { "fieldId": "bairro", "fieldValue": "={{ $json.body.bairroEnd }}" },
-            { "fieldId": "ponto_referencia", "fieldValue": "={{ $json.body.referencia }}" }
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nomeNucleo }}"
+            },
+            {
+              "fieldId": "projeto_id",
+              "fieldValue": "={{ $json.body.projetoId }}"
+            },
+            {
+              "fieldId": "modalidade_id",
+              "fieldValue": "={{ $json.body.modalidadeId }}"
+            },
+            {
+              "fieldId": "bairro_id",
+              "fieldValue": "={{ $json.body.bairroId }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}"
+            },
+            {
+              "fieldId": "resp_nome",
+              "fieldValue": "={{ $json.body.respNome }}"
+            },
+            {
+              "fieldId": "resp_cpf",
+              "fieldValue": "={{ $json.body.respCpf }}"
+            },
+            {
+              "fieldId": "resp_email",
+              "fieldValue": "={{ $json.body.respEmail }}"
+            },
+            {
+              "fieldId": "resp_telefone",
+              "fieldValue": "={{ $json.body.respTelefone }}"
+            },
+            {
+              "fieldId": "possui_cnpj",
+              "fieldValue": "={{ $json.body.possuiCnpj === 'S' ? 1 : 0 }}"
+            },
+            {
+              "fieldId": "cnpj",
+              "fieldValue": "={{ $json.body.cnpj }}"
+            },
+            {
+              "fieldId": "cep",
+              "fieldValue": "={{ $json.body.cep }}"
+            },
+            {
+              "fieldId": "rua",
+              "fieldValue": "={{ $json.body.rua }}"
+            },
+            {
+              "fieldId": "numero",
+              "fieldValue": "={{ $json.body.numero }}"
+            },
+            {
+              "fieldId": "bairro",
+              "fieldValue": "={{ $json.body.bairroEnd }}"
+            },
+            {
+              "fieldId": "ponto_referencia",
+              "fieldValue": "={{ $json.body.referencia }}"
+            },
+            {
+              "fieldId": "numero_vaga",
+              "fieldValue": "={{ .body.numero_vaga }}"
+            },
+            {
+              "fieldId": "vagas",
+              "fieldValue": "={{ .body.vagas }}"
+            }
           ]
         }
       },
@@ -63,30 +136,94 @@
       "name": "SB GASCTPNA POST",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, -300],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } }
+      "position": [
+        480,
+        -300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
     },
     {
       "parameters": {
         "tableId": "IBRASE_nucleos",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "nome", "fieldValue": "={{ $json.body.nomeNucleo }}" },
-            { "fieldId": "projeto_id", "fieldValue": "={{ $json.body.projetoId }}" },
-            { "fieldId": "modalidade_id", "fieldValue": "={{ $json.body.modalidadeId }}" },
-            { "fieldId": "bairro_id", "fieldValue": "={{ $json.body.bairroId }}" },
-            { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}" },
-            { "fieldId": "resp_nome", "fieldValue": "={{ $json.body.respNome }}" },
-            { "fieldId": "resp_cpf", "fieldValue": "={{ $json.body.respCpf }}" },
-            { "fieldId": "resp_email", "fieldValue": "={{ $json.body.respEmail }}" },
-            { "fieldId": "resp_telefone", "fieldValue": "={{ $json.body.respTelefone }}" },
-            { "fieldId": "possui_cnpj", "fieldValue": "={{ $json.body.possuiCnpj === 'S' ? 1 : 0 }}" },
-            { "fieldId": "cnpj", "fieldValue": "={{ $json.body.cnpj }}" },
-            { "fieldId": "cep", "fieldValue": "={{ $json.body.cep }}" },
-            { "fieldId": "rua", "fieldValue": "={{ $json.body.rua }}" },
-            { "fieldId": "numero", "fieldValue": "={{ $json.body.numero }}" },
-            { "fieldId": "bairro", "fieldValue": "={{ $json.body.bairroEnd }}" },
-            { "fieldId": "ponto_referencia", "fieldValue": "={{ $json.body.referencia }}" }
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nomeNucleo }}"
+            },
+            {
+              "fieldId": "projeto_id",
+              "fieldValue": "={{ $json.body.projetoId }}"
+            },
+            {
+              "fieldId": "modalidade_id",
+              "fieldValue": "={{ $json.body.modalidadeId }}"
+            },
+            {
+              "fieldId": "bairro_id",
+              "fieldValue": "={{ $json.body.bairroId }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}"
+            },
+            {
+              "fieldId": "resp_nome",
+              "fieldValue": "={{ $json.body.respNome }}"
+            },
+            {
+              "fieldId": "resp_cpf",
+              "fieldValue": "={{ $json.body.respCpf }}"
+            },
+            {
+              "fieldId": "resp_email",
+              "fieldValue": "={{ $json.body.respEmail }}"
+            },
+            {
+              "fieldId": "resp_telefone",
+              "fieldValue": "={{ $json.body.respTelefone }}"
+            },
+            {
+              "fieldId": "possui_cnpj",
+              "fieldValue": "={{ $json.body.possuiCnpj === 'S' ? 1 : 0 }}"
+            },
+            {
+              "fieldId": "cnpj",
+              "fieldValue": "={{ $json.body.cnpj }}"
+            },
+            {
+              "fieldId": "cep",
+              "fieldValue": "={{ $json.body.cep }}"
+            },
+            {
+              "fieldId": "rua",
+              "fieldValue": "={{ $json.body.rua }}"
+            },
+            {
+              "fieldId": "numero",
+              "fieldValue": "={{ $json.body.numero }}"
+            },
+            {
+              "fieldId": "bairro",
+              "fieldValue": "={{ $json.body.bairroEnd }}"
+            },
+            {
+              "fieldId": "ponto_referencia",
+              "fieldValue": "={{ $json.body.referencia }}"
+            },
+            {
+              "fieldId": "numero_vaga",
+              "fieldValue": "={{ .body.numero_vaga }}"
+            },
+            {
+              "fieldId": "vagas",
+              "fieldValue": "={{ .body.vagas }}"
+            }
           ]
         }
       },
@@ -94,30 +231,94 @@
       "name": "SB IBRASE POST",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, -100],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } }
+      "position": [
+        480,
+        -100
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
     },
     {
       "parameters": {
         "tableId": "AUNI_nucleos",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "nome", "fieldValue": "={{ $json.body.nomeNucleo }}" },
-            { "fieldId": "projeto_id", "fieldValue": "={{ $json.body.projetoId }}" },
-            { "fieldId": "modalidade_id", "fieldValue": "={{ $json.body.modalidadeId }}" },
-            { "fieldId": "bairro_id", "fieldValue": "={{ $json.body.bairroId }}" },
-            { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}" },
-            { "fieldId": "resp_nome", "fieldValue": "={{ $json.body.respNome }}" },
-            { "fieldId": "resp_cpf", "fieldValue": "={{ $json.body.respCpf }}" },
-            { "fieldId": "resp_email", "fieldValue": "={{ $json.body.respEmail }}" },
-            { "fieldId": "resp_telefone", "fieldValue": "={{ $json.body.respTelefone }}" },
-            { "fieldId": "possui_cnpj", "fieldValue": "={{ $json.body.possuiCnpj === 'S' ? 1 : 0 }}" },
-            { "fieldId": "cnpj", "fieldValue": "={{ $json.body.cnpj }}" },
-            { "fieldId": "cep", "fieldValue": "={{ $json.body.cep }}" },
-            { "fieldId": "rua", "fieldValue": "={{ $json.body.rua }}" },
-            { "fieldId": "numero", "fieldValue": "={{ $json.body.numero }}" },
-            { "fieldId": "bairro", "fieldValue": "={{ $json.body.bairroEnd }}" },
-            { "fieldId": "ponto_referencia", "fieldValue": "={{ $json.body.referencia }}" }
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nomeNucleo }}"
+            },
+            {
+              "fieldId": "projeto_id",
+              "fieldValue": "={{ $json.body.projetoId }}"
+            },
+            {
+              "fieldId": "modalidade_id",
+              "fieldValue": "={{ $json.body.modalidadeId }}"
+            },
+            {
+              "fieldId": "bairro_id",
+              "fieldValue": "={{ $json.body.bairroId }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}"
+            },
+            {
+              "fieldId": "resp_nome",
+              "fieldValue": "={{ $json.body.respNome }}"
+            },
+            {
+              "fieldId": "resp_cpf",
+              "fieldValue": "={{ $json.body.respCpf }}"
+            },
+            {
+              "fieldId": "resp_email",
+              "fieldValue": "={{ $json.body.respEmail }}"
+            },
+            {
+              "fieldId": "resp_telefone",
+              "fieldValue": "={{ $json.body.respTelefone }}"
+            },
+            {
+              "fieldId": "possui_cnpj",
+              "fieldValue": "={{ $json.body.possuiCnpj === 'S' ? 1 : 0 }}"
+            },
+            {
+              "fieldId": "cnpj",
+              "fieldValue": "={{ $json.body.cnpj }}"
+            },
+            {
+              "fieldId": "cep",
+              "fieldValue": "={{ $json.body.cep }}"
+            },
+            {
+              "fieldId": "rua",
+              "fieldValue": "={{ $json.body.rua }}"
+            },
+            {
+              "fieldId": "numero",
+              "fieldValue": "={{ $json.body.numero }}"
+            },
+            {
+              "fieldId": "bairro",
+              "fieldValue": "={{ $json.body.bairroEnd }}"
+            },
+            {
+              "fieldId": "ponto_referencia",
+              "fieldValue": "={{ $json.body.referencia }}"
+            },
+            {
+              "fieldId": "numero_vaga",
+              "fieldValue": "={{ .body.numero_vaga }}"
+            },
+            {
+              "fieldId": "vagas",
+              "fieldValue": "={{ .body.vagas }}"
+            }
           ]
         }
       },
@@ -125,30 +326,94 @@
       "name": "SB AUNI POST",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, 100],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } }
+      "position": [
+        480,
+        100
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
     },
     {
       "parameters": {
         "tableId": "IVEM_nucleos",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "nome", "fieldValue": "={{ $json.body.nomeNucleo }}" },
-            { "fieldId": "projeto_id", "fieldValue": "={{ $json.body.projetoId }}" },
-            { "fieldId": "modalidade_id", "fieldValue": "={{ $json.body.modalidadeId }}" },
-            { "fieldId": "bairro_id", "fieldValue": "={{ $json.body.bairroId }}" },
-            { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}" },
-            { "fieldId": "resp_nome", "fieldValue": "={{ $json.body.respNome }}" },
-            { "fieldId": "resp_cpf", "fieldValue": "={{ $json.body.respCpf }}" },
-            { "fieldId": "resp_email", "fieldValue": "={{ $json.body.respEmail }}" },
-            { "fieldId": "resp_telefone", "fieldValue": "={{ $json.body.respTelefone }}" },
-            { "fieldId": "possui_cnpj", "fieldValue": "={{ $json.body.possuiCnpj === 'S' ? 1 : 0 }}" },
-            { "fieldId": "cnpj", "fieldValue": "={{ $json.body.cnpj }}" },
-            { "fieldId": "cep", "fieldValue": "={{ $json.body.cep }}" },
-            { "fieldId": "rua", "fieldValue": "={{ $json.body.rua }}" },
-            { "fieldId": "numero", "fieldValue": "={{ $json.body.numero }}" },
-            { "fieldId": "bairro", "fieldValue": "={{ $json.body.bairroEnd }}" },
-            { "fieldId": "ponto_referencia", "fieldValue": "={{ $json.body.referencia }}" }
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nomeNucleo }}"
+            },
+            {
+              "fieldId": "projeto_id",
+              "fieldValue": "={{ $json.body.projetoId }}"
+            },
+            {
+              "fieldId": "modalidade_id",
+              "fieldValue": "={{ $json.body.modalidadeId }}"
+            },
+            {
+              "fieldId": "bairro_id",
+              "fieldValue": "={{ $json.body.bairroId }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}"
+            },
+            {
+              "fieldId": "resp_nome",
+              "fieldValue": "={{ $json.body.respNome }}"
+            },
+            {
+              "fieldId": "resp_cpf",
+              "fieldValue": "={{ $json.body.respCpf }}"
+            },
+            {
+              "fieldId": "resp_email",
+              "fieldValue": "={{ $json.body.respEmail }}"
+            },
+            {
+              "fieldId": "resp_telefone",
+              "fieldValue": "={{ $json.body.respTelefone }}"
+            },
+            {
+              "fieldId": "possui_cnpj",
+              "fieldValue": "={{ $json.body.possuiCnpj === 'S' ? 1 : 0 }}"
+            },
+            {
+              "fieldId": "cnpj",
+              "fieldValue": "={{ $json.body.cnpj }}"
+            },
+            {
+              "fieldId": "cep",
+              "fieldValue": "={{ $json.body.cep }}"
+            },
+            {
+              "fieldId": "rua",
+              "fieldValue": "={{ $json.body.rua }}"
+            },
+            {
+              "fieldId": "numero",
+              "fieldValue": "={{ $json.body.numero }}"
+            },
+            {
+              "fieldId": "bairro",
+              "fieldValue": "={{ $json.body.bairroEnd }}"
+            },
+            {
+              "fieldId": "ponto_referencia",
+              "fieldValue": "={{ $json.body.referencia }}"
+            },
+            {
+              "fieldId": "numero_vaga",
+              "fieldValue": "={{ .body.numero_vaga }}"
+            },
+            {
+              "fieldId": "vagas",
+              "fieldValue": "={{ .body.vagas }}"
+            }
           ]
         }
       },
@@ -156,42 +421,73 @@
       "name": "SB IVEM POST",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, 300],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } }
+      "position": [
+        480,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
     },
     {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
       "id": "res-gas-post",
       "name": "Respond GASCTPNA POST",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, -300]
+      "position": [
+        720,
+        -300
+      ]
     },
     {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
       "id": "res-ib-post",
       "name": "Respond IBRASE POST",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, -100]
+      "position": [
+        720,
+        -100
+      ]
     },
     {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
       "id": "res-au-post",
       "name": "Respond AUNI POST",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, 100]
+      "position": [
+        720,
+        100
+      ]
     },
     {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
       "id": "res-iv-post",
       "name": "Respond IVEM POST",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, 300]
+      "position": [
+        720,
+        300
+      ]
     },
-
     {
       "parameters": {
         "httpMethod": "PUT",
@@ -203,7 +499,10 @@
       "name": "Webhook PUT",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [0, 800],
+      "position": [
+        0,
+        800
+      ],
       "webhookId": "nucleos-put"
     },
     {
@@ -212,10 +511,21 @@
         "value1": "={{ $json.query.instituto || $json.body.instituto }}",
         "rules": {
           "rules": [
-            { "value2": "GASCTPNA" },
-            { "value2": "IBRASE", "output": 1 },
-            { "value2": "AUNI", "output": 2 },
-            { "value2": "IVEM", "output": 3 }
+            {
+              "value2": "GASCTPNA"
+            },
+            {
+              "value2": "IBRASE",
+              "output": 1
+            },
+            {
+              "value2": "AUNI",
+              "output": 2
+            },
+            {
+              "value2": "IVEM",
+              "output": 3
+            }
           ]
         },
         "fallbackOutput": 1
@@ -224,7 +534,10 @@
       "name": "Switch PUT",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
-      "position": [220, 800]
+      "position": [
+        220,
+        800
+      ]
     },
     {
       "parameters": {
@@ -233,23 +546,82 @@
         "matchFields": "id",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "id", "fieldValue": "={{ $json.body.id }}" },
-            { "fieldId": "nome", "fieldValue": "={{ $json.body.nomeNucleo }}" },
-            { "fieldId": "projeto_id", "fieldValue": "={{ $json.body.projetoId }}" },
-            { "fieldId": "modalidade_id", "fieldValue": "={{ $json.body.modalidadeId }}" },
-            { "fieldId": "bairro_id", "fieldValue": "={{ $json.body.bairroId }}" },
-            { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}" },
-            { "fieldId": "resp_nome", "fieldValue": "={{ $json.body.respNome }}" },
-            { "fieldId": "resp_cpf", "fieldValue": "={{ $json.body.respCpf }}" },
-            { "fieldId": "resp_email", "fieldValue": "={{ $json.body.respEmail }}" },
-            { "fieldId": "resp_telefone", "fieldValue": "={{ $json.body.respTelefone }}" },
-            { "fieldId": "possui_cnpj", "fieldValue": "={{ $json.body.possuiCnpj === 'S' ? 1 : 0 }}" },
-            { "fieldId": "cnpj", "fieldValue": "={{ $json.body.cnpj }}" },
-            { "fieldId": "cep", "fieldValue": "={{ $json.body.cep }}" },
-            { "fieldId": "rua", "fieldValue": "={{ $json.body.rua }}" },
-            { "fieldId": "numero", "fieldValue": "={{ $json.body.numero }}" },
-            { "fieldId": "bairro", "fieldValue": "={{ $json.body.bairroEnd }}" },
-            { "fieldId": "ponto_referencia", "fieldValue": "={{ $json.body.referencia }}" }
+            {
+              "fieldId": "id",
+              "fieldValue": "={{ $json.body.id }}"
+            },
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nomeNucleo }}"
+            },
+            {
+              "fieldId": "projeto_id",
+              "fieldValue": "={{ $json.body.projetoId }}"
+            },
+            {
+              "fieldId": "modalidade_id",
+              "fieldValue": "={{ $json.body.modalidadeId }}"
+            },
+            {
+              "fieldId": "bairro_id",
+              "fieldValue": "={{ $json.body.bairroId }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}"
+            },
+            {
+              "fieldId": "resp_nome",
+              "fieldValue": "={{ $json.body.respNome }}"
+            },
+            {
+              "fieldId": "resp_cpf",
+              "fieldValue": "={{ $json.body.respCpf }}"
+            },
+            {
+              "fieldId": "resp_email",
+              "fieldValue": "={{ $json.body.respEmail }}"
+            },
+            {
+              "fieldId": "resp_telefone",
+              "fieldValue": "={{ $json.body.respTelefone }}"
+            },
+            {
+              "fieldId": "possui_cnpj",
+              "fieldValue": "={{ $json.body.possuiCnpj === 'S' ? 1 : 0 }}"
+            },
+            {
+              "fieldId": "cnpj",
+              "fieldValue": "={{ $json.body.cnpj }}"
+            },
+            {
+              "fieldId": "cep",
+              "fieldValue": "={{ $json.body.cep }}"
+            },
+            {
+              "fieldId": "rua",
+              "fieldValue": "={{ $json.body.rua }}"
+            },
+            {
+              "fieldId": "numero",
+              "fieldValue": "={{ $json.body.numero }}"
+            },
+            {
+              "fieldId": "bairro",
+              "fieldValue": "={{ $json.body.bairroEnd }}"
+            },
+            {
+              "fieldId": "ponto_referencia",
+              "fieldValue": "={{ $json.body.referencia }}"
+            },
+            {
+              "fieldId": "numero_vaga",
+              "fieldValue": "={{ .body.numero_vaga }}"
+            },
+            {
+              "fieldId": "vagas",
+              "fieldValue": "={{ .body.vagas }}"
+            }
           ]
         }
       },
@@ -257,8 +629,16 @@
       "name": "SB GASCTPNA PUT",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, 500],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } }
+      "position": [
+        480,
+        500
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
     },
     {
       "parameters": {
@@ -267,23 +647,82 @@
         "matchFields": "id",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "id", "fieldValue": "={{ $json.body.id }}" },
-            { "fieldId": "nome", "fieldValue": "={{ $json.body.nomeNucleo }}" },
-            { "fieldId": "projeto_id", "fieldValue": "={{ $json.body.projetoId }}" },
-            { "fieldId": "modalidade_id", "fieldValue": "={{ $json.body.modalidadeId }}" },
-            { "fieldId": "bairro_id", "fieldValue": "={{ $json.body.bairroId }}" },
-            { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}" },
-            { "fieldId": "resp_nome", "fieldValue": "={{ $json.body.respNome }}" },
-            { "fieldId": "resp_cpf", "fieldValue": "={{ $json.body.respCpf }}" },
-            { "fieldId": "resp_email", "fieldValue": "={{ $json.body.respEmail }}" },
-            { "fieldId": "resp_telefone", "fieldValue": "={{ $json.body.respTelefone }}" },
-            { "fieldId": "possui_cnpj", "fieldValue": "={{ $json.body.possuiCnpj === 'S' ? 1 : 0 }}" },
-            { "fieldId": "cnpj", "fieldValue": "={{ $json.body.cnpj }}" },
-            { "fieldId": "cep", "fieldValue": "={{ $json.body.cep }}" },
-            { "fieldId": "rua", "fieldValue": "={{ $json.body.rua }}" },
-            { "fieldId": "numero", "fieldValue": "={{ $json.body.numero }}" },
-            { "fieldId": "bairro", "fieldValue": "={{ $json.body.bairroEnd }}" },
-            { "fieldId": "ponto_referencia", "fieldValue": "={{ $json.body.referencia }}" }
+            {
+              "fieldId": "id",
+              "fieldValue": "={{ $json.body.id }}"
+            },
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nomeNucleo }}"
+            },
+            {
+              "fieldId": "projeto_id",
+              "fieldValue": "={{ $json.body.projetoId }}"
+            },
+            {
+              "fieldId": "modalidade_id",
+              "fieldValue": "={{ $json.body.modalidadeId }}"
+            },
+            {
+              "fieldId": "bairro_id",
+              "fieldValue": "={{ $json.body.bairroId }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}"
+            },
+            {
+              "fieldId": "resp_nome",
+              "fieldValue": "={{ $json.body.respNome }}"
+            },
+            {
+              "fieldId": "resp_cpf",
+              "fieldValue": "={{ $json.body.respCpf }}"
+            },
+            {
+              "fieldId": "resp_email",
+              "fieldValue": "={{ $json.body.respEmail }}"
+            },
+            {
+              "fieldId": "resp_telefone",
+              "fieldValue": "={{ $json.body.respTelefone }}"
+            },
+            {
+              "fieldId": "possui_cnpj",
+              "fieldValue": "={{ $json.body.possuiCnpj === 'S' ? 1 : 0 }}"
+            },
+            {
+              "fieldId": "cnpj",
+              "fieldValue": "={{ $json.body.cnpj }}"
+            },
+            {
+              "fieldId": "cep",
+              "fieldValue": "={{ $json.body.cep }}"
+            },
+            {
+              "fieldId": "rua",
+              "fieldValue": "={{ $json.body.rua }}"
+            },
+            {
+              "fieldId": "numero",
+              "fieldValue": "={{ $json.body.numero }}"
+            },
+            {
+              "fieldId": "bairro",
+              "fieldValue": "={{ $json.body.bairroEnd }}"
+            },
+            {
+              "fieldId": "ponto_referencia",
+              "fieldValue": "={{ $json.body.referencia }}"
+            },
+            {
+              "fieldId": "numero_vaga",
+              "fieldValue": "={{ .body.numero_vaga }}"
+            },
+            {
+              "fieldId": "vagas",
+              "fieldValue": "={{ .body.vagas }}"
+            }
           ]
         }
       },
@@ -291,8 +730,16 @@
       "name": "SB IBRASE PUT",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, 700],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } }
+      "position": [
+        480,
+        700
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
     },
     {
       "parameters": {
@@ -301,23 +748,82 @@
         "matchFields": "id",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "id", "fieldValue": "={{ $json.body.id }}" },
-            { "fieldId": "nome", "fieldValue": "={{ $json.body.nomeNucleo }}" },
-            { "fieldId": "projeto_id", "fieldValue": "={{ $json.body.projetoId }}" },
-            { "fieldId": "modalidade_id", "fieldValue": "={{ $json.body.modalidadeId }}" },
-            { "fieldId": "bairro_id", "fieldValue": "={{ $json.body.bairroId }}" },
-            { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}" },
-            { "fieldId": "resp_nome", "fieldValue": "={{ $json.body.respNome }}" },
-            { "fieldId": "resp_cpf", "fieldValue": "={{ $json.body.respCpf }}" },
-            { "fieldId": "resp_email", "fieldValue": "={{ $json.body.respEmail }}" },
-            { "fieldId": "resp_telefone", "fieldValue": "={{ $json.body.respTelefone }}" },
-            { "fieldId": "possui_cnpj", "fieldValue": "={{ $json.body.possuiCnpj === 'S' ? 1 : 0 }}" },
-            { "fieldId": "cnpj", "fieldValue": "={{ $json.body.cnpj }}" },
-            { "fieldId": "cep", "fieldValue": "={{ $json.body.cep }}" },
-            { "fieldId": "rua", "fieldValue": "={{ $json.body.rua }}" },
-            { "fieldId": "numero", "fieldValue": "={{ $json.body.numero }}" },
-            { "fieldId": "bairro", "fieldValue": "={{ $json.body.bairroEnd }}" },
-            { "fieldId": "ponto_referencia", "fieldValue": "={{ $json.body.referencia }}" }
+            {
+              "fieldId": "id",
+              "fieldValue": "={{ $json.body.id }}"
+            },
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nomeNucleo }}"
+            },
+            {
+              "fieldId": "projeto_id",
+              "fieldValue": "={{ $json.body.projetoId }}"
+            },
+            {
+              "fieldId": "modalidade_id",
+              "fieldValue": "={{ $json.body.modalidadeId }}"
+            },
+            {
+              "fieldId": "bairro_id",
+              "fieldValue": "={{ $json.body.bairroId }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}"
+            },
+            {
+              "fieldId": "resp_nome",
+              "fieldValue": "={{ $json.body.respNome }}"
+            },
+            {
+              "fieldId": "resp_cpf",
+              "fieldValue": "={{ $json.body.respCpf }}"
+            },
+            {
+              "fieldId": "resp_email",
+              "fieldValue": "={{ $json.body.respEmail }}"
+            },
+            {
+              "fieldId": "resp_telefone",
+              "fieldValue": "={{ $json.body.respTelefone }}"
+            },
+            {
+              "fieldId": "possui_cnpj",
+              "fieldValue": "={{ $json.body.possuiCnpj === 'S' ? 1 : 0 }}"
+            },
+            {
+              "fieldId": "cnpj",
+              "fieldValue": "={{ $json.body.cnpj }}"
+            },
+            {
+              "fieldId": "cep",
+              "fieldValue": "={{ $json.body.cep }}"
+            },
+            {
+              "fieldId": "rua",
+              "fieldValue": "={{ $json.body.rua }}"
+            },
+            {
+              "fieldId": "numero",
+              "fieldValue": "={{ $json.body.numero }}"
+            },
+            {
+              "fieldId": "bairro",
+              "fieldValue": "={{ $json.body.bairroEnd }}"
+            },
+            {
+              "fieldId": "ponto_referencia",
+              "fieldValue": "={{ $json.body.referencia }}"
+            },
+            {
+              "fieldId": "numero_vaga",
+              "fieldValue": "={{ .body.numero_vaga }}"
+            },
+            {
+              "fieldId": "vagas",
+              "fieldValue": "={{ .body.vagas }}"
+            }
           ]
         }
       },
@@ -325,8 +831,16 @@
       "name": "SB AUNI PUT",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, 900],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } }
+      "position": [
+        480,
+        900
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
     },
     {
       "parameters": {
@@ -335,23 +849,82 @@
         "matchFields": "id",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "id", "fieldValue": "={{ $json.body.id }}" },
-            { "fieldId": "nome", "fieldValue": "={{ $json.body.nomeNucleo }}" },
-            { "fieldId": "projeto_id", "fieldValue": "={{ $json.body.projetoId }}" },
-            { "fieldId": "modalidade_id", "fieldValue": "={{ $json.body.modalidadeId }}" },
-            { "fieldId": "bairro_id", "fieldValue": "={{ $json.body.bairroId }}" },
-            { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}" },
-            { "fieldId": "resp_nome", "fieldValue": "={{ $json.body.respNome }}" },
-            { "fieldId": "resp_cpf", "fieldValue": "={{ $json.body.respCpf }}" },
-            { "fieldId": "resp_email", "fieldValue": "={{ $json.body.respEmail }}" },
-            { "fieldId": "resp_telefone", "fieldValue": "={{ $json.body.respTelefone }}" },
-            { "fieldId": "possui_cnpj", "fieldValue": "={{ $json.body.possuiCnpj === 'S' ? 1 : 0 }}" },
-            { "fieldId": "cnpj", "fieldValue": "={{ $json.body.cnpj }}" },
-            { "fieldId": "cep", "fieldValue": "={{ $json.body.cep }}" },
-            { "fieldId": "rua", "fieldValue": "={{ $json.body.rua }}" },
-            { "fieldId": "numero", "fieldValue": "={{ $json.body.numero }}" },
-            { "fieldId": "bairro", "fieldValue": "={{ $json.body.bairroEnd }}" },
-            { "fieldId": "ponto_referencia", "fieldValue": "={{ $json.body.referencia }}" }
+            {
+              "fieldId": "id",
+              "fieldValue": "={{ $json.body.id }}"
+            },
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nomeNucleo }}"
+            },
+            {
+              "fieldId": "projeto_id",
+              "fieldValue": "={{ $json.body.projetoId }}"
+            },
+            {
+              "fieldId": "modalidade_id",
+              "fieldValue": "={{ $json.body.modalidadeId }}"
+            },
+            {
+              "fieldId": "bairro_id",
+              "fieldValue": "={{ $json.body.bairroId }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}"
+            },
+            {
+              "fieldId": "resp_nome",
+              "fieldValue": "={{ $json.body.respNome }}"
+            },
+            {
+              "fieldId": "resp_cpf",
+              "fieldValue": "={{ $json.body.respCpf }}"
+            },
+            {
+              "fieldId": "resp_email",
+              "fieldValue": "={{ $json.body.respEmail }}"
+            },
+            {
+              "fieldId": "resp_telefone",
+              "fieldValue": "={{ $json.body.respTelefone }}"
+            },
+            {
+              "fieldId": "possui_cnpj",
+              "fieldValue": "={{ $json.body.possuiCnpj === 'S' ? 1 : 0 }}"
+            },
+            {
+              "fieldId": "cnpj",
+              "fieldValue": "={{ $json.body.cnpj }}"
+            },
+            {
+              "fieldId": "cep",
+              "fieldValue": "={{ $json.body.cep }}"
+            },
+            {
+              "fieldId": "rua",
+              "fieldValue": "={{ $json.body.rua }}"
+            },
+            {
+              "fieldId": "numero",
+              "fieldValue": "={{ $json.body.numero }}"
+            },
+            {
+              "fieldId": "bairro",
+              "fieldValue": "={{ $json.body.bairroEnd }}"
+            },
+            {
+              "fieldId": "ponto_referencia",
+              "fieldValue": "={{ $json.body.referencia }}"
+            },
+            {
+              "fieldId": "numero_vaga",
+              "fieldValue": "={{ .body.numero_vaga }}"
+            },
+            {
+              "fieldId": "vagas",
+              "fieldValue": "={{ .body.vagas }}"
+            }
           ]
         }
       },
@@ -359,70 +932,249 @@
       "name": "SB IVEM PUT",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, 1100],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } }
+      "position": [
+        480,
+        1100
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
     },
     {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
       "id": "res-gas-put",
       "name": "Respond GASCTPNA PUT",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, 500]
+      "position": [
+        720,
+        500
+      ]
     },
     {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
       "id": "res-ib-put",
       "name": "Respond IBRASE PUT",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, 700]
+      "position": [
+        720,
+        700
+      ]
     },
     {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
       "id": "res-au-put",
       "name": "Respond AUNI PUT",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, 900]
+      "position": [
+        720,
+        900
+      ]
     },
     {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
       "id": "res-iv-put",
       "name": "Respond IVEM PUT",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, 1100]
+      "position": [
+        720,
+        1100
+      ]
     }
   ],
   "connections": {
-    "Webhook POST": { "main": [[{ "node": "Switch POST", "type": "main", "index": 0 }]] },
+    "Webhook POST": {
+      "main": [
+        [
+          {
+            "node": "Switch POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Switch POST": {
       "main": [
-        [{ "node": "SB GASCTPNA POST", "type": "main", "index": 0 }],
-        [{ "node": "SB IBRASE POST", "type": "main", "index": 0 }],
-        [{ "node": "SB AUNI POST", "type": "main", "index": 0 }],
-        [{ "node": "SB IVEM POST", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "SB GASCTPNA POST",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB IBRASE POST",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB AUNI POST",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB IVEM POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "SB GASCTPNA POST": { "main": [[{ "node": "Respond GASCTPNA POST", "type": "main", "index": 0 }]] },
-    "SB IBRASE POST": { "main": [[{ "node": "Respond IBRASE POST", "type": "main", "index": 0 }]] },
-    "SB AUNI POST": { "main": [[{ "node": "Respond AUNI POST", "type": "main", "index": 0 }]] },
-    "SB IVEM POST": { "main": [[{ "node": "Respond IVEM POST", "type": "main", "index": 0 }]] },
-
-    "Webhook PUT": { "main": [[{ "node": "Switch PUT", "type": "main", "index": 0 }]] },
+    "SB GASCTPNA POST": {
+      "main": [
+        [
+          {
+            "node": "Respond GASCTPNA POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SB IBRASE POST": {
+      "main": [
+        [
+          {
+            "node": "Respond IBRASE POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SB AUNI POST": {
+      "main": [
+        [
+          {
+            "node": "Respond AUNI POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SB IVEM POST": {
+      "main": [
+        [
+          {
+            "node": "Respond IVEM POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook PUT": {
+      "main": [
+        [
+          {
+            "node": "Switch PUT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Switch PUT": {
       "main": [
-        [{ "node": "SB GASCTPNA PUT", "type": "main", "index": 0 }],
-        [{ "node": "SB IBRASE PUT", "type": "main", "index": 0 }],
-        [{ "node": "SB AUNI PUT", "type": "main", "index": 0 }],
-        [{ "node": "SB IVEM PUT", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "SB GASCTPNA PUT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB IBRASE PUT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB AUNI PUT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB IVEM PUT",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "SB GASCTPNA PUT": { "main": [[{ "node": "Respond GASCTPNA PUT", "type": "main", "index": 0 }]] },
-    "SB IBRASE PUT": { "main": [[{ "node": "Respond IBRASE PUT", "type": "main", "index": 0 }]] },
-    "SB AUNI PUT": { "main": [[{ "node": "Respond AUNI PUT", "type": "main", "index": 0 }]] },
-    "SB IVEM PUT": { "main": [[{ "node": "Respond IVEM PUT", "type": "main", "index": 0 }]] }
+    "SB GASCTPNA PUT": {
+      "main": [
+        [
+          {
+            "node": "Respond GASCTPNA PUT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SB IBRASE PUT": {
+      "main": [
+        [
+          {
+            "node": "Respond IBRASE PUT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SB AUNI PUT": {
+      "main": [
+        [
+          {
+            "node": "Respond AUNI PUT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SB IVEM PUT": {
+      "main": [
+        [
+          {
+            "node": "Respond IVEM PUT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
   "pinData": {},
   "meta": {}

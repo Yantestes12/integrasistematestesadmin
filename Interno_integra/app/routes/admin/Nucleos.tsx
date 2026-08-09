@@ -13,6 +13,9 @@ export interface NucleoItem {
   bairro_id?: number;
   espaco_id?: number;
   numero_vaga?: string | number;
+  vagas?: string | number;
+  resp_nome?: string;
+  endereco?: string;
   ativo: boolean;
   aceitando_vagas: boolean;
 }
@@ -197,6 +200,26 @@ export default function Nucleos() {
       // 4. VAGA DO NÚCLEO (Número da Vaga Alocada no Projeto)
       const numeroVaga = item.numero_vaga || item.vaga_numero || item.vaga_alocada || (idx + 1);
 
+      // 5. RESPONSÁVEL E ENDEREÇO
+      let respNome = item.resp_nome || item.espacos?.resp_nome;
+      if (!respNome && item.espaco_id && espacosCache[Number(item.espaco_id)]) {
+        respNome = espacosCache[Number(item.espaco_id)].resp_nome;
+      }
+      if (!respNome || respNome === "temp" || respNome === "x" || respNome === "—") {
+        respNome = "??? (Ajeitar depois)";
+      }
+
+      const espacoObj = item.espacos || (item.espaco_id ? espacosCache[Number(item.espaco_id)] : null);
+      const rua = item.rua || espacoObj?.rua;
+      const num = item.numero || espacoObj?.numero;
+      
+      let enderecoFormatado = "";
+      if (rua && rua !== "temp" && rua !== "xxxxxxx") {
+        enderecoFormatado = `${rua}${num ? `, ${num}` : ''} - ${bairroNome}`;
+      } else {
+        enderecoFormatado = bairroNome || "—";
+      }
+
       return {
         id,
         nome,
@@ -208,6 +231,9 @@ export default function Nucleos() {
         bairro_id: item.bairro_id,
         espaco_id: item.espaco_id,
         numero_vaga: numeroVaga,
+        vagas: item.vagas,
+        resp_nome: respNome,
+        endereco: enderecoFormatado,
         ativo: isAtivo,
         aceitando_vagas: isAceitandoVagas,
       };
@@ -266,6 +292,8 @@ export default function Nucleos() {
             bairro: e.bairro || e.nome || "—",
             espaco_id: e.id,
             numero_vaga: String(idx + 1),
+            resp_nome: e.resp_nome || "—",
+            endereco: [e.rua, e.numero, e.bairro].filter(Boolean).join(", ") || e.bairro || "—",
             ativo: e.ativo !== false,
             aceitando_vagas: true,
           };
@@ -279,6 +307,30 @@ export default function Nucleos() {
       setNucleos([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleAtivo = async (item: NucleoItem) => {
+    try {
+      const newAtivo = !item.ativo;
+      const formData = new FormData();
+      formData.append("id", String(item.id));
+      formData.append("ativo", String(newAtivo));
+      formData.append("instituto", currentInstitute.toUpperCase());
+
+      const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-put?instituto=${currentInstitute.toUpperCase()}`, {
+        method: "PUT",
+        body: formData,
+      });
+
+      if (res.ok) {
+        setNucleos(prev => prev.map(n => n.id === item.id ? { ...n, ativo: newAtivo } : n));
+      } else {
+        alert("Erro ao alterar status do núcleo.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Erro ao conectar com o servidor.");
     }
   };
 
@@ -397,11 +449,12 @@ export default function Nucleos() {
             <table className="w-full text-left border-collapse min-w-[900px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-xs sm:text-sm md:text-base font-black uppercase tracking-wider text-slate-700">
-                  <th className="py-4 px-4 md:px-6">Núcleo</th>
+                  <th className="py-4 px-4 md:px-6">Núcleo / Endereço</th>
                   <th className="py-4 px-4 md:px-6">Iniciativa</th>
-                  <th className="py-4 px-4 md:px-6">Bairro</th>
                   <th className="py-4 px-4 md:px-6">Modalidade</th>
-                  <th className="py-4 px-4 md:px-6 text-center">Vaga do Núcleo</th>
+                  <th className="py-4 px-4 md:px-6">Responsável Cedente</th>
+                  <th className="py-4 px-4 md:px-6 text-center">Vaga (Slot)</th>
+                  <th className="py-4 px-4 md:px-6 text-center">Capacidade</th>
                   <th className="py-4 px-4 md:px-6 text-center">Status Físico</th>
                   <th className="py-4 px-4 md:px-6 w-28 text-center">Ações</th>
                 </tr>
@@ -411,25 +464,21 @@ export default function Nucleos() {
                   return (
                     <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
                       
-                      {/* Núcleo */}
+                      {/* Núcleo e Endereço */}
                       <td className="py-4 md:py-5 px-4 md:px-6">
                         <span className="font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors block text-base sm:text-lg md:text-xl">
                           {item.nome}
                         </span>
-                        <span className="text-xs md:text-sm text-slate-400 font-medium">ID {item.id}</span>
+                        <span className="text-xs md:text-sm text-slate-500 font-medium block mt-0.5">
+                          📍 {item.endereco}
+                        </span>
+                        <span className="text-[11px] text-slate-400 font-medium">ID {item.id}</span>
                       </td>
 
                       {/* Iniciativa (nome do projeto) */}
                       <td className="py-4 md:py-5 px-4 md:px-6">
                         <span className="font-bold text-slate-800 text-sm md:text-base">
                           {item.projeto_nome}
-                        </span>
-                      </td>
-
-                      {/* Bairro (Resoluçao garantida) */}
-                      <td className="py-4 md:py-5 px-4 md:px-6">
-                        <span className="font-semibold text-slate-800 text-sm md:text-base bg-slate-100/80 px-2.5 py-1 rounded-md border border-slate-200/60 inline-block">
-                          {item.bairro}
                         </span>
                       </td>
 
@@ -440,10 +489,30 @@ export default function Nucleos() {
                         </span>
                       </td>
 
+                      {/* Responsável Cedente */}
+                      <td className="py-4 md:py-5 px-4 md:px-6">
+                        {item.resp_nome && item.resp_nome.includes("???") ? (
+                          <span className="font-extrabold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md text-xs inline-flex items-center gap-1">
+                            ⚠️ {item.resp_nome}
+                          </span>
+                        ) : (
+                          <span className="font-semibold text-slate-700 text-sm md:text-base block">
+                            👤 {item.resp_nome || "—"}
+                          </span>
+                        )}
+                      </td>
+
                       {/* Vaga do Núcleo (Exibe o número da vaga exato) */}
                       <td className="py-4 md:py-5 px-4 md:px-6 text-center">
                         <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs md:text-sm font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs">
-                          Vaga Nº {item.numero_vaga}
+                          Nº {item.numero_vaga}
+                        </span>
+                      </td>
+
+                      {/* Capacidade (Vagas) */}
+                      <td className="py-4 md:py-5 px-4 md:px-6 text-center">
+                        <span className="font-bold text-slate-800 text-sm md:text-base">
+                          {(item as any).vagas || "Não def."}
                         </span>
                       </td>
 
@@ -477,6 +546,17 @@ export default function Nucleos() {
                           >
                             <Edit3 size={16} />
                           </Link>
+                          <button
+                            onClick={() => handleToggleAtivo(item)}
+                            className={`p-2 rounded-lg transition-colors ${
+                              item.ativo
+                                ? "text-slate-400 hover:text-red-600 hover:bg-red-50"
+                                : "text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"
+                            }`}
+                            title={item.ativo ? "Desativar Núcleo" : "Ativar Núcleo"}
+                          >
+                            <Power size={16} />
+                          </button>
                           <button
                             onClick={() => handleDelete(item.id)}
                             className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"

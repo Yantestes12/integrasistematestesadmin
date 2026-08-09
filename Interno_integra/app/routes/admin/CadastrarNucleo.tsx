@@ -15,6 +15,7 @@ const cadastrarNucleoSchema = z.object({
   uf: z.string().optional(),
   bairroId: z.string().optional(),
   numeroVaga: z.string().optional(),
+  vagas: z.string().optional(),
   
   // Vigência e Status
   ativo: z.boolean().default(true),
@@ -128,6 +129,7 @@ export default function CadastrarNucleo() {
     defaultValues: {
       ativo: true,
       numeroVaga: "1",
+      vagas: "100",
     },
   });
 
@@ -210,6 +212,7 @@ export default function CadastrarNucleo() {
                 uf: nucleo.uf || "",
                 bairroId: String(nucleo.bairro_id || ""),
                 numeroVaga: String(nucleo.numero_vaga || nucleo.vaga_numero || "1"),
+                vagas: String(nucleo.vagas || "100"),
                 dataInicio: nucleo.data_inicio || "",
                 dataFim: nucleo.data_fim || "",
                 ativo: nucleo.ativo !== false && nucleo.ativo !== 0 && nucleo.ativo !== "0",
@@ -243,9 +246,12 @@ export default function CadastrarNucleo() {
         }
       });
 
-      // Passa o campo numero_vaga explícito para salvar na coluna do Supabase
+      // Passa os campos específicos explícitos para o N8N
       if (data.numeroVaga) {
         formData.append("numero_vaga", data.numeroVaga);
+      }
+      if (data.vagas) {
+        formData.append("vagas", data.vagas);
       }
 
       const response = await fetch(webhookUrl, {
@@ -363,17 +369,39 @@ export default function CadastrarNucleo() {
               {...register("numeroVaga")}
               className="w-full bg-indigo-50/50 border border-indigo-200 rounded-lg p-2.5 text-sm font-extrabold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(vaga => {
-                const ocupadoPor = vagasOcupadasNoProjeto[vaga];
-                return (
-                  <option key={vaga} value={vaga} disabled={!!ocupadoPor}>
-                    Vaga Nº {vaga} {ocupadoPor ? `— 🔴 Ocupada (${ocupadoPor})` : "— 🟢 Livre"}
-                  </option>
-                );
-              })}
+              {(() => {
+                const proj = projetos.find(p => String(p.id) === String(projetoIdWatch));
+                const totalSlots = proj?.vagas_por_nucleo ? Number(proj.vagas_por_nucleo) : 20;
+                const options = Array.from({ length: totalSlots > 0 ? totalSlots : 20 }, (_, i) => i + 1);
+                
+                return options.map(vaga => {
+                  const ocupadoPor = vagasOcupadasNoProjeto[vaga];
+                  return (
+                    <option key={vaga} value={vaga} disabled={!!ocupadoPor}>
+                      Vaga Nº {vaga} {ocupadoPor ? `— 🔴 Ocupada (${ocupadoPor})` : "— 🟢 Livre"}
+                    </option>
+                  );
+                });
+              })()}
             </select>
             <span className="text-[11px] text-slate-400 mt-1 block">
               Cada núcleo ocupa uma posição de Vaga única no projeto. Vagas já alocadas ficam bloqueadas para evitar duplicidade.
+            </span>
+          </div>
+
+          {/* CAMPO DE CAPACIDADE (VAGAS) */}
+          <div className="pt-2">
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Capacidade do Núcleo (Quantidade de Vagas)
+            </label>
+            <input
+              type="number"
+              {...register("vagas")}
+              placeholder="Ex: 100"
+              className="w-full sm:w-1/3 bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <span className="text-[11px] text-slate-400 mt-1 block">
+              Quantidade de alunos que este núcleo pode comportar.
             </span>
           </div>
 

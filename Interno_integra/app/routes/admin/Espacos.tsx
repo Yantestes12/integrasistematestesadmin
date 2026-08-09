@@ -35,7 +35,7 @@ export default function Espacos() {
   const [espacos, setEspacos] = useState<EspacoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<"cadastrados" | "solicitacoes">("cadastrados");
+  const [activeTab, setActiveTab] = useState<"todos" | "em_uso" | "disponiveis" | "incompletos" | "solicitacoes">("todos");
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [approvingId, setApprovingId] = useState<number | null>(null);
   const [togglingDocsId, setTogglingDocsId] = useState<number | null>(null);
@@ -297,27 +297,51 @@ export default function Espacos() {
     }, 1100);
   };
 
-  // Função para Abrir a Ficha Oficial do Espaço e Imprimir / Baixar em PDF
+  const getInstituteLogo = (instName: string) => {
+    const inst = (instName || "").toUpperCase();
+    if (inst.includes("GASCTPNA")) return "/logo_gasctpna.png";
+    if (inst.includes("IBRASE")) return "/logo_ibrase.png";
+    if (inst.includes("AUNI")) return "/logo_auni.png";
+    if (inst.includes("IVEM")) return "/logo_ivem.png";
+    return "/logo_integra.png";
+  };
+
+  // Função para Baixar Ficha Oficial diretamente em PDF sem popup
   const handleOpenPrintFicha = (espaco: EspacoItem) => {
     setSelectedPrintEspaco(espaco);
     const now = new Date();
     const formatted = `${now.toLocaleDateString("pt-BR")} às ${now.toLocaleTimeString("pt-BR")}`;
     setPrintTimestamp(formatted);
-    setPrintModalOpen(true);
 
-    addToast("info", "GERANDO FICHA TÉCNICA", `Preparando documento oficial de "${espaco.nome}"...`);
+    // Dispara a impressão/salvamento em PDF direto
+    setTimeout(() => {
+      window.print();
+    }, 150);
   };
 
-  const triggerPrintWindow = () => {
-    window.print();
+  const isIncompleto = (e: EspacoItem) => {
+    return !e.resp_nome || e.resp_nome === "—" || e.resp_nome === "temp" || e.resp_nome === "x" || !e.rua || e.rua === "temp" || e.rua === "xxxxxxx";
   };
 
-  // 🔴 REGRA CRÍTICA: Separação ESTRITA por status_aprovacao
-  // Espaço aprovado NUNCA aparece na aba Solicitações!
   const solicitacoesPendentes = espacos.filter(e => String(e.status_aprovacao || "").toLowerCase().trim() === "pendente");
   const espacosAprovados = espacos.filter(e => String(e.status_aprovacao || "").toLowerCase().trim() !== "pendente");
 
-  const currentList = activeTab === "solicitacoes" ? solicitacoesPendentes : espacosAprovados;
+  const emUsoList = espacosAprovados.filter(e => e.em_uso || !!e.nucleo_nome);
+  const disponiveisList = espacosAprovados.filter(e => !e.em_uso && !e.nucleo_nome && !isIncompleto(e));
+  const incompletosList = espacosAprovados.filter(e => isIncompleto(e));
+
+  const getCurrentList = () => {
+    switch (activeTab) {
+      case "em_uso": return emUsoList;
+      case "disponiveis": return disponiveisList;
+      case "incompletos": return incompletosList;
+      case "solicitacoes": return solicitacoesPendentes;
+      case "todos":
+      default: return espacosAprovados;
+    }
+  };
+
+  const currentList = getCurrentList();
 
   const filtered = currentList.filter(e =>
     !searchTerm ||
@@ -358,10 +382,16 @@ export default function Espacos() {
         .anim-archive-open { animation: archiveOpenAnim 1.1s ease-in-out forwards; }
 
         @media print {
-          body * { visibility: hidden; }
-          #printable-ficha-area, #printable-ficha-area * { visibility: visible; }
-          #printable-ficha-area { position: absolute; left: 0; top: 0; width: 100%; }
+          body * { visibility: hidden !important; }
+          #printable-ficha-area, #printable-ficha-area * { visibility: visible !important; }
+          #printable-ficha-area { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
           .no-print { display: none !important; }
+          
+          /* Estilização específica para GASCTPNA Green no Print */
+          .print-logo { content: url("${getInstituteLogo("GASCTPNA")}"); }
+          .print-accent-border { border-color: #166534 !important; }
+          .print-accent-text { color: #166534 !important; }
+          .print-accent-bg { background-color: #166534 !important; color: white !important; }
         }
       `}</style>
 
@@ -392,37 +422,76 @@ export default function Espacos() {
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
           
-          {/* Navegação de Abas */}
-          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+          {/* Navegação de Abas (Todos, Disponíveis, Em Uso, Incompletos, Solicitações) */}
+          <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl">
             <button
-              onClick={() => setActiveTab("cadastrados")}
-              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-2 ${
-                activeTab === "cadastrados"
-                  ? "bg-white text-slate-900 shadow-xs"
-                  : "text-slate-500 hover:text-slate-800"
+              onClick={() => setActiveTab("todos")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
+                activeTab === "todos" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              <Building2 size={15} />
-              <span>Espaços Cadastrados</span>
-              <span className={`px-2 py-0.5 rounded-full text-[11px] font-black ${
-                activeTab === "cadastrados" ? "bg-blue-100 text-blue-700" : "bg-slate-200 text-slate-600"
+              <Building2 size={14} />
+              <span>Todos</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                activeTab === "todos" ? "bg-blue-100 text-blue-700" : "bg-slate-200 text-slate-600"
               }`}>
                 {espacosAprovados.length}
               </span>
             </button>
 
             <button
-              onClick={() => setActiveTab("solicitacoes")}
-              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-2 ${
-                activeTab === "solicitacoes"
-                  ? "bg-white text-amber-900 shadow-xs"
-                  : "text-slate-500 hover:text-slate-800"
+              onClick={() => setActiveTab("disponiveis")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
+                activeTab === "disponiveis" ? "bg-white text-emerald-800 shadow-xs" : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              <Clock size={15} className={solicitacoesPendentes.length > 0 ? "text-amber-500 animate-pulse" : ""} />
-              <span>Solicitações de Espaço</span>
+              <CheckCircle2 size={14} className="text-emerald-500" />
+              <span>Disponíveis</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                activeTab === "disponiveis" ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600"
+              }`}>
+                {disponiveisList.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("em_uso")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
+                activeTab === "em_uso" ? "bg-white text-blue-800 shadow-xs" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <Layers size={14} className="text-blue-500" />
+              <span>Em Uso</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                activeTab === "em_uso" ? "bg-blue-100 text-blue-700" : "bg-slate-200 text-slate-600"
+              }`}>
+                {emUsoList.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("incompletos")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
+                activeTab === "incompletos" ? "bg-amber-500 text-white shadow-xs" : "text-amber-700 bg-amber-50 hover:bg-amber-100"
+              }`}
+            >
+              <AlertTriangle size={14} />
+              <span>Pendente de Dados (???)</span>
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-700 text-white">
+                {incompletosList.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("solicitacoes")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
+                activeTab === "solicitacoes" ? "bg-white text-purple-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <Clock size={14} className={solicitacoesPendentes.length > 0 ? "text-purple-600 animate-pulse" : ""} />
+              <span>Solicitações</span>
               {solicitacoesPendentes.length > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-black bg-amber-100 text-amber-800 border border-amber-200">
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">
                   {solicitacoesPendentes.length}
                 </span>
               )}
@@ -442,13 +511,23 @@ export default function Espacos() {
           </div>
         </div>
 
-        {/* Banner Informativo da Aba */}
-        {activeTab === "solicitacoes" && (
+        {/* Banners Informativos das Abas */}
+        {activeTab === "incompletos" && (
           <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3.5 flex items-start gap-3 text-xs text-amber-900">
-            <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+            <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
             <div>
-              <strong className="font-extrabold block text-amber-950">Solicitações de Espaço Físico Pendentes</strong>
-              Estes espaços aguardam aprovação do administrador. Enquanto estiverem em solicitações pendentes, eles <strong>NÃO</strong> aparecem disponíveis para vincular em Núcleos.
+              <strong className="font-extrabold block text-amber-950">Espaços Físicos Incompletos (Faltando Endereço ou Responsável)</strong>
+              Estes espaços vieram de migrações ou cadastros legados sem o endereço completo ou sem o responsável. Clique em <strong>Editar</strong> para preencher os dados e liberá-los como <strong>Disponíveis</strong> para vinculação nos Núcleos.
+            </div>
+          </div>
+        )}
+
+        {activeTab === "solicitacoes" && (
+          <div className="bg-purple-50/80 border border-purple-200/80 rounded-xl p-3.5 flex items-start gap-3 text-xs text-purple-900">
+            <AlertCircle size={18} className="text-purple-600 shrink-0 mt-0.5" />
+            <div>
+              <strong className="font-extrabold block text-purple-950">Solicitações de Espaço Físico Pendentes de Aprovação</strong>
+              Cadastros novos enviados por cedentes/externos que aguardam aprovação do Administrador. Após aprovados, eles passam para a aba de Espaços Disponíveis.
             </div>
           </div>
         )}
@@ -473,7 +552,7 @@ export default function Espacos() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6">
           {filtered.map(espaco => {
-            const isPendente = espaco.status_aprovacao === "pendente";
+            const isPendente = String(espaco.status_aprovacao || "").toLowerCase().trim() === "pendente";
 
             return (
               <div
@@ -495,14 +574,18 @@ export default function Espacos() {
                     </div>
                   )}
 
-                  {/* Badges do Topo: Lzinho Aprovado */}
+                  {/* Badges do Topo: Status do Espaço */}
                   <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
                     {isPendente ? (
-                      <span className="bg-amber-500 text-white text-[11px] font-black px-2 py-0.5 rounded shadow-xs flex items-center gap-1 uppercase tracking-wider">
-                        <Clock size={12} /> Pendente
+                      <span className="bg-purple-600 text-white text-[11px] font-black px-2.5 py-1 rounded shadow-xs flex items-center gap-1 uppercase tracking-wider">
+                        <Clock size={12} /> Solicitação Pendente
+                      </span>
+                    ) : isIncompleto(espaco) ? (
+                      <span className="bg-amber-500 text-white text-[11px] font-black px-2.5 py-1 rounded shadow-xs flex items-center gap-1 uppercase tracking-wider">
+                        <AlertTriangle size={12} /> ??? Info Pendente
                       </span>
                     ) : (
-                      <div className="bg-white/90 backdrop-blur-sm p-1 rounded-full shadow-sm" title="Aprovado">
+                      <div className="bg-white/90 backdrop-blur-sm p-1 rounded-full shadow-sm" title="Aprovado e Completo">
                         <CheckCircle2 size={20} className="text-emerald-500" />
                       </div>
                     )}
@@ -534,15 +617,15 @@ export default function Espacos() {
 
                   {/* Detalhes do Responsável */}
                   <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-1 text-xs">
-                    {espaco.resp_nome && espaco.resp_nome !== "temp" ? (
+                    {espaco.resp_nome && espaco.resp_nome !== "temp" && espaco.resp_nome !== "x" && espaco.resp_nome !== "—" ? (
                       <div className="flex items-center gap-1.5 text-slate-700 font-bold">
                         <User size={13} className="text-slate-400 shrink-0" />
                         <span className="truncate">Resp: {espaco.resp_nome}</span>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1.5 text-slate-400 italic">
-                        <User size={13} className="shrink-0" />
-                        <span>Responsável não cadastrado</span>
+                      <div className="flex items-center gap-1.5 text-amber-700 font-extrabold bg-amber-50/90 p-1.5 rounded-lg border border-amber-200">
+                        <AlertTriangle size={13} className="shrink-0 text-amber-600" />
+                        <span>Resp: ??? (Ajeitar depois)</span>
                       </div>
                     )}
 
@@ -762,188 +845,164 @@ export default function Espacos() {
         </div>
       )}
 
-      {/* Modal / Ficha Impressa Oficial para Download em PDF */}
-      {printModalOpen && selectedPrintEspaco && (
-        <div className="fixed inset-0 z-[9990] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto no-print">
-          <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden space-y-0 my-8">
-            
-            {/* Action Bar no Topo do Modal (No Print) */}
-            <div className="p-4 bg-slate-900 text-white flex items-center justify-between no-print border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-blue-400" />
-                <span className="text-xs font-black uppercase tracking-wider">Ficha Técnica do Espaço</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={triggerPrintWindow}
-                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-sm flex items-center gap-1.5 transition-all"
-                >
-                  <Printer size={15} />
-                  <span>Imprimir / Salvar PDF</span>
-                </button>
-
-                <button
-                  onClick={() => setPrintModalOpen(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-                >
-                  <X size={18} />
-                </button>
+      {/* DOCUMENTO IMPRESSO OFICIAL (Sem Popup na tela, só visível na impressão/PDF) */}
+      {selectedPrintEspaco && (
+        <div id="printable-ficha-area" className="hidden print:block p-8 space-y-6 font-sans bg-white text-slate-900 border-2 border-emerald-800">
+          
+          {/* Header da Ficha Oficial em Verde GASCTPNA */}
+          <div className="border-b-4 border-emerald-700 pb-5 flex items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <img
+                src={getInstituteLogo(authInstitute)}
+                alt={authInstitute}
+                className="h-16 max-w-[180px] object-contain"
+              />
+              <div>
+                <span className="bg-emerald-800 text-white px-3 py-1 rounded text-[11px] font-black uppercase tracking-widest inline-block mb-1">
+                  INSTITUTO {authInstitute} • PLATAFORMA INTEGRA
+                </span>
+                <h2 className="text-xl font-black text-emerald-950 uppercase tracking-tight">
+                  Ficha Técnica de Espaço Físico
+                </h2>
+                <p className="text-xs text-slate-500 font-medium">
+                  Documento Oficial de Cadastramento e Infraestrutura Operacional
+                </p>
               </div>
             </div>
 
-            {/* ÁREA IMPRESSA DO DOCUMENTO OFICIAL */}
-            <div id="printable-ficha-area" className="p-8 space-y-6 font-sans bg-white text-slate-800">
-              
-              {/* Header da Ficha Oficial */}
-              <div className="border-b-2 border-slate-900 pb-4 flex items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <span className="bg-slate-900 text-white px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-widest">
-                    {authInstitute} • PLATAFORMA INTEGRA
-                  </span>
-                  <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">
-                    Ficha Oficial de Cadastramento de Espaço Físico
-                  </h2>
-                  <p className="text-xs text-slate-500 font-medium">
-                    Documento de identificação e validação de infraestrutura do sistema.
-                  </p>
-                </div>
-
-                <div className="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center shrink-0 font-black text-xl shadow-md">
-                  {authInstitute.slice(0, 2)}
-                </div>
-              </div>
-
-              {/* Informações da Instalação */}
-              <div className="space-y-4 text-xs">
-                
-                {/* Bloco 1: Dados do Espaço */}
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5 border-b border-slate-200 pb-2">
-                    <Building2 size={14} className="text-blue-600" />
-                    Identificação do Espaço Físico
-                  </h3>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Nome da Instalação</span>
-                      <strong className="text-sm font-extrabold text-slate-900">{selectedPrintEspaco.nome}</strong>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Status da Aprovação</span>
-                      <span className="inline-block mt-0.5 bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[11px] font-extrabold border border-emerald-200">
-                        ✓ Aprovado e Operacional
-                      </span>
-                    </div>
-                  </div>
-
-                  {selectedPrintEspaco.em_uso && (
-                    <div className="pt-2 border-t border-slate-200/60">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Vínculo Operacional</span>
-                      <span className="font-bold text-blue-700">Em Uso pelo Núcleo: {selectedPrintEspaco.nucleo_nome}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Bloco 2: Localização e Endereço */}
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5 border-b border-slate-200 pb-2">
-                    <MapPin size={14} className="text-red-500" />
-                    Endereço e Localização
-                  </h3>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    <div>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Rua / Logradouro</span>
-                      <span className="font-bold text-slate-800">{selectedPrintEspaco.rua || "Não informado"}</span>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Número</span>
-                      <span className="font-bold text-slate-800">{selectedPrintEspaco.numero || "S/N"}</span>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Bairro</span>
-                      <span className="font-bold text-slate-800">{selectedPrintEspaco.bairro || "Não informado"}</span>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">CEP</span>
-                      <span className="font-bold text-slate-800">{selectedPrintEspaco.cep || "Não informado"}</span>
-                    </div>
-
-                    <div className="col-span-2">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Cidade / UF</span>
-                      <span className="font-bold text-slate-800">
-                        {[selectedPrintEspaco.cidade, selectedPrintEspaco.uf].filter(Boolean).join(" / ") || "Campos dos Goytacazes / RJ"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {selectedPrintEspaco.ponto_referencia && (
-                    <div className="pt-2 border-t border-slate-200/60 text-slate-600">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Ponto de Referência</span>
-                      <span className="italic font-medium">{selectedPrintEspaco.ponto_referencia}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Bloco 3: Dados do Responsável */}
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5 border-b border-slate-200 pb-2">
-                    <User size={14} className="text-blue-600" />
-                    Responsável da Instalação
-                  </h3>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Nome do Responsável</span>
-                      <span className="font-extrabold text-slate-900">{selectedPrintEspaco.resp_nome || "Não informado"}</span>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">CPF / CNPJ</span>
-                      <span className="font-bold text-slate-800">{selectedPrintEspaco.resp_cpf || selectedPrintEspaco.resp_cnpj || "Não informado"}</span>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Telefone de Contato</span>
-                      <span className="font-bold text-slate-800">{selectedPrintEspaco.resp_telefone || "Não informado"}</span>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">E-mail</span>
-                      <span className="font-bold text-slate-800">{selectedPrintEspaco.resp_email || "Não informado"}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Foto do Espaço se houver */}
-                {selectedPrintEspaco.foto_url && (
-                  <div className="space-y-2">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Registro Fotográfico</span>
-                    <div className="h-48 rounded-2xl overflow-hidden border border-slate-200">
-                      <img src={selectedPrintEspaco.foto_url} alt={selectedPrintEspaco.nome} className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Rodapé Oficial de Autenticação */}
-              <div className="pt-6 border-t-2 border-slate-900 text-center space-y-1">
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                  Documento emitido digitalmente pela Plataforma Integra em <strong className="text-slate-800">{printTimestamp}</strong>.
-                </p>
-                <p className="text-[9px] text-slate-400 font-medium">
-                  Instituto {authInstitute} • Sistema de Gestão de Projetos e Espaços Físicos
-                </p>
-              </div>
-
+            <div className="text-right border-l-2 border-emerald-200 pl-4">
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Código do Espaço</span>
+              <strong className="text-lg font-black text-emerald-800">#ESP-{selectedPrintEspaco.id}</strong>
             </div>
-
           </div>
+
+          {/* Informações da Instalação */}
+          <div className="space-y-4 text-xs">
+            
+            {/* Bloco 1: Dados do Espaço */}
+            <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-200 space-y-3">
+              <h3 className="text-xs font-black uppercase tracking-wider text-emerald-900 flex items-center gap-1.5 border-b border-emerald-200 pb-2">
+                <Building2 size={15} className="text-emerald-700" />
+                Identificação da Instalação Física
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Nome do Local</span>
+                  <strong className="text-sm font-extrabold text-slate-900">{selectedPrintEspaco.nome}</strong>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Status de Operação</span>
+                  <span className="inline-block mt-0.5 bg-emerald-100 text-emerald-900 px-2.5 py-0.5 rounded text-[11px] font-extrabold border border-emerald-300">
+                    ✓ Espaço Cadastrado e Operacional
+                  </span>
+                </div>
+              </div>
+
+              {selectedPrintEspaco.em_uso && (
+                <div className="pt-2 border-t border-emerald-200/80">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Vínculo com Núcleo</span>
+                  <span className="font-bold text-emerald-800">Em Uso pelo Núcleo: {selectedPrintEspaco.nucleo_nome}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Bloco 2: Localização e Endereço */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5 border-b border-slate-200 pb-2">
+                <MapPin size={15} className="text-emerald-700" />
+                Endereço e Localização
+              </h3>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Rua / Logradouro</span>
+                  <span className="font-bold text-slate-900">{selectedPrintEspaco.rua || "Não informado"}</span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Número</span>
+                  <span className="font-bold text-slate-900">{selectedPrintEspaco.numero || "S/N"}</span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Bairro</span>
+                  <span className="font-bold text-slate-900">{selectedPrintEspaco.bairro || "Não informado"}</span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">CEP</span>
+                  <span className="font-bold text-slate-900">{selectedPrintEspaco.cep || "Não informado"}</span>
+                </div>
+
+                <div className="col-span-2">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Cidade / UF</span>
+                  <span className="font-bold text-slate-900">
+                    {[selectedPrintEspaco.cidade, selectedPrintEspaco.uf].filter(Boolean).join(" / ") || "Campos dos Goytacazes / RJ"}
+                  </span>
+                </div>
+              </div>
+
+              {selectedPrintEspaco.ponto_referencia && (
+                <div className="pt-2 border-t border-slate-200 text-slate-700">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Ponto de Referência</span>
+                  <span className="italic font-medium">{selectedPrintEspaco.ponto_referencia}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Bloco 3: Dados do Responsável */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5 border-b border-slate-200 pb-2">
+                <User size={15} className="text-emerald-700" />
+                Responsável Cedente da Instalação
+              </h3>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Nome do Responsável</span>
+                  <span className="font-extrabold text-slate-900">{selectedPrintEspaco.resp_nome || "Não informado"}</span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">CPF / CNPJ</span>
+                  <span className="font-bold text-slate-900">{selectedPrintEspaco.resp_cpf || selectedPrintEspaco.resp_cnpj || "Não informado"}</span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Telefone de Contato</span>
+                  <span className="font-bold text-slate-900">{selectedPrintEspaco.resp_telefone || "Não informado"}</span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">E-mail</span>
+                  <span className="font-bold text-slate-900">{selectedPrintEspaco.resp_email || "Não informado"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Foto do Espaço se houver */}
+            {selectedPrintEspaco.foto_url && (
+              <div className="space-y-2">
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Registro Fotográfico</span>
+                <div className="h-44 rounded-xl overflow-hidden border border-slate-200 max-w-md">
+                  <img src={selectedPrintEspaco.foto_url} alt={selectedPrintEspaco.nome} className="w-full h-full object-cover" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Rodapé Oficial de Autenticação */}
+          <div className="pt-5 border-t-2 border-emerald-800 text-center space-y-1">
+            <p className="text-[10px] text-slate-600 font-bold uppercase tracking-wider">
+              Documento emitido digitalmente pela Plataforma Integra em <strong className="text-emerald-900">{printTimestamp}</strong>.
+            </p>
+            <p className="text-[9px] text-slate-400 font-medium">
+              Instituto {authInstitute} • Sistema Oficial de Gestão de Projetos e Espaços Físicos
+            </p>
+          </div>
+
         </div>
       )}
 

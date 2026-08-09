@@ -5,7 +5,10 @@
       "name": "Webhook POST",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "webhookId": "projetos-post",
       "parameters": {
         "httpMethod": "POST",
@@ -19,16 +22,30 @@
       "name": "Switch POST",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
-      "position": [220, 0],
+      "position": [
+        220,
+        0
+      ],
       "parameters": {
         "dataType": "string",
         "value1": "={{ $json.query.instituto || $json.body.instituto }}",
         "rules": {
           "rules": [
-            { "value2": "GASCTPNA" },
-            { "value2": "IBRASE", "output": 1 },
-            { "value2": "AUNI", "output": 2 },
-            { "value2": "IVEM", "output": 3 }
+            {
+              "value2": "GASCTPNA"
+            },
+            {
+              "value2": "IBRASE",
+              "output": 1
+            },
+            {
+              "value2": "AUNI",
+              "output": 2
+            },
+            {
+              "value2": "IVEM",
+              "output": 3
+            }
           ]
         },
         "fallbackOutput": 1
@@ -39,29 +56,85 @@
       "name": "SB GASCTPNA POST",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, -300],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } },
+      "position": [
+        480,
+        -300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
       "parameters": {
         "operation": "create",
         "tableId": "GASCTPNA_projetos",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "nome", "fieldValue": "={{ $json.body.nome_projeto }}" },
-            { "fieldId": "numero_proposta", "fieldValue": "={{ $json.body.numero_proposta }}" },
-            { "fieldId": "termo_fomento", "fieldValue": "={{ $json.body.termo_fomento }}" },
-            { "fieldId": "numero_processo_adm", "fieldValue": "={{ $json.body.numero_processo_adm }}" },
-            { "fieldId": "numero_transferegov", "fieldValue": "={{ $json.body.numero_transferegov }}" },
-            { "fieldId": "aplicabilidade", "fieldValue": "={{ $json.body.aplicabilidade }}" },
-            { "fieldId": "descricao", "fieldValue": "={{ $json.body.descricao }}" },
-            { "fieldId": "vigencia_inicio", "fieldValue": "={{ $json.body.vigencia_inicio }}" },
-            { "fieldId": "vigencia_fim", "fieldValue": "={{ $json.body.vigencia_termino }}" },
-            { "fieldId": "vigencia_termino", "fieldValue": "={{ $json.body.vigencia_termino }}" },
-            { "fieldId": "idade_min", "fieldValue": "={{ $json.body.idade_min }}" },
-            { "fieldId": "idade_max", "fieldValue": "={{ $json.body.idade_max }}" },
-            { "fieldId": "limites_cargos", "fieldValue": "={{ JSON.stringify($json.body.limites_cargos || []) }}" },
-            { "fieldId": "vagas_por_nucleo", "fieldValue": "={{ $json.body.vagas_por_nucleo }}" },
-            { "fieldId": "periodos_json", "fieldValue": "={{ JSON.stringify($json.body.periodos_json || []) }}" },
-            { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo }}" }
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nome_projeto }}"
+            },
+            {
+              "fieldId": "numero_proposta",
+              "fieldValue": "={{ $json.body.numero_proposta }}"
+            },
+            {
+              "fieldId": "termo_fomento",
+              "fieldValue": "={{ $json.body.termo_fomento }}"
+            },
+            {
+              "fieldId": "numero_processo_adm",
+              "fieldValue": "={{ $json.body.numero_processo_adm }}"
+            },
+            {
+              "fieldId": "numero_transferegov",
+              "fieldValue": "={{ $json.body.numero_transferegov }}"
+            },
+            {
+              "fieldId": "aplicabilidade",
+              "fieldValue": "={{ $json.body.aplicabilidade }}"
+            },
+            {
+              "fieldId": "descricao",
+              "fieldValue": "={{ $json.body.descricao }}"
+            },
+            {
+              "fieldId": "vigencia_inicio",
+              "fieldValue": "={{ $json.body.vigencia_inicio }}"
+            },
+            {
+              "fieldId": "vigencia_fim",
+              "fieldValue": "={{ $json.body.vigencia_termino }}"
+            },
+            {
+              "fieldId": "vigencia_termino",
+              "fieldValue": "={{ $json.body.vigencia_termino }}"
+            },
+            {
+              "fieldId": "idade_min",
+              "fieldValue": "={{ $json.body.idade_min }}"
+            },
+            {
+              "fieldId": "idade_max",
+              "fieldValue": "={{ $json.body.idade_max }}"
+            },
+            {
+              "fieldId": "limites_cargos",
+              "fieldValue": "={{ JSON.stringify($json.body.limites_cargos || []) }}"
+            },
+            {
+              "fieldId": "vagas_por_nucleo",
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
+            },
+            {
+              "fieldId": "periodos_json",
+              "fieldValue": "={{ JSON.stringify($json.body.periodos_json || []) }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo }}"
+            }
           ]
         }
       }
@@ -71,7 +144,10 @@
       "name": "Map GASCTPNA Limits",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [720, -300],
+      "position": [
+        720,
+        -300
+      ],
       "parameters": {
         "jsCode": "const projId = $input.first().json.id;\nconst body = $('Webhook POST').first().json.body;\nconst limites = body.limites_modalidade || body.limites_modalidades || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
       }
@@ -81,16 +157,37 @@
       "name": "Ins GASCTPNA Limits",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [960, -300],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } },
+      "position": [
+        960,
+        -300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
       "parameters": {
         "operation": "create",
         "tableId": "GASCTPNA_projeto_modalidade_limites",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "projeto_id", "fieldValue": "={{ $json.projeto_id }}" },
-            { "fieldId": "modalidade_id", "fieldValue": "={{ $json.modalidade_id }}" },
-            { "fieldId": "limite", "fieldValue": "={{ $json.limite }}" }
+            {
+              "fieldId": "projeto_id",
+              "fieldValue": "={{ $json.projeto_id }}"
+            },
+            {
+              "fieldId": "modalidade_id",
+              "fieldValue": "={{ $json.modalidade_id }}"
+            },
+            {
+              "fieldId": "limite",
+              "fieldValue": "={{ $json.limite }}"
+            },
+            {
+              "fieldId": "vagas_por_nucleo",
+              "fieldValue": "={{ .body.vagas_por_nucleo }}"
+            }
           ]
         }
       }
@@ -100,38 +197,99 @@
       "name": "Respond GASCTPNA",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, -180],
-      "parameters": { "respondWith": "allIncomingItems", "options": {} }
+      "position": [
+        720,
+        -180
+      ],
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      }
     },
-
     {
       "id": "ins-ibrase",
       "name": "SB IBRASE POST",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, -50],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } },
+      "position": [
+        480,
+        -50
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
       "parameters": {
         "operation": "create",
         "tableId": "IBRASE_projetos",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "nome", "fieldValue": "={{ $json.body.nome_projeto }}" },
-            { "fieldId": "numero_proposta", "fieldValue": "={{ $json.body.numero_proposta }}" },
-            { "fieldId": "termo_fomento", "fieldValue": "={{ $json.body.termo_fomento }}" },
-            { "fieldId": "numero_processo_adm", "fieldValue": "={{ $json.body.numero_processo_adm }}" },
-            { "fieldId": "numero_transferegov", "fieldValue": "={{ $json.body.numero_transferegov }}" },
-            { "fieldId": "aplicabilidade", "fieldValue": "={{ $json.body.aplicabilidade }}" },
-            { "fieldId": "descricao", "fieldValue": "={{ $json.body.descricao }}" },
-            { "fieldId": "vigencia_inicio", "fieldValue": "={{ $json.body.vigencia_inicio }}" },
-            { "fieldId": "vigencia_fim", "fieldValue": "={{ $json.body.vigencia_termino }}" },
-            { "fieldId": "vigencia_termino", "fieldValue": "={{ $json.body.vigencia_termino }}" },
-            { "fieldId": "idade_min", "fieldValue": "={{ $json.body.idade_min }}" },
-            { "fieldId": "idade_max", "fieldValue": "={{ $json.body.idade_max }}" },
-            { "fieldId": "limites_cargos", "fieldValue": "={{ JSON.stringify($json.body.limites_cargos || []) }}" },
-            { "fieldId": "vagas_por_nucleo", "fieldValue": "={{ $json.body.vagas_por_nucleo }}" },
-            { "fieldId": "periodos_json", "fieldValue": "={{ JSON.stringify($json.body.periodos_json || []) }}" },
-            { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo }}" }
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nome_projeto }}"
+            },
+            {
+              "fieldId": "numero_proposta",
+              "fieldValue": "={{ $json.body.numero_proposta }}"
+            },
+            {
+              "fieldId": "termo_fomento",
+              "fieldValue": "={{ $json.body.termo_fomento }}"
+            },
+            {
+              "fieldId": "numero_processo_adm",
+              "fieldValue": "={{ $json.body.numero_processo_adm }}"
+            },
+            {
+              "fieldId": "numero_transferegov",
+              "fieldValue": "={{ $json.body.numero_transferegov }}"
+            },
+            {
+              "fieldId": "aplicabilidade",
+              "fieldValue": "={{ $json.body.aplicabilidade }}"
+            },
+            {
+              "fieldId": "descricao",
+              "fieldValue": "={{ $json.body.descricao }}"
+            },
+            {
+              "fieldId": "vigencia_inicio",
+              "fieldValue": "={{ $json.body.vigencia_inicio }}"
+            },
+            {
+              "fieldId": "vigencia_fim",
+              "fieldValue": "={{ $json.body.vigencia_termino }}"
+            },
+            {
+              "fieldId": "vigencia_termino",
+              "fieldValue": "={{ $json.body.vigencia_termino }}"
+            },
+            {
+              "fieldId": "idade_min",
+              "fieldValue": "={{ $json.body.idade_min }}"
+            },
+            {
+              "fieldId": "idade_max",
+              "fieldValue": "={{ $json.body.idade_max }}"
+            },
+            {
+              "fieldId": "limites_cargos",
+              "fieldValue": "={{ JSON.stringify($json.body.limites_cargos || []) }}"
+            },
+            {
+              "fieldId": "vagas_por_nucleo",
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
+            },
+            {
+              "fieldId": "periodos_json",
+              "fieldValue": "={{ JSON.stringify($json.body.periodos_json || []) }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo }}"
+            }
           ]
         }
       }
@@ -141,7 +299,10 @@
       "name": "Map IBRASE Limits",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [720, -50],
+      "position": [
+        720,
+        -50
+      ],
       "parameters": {
         "jsCode": "const projId = $input.first().json.id;\nconst body = $('Webhook POST').first().json.body;\nconst limites = body.limites_modalidade || body.limites_modalidades || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
       }
@@ -151,16 +312,37 @@
       "name": "Ins IBRASE Limits",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [960, -50],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } },
+      "position": [
+        960,
+        -50
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
       "parameters": {
         "operation": "create",
         "tableId": "IBRASE_projeto_modalidade_limites",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "projeto_id", "fieldValue": "={{ $json.projeto_id }}" },
-            { "fieldId": "modalidade_id", "fieldValue": "={{ $json.modalidade_id }}" },
-            { "fieldId": "limite", "fieldValue": "={{ $json.limite }}" }
+            {
+              "fieldId": "projeto_id",
+              "fieldValue": "={{ $json.projeto_id }}"
+            },
+            {
+              "fieldId": "modalidade_id",
+              "fieldValue": "={{ $json.modalidade_id }}"
+            },
+            {
+              "fieldId": "limite",
+              "fieldValue": "={{ $json.limite }}"
+            },
+            {
+              "fieldId": "vagas_por_nucleo",
+              "fieldValue": "={{ .body.vagas_por_nucleo }}"
+            }
           ]
         }
       }
@@ -170,38 +352,99 @@
       "name": "Respond IBRASE",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, 70],
-      "parameters": { "respondWith": "allIncomingItems", "options": {} }
+      "position": [
+        720,
+        70
+      ],
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      }
     },
-
     {
       "id": "ins-auni",
       "name": "SB AUNI POST",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, 200],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } },
+      "position": [
+        480,
+        200
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
       "parameters": {
         "operation": "create",
         "tableId": "AUNI_projetos",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "nome", "fieldValue": "={{ $json.body.nome_projeto }}" },
-            { "fieldId": "numero_proposta", "fieldValue": "={{ $json.body.numero_proposta }}" },
-            { "fieldId": "termo_fomento", "fieldValue": "={{ $json.body.termo_fomento }}" },
-            { "fieldId": "numero_processo_adm", "fieldValue": "={{ $json.body.numero_processo_adm }}" },
-            { "fieldId": "numero_transferegov", "fieldValue": "={{ $json.body.numero_transferegov }}" },
-            { "fieldId": "aplicabilidade", "fieldValue": "={{ $json.body.aplicabilidade }}" },
-            { "fieldId": "descricao", "fieldValue": "={{ $json.body.descricao }}" },
-            { "fieldId": "vigencia_inicio", "fieldValue": "={{ $json.body.vigencia_inicio }}" },
-            { "fieldId": "vigencia_fim", "fieldValue": "={{ $json.body.vigencia_termino }}" },
-            { "fieldId": "vigencia_termino", "fieldValue": "={{ $json.body.vigencia_termino }}" },
-            { "fieldId": "idade_min", "fieldValue": "={{ $json.body.idade_min }}" },
-            { "fieldId": "idade_max", "fieldValue": "={{ $json.body.idade_max }}" },
-            { "fieldId": "limites_cargos", "fieldValue": "={{ JSON.stringify($json.body.limites_cargos || []) }}" },
-            { "fieldId": "vagas_por_nucleo", "fieldValue": "={{ $json.body.vagas_por_nucleo }}" },
-            { "fieldId": "periodos_json", "fieldValue": "={{ JSON.stringify($json.body.periodos_json || []) }}" },
-            { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo }}" }
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nome_projeto }}"
+            },
+            {
+              "fieldId": "numero_proposta",
+              "fieldValue": "={{ $json.body.numero_proposta }}"
+            },
+            {
+              "fieldId": "termo_fomento",
+              "fieldValue": "={{ $json.body.termo_fomento }}"
+            },
+            {
+              "fieldId": "numero_processo_adm",
+              "fieldValue": "={{ $json.body.numero_processo_adm }}"
+            },
+            {
+              "fieldId": "numero_transferegov",
+              "fieldValue": "={{ $json.body.numero_transferegov }}"
+            },
+            {
+              "fieldId": "aplicabilidade",
+              "fieldValue": "={{ $json.body.aplicabilidade }}"
+            },
+            {
+              "fieldId": "descricao",
+              "fieldValue": "={{ $json.body.descricao }}"
+            },
+            {
+              "fieldId": "vigencia_inicio",
+              "fieldValue": "={{ $json.body.vigencia_inicio }}"
+            },
+            {
+              "fieldId": "vigencia_fim",
+              "fieldValue": "={{ $json.body.vigencia_termino }}"
+            },
+            {
+              "fieldId": "vigencia_termino",
+              "fieldValue": "={{ $json.body.vigencia_termino }}"
+            },
+            {
+              "fieldId": "idade_min",
+              "fieldValue": "={{ $json.body.idade_min }}"
+            },
+            {
+              "fieldId": "idade_max",
+              "fieldValue": "={{ $json.body.idade_max }}"
+            },
+            {
+              "fieldId": "limites_cargos",
+              "fieldValue": "={{ JSON.stringify($json.body.limites_cargos || []) }}"
+            },
+            {
+              "fieldId": "vagas_por_nucleo",
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
+            },
+            {
+              "fieldId": "periodos_json",
+              "fieldValue": "={{ JSON.stringify($json.body.periodos_json || []) }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo }}"
+            }
           ]
         }
       }
@@ -211,7 +454,10 @@
       "name": "Map AUNI Limits",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [720, 200],
+      "position": [
+        720,
+        200
+      ],
       "parameters": {
         "jsCode": "const projId = $input.first().json.id;\nconst body = $('Webhook POST').first().json.body;\nconst limites = body.limites_modalidade || body.limites_modalidades || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
       }
@@ -221,16 +467,37 @@
       "name": "Ins AUNI Limits",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [960, 200],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } },
+      "position": [
+        960,
+        200
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
       "parameters": {
         "operation": "create",
         "tableId": "AUNI_projeto_modalidade_limites",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "projeto_id", "fieldValue": "={{ $json.projeto_id }}" },
-            { "fieldId": "modalidade_id", "fieldValue": "={{ $json.modalidade_id }}" },
-            { "fieldId": "limite", "fieldValue": "={{ $json.limite }}" }
+            {
+              "fieldId": "projeto_id",
+              "fieldValue": "={{ $json.projeto_id }}"
+            },
+            {
+              "fieldId": "modalidade_id",
+              "fieldValue": "={{ $json.modalidade_id }}"
+            },
+            {
+              "fieldId": "limite",
+              "fieldValue": "={{ $json.limite }}"
+            },
+            {
+              "fieldId": "vagas_por_nucleo",
+              "fieldValue": "={{ .body.vagas_por_nucleo }}"
+            }
           ]
         }
       }
@@ -240,38 +507,99 @@
       "name": "Respond AUNI",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, 320],
-      "parameters": { "respondWith": "allIncomingItems", "options": {} }
+      "position": [
+        720,
+        320
+      ],
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      }
     },
-
     {
       "id": "ins-ivem",
       "name": "SB IVEM POST",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, 450],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } },
+      "position": [
+        480,
+        450
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
       "parameters": {
         "operation": "create",
         "tableId": "IVEM_projetos",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "nome", "fieldValue": "={{ $json.body.nome_projeto }}" },
-            { "fieldId": "numero_proposta", "fieldValue": "={{ $json.body.numero_proposta }}" },
-            { "fieldId": "termo_fomento", "fieldValue": "={{ $json.body.termo_fomento }}" },
-            { "fieldId": "numero_processo_adm", "fieldValue": "={{ $json.body.numero_processo_adm }}" },
-            { "fieldId": "numero_transferegov", "fieldValue": "={{ $json.body.numero_transferegov }}" },
-            { "fieldId": "aplicabilidade", "fieldValue": "={{ $json.body.aplicabilidade }}" },
-            { "fieldId": "descricao", "fieldValue": "={{ $json.body.descricao }}" },
-            { "fieldId": "vigencia_inicio", "fieldValue": "={{ $json.body.vigencia_inicio }}" },
-            { "fieldId": "vigencia_fim", "fieldValue": "={{ $json.body.vigencia_termino }}" },
-            { "fieldId": "vigencia_termino", "fieldValue": "={{ $json.body.vigencia_termino }}" },
-            { "fieldId": "idade_min", "fieldValue": "={{ $json.body.idade_min }}" },
-            { "fieldId": "idade_max", "fieldValue": "={{ $json.body.idade_max }}" },
-            { "fieldId": "limites_cargos", "fieldValue": "={{ JSON.stringify($json.body.limites_cargos || []) }}" },
-            { "fieldId": "vagas_por_nucleo", "fieldValue": "={{ $json.body.vagas_por_nucleo }}" },
-            { "fieldId": "periodos_json", "fieldValue": "={{ JSON.stringify($json.body.periodos_json || []) }}" },
-            { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo }}" }
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nome_projeto }}"
+            },
+            {
+              "fieldId": "numero_proposta",
+              "fieldValue": "={{ $json.body.numero_proposta }}"
+            },
+            {
+              "fieldId": "termo_fomento",
+              "fieldValue": "={{ $json.body.termo_fomento }}"
+            },
+            {
+              "fieldId": "numero_processo_adm",
+              "fieldValue": "={{ $json.body.numero_processo_adm }}"
+            },
+            {
+              "fieldId": "numero_transferegov",
+              "fieldValue": "={{ $json.body.numero_transferegov }}"
+            },
+            {
+              "fieldId": "aplicabilidade",
+              "fieldValue": "={{ $json.body.aplicabilidade }}"
+            },
+            {
+              "fieldId": "descricao",
+              "fieldValue": "={{ $json.body.descricao }}"
+            },
+            {
+              "fieldId": "vigencia_inicio",
+              "fieldValue": "={{ $json.body.vigencia_inicio }}"
+            },
+            {
+              "fieldId": "vigencia_fim",
+              "fieldValue": "={{ $json.body.vigencia_termino }}"
+            },
+            {
+              "fieldId": "vigencia_termino",
+              "fieldValue": "={{ $json.body.vigencia_termino }}"
+            },
+            {
+              "fieldId": "idade_min",
+              "fieldValue": "={{ $json.body.idade_min }}"
+            },
+            {
+              "fieldId": "idade_max",
+              "fieldValue": "={{ $json.body.idade_max }}"
+            },
+            {
+              "fieldId": "limites_cargos",
+              "fieldValue": "={{ JSON.stringify($json.body.limites_cargos || []) }}"
+            },
+            {
+              "fieldId": "vagas_por_nucleo",
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
+            },
+            {
+              "fieldId": "periodos_json",
+              "fieldValue": "={{ JSON.stringify($json.body.periodos_json || []) }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo }}"
+            }
           ]
         }
       }
@@ -281,7 +609,10 @@
       "name": "Map IVEM Limits",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [720, 450],
+      "position": [
+        720,
+        450
+      ],
       "parameters": {
         "jsCode": "const projId = $input.first().json.id;\nconst body = $('Webhook POST').first().json.body;\nconst limites = body.limites_modalidade || body.limites_modalidades || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
       }
@@ -291,16 +622,37 @@
       "name": "Ins IVEM Limits",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [960, 450],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } },
+      "position": [
+        960,
+        450
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      },
       "parameters": {
         "operation": "create",
         "tableId": "IVEM_projeto_modalidade_limites",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "projeto_id", "fieldValue": "={{ $json.projeto_id }}" },
-            { "fieldId": "modalidade_id", "fieldValue": "={{ $json.modalidade_id }}" },
-            { "fieldId": "limite", "fieldValue": "={{ $json.limite }}" }
+            {
+              "fieldId": "projeto_id",
+              "fieldValue": "={{ $json.projeto_id }}"
+            },
+            {
+              "fieldId": "modalidade_id",
+              "fieldValue": "={{ $json.modalidade_id }}"
+            },
+            {
+              "fieldId": "limite",
+              "fieldValue": "={{ $json.limite }}"
+            },
+            {
+              "fieldId": "vagas_por_nucleo",
+              "fieldValue": "={{ .body.vagas_por_nucleo }}"
+            }
           ]
         }
       }
@@ -310,57 +662,167 @@
       "name": "Respond IVEM",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, 570],
-      "parameters": { "respondWith": "allIncomingItems", "options": {} }
+      "position": [
+        720,
+        570
+      ],
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      }
     }
   ],
   "connections": {
     "Webhook POST": {
-      "main": [[{ "node": "Switch POST", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Switch POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Switch POST": {
       "main": [
-        [{ "node": "SB GASCTPNA POST", "type": "main", "index": 0 }],
-        [{ "node": "SB IBRASE POST", "type": "main", "index": 0 }],
-        [{ "node": "SB AUNI POST", "type": "main", "index": 0 }],
-        [{ "node": "SB IVEM POST", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "SB GASCTPNA POST",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB IBRASE POST",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB AUNI POST",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB IVEM POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "SB GASCTPNA POST": {
-      "main": [[
-        { "node": "Map GASCTPNA Limits", "type": "main", "index": 0 },
-        { "node": "Respond GASCTPNA", "type": "main", "index": 0 }
-      ]]
+      "main": [
+        [
+          {
+            "node": "Map GASCTPNA Limits",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond GASCTPNA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Map GASCTPNA Limits": {
-      "main": [[{ "node": "Ins GASCTPNA Limits", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Ins GASCTPNA Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "SB IBRASE POST": {
-      "main": [[
-        { "node": "Map IBRASE Limits", "type": "main", "index": 0 },
-        { "node": "Respond IBRASE", "type": "main", "index": 0 }
-      ]]
+      "main": [
+        [
+          {
+            "node": "Map IBRASE Limits",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond IBRASE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Map IBRASE Limits": {
-      "main": [[{ "node": "Ins IBRASE Limits", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Ins IBRASE Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "SB AUNI POST": {
-      "main": [[
-        { "node": "Map AUNI Limits", "type": "main", "index": 0 },
-        { "node": "Respond AUNI", "type": "main", "index": 0 }
-      ]]
+      "main": [
+        [
+          {
+            "node": "Map AUNI Limits",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond AUNI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Map AUNI Limits": {
-      "main": [[{ "node": "Ins AUNI Limits", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Ins AUNI Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "SB IVEM POST": {
-      "main": [[
-        { "node": "Map IVEM Limits", "type": "main", "index": 0 },
-        { "node": "Respond IVEM", "type": "main", "index": 0 }
-      ]]
+      "main": [
+        [
+          {
+            "node": "Map IVEM Limits",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond IVEM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Map IVEM Limits": {
-      "main": [[{ "node": "Ins IVEM Limits", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Ins IVEM Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "pinData": {},
