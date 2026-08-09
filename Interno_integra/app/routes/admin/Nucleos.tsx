@@ -142,9 +142,7 @@ export default function Nucleos() {
   const parseNucleosList = (rawData: any): NucleoItem[] => {
     const flatList = flattenResponse(rawData);
 
-    return flatList
-      .filter((item: any) => item.resp_nome !== "temp" && item.resp_email !== "temp@temp.temp")
-      .map((item, idx) => {
+    return flatList.map((item, idx) => {
       const id = item.id || item.id_nucleo || idx + 1;
       const nome = item.nome || item.nome_nucleo || `Núcleo ${id}`;
       const isAtivo = item.ativo !== false && item.ativo !== 0 && item.ativo !== "0";
@@ -231,11 +229,9 @@ export default function Nucleos() {
         }
         
         const parsed = parseNucleosList(data);
-        if (parsed.length > 0) {
-          setNucleos(parsed.sort((a, b) => Number(a.numero_vaga) - Number(b.numero_vaga)));
-          setLoading(false);
-          return;
-        }
+        setNucleos(parsed.sort((a, b) => Number(a.numero_vaga) - Number(b.numero_vaga)));
+        setLoading(false);
+        return;
       }
     } catch (e) {
       console.warn("Erro no Webhook N8N de Núcleos:", e);
