@@ -70,10 +70,21 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
           const rawInicio = item.vigencia_inicio || item.vigenciainicio || item.data_inicio_vigencia || item.data_inicio || item.dataInicioVigencia || item.vigencia?.dataInicio || item.vigencia?.inicio || "";
           const rawTermino = item.vigencia_fim || item.vigencia_termino || item.vigenciatermino || item.data_termino_vigencia || item.data_fim || item.dataTerminoVigencia || item.vigencia?.dataTermino || item.vigencia?.fim || "";
 
-          let mappedLimitesModalidade = parseModalidades(item.limites_modalidade) || 
-            parseModalidades(item.limites_modalidades) || 
-            parseModalidades(item.limitesModalidade) || 
-            parseModalidades(item.limitesModalidades);
+          let mappedLimitesModalidade = null;
+          const candidates = [
+            item.limites_modalidades,
+            item.limitesModalidades,
+            item.limites_modalidade,
+            item.limitesModalidade
+          ];
+          for (const cand of candidates) {
+            const parsed = parseModalidades(cand);
+            if (parsed && parsed.length > 0) {
+              mappedLimitesModalidade = parsed;
+              break;
+            }
+          }
+          if (!mappedLimitesModalidade) mappedLimitesModalidade = [];
 
           if (!mappedLimitesModalidade) {
             mappedLimitesModalidade = [];
