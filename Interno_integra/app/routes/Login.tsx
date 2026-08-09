@@ -30,8 +30,6 @@ export default function Login() {
 
     // 1. Tentar autenticação via Webhook n8n
     try {
-      console.log("Enviando requisição de login para n8n webhook https://w.ibrase.com.br/webhook/loginadmin ...");
-      
       const webhookUrl = `https://w.ibrase.com.br/webhook/loginadmin?username=${encodeURIComponent(cleanUser)}&password=${encodeURIComponent(cleanPass)}`;
       
       const res = await fetch(webhookUrl, {
@@ -45,12 +43,8 @@ export default function Login() {
         }),
       });
 
-      console.log("Status da resposta do n8n:", res.status, res.statusText);
-
       if (res.ok) {
         const text = await res.text();
-        console.log("Resposta do n8n webhook:", text);
-
         let data: any = null;
         try {
           data = JSON.parse(text);
@@ -86,7 +80,7 @@ export default function Login() {
       console.warn("N8N Webhook indisponível ou bloqueado por CORS. Executando fallback Supabase...", n8nErr);
     }
 
-    // 2. Fallback direto Supabase (caso o webhook do n8n falhe ou não responda)
+    // 2. Fallback direto Supabase
     try {
       let foundUser: any = null;
       let foundInstitute = "IBRASE";
@@ -153,59 +147,56 @@ export default function Login() {
   };
 
   return (
-    <div className="login-container w-full h-screen overflow-hidden flex items-center justify-center bg-[#f8fafc] p-4 text-[#0f172a]">
-      {/* ==========================================================================
-          FORMULÁRIO DE LOGIN CENTRALIZADO
-          ========================================================================== */}
-      <div className="login-viewport w-full max-w-[440px] bg-white flex flex-col justify-center px-10 py-10 rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50 relative z-20">
+    <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-50/70 p-4 sm:p-6 md:p-8 font-sans overflow-hidden">
+      
+      {/* Luzes decorativas sutis de fundo */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-500/5 blur-[120px] pointer-events-none rounded-full" />
+      <div className="absolute bottom-0 right-10 w-[400px] h-[300px] bg-emerald-500/5 blur-[100px] pointer-events-none rounded-full" />
+
+      {/* Card Principal Centralizado */}
+      <div className="w-full max-w-[450px] bg-white rounded-3xl border border-slate-200/80 shadow-2xl shadow-slate-900/5 p-7 sm:p-9 relative z-10 transition-all">
         
-        {/* Logo GIF Oficial da Marca (_prod_simbolo.gif) + Badge Admin */}
-        <div className="brand-header text-center mb-5 flex flex-col items-center justify-center w-full">
+        {/* Cabeçalho da Marca */}
+        <div className="flex flex-col items-center justify-center text-center mb-7">
           <img 
-            className="brand-symbol-gif h-[70px] w-auto object-contain mx-auto mb-1 block" 
+            className="h-16 sm:h-20 w-auto object-contain mb-2 block transition-transform hover:scale-105" 
             src="/_prod_simbolo.gif" 
             onError={(e) => { (e.target as any).src='/logo_integra_simbolo.gif'; }} 
             alt="INTEGRA Símbolo" 
           />
           <img 
-            className="brand-text-logo h-[24px] w-auto max-w-[200px] object-contain mx-auto mb-2 block" 
+            className="h-6 sm:h-7 w-auto max-w-[180px] object-contain mb-3 block" 
             src="/_prod_texto.png" 
             onError={(e) => { (e.target as any).src='/logo_integra_texto.png'; }} 
             alt="INTEGRA" 
           />
 
-          {/* Badge Distintiva do Admin */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-slate-100 rounded-full text-[11px] font-extrabold uppercase tracking-wider shadow-sm mt-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
-            Portal de Administração
+          {/* Badge Elegante */}
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-100 border border-slate-200/60 text-slate-700 text-[11px] font-extrabold uppercase tracking-wider shadow-2xs">
+            <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+            <span>Portal de Administração</span>
           </div>
-        </div>
-
-        {/* Barrinha Mobile das 4 Instituições (Exibida apenas em Celulares) */}
-        <div className="mobile-institutions-bar lg:hidden flex flex-wrap gap-1.5 justify-center mb-5">
-          <span className="mobile-inst-tag tag-ibrase">IBRASE ADMIN</span>
-          <span className="mobile-inst-tag tag-ivem">IVEM ADMIN</span>
-          <span className="mobile-inst-tag tag-gasctpna">GASCTPNA ADMIN</span>
-          <span className="mobile-inst-tag tag-auni">AUNI ADMIN</span>
         </div>
 
         {/* Banner de Erro */}
         {errorMsg && (
-          <div className="error-banner flex items-center gap-2 bg-[#fef2f2] text-[#ef4444] p-3 rounded-lg border border-[#fca5a5] text-sm font-medium mb-5 shadow-sm transform transition-all">
-            <AlertCircle className="w-[18px] h-[18px] shrink-0" />
+          <div className="flex items-center gap-2.5 bg-red-50 text-red-700 p-3.5 rounded-2xl border border-red-200 text-xs font-semibold mb-6 animate-fadeIn">
+            <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {/* Formulário */}
-        <form onSubmit={handleLogin} className="clean-form flex flex-col gap-4.5 w-full">
-          <div className="form-group flex flex-col gap-[6px]">
-            <label className="form-label text-[12px] font-bold text-[#1e293b] uppercase tracking-wider">Usuário ou E-mail Institucional</label>
-            <div className="input-wrapper relative flex items-center">
-              <User className="input-icon absolute left-3 text-[#94a3b8] w-[18px] h-[18px]" />
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+              Usuário ou E-mail Institucional
+            </label>
+            <div className="relative flex items-center">
+              <User className="absolute left-3.5 text-slate-400 w-4 h-4 pointer-events-none" />
               <input 
                 type="text" 
-                className="clean-input w-full h-[46px] pl-10 pr-4 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] text-[#0f172a] text-[14.5px] font-medium placeholder-[#94a3b8] focus:bg-white focus:border-[#1e40af] focus:ring-4 focus:ring-[#1e40af]/10 transition-all outline-none" 
+                className="w-full h-12 pl-10 pr-4 rounded-xl border border-slate-200 bg-slate-50/60 text-slate-900 text-sm font-medium placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none" 
                 placeholder="Digite seu usuário ou e-mail corporativo" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -214,13 +205,15 @@ export default function Login() {
             </div>
           </div>
 
-          <div className="form-group flex flex-col gap-[6px]">
-            <label className="form-label text-[12px] font-bold text-[#1e293b] uppercase tracking-wider">Senha de Acesso</label>
-            <div className="input-wrapper relative flex items-center">
-              <Lock className="input-icon absolute left-3 text-[#94a3b8] w-[18px] h-[18px]" />
+          <div className="space-y-1.5">
+            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+              Senha de Acesso
+            </label>
+            <div className="relative flex items-center">
+              <Lock className="absolute left-3.5 text-slate-400 w-4 h-4 pointer-events-none" />
               <input 
                 type={showPassword ? "text" : "password"} 
-                className="clean-input w-full h-[46px] pl-10 pr-[70px] rounded-xl border border-[#e2e8f0] bg-[#f8fafc] text-[#0f172a] text-[14.5px] font-medium placeholder-[#94a3b8] focus:bg-white focus:border-[#1e40af] focus:ring-4 focus:ring-[#1e40af]/10 transition-all outline-none" 
+                className="w-full h-12 pl-10 pr-24 rounded-xl border border-slate-200 bg-slate-50/60 text-slate-900 text-sm font-medium placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none" 
                 placeholder="••••••••" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -229,37 +222,50 @@ export default function Login() {
               <button 
                 type="button" 
                 onClick={() => setShowPassword(!showPassword)}
-                className="btn-toggle-pass absolute right-3 h-[28px] px-2 bg-white border border-[#e2e8f0] rounded-md text-[11px] font-bold text-[#64748b] uppercase tracking-wide flex items-center gap-[4px] hover:bg-[#f1f5f9] hover:text-[#0f172a] transition-colors"
+                className="absolute right-3 px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-2xs cursor-pointer"
               >
-                {showPassword ? <EyeOff className="w-[14px] h-[14px]" /> : <Eye className="w-[14px] h-[14px]" />} 
-                {showPassword ? "Ocultar" : "Ver"}
+                {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />} 
+                <span>{showPassword ? "Ocultar" : "Ver"}</span>
               </button>
             </div>
           </div>
 
-          <div className="form-options flex items-center justify-between mt-1">
-            <label className="remember-label flex items-center gap-2 cursor-pointer text-[13px] font-medium text-[#475569] hover:text-[#0f172a] select-none">
-              <input type="checkbox" className="w-[15px] h-[15px] rounded-[4px] border-[#cbd5e1] text-[#1e40af] focus:ring-[#1e40af]/20" />
-              Lembrar acesso neste computador
+          <div className="flex items-center justify-between pt-1 pb-1 text-xs font-medium">
+            <label className="flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900 select-none">
+              <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20" />
+              <span>Lembrar acesso</span>
             </label>
-            <a href="#" className="forgot-link text-[12.5px] font-bold text-[#1e40af] hover:text-[#1d4ed8] underline decoration-transparent hover:decoration-[#1d4ed8] transition-all" onClick={(e) => { e.preventDefault(); alert('Solicite a redefinição de senha ao administrador master do seu instituto.'); }}>Esqueceu a senha?</a>
+            <a 
+              href="#" 
+              className="font-bold text-blue-600 hover:text-blue-700 hover:underline transition-colors" 
+              onClick={(e) => { e.preventDefault(); alert('Solicite a redefinição de senha ao administrador do seu instituto.'); }}
+            >
+              Esqueceu a senha?
+            </a>
           </div>
 
           <button 
             type="submit" 
             disabled={isLoading}
-            className="btn-primary-login w-full h-[48px] mt-2 rounded-[14px] bg-slate-900 text-white text-[15px] font-bold flex items-center justify-center gap-2 shadow-[0_6px_20px_rgba(15,23,42,0.25)] hover:bg-slate-800 hover:shadow-[0_8px_25px_rgba(15,23,42,0.35)] hover:-translate-y-[1px] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-slate-900/15 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer mt-3"
           >
-            {isLoading ? "Autenticando Gestor..." : "Acessar Painel Administrativo"}
-            {!isLoading && <ArrowRight className="w-5 h-5 ml-1" />}
+            {isLoading ? "Autenticando..." : "Acessar Painel"}
+            {!isLoading && <ArrowRight className="w-4 h-4" />}
           </button>
         </form>
         
-        {/* Aviso de Privacidade e Segurança */}
-        <p className="privacy-notice text-[11.5px] text-[#94a3b8] text-center mt-6 leading-[1.6]">
-          🔒 <strong>Ambiente Corporativo Restrito</strong><br />
-          Tentativas de acesso não autorizadas são registradas e auditadas.
-        </p>
+        {/* Rodapé dos Institutos Suportados */}
+        <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+          <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">
+            Institutos Integrados
+          </p>
+          <div className="flex items-center justify-center gap-2.5 text-xs font-bold text-slate-600 flex-wrap">
+            <span className="px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200/60">IBRASE</span>
+            <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/60">GASCTPNA</span>
+            <span className="px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200/60">AUNI</span>
+            <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60">IVEM</span>
+          </div>
+        </div>
 
       </div>
     </div>
