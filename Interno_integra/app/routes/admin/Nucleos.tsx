@@ -168,15 +168,20 @@ export default function Nucleos() {
       }
 
       // 2. Resolver nome da modalidade
+      const espacoObj = item.espacos || (item.espaco_id ? espacosCache[Number(item.espaco_id)] : null);
+      const targetModId = item.modalidade_id || espacoObj?.modalidade_id;
+
       let modalidadeNome = "";
       if (item.modalidades?.nome) {
         modalidadeNome = item.modalidades.nome;
       } else if (item.modalidade_nome || item.modalidade) {
         modalidadeNome = item.modalidade_nome || item.modalidade;
-      } else if (item.modalidade_id && modalidadesCache[Number(item.modalidade_id)]) {
-        modalidadeNome = modalidadesCache[Number(item.modalidade_id)];
-      } else if (item.modalidade_id) {
-        modalidadeNome = `Modalidade ID ${item.modalidade_id}`;
+      } else if (espacoObj?.modalidade_nome || espacoObj?.modalidade) {
+        modalidadeNome = espacoObj.modalidade_nome || espacoObj.modalidade;
+      } else if (targetModId && modalidadesCache[Number(targetModId)]) {
+        modalidadeNome = modalidadesCache[Number(targetModId)];
+      } else if (targetModId) {
+        modalidadeNome = `Modalidade ID ${targetModId}`;
       } else {
         modalidadeNome = "—";
       }
@@ -209,7 +214,6 @@ export default function Nucleos() {
         respNome = "??? (Ajeitar depois)";
       }
 
-      const espacoObj = item.espacos || (item.espaco_id ? espacosCache[Number(item.espaco_id)] : null);
       const rua = item.rua || espacoObj?.rua;
       const num = item.numero || espacoObj?.numero;
       
@@ -454,7 +458,6 @@ export default function Nucleos() {
                   <th className="py-4 px-4 md:px-6">Modalidade</th>
                   <th className="py-4 px-4 md:px-6">Responsável Cedente</th>
                   <th className="py-4 px-4 md:px-6 text-center">Vaga (Slot)</th>
-                  <th className="py-4 px-4 md:px-6 text-center">Capacidade</th>
                   <th className="py-4 px-4 md:px-6 text-center">Status Físico</th>
                   <th className="py-4 px-4 md:px-6 w-28 text-center">Ações</th>
                 </tr>
@@ -509,12 +512,7 @@ export default function Nucleos() {
                         </span>
                       </td>
 
-                      {/* Capacidade (Vagas) */}
-                      <td className="py-4 md:py-5 px-4 md:px-6 text-center">
-                        <span className="font-bold text-slate-800 text-sm md:text-base">
-                          {(item as any).vagas || "Não def."}
-                        </span>
-                      </td>
+
 
                       {/* Status Físico (Ativo/Inativo) */}
                       <td className="py-4 md:py-5 px-4 md:px-6 text-center">

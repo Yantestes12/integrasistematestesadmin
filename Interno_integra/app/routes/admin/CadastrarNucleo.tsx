@@ -389,21 +389,7 @@ export default function CadastrarNucleo() {
             </span>
           </div>
 
-          {/* CAMPO DE CAPACIDADE (VAGAS) */}
-          <div className="pt-2">
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Capacidade do Núcleo (Quantidade de Vagas)
-            </label>
-            <input
-              type="number"
-              {...register("vagas")}
-              placeholder="Ex: 100"
-              className="w-full sm:w-1/3 bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            <span className="text-[11px] text-slate-400 mt-1 block">
-              Quantidade de alunos que este núcleo pode comportar.
-            </span>
-          </div>
+
 
           {/* CARD DE INFORMAÇÕES AUTOMÁTICAS HERDADAS DO ESPAÇO */}
           {selectedEspaco && (
