@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Plus, Search, Edit3, Power, Loader2, Layers, Building2, Trash2, AlertTriangle, Clock, X } from "lucide-react";
+import { Plus, Search, Edit3, Loader2, Layers, Building2, Trash2, AlertTriangle, Clock, X, FileText } from "lucide-react";
 
 export interface IniciativaItem {
   id: string | number;
@@ -22,11 +22,12 @@ export default function Iniciativas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentInstitute, setCurrentInstitute] = useState("IBRASE");
 
-  // Estado do Modal de Confirmação com Contagem de 10 Segundos
+  // Estado do Modal de Confirmação com Contagem de 10 Segundos e Animação de Papel Rasgando
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedIniciativa, setSelectedIniciativa] = useState<IniciativaItem | null>(null);
   const [countdown, setCountdown] = useState(10);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isTearing, setIsTearing] = useState(false);
 
   useEffect(() => {
     const savedInstitute = localStorage.getItem("auth_institute") || "IBRASE";
@@ -138,44 +139,53 @@ export default function Iniciativas() {
   const openDeleteModal = (item: IniciativaItem) => {
     setSelectedIniciativa(item);
     setCountdown(10);
+    setIsTearing(false);
     setDeleteModalOpen(true);
   };
 
   const closeDeleteModal = () => {
+    if (isDeleting) return;
     setDeleteModalOpen(false);
     setSelectedIniciativa(null);
     setCountdown(10);
+    setIsTearing(false);
   };
 
   const handleConfirmDelete = async () => {
-    if (!selectedIniciativa || countdown > 0) return;
+    if (!selectedIniciativa || countdown > 0 || isDeleting) return;
     setIsDeleting(true);
+    setIsTearing(true); // Inicia animação visual de rasgar o papel
 
-    try {
-      let res = await fetch("https://w.ibrase.com.br/webhook/projetos-delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: selectedIniciativa.id, instituto: currentInstitute.toUpperCase() }),
-      });
-
-      if (!res.ok) {
-        res = await fetch(`https://w.ibrase.com.br/webhook/projetos-delete?id=${selectedIniciativa.id}&instituto=${currentInstitute.toUpperCase()}`, {
-          method: "DELETE",
+    // Aguarda a animação de rasgar o papel terminar (1100ms)
+    setTimeout(async () => {
+      try {
+        let res = await fetch("https://w.ibrase.com.br/webhook/projetos-delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: selectedIniciativa.id, instituto: currentInstitute.toUpperCase() }),
         });
-      }
 
-      if (res.ok) {
-        setIniciativas(prev => prev.filter(item => item.id !== selectedIniciativa.id));
-        closeDeleteModal();
-      } else {
-        alert("Erro ao excluir iniciativa via N8N. Importe o novo fluxo N8N_PROJETOS_DELETE no seu N8N.");
+        if (!res.ok) {
+          res = await fetch(`https://w.ibrase.com.br/webhook/projetos-delete?id=${selectedIniciativa.id}&instituto=${currentInstitute.toUpperCase()}`, {
+            method: "DELETE",
+          });
+        }
+
+        if (res.ok) {
+          setIniciativas(prev => prev.filter(item => item.id !== selectedIniciativa.id));
+          setDeleteModalOpen(false);
+          setSelectedIniciativa(null);
+        } else {
+          alert("Erro ao excluir iniciativa via N8N. Importe o novo fluxo N8N_PROJETOS_DELETE no seu N8N.");
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Erro ao conectar com o servidor para excluir.");
+      } finally {
+        setIsDeleting(false);
+        setIsTearing(false);
       }
-    } catch (e) {
-      console.error(e);
-      alert("Erro ao conectar com o servidor para excluir.");
-    } finally {
-      setIsDeleting(false);
-    }
+    }, 1100);
   };
 
   const filteredIniciativas = iniciativas.filter((item) =>
@@ -186,6 +196,29 @@ export default function Iniciativas() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans">
       
+      {/* Estilos customizados para a animação do papel rasgando */}
+      <style>{`
+        @keyframes tearLeftAnim {
+          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+          40% { transform: translateY(12px) translateX(-18px) rotate(-14deg); opacity: 0.95; }
+          100% { transform: translateY(100px) translateX(-45px) rotate(-35deg) scale(0.4); opacity: 0; }
+        }
+        @keyframes tearRightAnim {
+          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+          40% { transform: translateY(12px) translateX(18px) rotate(14deg); opacity: 0.95; }
+          100% { transform: translateY(100px) translateX(45px) rotate(35deg) scale(0.4); opacity: 0; }
+        }
+        @keyframes trashLidAnim {
+          0% { transform: rotate(0deg); }
+          30% { transform: rotate(-35deg) translateY(-6px); }
+          75% { transform: rotate(-35deg) translateY(-6px); }
+          100% { transform: rotate(0deg); }
+        }
+        .anim-tear-left { animation: tearLeftAnim 1.1s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .anim-tear-right { animation: tearRightAnim 1.1s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .anim-trash-lid { animation: trashLidAnim 1.1s ease-in-out forwards; transform-origin: left bottom; }
+      `}</style>
+
       {/* Top Banner / Breadcrumb */}
       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -286,7 +319,6 @@ export default function Iniciativas() {
                           {item.nome}
                         </span>
                         
-                        {/* Exibe APENAS se é Evento ou Projeto de Aula */}
                         <span className={`inline-block mt-2 px-3 py-1 rounded text-xs font-extrabold uppercase tracking-wider ${
                           isEvento ? 'bg-orange-100 text-orange-800 border border-orange-200' : 'bg-blue-100 text-blue-800 border border-blue-200'
                         }`}>
@@ -354,20 +386,20 @@ export default function Iniciativas() {
         )}
       </div>
 
-      {/* Modal de Confirmação com Contagem de 10 Segundos */}
+      {/* Modal de Confirmação com Animação de Folha de Papel Rasgando e Trava de 10s */}
       {deleteModalOpen && selectedIniciativa && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-5 animate-in fade-in zoom-in duration-150">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in duration-200">
             
             {/* Header do Modal */}
-            <div className="flex items-start justify-between gap-3">
-              <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
-                <AlertTriangle size={22} />
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold">
+                  <AlertTriangle size={18} />
+                </div>
+                <h3 className="text-base font-extrabold text-slate-800">Excluir Iniciativa</h3>
               </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-slate-900">Excluir Iniciativa</h3>
-                <p className="text-xs text-slate-500">Confirmação de segurança</p>
-              </div>
+
               <button
                 onClick={closeDeleteModal}
                 disabled={isDeleting}
@@ -377,24 +409,71 @@ export default function Iniciativas() {
               </button>
             </div>
 
-            {/* Corpo com aviso e aviso dos 10s */}
-            <div className="space-y-3 text-sm text-slate-600">
-              <p>
-                Tem certeza que deseja excluir a iniciativa <strong className="text-slate-800 font-extrabold">"{selectedIniciativa.nome}"</strong>?
-              </p>
-              <div className="bg-amber-50 border border-amber-200/80 p-3 rounded-xl text-amber-900 text-xs font-medium space-y-1">
-                <div className="flex items-center gap-1.5 font-bold text-amber-800">
-                  <Clock size={14} className="text-amber-600" />
-                  <span>Trava de SegurançaAtiva ({countdown}s)</span>
+            {/* ÁREA DA ANIMAÇÃO DO PAPEL RASGANDO */}
+            <div className="relative py-4 flex flex-col items-center justify-center min-h-[190px]">
+              
+              {!isTearing ? (
+                /* Papel Inteiro antes de rasgar */
+                <div className="w-full max-w-[280px] bg-amber-50/90 border-2 border-amber-200/80 rounded-xl p-4 shadow-sm relative rotate-[-1deg] transition-all hover:rotate-0">
+                  {/* Fita adesiva / Durex no topo */}
+                  <div className="w-12 h-3 bg-amber-200/60 backdrop-blur-xs absolute -top-1.5 left-1/2 -translate-x-1/2 rounded-xs shadow-2xs border border-amber-300/40" />
+                  
+                  <div className="flex items-center gap-2 text-amber-800 text-xs font-bold uppercase tracking-wider mb-1">
+                    <FileText size={14} className="text-amber-600" />
+                    <span>{currentInstitute} • Ficha do Projeto</span>
+                  </div>
+
+                  <h4 className="text-slate-900 font-black text-base line-clamp-2 border-b border-amber-200/60 pb-2 mb-2">
+                    {selectedIniciativa.nome}
+                  </h4>
+
+                  <p className="text-xs text-amber-900/70 font-medium">
+                    {selectedIniciativa.termo_fomento ? `Termo: ${selectedIniciativa.termo_fomento}` : 'Iniciativa cadastrada no sistema'}
+                  </p>
                 </div>
-                <p>
-                  Para evitar exclusões acidentais, aguarde os <strong className="font-extrabold">{countdown} segundos</strong> antes de confirmar a exclusão.
-                </p>
-              </div>
+              ) : (
+                /* Papel Rasgando em 2 metades + Lixeira */
+                <div className="relative w-full h-[180px] flex flex-col items-center justify-between">
+                  {/* Metade Esquerda do Papel */}
+                  <div className="absolute left-6 top-0 w-[125px] bg-amber-50 border-2 border-amber-200 rounded-l-xl p-3 shadow-md anim-tear-left overflow-hidden">
+                    <div className="text-[10px] text-amber-800 font-bold uppercase">Projeto</div>
+                    <div className="text-xs font-black text-slate-800 truncate">{selectedIniciativa.nome}</div>
+                  </div>
+
+                  {/* Metade Direita do Papel */}
+                  <div className="absolute right-6 top-0 w-[125px] bg-amber-50 border-2 border-amber-200 rounded-r-xl p-3 shadow-md anim-tear-right overflow-hidden border-l-dashed border-l-amber-300">
+                    <div className="text-[10px] text-amber-800 font-bold uppercase">Excluindo...</div>
+                    <div className="text-xs font-black text-slate-800 truncate">{selectedIniciativa.nome}</div>
+                  </div>
+
+                  {/* Ícone da Lixeira Abrindo a Tampa */}
+                  <div className="mt-auto flex flex-col items-center text-red-500">
+                    <div className="anim-trash-lid mb-0.5">
+                      <div className="w-10 h-2 bg-red-500 rounded-t-md shadow-xs mx-auto" />
+                    </div>
+                    <div className="w-12 h-14 bg-red-600 text-white rounded-b-xl flex items-center justify-center shadow-lg border-2 border-red-700">
+                      <Trash2 size={24} className="animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Mensagem e Trava de 10s */}
+              {!isTearing && (
+                <div className="mt-4 w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-center space-y-1">
+                  <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-amber-700">
+                    <Clock size={14} className="text-amber-600" />
+                    <span>Trava de Segurança: {countdown > 0 ? `Aguarde ${countdown}s` : "Liberado para excluir"}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    {countdown > 0 ? "Aguarde a contagem regressiva para confirmar a exclusão." : "Clique no botão abaixo para rasgar a ficha e excluir."}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Botões de Ação */}
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={closeDeleteModal}
@@ -408,10 +487,10 @@ export default function Iniciativas() {
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={countdown > 0 || isDeleting}
-                className={`px-5 py-2.5 rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-2 ${
+                className={`px-5 py-2.5 rounded-xl font-extrabold text-xs shadow-sm transition-all flex items-center gap-2 ${
                   countdown > 0 || isDeleting
-                    ? "bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300"
-                    : "bg-red-600 hover:bg-red-700 text-white cursor-pointer shadow-red-600/20 shadow-md animate-pulse"
+                    ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
+                    : "bg-red-600 hover:bg-red-700 text-white cursor-pointer shadow-red-600/20 shadow-md animate-bounce"
                 }`}
               >
                 {isDeleting ? (
@@ -424,7 +503,7 @@ export default function Iniciativas() {
                   </>
                 ) : (
                   <>
-                    <Trash2 size={14} /> Confirmar Exclusão
+                    <Trash2 size={14} /> Confirmar & Rasgar Ficha
                   </>
                 )}
               </button>

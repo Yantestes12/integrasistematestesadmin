@@ -1,138 +1,75 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Plus, Search, Edit3, Power, Loader2, MapPin, Building2, User, CheckCircle2, Circle, Clock, Inbox, AlertTriangle, Trash2 } from "lucide-react";
+import { Plus, Search, Edit3, Power, CheckCircle2, Clock, MapPin, Building2, User, Phone, FileText, AlertCircle, AlertTriangle, Trash2, Loader2, X, Home } from "lucide-react";
 
 export interface EspacoItem {
-  id: string | number;
-  nome: string;
+  id: number;
   projeto_id?: number;
-  projeto_nome?: string;
   modalidade_id?: number;
-  modalidade_nome?: string;
+  nome: string;
+  resp_cpf?: string;
+  resp_cnpj?: string;
   resp_nome?: string;
+  resp_email?: string;
+  resp_telefone?: string;
+  cep?: string;
+  rua?: string;
+  numero?: string;
   bairro?: string;
+  ponto_referencia?: string;
   cidade?: string;
   uf?: string;
-  ativo: boolean;
-  status_aprovacao?: string; // "aprovado" | "pendente" | "rejeitado"
+  horarios?: any;
+  foto_url?: string;
+  termo_url?: string;
+  ativo?: boolean;
+  status_aprovacao?: string; // 'aprovado' | 'pendente' | 'rejeitado'
   docs_pendentes?: boolean;
-  nucleo_nome?: string; // Nome do núcleo se estiver em uso
+  projeto_nome?: string;
+  created_at?: string;
 }
-
-let projetosCache: Record<number, string> = {};
-let modalidadesCache: Record<number, string> = {};
-
-const flattenResponse = (data: any): any[] => {
-  if (!data) return [];
-  let list: any[] = Array.isArray(data) ? data : data.data || data.items || (Array.isArray(data.json) ? data.json : data.json ? [data.json] : [data]);
-  let flat: any[] = [];
-  list.forEach((entry: any) => {
-    if (entry?.json) {
-      Array.isArray(entry.json) ? flat.push(...entry.json) : flat.push(entry.json);
-    } else if (Array.isArray(entry)) {
-      flat.push(...entry);
-    } else {
-      flat.push(entry);
-    }
-  });
-  return flat;
-};
 
 export default function Espacos() {
   const [espacos, setEspacos] = useState<EspacoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentInstitute, setCurrentInstitute] = useState("IBRASE");
-  const [activeTab, setActiveTab] = useState<"aprovados" | "solicitacoes">("aprovados");
-  const [togglingId, setTogglingId] = useState<string | number | null>(null);
-  const [approvingId, setApprovingId] = useState<string | number | null>(null);
-  const [markingPendingId, setMarkingPendingId] = useState<string | number | null>(null);
-  const [deletingId, setDeletingId] = useState<string | number | null>(null);
+  const [activeTab, setActiveTab] = useState<"cadastrados" | "solicitacoes">("cadastrados");
+  const [togglingId, setTogglingId] = useState<number | null>(null);
+  const [approvingId, setApprovingId] = useState<number | null>(null);
+  const [markingPendingId, setMarkingPendingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  useEffect(() => {
-    const savedInstitute = localStorage.getItem("auth_institute") || "IBRASE";
-    setCurrentInstitute(savedInstitute);
-    Promise.all([
-      fetchProjetos(savedInstitute),
-      fetchModalidades(savedInstitute)
-    ]).then(() => {
-      fetchEspacos(savedInstitute);
-    });
-  }, []);
+  // Modal de Exclusão Animação Minimalista (Estrutura Desmoronando/Desfazendo)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedDeleteEspaco, setSelectedDeleteEspaco] = useState<EspacoItem | null>(null);
+  const [isCollapsing, setIsCollapsing] = useState(false);
 
-  const fetchProjetos = async (inst: string) => {
-    try {
-      const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${inst.toUpperCase()}`);
-      if (res.ok) {
-        const data = await res.json();
-        projetosCache = {};
-        flattenResponse(data).forEach((p: any) => { if (p.id && p.nome) projetosCache[Number(p.id)] = p.nome; });
-      }
-    } catch (e) { console.warn("Erro projetos:", e); }
-  };
-
-  const fetchModalidades = async (inst: string) => {
-    try {
-      const res = await fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${inst.toUpperCase()}`);
-      if (res.ok) {
-        const data = await res.json();
-        modalidadesCache = {};
-        flattenResponse(data).forEach((m: any) => { if (m.id && m.nome) modalidadesCache[Number(m.id)] = m.nome; });
-      }
-    } catch (e) { console.warn("Erro modalidades:", e); }
-  };
-
-  const fetchEspacos = async (inst: string) => {
+  const fetchEspacos = async () => {
     setLoading(true);
     try {
-      const [resEspacos, resNucleos] = await Promise.all([
-        fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${inst.toUpperCase()}`),
-        fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst.toUpperCase()}`).catch(() => null)
-      ]);
-
-      let nucleosMap: Record<string, string> = {};
-      if (resNucleos && resNucleos.ok) {
-        const nData = await resNucleos.json();
-        flattenResponse(nData).forEach((n: any) => {
-          if (n.espaco_id) nucleosMap[String(n.espaco_id)] = n.nome || `Núcleo #${n.id}`;
-        });
-      }
-
-      if (resEspacos.ok) {
-        const data = await resEspacos.json();
-        const list = flattenResponse(data);
-        setEspacos(list.map((e: any) => {
-          const statusStr = String(e.status_aprovacao || "").toLowerCase().trim();
-          const isPendenteStatus = statusStr === "pendente";
-          
-          // Verifica se falta documento ou se a flag docs_pendentes é verdadeira
-          const temDocOuFotoFaltando = !e.foto_url || !e.termo_url;
-          const isDocsPendentes = Boolean(
-            e.docs_pendentes === true ||
-            e.docs_pendentes === "true" ||
-            e.docs_pendentes === 1 ||
-            e.docs_pendentes === "1" ||
-            e.docs_pendentes === "t" ||
-            temDocOuFotoFaltando
-          );
+      const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
+      const res = await fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${authInstitute.toUpperCase()}`);
+      if (res.ok) {
+        const data = await res.json();
+        let rawList: any[] = [];
+        if (Array.isArray(data)) rawList = data;
+        else if (data && Array.isArray(data.data)) rawList = data.data;
+        else if (data && data.json) rawList = Array.isArray(data.json) ? data.json : [data.json];
+        
+        const list = rawList.map((item: any) => {
+          const status = (item.status_aprovacao || "aprovado").toString().toLowerCase().trim();
+          const fotoOk = !!(item.foto_url && item.foto_url.trim().length > 0);
+          const termoOk = !!(item.termo_url && item.termo_url.trim().length > 0);
+          const docsPerto = item.docs_pendentes === true || (!fotoOk || !termoOk);
 
           return {
-            id: e.id,
-            nome: e.nome || "",
-            projeto_id: e.projeto_id,
-            projeto_nome: e.projeto_id ? projetosCache[Number(e.projeto_id)] || `Projeto ID ${e.projeto_id}` : "—",
-            modalidade_id: e.modalidade_id,
-            modalidade_nome: e.modalidade_id ? modalidadesCache[Number(e.modalidade_id)] || `Modalidade ID ${e.modalidade_id}` : "—",
-            resp_nome: e.resp_nome || "—",
-            bairro: e.bairro || "",
-            cidade: e.cidade || "",
-            uf: e.uf || "",
-            ativo: e.ativo !== false && e.ativo !== 0 && e.ativo !== "0",
-            status_aprovacao: isPendenteStatus ? "pendente" : "aprovado",
-            docs_pendentes: isDocsPendentes,
-            nucleo_nome: nucleosMap[String(e.id)] || undefined,
+            ...item,
+            status_aprovacao: status,
+            docs_pendentes: docsPerto,
           };
-        }));
+        });
+
+        setEspacos(list);
       }
     } catch (e) {
       console.error("Erro ao buscar espaços:", e);
@@ -140,6 +77,10 @@ export default function Espacos() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchEspacos();
+  }, []);
 
   const handleToggleAtivo = async (espaco: EspacoItem) => {
     setTogglingId(espaco.id);
@@ -207,27 +148,47 @@ export default function Espacos() {
     }
   };
 
-  const handleDeleteEspaco = async (espaco: EspacoItem) => {
-    if (!window.confirm(`Tem certeza que deseja excluir permanentemente o espaço "${espaco.nome}"?`)) return;
-    setDeletingId(espaco.id);
-    try {
-      const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
-      const res = await fetch("https://w.ibrase.com.br/webhook/espacos-delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: espaco.id, instituto: authInstitute.toUpperCase() }),
-      });
-      if (res.ok) {
-        setEspacos(prev => prev.filter(e => e.id !== espaco.id));
-      } else {
-        alert("Erro ao excluir espaço. Tente novamente.");
+  const openDeleteModal = (espaco: EspacoItem) => {
+    setSelectedDeleteEspaco(espaco);
+    setIsCollapsing(false);
+    setDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    if (deletingId) return;
+    setDeleteModalOpen(false);
+    setSelectedDeleteEspaco(null);
+    setIsCollapsing(false);
+  };
+
+  const handleConfirmDeleteEspaco = async () => {
+    if (!selectedDeleteEspaco || deletingId) return;
+    setDeletingId(selectedDeleteEspaco.id);
+    setIsCollapsing(true); // Ativa animação minimalista de desmoronamento/desfazimento
+
+    setTimeout(async () => {
+      try {
+        const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
+        const res = await fetch("https://w.ibrase.com.br/webhook/espacos-delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: selectedDeleteEspaco.id, instituto: authInstitute.toUpperCase() }),
+        });
+        if (res.ok) {
+          setEspacos(prev => prev.filter(e => e.id !== selectedDeleteEspaco.id));
+          setDeleteModalOpen(false);
+          setSelectedDeleteEspaco(null);
+        } else {
+          alert("Erro ao excluir espaço. Tente novamente.");
+        }
+      } catch (e) {
+        console.error("Erro ao excluir espaço:", e);
+        alert("Erro ao conectar com o servidor.");
+      } finally {
+        setDeletingId(null);
+        setIsCollapsing(false);
       }
-    } catch (e) {
-      console.error("Erro ao excluir espaço:", e);
-      alert("Erro ao conectar com o servidor.");
-    } finally {
-      setDeletingId(null);
-    }
+    }, 950);
   };
 
   // 🔴 REGRA CRÍTICA: Separação ESTRITA por status_aprovacao
@@ -246,255 +207,239 @@ export default function Espacos() {
 
   return (
     <div className="space-y-6 font-sans">
+      
+      {/* Keyframes de animação de desmoronamento minimalista de estrutura */}
+      <style>{`
+        @keyframes collapseAnim {
+          0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; filter: blur(0px); }
+          40% { transform: translateY(8px) scale(0.96) rotate(-2deg); opacity: 0.85; }
+          75% { transform: translateY(35px) scale(0.7, 0.3) rotate(3deg); opacity: 0.4; filter: blur(2px); }
+          100% { transform: translateY(70px) scale(0.4, 0.05); opacity: 0; filter: blur(4px); }
+        }
+        @keyframes dustAnim {
+          0% { transform: translateY(0) scale(0.4); opacity: 0; }
+          50% { transform: translateY(-25px) scale(1.3); opacity: 0.5; }
+          100% { transform: translateY(-55px) scale(2); opacity: 0; }
+        }
+        .anim-collapse-building { animation: collapseAnim 0.95s cubic-bezier(0.55, 0, 0.1, 1) forwards; }
+        .anim-dust-rising { animation: dustAnim 0.95s ease-out forwards; }
+      `}</style>
+
       {/* Header */}
       <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider border border-slate-200">
-              {currentInstitute}
-            </span>
-            <span className="text-slate-400 text-xs font-medium">• Módulo Administrativo</span>
+            <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Módulo Operacional</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 flex items-center gap-2">
-            <Building2 className="w-6 h-6 text-[var(--theme-primary)]" />
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             Espaços Físicos
           </h1>
           <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
-            Locais cadastrados nos bairros para o instituto <strong className="text-slate-800">{currentInstitute}</strong>.
+            Gerencie os locais cadastrados e acompanhe solicitações de novos espaços.
           </p>
         </div>
+
         <Link
           to="/admin/cadastrar-espaco"
-          className="inline-flex items-center gap-2 bg-[var(--theme-primary)] hover:opacity-90 text-white font-bold px-4 py-2.5 rounded-xl shadow-sm transition-all text-sm shrink-0"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 text-xs sm:text-sm shrink-0"
         >
-          <Plus size={18} />
-          Cadastrar Espaço
+          <Plus size={16} />
+          <span>Cadastrar Espaço</span>
         </Link>
       </div>
 
-      {/* Navegação por Abas (Espaços Aprovados vs Solicitações de Espaço) */}
-      <div className="flex items-center gap-3 border-b border-slate-200 pb-1">
-        <button
-          onClick={() => setActiveTab("aprovados")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${
-            activeTab === "aprovados"
-              ? "bg-[var(--theme-primary)] text-white shadow-sm"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-          }`}
-        >
-          <Building2 size={16} />
-          Espaços Cadastrados ({espacosAprovados.length})
-        </button>
+      {/* Tabs & Busca */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          
+          {/* Navegação de Abas */}
+          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+            <button
+              onClick={() => setActiveTab("cadastrados")}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-2 ${
+                activeTab === "cadastrados"
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <Building2 size={15} />
+              <span>Espaços Cadastrados</span>
+              <span className={`px-2 py-0.5 rounded-full text-[11px] font-black ${
+                activeTab === "cadastrados" ? "bg-blue-100 text-blue-700" : "bg-slate-200 text-slate-600"
+              }`}>
+                {espacosAprovados.length}
+              </span>
+            </button>
 
-        <button
-          onClick={() => setActiveTab("solicitacoes")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all relative ${
-            activeTab === "solicitacoes"
-              ? "bg-amber-500 text-white shadow-sm"
-              : "bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100"
-          }`}
-        >
-          <Inbox size={16} />
-          Solicitações de Espaço
-          {solicitacoesPendentes.length > 0 && (
-            <span className={`px-2 py-0.5 text-[11px] font-extrabold rounded-full ${
-              activeTab === "solicitacoes" ? "bg-white text-amber-700" : "bg-amber-500 text-white"
-            }`}>
-              {solicitacoesPendentes.length}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* Busca e Barra de Estatísticas */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-4 flex-wrap">
-        <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-          <input
-            type="text"
-            placeholder={activeTab === "solicitacoes" ? "Buscar solicitações pendentes..." : "Buscar por bairro, nome ou responsável..."}
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)]/30 focus:border-[var(--theme-primary)]"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-        </div>
-        {activeTab === "aprovados" ? (
-          <div className="flex items-center gap-2 sm:gap-3 text-xs font-semibold flex-wrap">
-            <span className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5 whitespace-nowrap">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-              Em Uso ({espacosAprovados.filter(e => e.nucleo_nome).length})
-            </span>
-            <span className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1.5 whitespace-nowrap">
-              <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
-              Disponíveis para Núcleo ({espacosAprovados.filter(e => !e.nucleo_nome).length})
-            </span>
+            <button
+              onClick={() => setActiveTab("solicitacoes")}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-2 ${
+                activeTab === "solicitacoes"
+                  ? "bg-white text-amber-900 shadow-xs"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <Clock size={15} className={solicitacoesPendentes.length > 0 ? "text-amber-500 animate-pulse" : ""} />
+              <span>Solicitações de Espaço</span>
+              {solicitacoesPendentes.length > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-black bg-amber-100 text-amber-800 border border-amber-200">
+                  {solicitacoesPendentes.length}
+                </span>
+              )}
+            </button>
           </div>
-        ) : (
-          <div className="flex items-center gap-2 text-xs font-semibold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200">
-            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-            <span>Espaços pendentes NÃO ficam disponíveis para criar Núcleos até a aprovação</span>
+
+          {/* Campo de Busca */}
+          <div className="relative w-full sm:w-72">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Buscar por nome, bairro..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            />
+          </div>
+        </div>
+
+        {/* Banner Informativo da Aba */}
+        {activeTab === "solicitacoes" && (
+          <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3.5 flex items-start gap-3 text-xs text-amber-900">
+            <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <strong className="font-extrabold block text-amber-950">Solicitações de Espaço Físico Pendentes</strong>
+              Estes espaços foram cadastrados ou solicitados mas ainda aguardam aprovação. Enquanto estiverem pendentes, eles <strong>NÃO</strong> aparecem disponíveis para alocação de Núcleos.
+            </div>
           </div>
         )}
       </div>
 
-      {/* Grid de Cards Quadrados */}
+      {/* Lista de Espaços */}
       {loading ? (
-        <div className="flex items-center justify-center py-20 gap-3 text-slate-500 bg-white rounded-2xl border border-slate-200 shadow-sm">
-          <Loader2 className="animate-spin w-5 h-5 text-[var(--theme-primary)]" />
-          <span className="text-sm font-medium">Carregando espaços...</span>
+        <div className="bg-white p-12 rounded-2xl border border-slate-200 shadow-sm text-center space-y-3">
+          <Loader2 size={32} className="animate-spin text-blue-600 mx-auto" />
+          <p className="text-slate-500 text-xs font-semibold">Carregando espaços físicos...</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-white rounded-2xl border border-slate-200 shadow-sm">
-          <Building2 className="w-12 h-12 mb-3 opacity-30" />
-          <p className="text-sm font-medium">
-            {activeTab === "solicitacoes" ? "Nenhuma solicitação de espaço pendente no momento." : "Nenhum espaço cadastrado."}
+        <div className="bg-white p-12 rounded-2xl border border-slate-200 shadow-sm text-center space-y-3">
+          <Building2 size={40} className="text-slate-300 mx-auto" />
+          <h3 className="text-base font-bold text-slate-700">Nenhum espaço encontrado</h3>
+          <p className="text-slate-400 text-xs max-w-sm mx-auto">
+            {activeTab === "solicitacoes"
+              ? "Não existem solicitações de espaço pendentes no momento."
+              : "Nenhum espaço físico cadastrado corresponde aos critérios da busca."}
           </p>
-          {activeTab === "aprovados" && (
-            <Link to="/admin/cadastrar-espaco" className="mt-4 text-sm font-bold text-[var(--theme-primary)] hover:underline">
-              + Cadastrar primeiro espaço
-            </Link>
-          )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6">
           {filtered.map(espaco => {
-            const emUso = Boolean(espaco.nucleo_nome);
-            const isSolicitacaoPendente = espaco.status_aprovacao === "pendente";
+            const isPendente = espaco.status_aprovacao === "pendente";
 
             return (
-              <div 
+              <div
                 key={espaco.id}
-                className={`bg-white rounded-2xl border p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between min-h-[240px] relative group ${
-                  isSolicitacaoPendente ? "border-amber-300 ring-1 ring-amber-100" : "border-slate-200"
-                }`}
+                className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-all overflow-hidden flex flex-col justify-between"
               >
-                {/* Header do Card */}
-                <div>
-                  <div className="flex items-start justify-between gap-2 mb-3 flex-wrap sm:flex-nowrap">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 ${
-                        isSolicitacaoPendente ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-[var(--theme-primary)]"
-                      }`}>
-                        {isSolicitacaoPendente ? <Clock className="w-5 h-5" /> : <Building2 className="w-5 h-5" />}
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="font-extrabold text-slate-800 text-base leading-tight group-hover:text-[var(--theme-primary)] transition-colors break-words flex items-center gap-1.5 flex-wrap">
-                          {espaco.nome}
-                          {/* ⚠️ ÍCONE DE AVISO PARA INFORMAÇÃO OU DOCUMENTO FALTANTE */}
-                          {espaco.docs_pendentes && (
-                            <span 
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 cursor-help shrink-0 shadow-2xs"
-                              title="Atenção: Informação ou documento faltante neste espaço"
-                            >
-                              <AlertTriangle size={12} className="text-amber-600 shrink-0" />
-                              Info faltante
-                            </span>
-                          )}
-                        </h3>
-                        {espaco.bairro && (
-                          <div className="flex items-center gap-1 text-slate-400 text-xs mt-0.5">
-                            <MapPin className="w-3 h-3 shrink-0" />
-                            <span className="truncate">{[espaco.bairro, espaco.cidade].filter(Boolean).join(" · ")}</span>
-                          </div>
-                        )}
-                      </div>
+                {/* Imagem de Capa ou Placeholder */}
+                <div className="relative h-44 bg-slate-100 overflow-hidden">
+                  {espaco.foto_url ? (
+                    <img
+                      src={espaco.foto_url}
+                      alt={espaco.nome}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-100">
+                      <Building2 size={36} />
+                      <span className="text-xs font-semibold mt-1">Sem foto cadastrada</span>
                     </div>
+                  )}
 
-                    {/* Tag de Status / Solicitação */}
-                    <div className="shrink-0">
-                      {isSolicitacaoPendente ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200 whitespace-nowrap shadow-2xs">
-                          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
-                          Aguardando Aprovação
-                        </span>
-                      ) : emUso ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-2xs whitespace-nowrap">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                          Em Uso
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
-                          <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
-                          Disponível
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Informações Centrais do Card */}
-                  <div className="space-y-2.5 mt-4 pt-3 border-t border-slate-100 text-xs">
-                    {isSolicitacaoPendente ? (
-                      <div className="bg-amber-50 border border-amber-200/80 p-2.5 rounded-xl text-amber-900">
-                        <span className="font-bold text-[11px] text-amber-700 uppercase tracking-wider block mb-0.5">Status da Solicitação:</span>
-                        <span className="font-semibold text-xs flex items-center gap-1.5">
-                          <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                          Aguardando aprovação — Não pode criar Núcleo
-                        </span>
-                      </div>
-                    ) : emUso ? (
-                      <div className="bg-emerald-50/70 border border-emerald-200/60 p-2.5 rounded-xl text-emerald-900">
-                        <span className="font-bold text-[11px] text-emerald-700 uppercase tracking-wider block mb-0.5">Operando Núcleo:</span>
-                        <span className="font-extrabold text-xs flex items-center gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          {espaco.nucleo_nome}
-                        </span>
-                      </div>
+                  {/* Badge de Status de Aprovação e Alerta Info Faltante */}
+                  <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
+                    {isPendente ? (
+                      <span className="bg-amber-500 text-white text-[11px] font-black px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1 uppercase tracking-wider">
+                        <Clock size={12} /> Solicitação Pendente
+                      </span>
                     ) : (
-                      <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-slate-500">
-                        <span className="font-medium text-xs flex items-center gap-1.5">
-                          <Circle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          Pronto para receber novo núcleo
-                        </span>
-                      </div>
+                      <span className="bg-emerald-600 text-white text-[11px] font-black px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1 uppercase tracking-wider">
+                        <CheckCircle2 size={12} /> Aprovado
+                      </span>
                     )}
 
-                    <div className="flex items-center gap-2 text-slate-600 pt-1">
-                      <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span className="truncate">Resp: <strong>{espaco.resp_nome}</strong></span>
-                    </div>
-
-                    {espaco.projeto_nome !== "—" && (
-                      <div className="flex items-center gap-2 text-slate-500">
-                        <span className="px-2 py-0.5 rounded bg-slate-100 font-semibold text-[11px] text-slate-700">
-                          {espaco.projeto_nome}
+                    {/* Aviso ⚠️ Info faltante (Apenas em espaços aprovados com docs pendentes) */}
+                    {!isPendente && espaco.docs_pendentes && (
+                      <div className="group relative">
+                        <span className="bg-amber-100 text-amber-800 border border-amber-300 text-[11px] font-black px-2.5 py-1 rounded-lg shadow-xs flex items-center gap-1 cursor-help">
+                          <AlertTriangle size={12} className="text-amber-600" />
+                          ⚠️ Info faltante
                         </span>
-                        {espaco.modalidade_nome !== "—" && (
-                          <span className="text-[11px] text-slate-400 truncate">
-                            • {espaco.modalidade_nome}
-                          </span>
-                        )}
+                        <div className="absolute right-0 top-full mt-1 hidden group-hover:block w-48 bg-slate-900 text-white text-[11px] p-2 rounded-lg shadow-lg z-20 font-medium">
+                          Espaço aprovado sem foto ou termo anexado. Clique em editar para complementar os dados.
+                        </div>
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Footer do Card Quadrado com Ações */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-auto">
-                  {isSolicitacaoPendente ? (
-                    <div className="flex items-center gap-2 w-full">
+                {/* Conteúdo Principal do Card */}
+                <div className="p-4 sm:p-5 space-y-3 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 line-clamp-1">
+                      {espaco.nome}
+                    </h3>
+                    
+                    {(espaco.bairro || espaco.cidade) && (
+                      <p className="text-xs text-slate-500 flex items-center gap-1 font-medium mt-0.5">
+                        <MapPin size={13} className="text-slate-400 shrink-0" />
+                        <span>{[espaco.bairro, espaco.cidade].filter(Boolean).join(" • ")}</span>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Detalhes do Responsável */}
+                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-1 text-xs">
+                    {espaco.resp_nome && (
+                      <div className="flex items-center gap-1.5 text-slate-700 font-bold">
+                        <User size={13} className="text-slate-400 shrink-0" />
+                        <span className="truncate">Resp: {espaco.resp_nome}</span>
+                      </div>
+                    )}
+                    {espaco.resp_telefone && (
+                      <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+                        <Phone size={13} className="text-slate-400 shrink-0" />
+                        <span>{espaco.resp_telefone}</span>
+                      </div>
+                    )}
+                    {espaco.ponto_referencia && (
+                      <div className="text-[11px] text-slate-500 italic line-clamp-1 mt-1 pt-1 border-t border-slate-200/60">
+                        Ref: {espaco.ponto_referencia}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Footer do Card com Ações */}
+                <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+                  {isPendente ? (
+                    <>
                       <button
                         onClick={() => handleAprovarEspaco(espaco)}
                         disabled={approvingId === espaco.id}
-                        className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-xl shadow-xs transition-all text-xs"
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2 px-3 rounded-xl text-xs shadow-xs transition-all flex items-center justify-center gap-1.5"
                       >
-                        {approvingId === espaco.id ? (
-                          <Loader2 size={14} className="animate-spin" />
-                        ) : (
-                          <>
-                            <CheckCircle2 size={14} />
-                            Aprovar Espaço
-                          </>
-                        )}
+                        {approvingId === espaco.id ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                        <span>Aprovar Espaço</span>
                       </button>
+
                       <button
-                        onClick={() => handleDeleteEspaco(espaco)}
-                        disabled={deletingId === espaco.id}
-                        className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors border border-slate-200"
-                        title="Recusar e Excluir Solicitação"
+                        onClick={() => openDeleteModal(espaco)}
+                        className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        title="Rejeitar / Excluir"
                       >
-                        {deletingId === espaco.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                        <Trash2 size={16} />
                       </button>
-                    </div>
+                    </>
                   ) : (
                     <>
                       <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
@@ -534,12 +479,11 @@ export default function Espacos() {
                           {togglingId === espaco.id ? <Loader2 size={14} className="animate-spin" /> : <Power size={14} />}
                         </button>
                         <button
-                          onClick={() => handleDeleteEspaco(espaco)}
-                          disabled={deletingId === espaco.id}
+                          onClick={() => openDeleteModal(espaco)}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                           title="Excluir Espaço"
                         >
-                          {deletingId === espaco.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </>
@@ -550,6 +494,99 @@ export default function Espacos() {
           })}
         </div>
       )}
+
+      {/* Modal de Confirmação com Animação Minimalista de Estrutura Desfazendo / Desmoronando */}
+      {deleteModalOpen && selectedDeleteEspaco && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in duration-200">
+            
+            {/* Header do Modal */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold">
+                  <AlertTriangle size={18} />
+                </div>
+                <h3 className="text-base font-extrabold text-slate-800">Excluir Espaço Físico</h3>
+              </div>
+
+              <button
+                onClick={closeDeleteModal}
+                disabled={deletingId === selectedDeleteEspaco.id}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* ÁREA DA ANIMAÇÃO MINIMALISTA DE DESFAZER / DESMORONAR O ESPAÇO */}
+            <div className="relative py-4 flex flex-col items-center justify-center min-h-[160px] overflow-hidden">
+              
+              <div className={`w-full max-w-[290px] bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 shadow-sm relative transition-all ${
+                isCollapsing ? 'anim-collapse-building' : 'hover:border-slate-300'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 border border-blue-200">
+                    <Building2 size={24} />
+                  </div>
+                  <div className="overflow-hidden">
+                    <h4 className="text-slate-900 font-extrabold text-sm truncate">
+                      {selectedDeleteEspaco.nome}
+                    </h4>
+                    <p className="text-xs text-slate-500 truncate mt-0.5">
+                      {selectedDeleteEspaco.bairro || 'Espaço Físico'} • {selectedDeleteEspaco.cidade || 'Campos dos Goytacazes'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Partículas de poeira minimalista subindo durante o colapso */}
+              {isCollapsing && (
+                <div className="absolute inset-0 pointer-events-none flex items-center justify-around">
+                  <div className="w-3 h-3 bg-slate-300 rounded-full anim-dust-rising" style={{ animationDelay: '0ms' }} />
+                  <div className="w-4 h-4 bg-slate-400 rounded-full anim-dust-rising" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2.5 h-2.5 bg-slate-300 rounded-full anim-dust-rising" style={{ animationDelay: '300ms' }} />
+                </div>
+              )}
+
+              {!isCollapsing && (
+                <p className="mt-4 text-xs text-slate-600 text-center font-medium">
+                  Tem certeza que deseja remover a estrutura do espaço <strong className="text-slate-900 font-bold">"{selectedDeleteEspaco.nome}"</strong>?
+                </p>
+              )}
+            </div>
+
+            {/* Botões de Ação */}
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={closeDeleteModal}
+                disabled={deletingId === selectedDeleteEspaco.id}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-xs text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmDeleteEspaco}
+                disabled={deletingId === selectedDeleteEspaco.id}
+                className="px-5 py-2.5 rounded-xl font-extrabold text-xs shadow-sm bg-red-600 hover:bg-red-700 text-white cursor-pointer shadow-red-600/20 shadow-md transition-all flex items-center gap-2"
+              >
+                {deletingId === selectedDeleteEspaco.id ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" /> Desfazendo Estrutura...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={14} /> Confirmar Exclusão
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
