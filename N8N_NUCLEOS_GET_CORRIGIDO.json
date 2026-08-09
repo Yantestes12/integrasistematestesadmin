@@ -38,7 +38,7 @@
       "parameters": {
         "operation": "getAll",
         "tableId": "GASCTPNA_nucleos",
-        "returnAll": true,
+        "limit": 100,
         "options": {}
       },
       "id": "sb-gas-get",
@@ -52,7 +52,7 @@
       "parameters": {
         "operation": "getAll",
         "tableId": "IBRASE_nucleos",
-        "returnAll": true,
+        "limit": 100,
         "options": {}
       },
       "id": "sb-ib-get",
@@ -66,7 +66,7 @@
       "parameters": {
         "operation": "getAll",
         "tableId": "AUNI_nucleos",
-        "returnAll": true,
+        "limit": 100,
         "options": {}
       },
       "id": "sb-au-get",
@@ -80,7 +80,7 @@
       "parameters": {
         "operation": "getAll",
         "tableId": "IVEM_nucleos",
-        "returnAll": true,
+        "limit": 100,
         "options": {}
       },
       "id": "sb-iv-get",

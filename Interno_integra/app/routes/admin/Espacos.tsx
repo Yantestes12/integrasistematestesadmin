@@ -25,7 +25,6 @@ export interface EspacoItem {
   termo_url?: string;
   ativo?: boolean;
   status_aprovacao?: string; // 'aprovado' | 'pendente' | 'rejeitado'
-  docs_pendentes?: boolean;
   projeto_nome?: string;
   nucleo_nome?: string;
   em_uso?: boolean;
@@ -163,7 +162,6 @@ export default function Espacos() {
           foto_url: n.foto_url,
           termo_url: n.termo_url,
           status_aprovacao: n.status_aprovacao || "aprovado",
-          docs_pendentes: n.docs_pendentes,
           ativo: n.ativo !== false,
           nucleo_nome: n.nome,
           em_uso: true,
@@ -172,16 +170,12 @@ export default function Espacos() {
 
       const list = rawList.map((item: any) => {
         const status = (item.status_aprovacao || "aprovado").toString().toLowerCase().trim();
-        const fotoOk = !!(item.foto_url && item.foto_url.trim().length > 0);
-        const termoOk = !!(item.termo_url && item.termo_url.trim().length > 0);
-        const docsPerto = item.docs_pendentes === true || (!fotoOk || !termoOk);
 
         const linkedNucleo = nMap[Number(item.id)] || item.nucleo_nome || (item.projeto_nome ? `Núcleo ${item.nome}` : null);
 
         return {
           ...item,
           status_aprovacao: status,
-          docs_pendentes: docsPerto,
           nucleo_nome: linkedNucleo,
           em_uso: !!linkedNucleo,
         };
@@ -247,34 +241,6 @@ export default function Espacos() {
     }
   };
 
-  const handleToggleDocsPendentes = async (espaco: EspacoItem) => {
-    setTogglingDocsId(espaco.id);
-    const nextVal = !espaco.docs_pendentes;
-    try {
-      const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
-      const res = await fetch("https://w.ibrase.com.br/webhook/espacos-put", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: espaco.id,
-          docs_pendentes: nextVal,
-          instituto: authInstitute.toUpperCase()
-        }),
-      });
-      if (res.ok) {
-        setEspacos(prev => prev.map(e => e.id === espaco.id ? { ...e, docs_pendentes: nextVal } : e));
-        addToast(
-          nextVal ? "warning" : "success",
-          nextVal ? "INFO FALTANTE MARCADA" : "DOCUMENTAÇÃO COMPLETA",
-          `Status de documentação de "${espaco.nome}" atualizado.`
-        );
-      }
-    } catch (e) {
-      console.error("Erro ao alterar docs_pendentes:", e);
-    } finally {
-      setTogglingDocsId(null);
-    }
-  };
 
   const openDeleteModal = (espaco: EspacoItem) => {
     setSelectedDeleteEspaco(espaco);
@@ -529,42 +495,16 @@ export default function Espacos() {
                     </div>
                   )}
 
-                  {/* Badges do Topo: Lzinho Aprovado + Badge Interativa Info Faltante */}
+                  {/* Badges do Topo: Lzinho Aprovado */}
                   <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
                     {isPendente ? (
                       <span className="bg-amber-500 text-white text-[11px] font-black px-2 py-0.5 rounded shadow-xs flex items-center gap-1 uppercase tracking-wider">
                         <Clock size={12} /> Pendente
                       </span>
                     ) : (
-                      <span className="bg-emerald-600 text-white text-[11px] font-black px-2 py-0.5 rounded shadow-xs flex items-center gap-1 uppercase tracking-wider">
-                        <CheckCircle2 size={12} /> ✓ Aprovado
-                      </span>
-                    )}
-
-                    {/* Badge do Topo ÚNICA para Info Faltante / Docs OK */}
-                    {!isPendente && (
-                      <button
-                        onClick={() => handleToggleDocsPendentes(espaco)}
-                        disabled={togglingDocsId === espaco.id}
-                        className={`text-[11px] font-black px-2.5 py-1 rounded-lg shadow-xs flex items-center gap-1 transition-all cursor-pointer border ${
-                          espaco.docs_pendentes
-                            ? "bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200"
-                            : "bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200"
-                        }`}
-                        title="Clique para alternar o status de documentação"
-                      >
-                        {espaco.docs_pendentes ? (
-                          <>
-                            <AlertTriangle size={12} className="text-amber-600" />
-                            ⚠️ Info faltante
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle2 size={12} className="text-emerald-600" />
-                            ✓ Docs OK
-                          </>
-                        )}
-                      </button>
+                      <div className="bg-white/90 backdrop-blur-sm p-1 rounded-full shadow-sm" title="Aprovado">
+                        <CheckCircle2 size={20} className="text-emerald-500" />
+                      </div>
                     )}
                   </div>
                 </div>

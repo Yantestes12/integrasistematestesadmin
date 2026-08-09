@@ -217,17 +217,31 @@ export default function Nucleos() {
   const fetchNucleos = async (instituteName: string) => {
     setLoading(true);
 
+    let fetchedData = null;
     try {
       const n8nEndpoint = `https://w.ibrase.com.br/webhook/nucleos-get?instituto=${instituteName.toUpperCase()}`;
       
       const res = await fetch(n8nEndpoint, { method: 'GET' });
       if (res.ok) {
-        const data = await res.json();
-        
-        if (data.message === "Workflow was started" || (Array.isArray(data) && data.length > 0 && data[0].message === "Workflow was started")) {
-          console.warn("O Webhook do N8N não retornou os dados. Mude o campo 'Respond' para 'Using Respond to Webhook Node'.");
+        const text = await res.text();
+        if (text) {
+          try {
+            fetchedData = JSON.parse(text);
+          } catch (e) {
+            console.warn("N8N returned non-JSON:", text);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Erro ao fazer fetch no Webhook N8N de Núcleos:", e);
+    }
+
+    try {
+      if (fetchedData) {
+        if (fetchedData.message === "Workflow was started" || (Array.isArray(fetchedData) && fetchedData.length > 0 && fetchedData[0].message === "Workflow was started")) {
+          console.warn("O Webhook do N8N não retornou os dados corretamente.");
         } else {
-          const parsed = parseNucleosList(data);
+          const parsed = parseNucleosList(fetchedData);
           if (parsed.length > 0) {
             setNucleos(parsed.sort((a, b) => Number(a.numero_vaga) - Number(b.numero_vaga)));
             setLoading(false);
@@ -236,9 +250,10 @@ export default function Nucleos() {
         }
       }
 
-      // FALLBACK ROBUSTO: Se nucleos-get retornar vazio por erro de join do Supabase no N8N, constrói a partir dos espaços
+      // FALLBACK ROBUSTO: Se nucleos-get retornar vazio, falhar ou não trouxer os dados
       const espacoKeys = Object.keys(espacosCache);
       if (espacoKeys.length > 0) {
+        console.warn("Usando cache de espaços como fallback para núcleos.");
         const fallbackList: NucleoItem[] = espacoKeys.map((key, idx) => {
           const e = espacosCache[Number(key)];
           return {
@@ -256,9 +271,12 @@ export default function Nucleos() {
           };
         });
         setNucleos(fallbackList);
+      } else {
+        setNucleos([]);
       }
     } catch (e) {
-      console.warn("Erro no Webhook N8N de Núcleos:", e);
+      console.warn("Erro ao processar dados de Núcleos:", e);
+      setNucleos([]);
     } finally {
       setLoading(false);
     }
