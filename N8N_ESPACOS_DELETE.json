@@ -56,8 +56,15 @@
       "parameters": {
         "operation": "delete",
         "tableId": "GASCTPNA_espacos",
-        "matchColumn": "id",
-        "matchValue": "={{ $json.body.id || $json.query.id }}"
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.id || $json.query.id }}"
+            }
+          ]
+        }
       },
       "id": "34d30c79-7c26-4c1a-a0f4-38af76c713dd",
       "name": "SB GASCTPNA DELETE1",
@@ -78,8 +85,15 @@
       "parameters": {
         "operation": "delete",
         "tableId": "IBRASE_espacos",
-        "matchColumn": "id",
-        "matchValue": "={{ $json.body.id || $json.query.id }}"
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.id || $json.query.id }}"
+            }
+          ]
+        }
       },
       "id": "032e0630-1fac-457e-80a1-586bb35e862a",
       "name": "SB IBRASE DELETE1",
@@ -100,8 +114,15 @@
       "parameters": {
         "operation": "delete",
         "tableId": "AUNI_espacos",
-        "matchColumn": "id",
-        "matchValue": "={{ $json.body.id || $json.query.id }}"
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.id || $json.query.id }}"
+            }
+          ]
+        }
       },
       "id": "7b7f70f2-adef-4def-8522-998adb798038",
       "name": "SB AUNI DELETE1",
@@ -122,8 +143,15 @@
       "parameters": {
         "operation": "delete",
         "tableId": "IVEM_espacos",
-        "matchColumn": "id",
-        "matchValue": "={{ $json.body.id || $json.query.id }}"
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.id || $json.query.id }}"
+            }
+          ]
+        }
       },
       "id": "2a38ae08-238c-4ae1-84ab-551f00546e71",
       "name": "SB IVEM DELETE1",
