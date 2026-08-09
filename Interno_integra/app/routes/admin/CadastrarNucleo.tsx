@@ -2,9 +2,9 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams, useNavigate } from "react-router";
 import * as z from "zod";
-import { ArrowLeft, Save, MapPin, User, FileText, Building2, Search, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, MapPin, Building2, Loader2, Award } from "lucide-react";
 
-// 1. Schemas de Validação (Zod)
+// Schemas de Validação (Zod)
 const cadastrarNucleoSchema = z.object({
   // Identificação
   nomeNucleo: z.string().optional(),
@@ -19,11 +19,8 @@ const cadastrarNucleoSchema = z.object({
   // Vigência e Status
   ativo: z.boolean().default(true),
   aceitandoVagas: z.boolean().default(true),
-
-  // Vínculos da Equipe
-  coordenadorId: z.string().optional(),
-  instrutorId: z.string().optional(),
-  auxiliaresIds: z.array(z.string()).optional(),
+  dataInicio: z.string().optional(),
+  dataFim: z.string().optional(),
 });
 
 type CadastrarNucleoFormData = z.infer<typeof cadastrarNucleoSchema>;
@@ -56,12 +53,14 @@ export default function CadastrarNucleo() {
   const [espacos, setEspacos] = useState<any[]>([]);
   const [projetos, setProjetos] = useState<any[]>([]);
   const [modalidades, setModalidades] = useState<any[]>([]);
+  const [nucleosExistentes, setNucleosExistentes] = useState<any[]>([]);
 
   useEffect(() => {
     const savedInst = localStorage.getItem("auth_institute") || "IBRASE";
     fetchEspacos(savedInst);
     fetchProjetos(savedInst);
     fetchModalidades(savedInst);
+    fetchNucleos(savedInst);
   }, []);
 
   const fetchEspacos = async (inst: string) => {
@@ -106,24 +105,52 @@ export default function CadastrarNucleo() {
     } catch (e) { console.warn("Erro modalidades:", e); }
   };
 
-  const [isSearchingCep, setIsSearchingCep] = useState(false);
-  const [isSearchingCnpj, setIsSearchingCnpj] = useState(false);
-  const [isSearchingCpf, setIsSearchingCpf] = useState(false);
+  const fetchNucleos = async (inst: string) => {
+    try {
+      const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst.toUpperCase()}`);
+      if (res.ok) {
+        const data = await res.json();
+        let list = Array.isArray(data) ? data : data.data || data.items || (Array.isArray(data.json) ? data.json : [data.json]);
+        let flatList: any[] = [];
+        list.forEach((entry: any) => {
+          if (entry && entry.json) {
+            if (Array.isArray(entry.json)) flatList.push(...entry.json);
+            else flatList.push(entry.json);
+          } else flatList.push(entry);
+        });
+        setNucleosExistentes(flatList);
+      }
+    } catch (e) { console.warn("Erro nucleos:", e); }
+  };
 
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting }, setValue: setFormValue, getValues: getFormValues, reset } = useForm<CadastrarNucleoFormData>({
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting }, setValue: setFormValue, reset } = useForm<CadastrarNucleoFormData>({
     resolver: customZodResolver(cadastrarNucleoSchema),
     defaultValues: {
       ativo: true,
-      possuiCnpj: "N",
+      numeroVaga: "1",
     },
   });
 
-  const possuiCnpjWatch = watch("possuiCnpj");
   const projetoIdWatch = watch("projetoId");
   const espacoIdWatch = watch("espacoId");
 
+  // Vagas ocupadas do projeto selecionado
+  const vagasOcupadasNoProjeto = useMemo(() => {
+    if (!projetoIdWatch) return {};
+    const map: Record<number, string> = {};
+    nucleosExistentes.forEach((n: any) => {
+      if (String(n.projeto_id) === String(projetoIdWatch) && String(n.id) !== editId) {
+        const vagaNum = Number(n.numero_vaga || n.vaga_numero || n.id);
+        if (vagaNum) {
+          map[vagaNum] = n.nome || `Núcleo ID ${n.id}`;
+        }
+      }
+    });
+    return map;
+  }, [projetoIdWatch, nucleosExistentes, editId]);
+
   const filteredEspacos = useMemo(() => {
-    // Regra Crítica: Apenas Espaços APROVADOS (não pendentes) podem ser selecionados para virar Núcleo
+    // Apenas Espaços APROVADOS (não pendentes) podem ser selecionados para virar Núcleo
     const apenasAprovados = espacos.filter(e => e.status_aprovacao !== "pendente" && !e.docs_pendentes);
     if (!projetoIdWatch) return apenasAprovados;
     return apenasAprovados.filter(e => String(e.projeto_id) === String(projetoIdWatch));
@@ -163,7 +190,6 @@ export default function CadastrarNucleo() {
             const data = await res.json();
             let list = Array.isArray(data) ? data : data.data || data.items || (Array.isArray(data.json) ? data.json : [data.json]);
             
-            // Tratamento extra caso retorne { json: [...] } aninhado
             let flatList: any[] = [];
             list.forEach((entry: any) => {
               if (entry && entry.json) {
@@ -177,30 +203,16 @@ export default function CadastrarNucleo() {
             if (nucleo) {
               reset({
                 nomeNucleo: nucleo.nome || nucleo.nome_nucleo || "",
+                espacoId: String(nucleo.espaco_id || ""),
                 projetoId: String(nucleo.projeto_id || ""),
                 modalidadeId: String(nucleo.modalidade_id || ""),
                 cidadeId: String(nucleo.cidade_id || ""),
                 uf: nucleo.uf || "",
                 bairroId: String(nucleo.bairro_id || ""),
-                numeroVaga: String(nucleo.numero_vaga || "1"),
+                numeroVaga: String(nucleo.numero_vaga || nucleo.vaga_numero || "1"),
                 dataInicio: nucleo.data_inicio || "",
                 dataFim: nucleo.data_fim || "",
                 ativo: nucleo.ativo !== false && nucleo.ativo !== 0 && nucleo.ativo !== "0",
-                respNome: nucleo.coordenador_nome_real || nucleo.coordenador || nucleo.resp_nome || "",
-                respCpf: nucleo.coordenador_cpf || nucleo.resp_cpf || "",
-                respEmail: nucleo.coordenador_email || nucleo.resp_email || "",
-                respTelefone: nucleo.telefone || nucleo.resp_telefone || "",
-                possuiCnpj: nucleo.cnpj ? "S" : "N",
-                cnpj: nucleo.cnpj || "",
-                cep: nucleo.cep || "",
-                rua: nucleo.rua || nucleo.logradouro || (nucleo.endereco ? nucleo.endereco.split(",")[0] : ""),
-                numero: nucleo.numero || "",
-                bairroEnd: nucleo.bairro_end || nucleo.bairro_nome || "",
-                referencia: nucleo.referencia || "",
-                coordenadorId: String(nucleo.coordenador_id || ""),
-                instrutorId: String(nucleo.instrutor_id || ""),
-                // auxiliaresIds viriam como array, o n8n ou PHP legado salva no nucleo_colaboradores, se o get trouxer:
-                auxiliaresIds: Array.isArray(nucleo.auxiliares_ids) ? nucleo.auxiliares_ids.map(String) : [],
               });
             }
           }
@@ -214,126 +226,27 @@ export default function CadastrarNucleo() {
     }
   }, [editId, reset]);
 
-  const handleBuscarCep = async () => {
-    const cepAtual = getFormValues("cep");
-    if (!cepAtual || cepAtual.replace(/\D/g, '').length !== 8) {
-      alert("Por favor, digite um CEP válido com 8 dígitos.");
-      return;
-    }
-
-    setIsSearchingCep(true);
-    try {
-      const cleanCep = cepAtual.replace(/\D/g, '');
-      const res = await fetch(`https://w.ibrase.com.br/webhook/consultarcep?cep=${cleanCep}`);
-      
-      if (res.ok) {
-        const data = await res.json();
-        
-        // Tratar formato Hub do Desenvolvedor ou ViaCEP
-        const address = data.result || data;
-
-        if (address && !address.erro) {
-          if (address.logradouro) setFormValue("rua", address.logradouro);
-          if (address.bairro) setFormValue("bairroEnd", address.bairro);
-          // Podemos expandir se quisermos preencher cidade e estado globais aqui
-        } else {
-          alert("CEP não encontrado.");
-        }
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Erro ao buscar o CEP.");
-    } finally {
-      setIsSearchingCep(false);
-    }
-  };
-
-  const handleBuscarCnpj = async () => {
-    const cnpj = getFormValues("cnpj");
-    if (!cnpj || cnpj.length < 14) {
-      alert("Por favor, digite um CNPJ válido.");
-      return;
-    }
-
-    setIsSearchingCnpj(true);
-    try {
-      const cleanCnpj = cnpj.replace(/\D/g, "");
-      const res = await fetch(`https://w.ibrase.com.br/webhook/consultarcnpj?cnpj=${cleanCnpj}`);
-      
-      if (res.ok) {
-        const data = await res.json();
-        const result = data.result || data;
-
-        if (result && result.nome) {
-          // Preenche o nome do núcleo com a Razão Social
-          setFormValue("nomeNucleo", result.nome);
-        } else {
-          alert("CNPJ não encontrado ou sem razão social.");
-        }
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Erro ao buscar o CNPJ.");
-    } finally {
-      setIsSearchingCnpj(false);
-    }
-  };
-
-  const handleBuscarCpf = async () => {
-    const cpf = getFormValues("respCpf");
-    if (!cpf || cpf.length < 11) {
-      alert("Por favor, digite um CPF válido.");
-      return;
-    }
-
-    setIsSearchingCpf(true);
-    try {
-      const cleanCpf = cpf.replace(/\D/g, "");
-      const res = await fetch(`https://w.ibrase.com.br/webhook/api-hub-cpf?cpf=${cleanCpf}`);
-      
-      if (res.ok) {
-        const data = await res.json();
-        const result = data.result || data;
-
-        if (result && result.nome) {
-          // Preenche o nome do responsável com o nome retornado
-          setFormValue("respNome", result.nome);
-        } else {
-          alert("CPF não encontrado.");
-        }
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Erro ao buscar o CPF.");
-    } finally {
-      setIsSearchingCpf(false);
-    }
-  };
-
   const onSubmit = async (data: CadastrarNucleoFormData) => {
     try {
       const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
       
-      // Define a URL correta com base se é Edição ou Criação
       const webhookUrl = editId 
         ? `https://w.ibrase.com.br/webhook/nucleos-put?instituto=${authInstitute}`
         : `https://w.ibrase.com.br/webhook/nucleos-post?instituto=${authInstitute}`;
 
       const formData = new FormData();
-      if (editId) formData.append("id", editId); // Envia o ID para o update
+      if (editId) formData.append("id", editId);
 
       Object.entries(data).forEach(([key, value]) => {
-        if (value instanceof FileList) {
-          if (value.length > 0) {
-            formData.append(key, value[0]); 
-          }
-        } else if (Array.isArray(value)) {
-          // Se for array (ex: auxiliaresIds), envia como JSON string
-          formData.append(key, JSON.stringify(value));
-        } else if (value !== undefined && value !== null) {
+        if (value !== undefined && value !== null) {
           formData.append(key, String(value));
         }
       });
+
+      // Passa o campo numero_vaga explícito para salvar na coluna do Supabase
+      if (data.numeroVaga) {
+        formData.append("numero_vaga", data.numeroVaga);
+      }
 
       const response = await fetch(webhookUrl, {
         method: editId ? "PUT" : "POST",
@@ -344,16 +257,11 @@ export default function CadastrarNucleo() {
         throw new Error("Erro ao enviar dados.");
       }
       
-      const responseData = await response.json();
-      if (responseData.message === "Workflow was started" || responseData[0]?.message === "Workflow was started") {
-         // Silencioso
-      }
-      
       alert(editId ? "Núcleo atualizado com sucesso!" : "Núcleo cadastrado com sucesso!");
       navigate("/admin/nucleos");
     } catch (error) {
       console.error(error);
-      alert("Erro ao enviar para o N8N.");
+      alert("Erro ao conectar com o servidor para salvar núcleo.");
     }
   };
 
@@ -368,13 +276,15 @@ export default function CadastrarNucleo() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12 font-sans">
-      {/* CABEÇALHO DA PÁGINA */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      
+      {/* Banner de Topo */}
+      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{editId ? "Editar Núcleo" : "Novo Núcleo"}</h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Preencha os dados abaixo para {editId ? "editar" : "registrar"} um núcleo. Campos com{" "}
-            <span className="text-red-500">*</span> são obrigatórios.
+          <h1 className="text-xl font-bold text-slate-800">
+            {editId ? "Editar Núcleo Operacional" : "Cadastrar Novo Núcleo Operacional"}
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Vincule um Espaço Físico Aprovado a uma Iniciativa para ativar um Núcleo.
           </p>
         </div>
 
@@ -394,7 +304,7 @@ export default function CadastrarNucleo() {
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
           <div className="flex items-center gap-2 mb-2 border-b border-slate-100 pb-3">
             <MapPin className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-base font-bold text-slate-800">Identificação e Localização Geral</h2>
+            <h2 className="text-base font-bold text-slate-800">Identificação e Localização do Núcleo</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -404,7 +314,7 @@ export default function CadastrarNucleo() {
               </label>
               <select
                 {...register("projetoId")}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
               >
                 <option value="">Selecione o projeto de aula/evento</option>
                 {projetos.map(p => (
@@ -418,16 +328,16 @@ export default function CadastrarNucleo() {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Selecione o Espaço (Local Físico Cadastrado) <span className="text-red-500">*</span>
+                Selecione o Espaço (Local Físico Aprovado) <span className="text-red-500">*</span>
               </label>
               <select
                 {...register("espacoId")}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
               >
                 {!projetoIdWatch ? (
-                  <option value="">Selecione primeiro o Projeto de Aula ou Evento acima...</option>
+                  <option value="">Selecione primeiro o Projeto acima...</option>
                 ) : filteredEspacos.length === 0 ? (
-                  <option value="">Nenhum espaço cadastrado para este projeto</option>
+                  <option value="">Nenhum espaço aprovado disponível para este projeto</option>
                 ) : (
                   <option value="">Selecione um espaço físico para este projeto...</option>
                 )}
@@ -441,6 +351,30 @@ export default function CadastrarNucleo() {
                 <span className="text-[11px] text-red-500 mt-1 block">{errors.espacoId.message}</span>
               )}
             </div>
+          </div>
+
+          {/* SELETOR DE VAGA DO NÚCLEO (SLOT NO PROJETO) */}
+          <div className="pt-2">
+            <label className="block text-xs font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+              <Award className="w-4 h-4 text-indigo-600" />
+              <span>Número da Vaga do Núcleo (Alocação no Projeto)</span>
+            </label>
+            <select
+              {...register("numeroVaga")}
+              className="w-full bg-indigo-50/50 border border-indigo-200 rounded-lg p-2.5 text-sm font-extrabold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(vaga => {
+                const ocupadoPor = vagasOcupadasNoProjeto[vaga];
+                return (
+                  <option key={vaga} value={vaga} disabled={!!ocupadoPor}>
+                    Vaga Nº {vaga} {ocupadoPor ? `— 🔴 Ocupada (${ocupadoPor})` : "— 🟢 Livre"}
+                  </option>
+                );
+              })}
+            </select>
+            <span className="text-[11px] text-slate-400 mt-1 block">
+              Cada núcleo ocupa uma posição de Vaga única no projeto. Vagas já alocadas ficam bloqueadas para evitar duplicidade.
+            </span>
           </div>
 
           {/* CARD DE INFORMAÇÕES AUTOMÁTICAS HERDADAS DO ESPAÇO */}
@@ -474,73 +408,6 @@ export default function CadastrarNucleo() {
               </div>
             </div>
           )}
-        </div>
-
-        {/* EQUIPE DO NÚCLEO */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-          <div className="flex items-center gap-2 mb-2 border-b border-slate-100 pb-3">
-            <User className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-base font-bold text-slate-800">Equipe do Núcleo</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Coordenador(a) do Núcleo
-              </label>
-              <select
-                {...register("coordenadorId")}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Selecione um coordenador...</option>
-                <option value="1">João Silva (Coordenador)</option>
-                <option value="2">Maria Oliveira (Coordenadora)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Instrutor(a)
-              </label>
-              <select
-                {...register("instrutorId")}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Selecione um instrutor...</option>
-                <option value="3">Carlos Santos (Instrutor)</option>
-                <option value="4">Ana Paula (Instrutora)</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Auxiliares (Múltipla escolha)
-            </label>
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 max-h-40 overflow-y-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                {[
-                  { id: "5", nome: "Pedro Alves", cargo: "Auxiliar Administrativo" },
-                  { id: "6", nome: "Fernanda Costa", cargo: "Auxiliar de Campo" },
-                  { id: "7", nome: "Roberto Mendes", cargo: "Auxiliar Geral" },
-                ].map(aux => (
-                  <label key={aux.id} className="flex items-start gap-2 p-2 bg-white border border-slate-100 rounded-md cursor-pointer hover:border-indigo-300 transition-colors">
-                    <input 
-                      type="checkbox" 
-                      value={aux.id}
-                      {...register("auxiliaresIds")}
-                      className="mt-0.5 w-3.5 h-3.5 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
-                    />
-                    <div className="flex flex-col">
-                      <span className="text-xs font-bold text-slate-800 leading-tight">{aux.nome}</span>
-                      <span className="text-[10px] text-slate-500 leading-tight">{aux.cargo}</span>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-            <span className="text-[11px] text-slate-400 mt-1 block">Selecione os auxiliares que estarão vinculados a este núcleo. (A lista vem do N8N).</span>
-          </div>
         </div>
 
         {/* VIGÊNCIA E STATUS */}
