@@ -22,7 +22,7 @@ export default function Iniciativas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentInstitute, setCurrentInstitute] = useState("IBRASE");
 
-  // Estado do Modal de Confirmação com Contagem de 10 Segundos e Animação de Papel Rasgando
+  // Estado do Modal de Confirmação com Contagem de 10 Segundos e Animação de Papel Rasgando caindo na Lixeira
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedIniciativa, setSelectedIniciativa] = useState<IniciativaItem | null>(null);
   const [countdown, setCountdown] = useState(10);
@@ -154,9 +154,8 @@ export default function Iniciativas() {
   const handleConfirmDelete = async () => {
     if (!selectedIniciativa || countdown > 0 || isDeleting) return;
     setIsDeleting(true);
-    setIsTearing(true); // Inicia animação visual de rasgar o papel
+    setIsTearing(true); // Inicia animação visual de rasgar e cair na lixeira
 
-    // Aguarda a animação de rasgar o papel terminar (1100ms)
     setTimeout(async () => {
       try {
         let res = await fetch("https://w.ibrase.com.br/webhook/projetos-delete", {
@@ -196,22 +195,22 @@ export default function Iniciativas() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans">
       
-      {/* Estilos customizados para a animação do papel rasgando */}
+      {/* Estilos customizados para a animação do papel rasgando e CAINDO DIRETO NA LIXEIRA */}
       <style>{`
         @keyframes tearLeftAnim {
-          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-          40% { transform: translateY(12px) translateX(-18px) rotate(-14deg); opacity: 0.95; }
-          100% { transform: translateY(100px) translateX(-45px) rotate(-35deg) scale(0.4); opacity: 0; }
+          0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+          35% { transform: translateY(15px) translateX(15px) rotate(-10deg) scale(0.9); opacity: 0.95; }
+          100% { transform: translateY(90px) translateX(55px) rotate(-25deg) scale(0.2); opacity: 0; }
         }
         @keyframes tearRightAnim {
-          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-          40% { transform: translateY(12px) translateX(18px) rotate(14deg); opacity: 0.95; }
-          100% { transform: translateY(100px) translateX(45px) rotate(35deg) scale(0.4); opacity: 0; }
+          0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+          35% { transform: translateY(15px) translateX(-15px) rotate(10deg) scale(0.9); opacity: 0.95; }
+          100% { transform: translateY(90px) translateX(-55px) rotate(25deg) scale(0.2); opacity: 0; }
         }
         @keyframes trashLidAnim {
           0% { transform: rotate(0deg); }
-          30% { transform: rotate(-35deg) translateY(-6px); }
-          75% { transform: rotate(-35deg) translateY(-6px); }
+          30% { transform: rotate(-40deg) translateY(-8px); }
+          75% { transform: rotate(-40deg) translateY(-8px); }
           100% { transform: rotate(0deg); }
         }
         .anim-tear-left { animation: tearLeftAnim 1.1s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
@@ -386,7 +385,7 @@ export default function Iniciativas() {
         )}
       </div>
 
-      {/* Modal de Confirmação com Animação de Folha de Papel Rasgando e Trava de 10s */}
+      {/* Modal de Confirmação com Animação de Folha de Papel Rasgando CAINDO DIRETO NA LIXEIRA */}
       {deleteModalOpen && selectedIniciativa && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in duration-200">
@@ -409,8 +408,8 @@ export default function Iniciativas() {
               </button>
             </div>
 
-            {/* ÁREA DA ANIMAÇÃO DO PAPEL RASGANDO */}
-            <div className="relative py-4 flex flex-col items-center justify-center min-h-[190px]">
+            {/* ÁREA DA ANIMAÇÃO DO PAPEL RASGANDO E CAINDO DENTRO DA LIXEIRA */}
+            <div className="relative py-4 flex flex-col items-center justify-center min-h-[200px] overflow-hidden">
               
               {!isTearing ? (
                 /* Papel Inteiro antes de rasgar */
@@ -432,27 +431,27 @@ export default function Iniciativas() {
                   </p>
                 </div>
               ) : (
-                /* Papel Rasgando em 2 metades + Lixeira */
-                <div className="relative w-full h-[180px] flex flex-col items-center justify-between">
-                  {/* Metade Esquerda do Papel */}
-                  <div className="absolute left-6 top-0 w-[125px] bg-amber-50 border-2 border-amber-200 rounded-l-xl p-3 shadow-md anim-tear-left overflow-hidden">
+                /* Papel Rasgando em 2 metades e caindo exatamente DENTRO da lixeira */
+                <div className="relative w-full h-[190px] flex flex-col items-center justify-end">
+                  {/* Metade Esquerda do Papel (Cai para a direita, entrando na lixeira) */}
+                  <div className="absolute left-[12%] top-1 w-[120px] bg-amber-50 border-2 border-amber-200 rounded-l-xl p-3 shadow-md anim-tear-left overflow-hidden z-10">
                     <div className="text-[10px] text-amber-800 font-bold uppercase">Projeto</div>
                     <div className="text-xs font-black text-slate-800 truncate">{selectedIniciativa.nome}</div>
                   </div>
 
-                  {/* Metade Direita do Papel */}
-                  <div className="absolute right-6 top-0 w-[125px] bg-amber-50 border-2 border-amber-200 rounded-r-xl p-3 shadow-md anim-tear-right overflow-hidden border-l-dashed border-l-amber-300">
+                  {/* Metade Direita do Papel (Cai para a esquerda, entrando na lixeira) */}
+                  <div className="absolute right-[12%] top-1 w-[120px] bg-amber-50 border-2 border-amber-200 rounded-r-xl p-3 shadow-md anim-tear-right overflow-hidden border-l-dashed border-l-amber-300 z-10">
                     <div className="text-[10px] text-amber-800 font-bold uppercase">Excluindo...</div>
                     <div className="text-xs font-black text-slate-800 truncate">{selectedIniciativa.nome}</div>
                   </div>
 
-                  {/* Ícone da Lixeira Abrindo a Tampa */}
-                  <div className="mt-auto flex flex-col items-center text-red-500">
+                  {/* Lixeira Central com a Tampa Abrindo */}
+                  <div className="mt-auto flex flex-col items-center text-red-500 z-20 pb-1">
                     <div className="anim-trash-lid mb-0.5">
-                      <div className="w-10 h-2 bg-red-500 rounded-t-md shadow-xs mx-auto" />
+                      <div className="w-14 h-2.5 bg-red-500 rounded-t-md shadow-xs mx-auto" />
                     </div>
-                    <div className="w-12 h-14 bg-red-600 text-white rounded-b-xl flex items-center justify-center shadow-lg border-2 border-red-700">
-                      <Trash2 size={24} className="animate-pulse" />
+                    <div className="w-16 h-16 bg-red-600 text-white rounded-b-2xl flex items-center justify-center shadow-xl border-2 border-red-700">
+                      <Trash2 size={28} className="animate-pulse" />
                     </div>
                   </div>
                 </div>
@@ -466,7 +465,7 @@ export default function Iniciativas() {
                     <span>Trava de Segurança: {countdown > 0 ? `Aguarde ${countdown}s` : "Liberado para excluir"}</span>
                   </div>
                   <p className="text-[11px] text-slate-500">
-                    {countdown > 0 ? "Aguarde a contagem regressiva para confirmar a exclusão." : "Clique no botão abaixo para rasgar a ficha e excluir."}
+                    {countdown > 0 ? "Aguarde a contagem regressiva para confirmar a exclusão." : "Clique no botão abaixo para rasgar a ficha e jogar na lixeira."}
                   </p>
                 </div>
               )}

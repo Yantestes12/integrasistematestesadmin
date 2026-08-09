@@ -8,11 +8,14 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "wh-projetos-delete",
+      "id": "327b1af9-e51f-4602-94a0-0c60ef8477b4",
       "name": "Webhook DELETE",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [0, 0],
+      "position": [
+        -2640,
+        -928
+      ],
       "webhookId": "projetos-delete"
     },
     {
@@ -21,19 +24,33 @@
         "value1": "={{ $json.query.instituto || $json.body.instituto }}",
         "rules": {
           "rules": [
-            { "value2": "GASCTPNA" },
-            { "value2": "IBRASE", "output": 1 },
-            { "value2": "AUNI", "output": 2 },
-            { "value2": "IVEM", "output": 3 }
+            {
+              "value2": "GASCTPNA"
+            },
+            {
+              "value2": "IBRASE",
+              "output": 1
+            },
+            {
+              "value2": "AUNI",
+              "output": 2
+            },
+            {
+              "value2": "IVEM",
+              "output": 3
+            }
           ]
         },
-        "fallbackOutput": 0
+        "fallbackOutput": 1
       },
-      "id": "switch-delete-proj",
+      "id": "fb13b0cf-db9a-4448-9883-a64286c30fa4",
       "name": "Switch DELETE",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
-      "position": [220, 0]
+      "position": [
+        -2416,
+        -960
+      ]
     },
     {
       "parameters": {
@@ -42,13 +59,19 @@
         "matchColumn": "id",
         "matchValue": "={{ $json.body.id || $json.query.id }}"
       },
-      "id": "sb-gasctpna-del-proj",
+      "id": "2f74e6d3-8ce5-4b7f-b08e-6e7176d80913",
       "name": "SB GASCTPNA DELETE",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, -300],
+      "position": [
+        -2192,
+        -1216
+      ],
       "credentials": {
-        "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" }
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
       }
     },
     {
@@ -58,13 +81,19 @@
         "matchColumn": "id",
         "matchValue": "={{ $json.body.id || $json.query.id }}"
       },
-      "id": "sb-ibrase-del-proj",
+      "id": "e34e9e36-8d35-40ad-bf5a-892cec193c55",
       "name": "SB IBRASE DELETE",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, -100],
+      "position": [
+        -2192,
+        -1024
+      ],
       "credentials": {
-        "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" }
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
       }
     },
     {
@@ -74,13 +103,19 @@
         "matchColumn": "id",
         "matchValue": "={{ $json.body.id || $json.query.id }}"
       },
-      "id": "sb-auni-del-proj",
+      "id": "8b137cd8-0373-491c-9dcb-44d3c8043027",
       "name": "SB AUNI DELETE",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, 100],
+      "position": [
+        -2192,
+        -832
+      ],
       "credentials": {
-        "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" }
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
       }
     },
     {
@@ -90,71 +125,123 @@
         "matchColumn": "id",
         "matchValue": "={{ $json.body.id || $json.query.id }}"
       },
-      "id": "sb-ivem-del-proj",
+      "id": "d0c56f2e-e9aa-46ab-a9b2-fff94a66ac42",
       "name": "SB IVEM DELETE",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, 300],
+      "position": [
+        -2192,
+        -640
+      ],
       "credentials": {
-        "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" }
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
       }
     },
     {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
-      "id": "resp-gasctpna-del-proj",
-      "name": "Respond GASCTPNA",
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "91062cf6-531e-4a0a-9c33-016e85d7ec97",
+      "name": "Respond DELETE",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, -300]
-    },
-    {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
-      "id": "resp-ibrase-del-proj",
-      "name": "Respond IBRASE",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [720, -100]
-    },
-    {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
-      "id": "resp-auni-del-proj",
-      "name": "Respond AUNI",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [720, 100]
-    },
-    {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
-      "id": "resp-ivem-del-proj",
-      "name": "Respond IVEM",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [720, 300]
+      "position": [
+        -1744,
+        -928
+      ]
     }
   ],
   "connections": {
     "Webhook DELETE": {
-      "main": [[{ "node": "Switch DELETE", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Switch DELETE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Switch DELETE": {
       "main": [
-        [{ "node": "SB GASCTPNA DELETE", "type": "main", "index": 0 }],
-        [{ "node": "SB IBRASE DELETE", "type": "main", "index": 0 }],
-        [{ "node": "SB AUNI DELETE", "type": "main", "index": 0 }],
-        [{ "node": "SB IVEM DELETE", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "SB GASCTPNA DELETE",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB IBRASE DELETE",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB AUNI DELETE",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB IVEM DELETE",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "SB GASCTPNA DELETE": {
-      "main": [[{ "node": "Respond GASCTPNA", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Respond DELETE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "SB IBRASE DELETE": {
-      "main": [[{ "node": "Respond IBRASE", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Respond DELETE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "SB AUNI DELETE": {
-      "main": [[{ "node": "Respond AUNI", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Respond DELETE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "SB IVEM DELETE": {
-      "main": [[{ "node": "Respond IVEM", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Respond DELETE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   }
 }
