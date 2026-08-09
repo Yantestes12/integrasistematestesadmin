@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Plus, Search, Edit3, Power, Loader2, MapPin, Home, Building2, User, Calendar, CheckCircle2, Circle, Clock, Inbox, AlertTriangle } from "lucide-react";
+import { Plus, Search, Edit3, Power, Loader2, MapPin, Building2, User, CheckCircle2, Circle, Clock, Inbox, AlertTriangle, Trash2 } from "lucide-react";
 
 export interface EspacoItem {
   id: string | number;
@@ -46,7 +46,7 @@ export default function Espacos() {
   const [activeTab, setActiveTab] = useState<"aprovados" | "solicitacoes">("aprovados");
   const [togglingId, setTogglingId] = useState<string | number | null>(null);
   const [approvingId, setApprovingId] = useState<string | number | null>(null);
-  const [markingPendingId, setMarkingPendingId] = useState<string | number | null>(null);
+  const [deletingId, setDeletingId] = useState<string | number | null>(null);
 
   useEffect(() => {
     const savedInstitute = localStorage.getItem("auth_institute") || "IBRASE";
@@ -100,22 +100,26 @@ export default function Espacos() {
       if (resEspacos.ok) {
         const data = await resEspacos.json();
         const list = flattenResponse(data);
-        setEspacos(list.map((e: any) => ({
-          id: e.id,
-          nome: e.nome || "",
-          projeto_id: e.projeto_id,
-          projeto_nome: e.projeto_id ? projetosCache[Number(e.projeto_id)] || `Projeto ID ${e.projeto_id}` : "—",
-          modalidade_id: e.modalidade_id,
-          modalidade_nome: e.modalidade_id ? modalidadesCache[Number(e.modalidade_id)] || `Modalidade ID ${e.modalidade_id}` : "—",
-          resp_nome: e.resp_nome || "—",
-          bairro: e.bairro || "",
-          cidade: e.cidade || "",
-          uf: e.uf || "",
-          ativo: e.ativo !== false && e.ativo !== 0 && e.ativo !== "0",
-          status_aprovacao: e.status_aprovacao || (e.docs_pendentes ? "pendente" : "aprovado"),
-          docs_pendentes: Boolean(e.docs_pendentes || e.status_aprovacao === "pendente"),
-          nucleo_nome: nucleosMap[String(e.id)] || undefined,
-        })));
+        setEspacos(list.map((e: any) => {
+          // status_aprovacao estrito: se vier 'pendente' é pendente, caso contrário é aprovado por padrão
+          const statusAprovacao = e.status_aprovacao === "pendente" ? "pendente" : (e.status_aprovacao || "aprovado");
+          return {
+            id: e.id,
+            nome: e.nome || "",
+            projeto_id: e.projeto_id,
+            projeto_nome: e.projeto_id ? projetosCache[Number(e.projeto_id)] || `Projeto ID ${e.projeto_id}` : "—",
+            modalidade_id: e.modalidade_id,
+            modalidade_nome: e.modalidade_id ? modalidadesCache[Number(e.modalidade_id)] || `Modalidade ID ${e.modalidade_id}` : "—",
+            resp_nome: e.resp_nome || "—",
+            bairro: e.bairro || "",
+            cidade: e.cidade || "",
+            uf: e.uf || "",
+            ativo: e.ativo !== false && e.ativo !== 0 && e.ativo !== "0",
+            status_aprovacao: statusAprovacao,
+            docs_pendentes: Boolean(e.docs_pendentes),
+            nucleo_nome: nucleosMap[String(e.id)] || undefined,
+          };
+        }));
       }
     } catch (e) {
       console.error("Erro ao buscar espaços:", e);
@@ -131,7 +135,7 @@ export default function Espacos() {
       const res = await fetch("https://w.ibrase.com.br/webhook/espacos-put", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: espaco.id, ativo: !espaco.ativo, instituto: authInstitute }),
+        body: JSON.stringify({ id: espaco.id, ativo: !espaco.ativo, instituto: authInstitute.toUpperCase() }),
       });
       if (res.ok) {
         setEspacos(prev => prev.map(e => e.id === espaco.id ? { ...e, ativo: !espaco.ativo } : e));
@@ -153,12 +157,11 @@ export default function Espacos() {
         body: JSON.stringify({
           id: espaco.id,
           status_aprovacao: "aprovado",
-          docs_pendentes: false,
-          instituto: authInstitute
+          instituto: authInstitute.toUpperCase()
         }),
       });
       if (res.ok) {
-        setEspacos(prev => prev.map(e => e.id === espaco.id ? { ...e, status_aprovacao: "aprovado", docs_pendentes: false } : e));
+        setEspacos(prev => prev.map(e => e.id === espaco.id ? { ...e, status_aprovacao: "aprovado" } : e));
       }
     } catch (e) {
       console.error("Erro ao aprovar espaço:", e);
@@ -167,33 +170,32 @@ export default function Espacos() {
     }
   };
 
-  const handleMarcarPendente = async (espaco: EspacoItem) => {
-    setMarkingPendingId(espaco.id);
+  const handleDeleteEspaco = async (espaco: EspacoItem) => {
+    if (!window.confirm(`Tem certeza que deseja excluir permanentemente o espaço "${espaco.nome}"?`)) return;
+    setDeletingId(espaco.id);
     try {
       const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
-      const res = await fetch("https://w.ibrase.com.br/webhook/espacos-put", {
+      const res = await fetch("https://w.ibrase.com.br/webhook/espacos-delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: espaco.id,
-          status_aprovacao: "pendente",
-          docs_pendentes: true,
-          instituto: authInstitute
-        }),
+        body: JSON.stringify({ id: espaco.id, instituto: authInstitute.toUpperCase() }),
       });
       if (res.ok) {
-        setEspacos(prev => prev.map(e => e.id === espaco.id ? { ...e, status_aprovacao: "pendente", docs_pendentes: true } : e));
+        setEspacos(prev => prev.filter(e => e.id !== espaco.id));
+      } else {
+        alert("Erro ao excluir espaço. Tente novamente.");
       }
     } catch (e) {
-      console.error("Erro ao marcar como pendente:", e);
+      console.error("Erro ao excluir espaço:", e);
+      alert("Erro ao conectar com o servidor.");
     } finally {
-      setMarkingPendingId(null);
+      setDeletingId(null);
     }
   };
 
-  // Separação em listas de Aprovados e Solicitações Pendentes
-  const solicitacoesPendentes = espacos.filter(e => e.status_aprovacao === "pendente" || e.docs_pendentes);
-  const espacosAprovados = espacos.filter(e => e.status_aprovacao !== "pendente" && !e.docs_pendentes);
+  // 🔴 REGRA CRÍTICA: Separação ESTRITA por status_aprovacao (Sem duplicatas em ambas as abas)
+  const solicitacoesPendentes = espacos.filter(e => e.status_aprovacao === "pendente");
+  const espacosAprovados = espacos.filter(e => e.status_aprovacao !== "pendente");
 
   const currentList = activeTab === "solicitacoes" ? solicitacoesPendentes : espacosAprovados;
 
@@ -320,13 +322,13 @@ export default function Espacos() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
           {filtered.map(espaco => {
             const emUso = Boolean(espaco.nucleo_nome);
-            const isPendente = espaco.status_aprovacao === "pendente" || espaco.docs_pendentes;
+            const isSolicitacaoPendente = espaco.status_aprovacao === "pendente";
 
             return (
               <div 
                 key={espaco.id}
                 className={`bg-white rounded-2xl border p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between min-h-[240px] relative group ${
-                  isPendente ? "border-amber-300 ring-1 ring-amber-100" : "border-slate-200"
+                  isSolicitacaoPendente ? "border-amber-300 ring-1 ring-amber-100" : "border-slate-200"
                 }`}
               >
                 {/* Header do Card */}
@@ -334,13 +336,23 @@ export default function Espacos() {
                   <div className="flex items-start justify-between gap-2 mb-3 flex-wrap sm:flex-nowrap">
                     <div className="flex items-center gap-2 min-w-0">
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 ${
-                        isPendente ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-[var(--theme-primary)]"
+                        isSolicitacaoPendente ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-[var(--theme-primary)]"
                       }`}>
-                        {isPendente ? <Clock className="w-5 h-5" /> : <Building2 className="w-5 h-5" />}
+                        {isSolicitacaoPendente ? <Clock className="w-5 h-5" /> : <Building2 className="w-5 h-5" />}
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-extrabold text-slate-800 text-base leading-tight group-hover:text-[var(--theme-primary)] transition-colors break-words">
+                        <h3 className="font-extrabold text-slate-800 text-base leading-tight group-hover:text-[var(--theme-primary)] transition-colors break-words flex items-center gap-1.5">
                           {espaco.nome}
+                          {/* ⚠️ ÍCONE DE AVISO PARA INFORMAÇÃO FALTANTE MESMO SE APROVADO */}
+                          {espaco.docs_pendentes && (
+                            <span 
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 cursor-help shrink-0"
+                              title="Atenção: Informação ou documento faltante neste espaço"
+                            >
+                              <AlertTriangle size={12} className="text-amber-600 shrink-0" />
+                              Info faltante
+                            </span>
+                          )}
                         </h3>
                         {espaco.bairro && (
                           <div className="flex items-center gap-1 text-slate-400 text-xs mt-0.5">
@@ -353,10 +365,10 @@ export default function Espacos() {
 
                     {/* Tag de Status / Solicitação */}
                     <div className="shrink-0">
-                      {isPendente ? (
+                      {isSolicitacaoPendente ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200 whitespace-nowrap shadow-2xs">
                           <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
-                          Solicitação Pendente
+                          Aguardando Aprovação
                         </span>
                       ) : emUso ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-2xs whitespace-nowrap">
@@ -374,12 +386,12 @@ export default function Espacos() {
 
                   {/* Informações Centrais do Card */}
                   <div className="space-y-2.5 mt-4 pt-3 border-t border-slate-100 text-xs">
-                    {isPendente ? (
+                    {isSolicitacaoPendente ? (
                       <div className="bg-amber-50 border border-amber-200/80 p-2.5 rounded-xl text-amber-900">
                         <span className="font-bold text-[11px] text-amber-700 uppercase tracking-wider block mb-0.5">Status da Solicitação:</span>
                         <span className="font-semibold text-xs flex items-center gap-1.5">
                           <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                          Aguardando aprovação do administrador
+                          Aguardando aprovação — Não pode criar Núcleo
                         </span>
                       </div>
                     ) : emUso ? (
@@ -421,21 +433,31 @@ export default function Espacos() {
 
                 {/* Footer do Card Quadrado com Ações */}
                 <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-auto">
-                  {isPendente ? (
-                    <button
-                      onClick={() => handleAprovarEspaco(espaco)}
-                      disabled={approvingId === espaco.id}
-                      className="w-full flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-xl shadow-xs transition-all text-xs"
-                    >
-                      {approvingId === espaco.id ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <>
-                          <CheckCircle2 size={14} />
-                          Aprovar Espaço
-                        </>
-                      )}
-                    </button>
+                  {isSolicitacaoPendente ? (
+                    <div className="flex items-center gap-2 w-full">
+                      <button
+                        onClick={() => handleAprovarEspaco(espaco)}
+                        disabled={approvingId === espaco.id}
+                        className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-xl shadow-xs transition-all text-xs"
+                      >
+                        {approvingId === espaco.id ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <>
+                            <CheckCircle2 size={14} />
+                            Aprovar Espaço
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteEspaco(espaco)}
+                        disabled={deletingId === espaco.id}
+                        className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors border border-slate-200"
+                        title="Recusar e Excluir Solicitação"
+                      >
+                        {deletingId === espaco.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                      </button>
+                    </div>
                   ) : (
                     <>
                       <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
@@ -445,15 +467,6 @@ export default function Espacos() {
                       </span>
 
                       <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => handleMarcarPendente(espaco)}
-                          disabled={markingPendingId === espaco.id}
-                          className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors border border-amber-200/60"
-                          title="Marcar como solicitação pendente"
-                        >
-                          {markingPendingId === espaco.id ? <Loader2 size={13} className="animate-spin" /> : <Clock size={13} />}
-                          Pendente
-                        </button>
                         <Link
                           to={`/admin/cadastrar-espaco?edit=${espaco.id}`}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
@@ -474,6 +487,14 @@ export default function Espacos() {
                         >
                           {togglingId === espaco.id ? <Loader2 size={14} className="animate-spin" /> : <Power size={14} />}
                         </button>
+                        <button
+                          onClick={() => handleDeleteEspaco(espaco)}
+                          disabled={deletingId === espaco.id}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          title="Excluir Espaço"
+                        >
+                          {deletingId === espaco.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                        </button>
                       </div>
                     </>
                   )}
@@ -486,4 +507,3 @@ export default function Espacos() {
     </div>
   );
 }
-

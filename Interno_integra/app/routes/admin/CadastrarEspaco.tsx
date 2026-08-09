@@ -239,7 +239,7 @@ export default function CadastrarEspaco() {
               cidade: espaco.cidade || "",
               uf: espaco.uf || "",
               pontoReferencia: espaco.ponto_referencia || "",
-              horarios: { ...DEFAULT_HORARIOS, ...(espaco.horarios || {}) },
+              horarios: { ...DEFAULT_HORARIOS, ...(typeof espaco.horarios === "string" ? JSON.parse(espaco.horarios) : (espaco.horarios || {})) },
               docsPendentes: Boolean(espaco.docs_pendentes || espaco.status_aprovacao === "pendente"),
               fotoUrl: espaco.foto_url || "",
               termoUrl: espaco.termo_url || "",
