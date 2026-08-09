@@ -101,15 +101,7 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
             fim: p.fim ? formatDateForInput(p.fim) : ""
           }));
 
-          if (mappedPeriodos.length === 0) {
-            mappedPeriodos = [
-              { id: Date.now() + 1, tipo: "planejamento", rotulo: "Iniciação", inicio: "", fim: "" },
-              { id: Date.now() + 2, tipo: "avaliacao", rotulo: "1º Trimestre", inicio: "", fim: "" },
-              { id: Date.now() + 3, tipo: "avaliacao", rotulo: "2º Trimestre", inicio: "", fim: "" },
-              { id: Date.now() + 4, tipo: "avaliacao", rotulo: "3º Trimestre", inicio: "", fim: "" },
-              { id: Date.now() + 5, tipo: "avaliacao", rotulo: "4º Trimestre", inicio: "", fim: "" }
-            ];
-          }
+
 
           let ativo = true;
           if (item.status?.ativo !== undefined) {
