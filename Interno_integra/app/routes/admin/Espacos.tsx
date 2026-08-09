@@ -39,10 +39,9 @@ export default function Espacos() {
   const [togglingDocsId, setTogglingDocsId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  // Modal de Exclusão Animação Minimalista (Estrutura Desmoronando/Desfazendo)
+  // Modal de Exclusão Clean & Minimalista
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedDeleteEspaco, setSelectedDeleteEspaco] = useState<EspacoItem | null>(null);
-  const [isCollapsing, setIsCollapsing] = useState(false);
 
   const fetchEspacos = async () => {
     setLoading(true);
@@ -150,7 +149,6 @@ export default function Espacos() {
 
   const openDeleteModal = (espaco: EspacoItem) => {
     setSelectedDeleteEspaco(espaco);
-    setIsCollapsing(false);
     setDeleteModalOpen(true);
   };
 
@@ -158,37 +156,41 @@ export default function Espacos() {
     if (deletingId) return;
     setDeleteModalOpen(false);
     setSelectedDeleteEspaco(null);
-    setIsCollapsing(false);
   };
 
   const handleConfirmDeleteEspaco = async () => {
     if (!selectedDeleteEspaco || deletingId) return;
     setDeletingId(selectedDeleteEspaco.id);
-    setIsCollapsing(true);
 
-    setTimeout(async () => {
-      try {
-        const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
-        const res = await fetch("https://w.ibrase.com.br/webhook/espacos-delete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: selectedDeleteEspaco.id, instituto: authInstitute.toUpperCase() }),
+    try {
+      const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
+      
+      // Tenta enviar POST primeiro e faz fallback para DELETE com query params
+      let res = await fetch("https://w.ibrase.com.br/webhook/espacos-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: selectedDeleteEspaco.id, instituto: authInstitute.toUpperCase() }),
+      });
+
+      if (!res.ok) {
+        res = await fetch(`https://w.ibrase.com.br/webhook/espacos-delete?id=${selectedDeleteEspaco.id}&instituto=${authInstitute.toUpperCase()}`, {
+          method: "DELETE",
         });
-        if (res.ok) {
-          setEspacos(prev => prev.filter(e => e.id !== selectedDeleteEspaco.id));
-          setDeleteModalOpen(false);
-          setSelectedDeleteEspaco(null);
-        } else {
-          alert("Erro ao excluir espaço. Tente novamente.");
-        }
-      } catch (e) {
-        console.error("Erro ao excluir espaço:", e);
-        alert("Erro ao conectar com o servidor.");
-      } finally {
-        setDeletingId(null);
-        setIsCollapsing(false);
       }
-    }, 950);
+
+      if (res.ok) {
+        setEspacos(prev => prev.filter(e => e.id !== selectedDeleteEspaco.id));
+        setDeleteModalOpen(false);
+        setSelectedDeleteEspaco(null);
+      } else {
+        alert("Erro ao excluir espaço via N8N. Certifique-se de importar o fluxo N8N_ESPACOS_DELETE.");
+      }
+    } catch (e) {
+      console.error("Erro ao excluir espaço:", e);
+      alert("Erro ao conectar com o servidor.");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   // 🔴 REGRA CRÍTICA: Separação ESTRITA por status_aprovacao
@@ -208,23 +210,6 @@ export default function Espacos() {
   return (
     <div className="space-y-6 font-sans">
       
-      {/* Keyframes de animação de desmoronamento minimalista de estrutura */}
-      <style>{`
-        @keyframes collapseAnim {
-          0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; filter: blur(0px); }
-          40% { transform: translateY(8px) scale(0.96) rotate(-2deg); opacity: 0.85; }
-          75% { transform: translateY(35px) scale(0.7, 0.3) rotate(3deg); opacity: 0.4; filter: blur(2px); }
-          100% { transform: translateY(70px) scale(0.4, 0.05); opacity: 0; filter: blur(4px); }
-        }
-        @keyframes dustAnim {
-          0% { transform: translateY(0) scale(0.4); opacity: 0; }
-          50% { transform: translateY(-25px) scale(1.3); opacity: 0.5; }
-          100% { transform: translateY(-55px) scale(2); opacity: 0; }
-        }
-        .anim-collapse-building { animation: collapseAnim 0.95s cubic-bezier(0.55, 0, 0.1, 1) forwards; }
-        .anim-dust-rising { animation: dustAnim 0.95s ease-out forwards; }
-      `}</style>
-
       {/* Header */}
       <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -375,7 +360,7 @@ export default function Espacos() {
                           ⚠️ Info faltante
                         </span>
                         <div className="absolute right-0 top-full mt-1 hidden group-hover:block w-48 bg-slate-900 text-white text-[11px] p-2 rounded-lg shadow-lg z-20 font-medium">
-                          Espaço aprovado com pendência de foto ou termo. Clique em 'Marcar pendência' para alternar.
+                          Espaço aprovado com pendência de foto ou termo. Clique em 'Info faltante' para alternar.
                         </div>
                       </div>
                     )}
@@ -505,18 +490,21 @@ export default function Espacos() {
         </div>
       )}
 
-      {/* Modal de Confirmação com Animação Minimalista de Estrutura Desfazendo / Desmoronando */}
+      {/* Modal de Confirmação Clean e Elegante para Exclusão de Espaço */}
       {deleteModalOpen && selectedDeleteEspaco && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in duration-200">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in duration-150">
             
             {/* Header do Modal */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold">
-                  <AlertTriangle size={18} />
+            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center font-bold shrink-0">
+                  <AlertTriangle size={20} />
                 </div>
-                <h3 className="text-base font-extrabold text-slate-800">Excluir Espaço Físico</h3>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900">Excluir Espaço Físico</h3>
+                  <p className="text-xs text-slate-500">Confirmação de exclusão permanente</p>
+                </div>
               </div>
 
               <button
@@ -528,41 +516,21 @@ export default function Espacos() {
               </button>
             </div>
 
-            {/* ÁREA DA ANIMAÇÃO MINIMALISTA DE DESFAZER / DESMORONAR O ESPAÇO */}
-            <div className="relative py-4 flex flex-col items-center justify-center min-h-[160px] overflow-hidden">
+            {/* Corpo do Modal */}
+            <div className="space-y-3 text-sm text-slate-600">
+              <p>
+                Tem certeza que deseja excluir permanentemente o espaço físico <strong className="text-slate-900 font-extrabold">"{selectedDeleteEspaco.nome}"</strong>?
+              </p>
               
-              <div className={`w-full max-w-[290px] bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 shadow-sm relative transition-all ${
-                isCollapsing ? 'anim-collapse-building' : 'hover:border-slate-300'
-              }`}>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 border border-blue-200">
-                    <Building2 size={24} />
-                  </div>
-                  <div className="overflow-hidden">
-                    <h4 className="text-slate-900 font-extrabold text-sm truncate">
-                      {selectedDeleteEspaco.nome}
-                    </h4>
-                    <p className="text-xs text-slate-500 truncate mt-0.5">
-                      {selectedDeleteEspaco.bairro || 'Espaço Físico'} • {selectedDeleteEspaco.cidade || 'Campos dos Goytacazes'}
-                    </p>
-                  </div>
+              <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs space-y-1 text-slate-600">
+                <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                  <Building2 size={14} className="text-slate-500" />
+                  <span>{selectedDeleteEspaco.nome}</span>
+                </div>
+                <div className="text-slate-500">
+                  {[selectedDeleteEspaco.bairro, selectedDeleteEspaco.cidade].filter(Boolean).join(" • ") || "Espaço Físico"}
                 </div>
               </div>
-
-              {/* Partículas de poeira minimalista subindo durante o colapso */}
-              {isCollapsing && (
-                <div className="absolute inset-0 pointer-events-none flex items-center justify-around">
-                  <div className="w-3 h-3 bg-slate-300 rounded-full anim-dust-rising" style={{ animationDelay: '0ms' }} />
-                  <div className="w-4 h-4 bg-slate-400 rounded-full anim-dust-rising" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2.5 h-2.5 bg-slate-300 rounded-full anim-dust-rising" style={{ animationDelay: '300ms' }} />
-                </div>
-              )}
-
-              {!isCollapsing && (
-                <p className="mt-4 text-xs text-slate-600 text-center font-medium">
-                  Tem certeza que deseja remover a estrutura do espaço <strong className="text-slate-900 font-bold">"{selectedDeleteEspaco.nome}"</strong>?
-                </p>
-              )}
             </div>
 
             {/* Botões de Ação */}
@@ -584,7 +552,7 @@ export default function Espacos() {
               >
                 {deletingId === selectedDeleteEspaco.id ? (
                   <>
-                    <Loader2 size={14} className="animate-spin" /> Desfazendo Estrutura...
+                    <Loader2 size={14} className="animate-spin" /> Excluindo...
                   </>
                 ) : (
                   <>

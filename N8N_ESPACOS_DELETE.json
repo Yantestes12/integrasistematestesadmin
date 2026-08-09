@@ -40,7 +40,7 @@
         "operation": "delete",
         "tableId": "GASCTPNA_espacos",
         "matchColumn": "id",
-        "matchValue": "={{ $json.body.id }}"
+        "matchValue": "={{ $json.body.id || $json.query.id }}"
       },
       "id": "sb-gasctpna-delete",
       "name": "SB GASCTPNA DELETE",
@@ -56,7 +56,7 @@
         "operation": "delete",
         "tableId": "IBRASE_espacos",
         "matchColumn": "id",
-        "matchValue": "={{ $json.body.id }}"
+        "matchValue": "={{ $json.body.id || $json.query.id }}"
       },
       "id": "sb-ibrase-delete",
       "name": "SB IBRASE DELETE",
@@ -72,7 +72,7 @@
         "operation": "delete",
         "tableId": "AUNI_espacos",
         "matchColumn": "id",
-        "matchValue": "={{ $json.body.id }}"
+        "matchValue": "={{ $json.body.id || $json.query.id }}"
       },
       "id": "sb-auni-delete",
       "name": "SB AUNI DELETE",
@@ -88,7 +88,7 @@
         "operation": "delete",
         "tableId": "IVEM_espacos",
         "matchColumn": "id",
-        "matchValue": "={{ $json.body.id }}"
+        "matchValue": "={{ $json.body.id || $json.query.id }}"
       },
       "id": "sb-ivem-delete",
       "name": "SB IVEM DELETE",
@@ -101,7 +101,7 @@
     },
     {
       "parameters": { "respondWith": "allIncomingItems", "options": {} },
-      "id": "resp-gasctpna-del",
+      "id": "resp-gasctpna-delete",
       "name": "Respond GASCTPNA",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
@@ -109,7 +109,7 @@
     },
     {
       "parameters": { "respondWith": "allIncomingItems", "options": {} },
-      "id": "resp-ibrase-del",
+      "id": "resp-ibrase-delete",
       "name": "Respond IBRASE",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
@@ -117,7 +117,7 @@
     },
     {
       "parameters": { "respondWith": "allIncomingItems", "options": {} },
-      "id": "resp-auni-del",
+      "id": "resp-auni-delete",
       "name": "Respond AUNI",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
@@ -125,7 +125,7 @@
     },
     {
       "parameters": { "respondWith": "allIncomingItems", "options": {} },
-      "id": "resp-ivem-del",
+      "id": "resp-ivem-delete",
       "name": "Respond IVEM",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
