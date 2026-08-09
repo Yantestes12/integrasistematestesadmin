@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Plus, Search, Edit3, Power, CheckCircle2, Clock, MapPin, Building2, User, Phone, AlertCircle, AlertTriangle, Trash2, Loader2, X, Archive, Download, Printer } from "lucide-react";
+import { Plus, Search, Edit3, Power, CheckCircle2, Clock, MapPin, Building2, User, Phone, AlertCircle, AlertTriangle, Trash2, Loader2, X, Archive, Download, Printer, Layers } from "lucide-react";
 import ToastContainer, { type ToastMessage } from "../../components/Toast";
 
 export interface EspacoItem {
@@ -27,6 +27,8 @@ export interface EspacoItem {
   status_aprovacao?: string; // 'aprovado' | 'pendente' | 'rejeitado'
   docs_pendentes?: boolean;
   projeto_nome?: string;
+  nucleo_nome?: string;
+  em_uso?: boolean;
   created_at?: string;
 }
 
@@ -79,17 +81,59 @@ export default function Espacos() {
     return () => clearInterval(timer);
   }, [deleteModalOpen, countdown]);
 
+  const flattenResponse = (rawData: any): any[] => {
+    let list: any[] = [];
+    if (Array.isArray(rawData)) {
+      list = rawData;
+    } else if (rawData && typeof rawData === 'object') {
+      if (Array.isArray(rawData.data)) list = rawData.data;
+      else if (Array.isArray(rawData.items)) list = rawData.items;
+      else if (rawData.json) list = Array.isArray(rawData.json) ? rawData.json : [rawData.json];
+      else list = [rawData];
+    }
+
+    let flatList: any[] = [];
+    list.forEach(entry => {
+      if (entry && entry.json) {
+        if (Array.isArray(entry.json)) {
+          flatList.push(...entry.json);
+        } else {
+          flatList.push(entry.json);
+        }
+      } else if (Array.isArray(entry)) {
+        flatList.push(...entry);
+      } else {
+        flatList.push(entry);
+      }
+    });
+    return flatList;
+  };
+
   const fetchEspacos = async () => {
     setLoading(true);
     try {
       const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
-      const res = await fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${authInstitute.toUpperCase()}`);
-      if (res.ok) {
-        const data = await res.json();
-        let rawList: any[] = [];
-        if (Array.isArray(data)) rawList = data;
-        else if (data && Array.isArray(data.data)) rawList = data.data;
-        else if (data && data.json) rawList = Array.isArray(data.json) ? data.json : [data.json];
+      
+      // Busca Espaços e Núcleos em paralelo para detectar "Em Uso" e "Vinculado ao Núcleo"
+      const [resE, resN] = await Promise.all([
+        fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${authInstitute.toUpperCase()}`),
+        fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${authInstitute.toUpperCase()}`).catch(() => null)
+      ]);
+
+      let nMap: Record<number, string> = {};
+      if (resN && resN.ok) {
+        const nData = await resN.json();
+        const nList = flattenResponse(nData);
+        nList.forEach((n: any) => {
+          if (n.espaco_id) {
+            nMap[Number(n.espaco_id)] = n.nome || `Núcleo #${n.id}`;
+          }
+        });
+      }
+
+      if (resE.ok) {
+        const data = await resE.json();
+        const rawList = flattenResponse(data);
         
         const list = rawList.map((item: any) => {
           const status = (item.status_aprovacao || "aprovado").toString().toLowerCase().trim();
@@ -97,10 +141,14 @@ export default function Espacos() {
           const termoOk = !!(item.termo_url && item.termo_url.trim().length > 0);
           const docsPerto = item.docs_pendentes === true || (!fotoOk || !termoOk);
 
+          const linkedNucleo = nMap[Number(item.id)] || item.nucleo_nome || (item.projeto_nome ? `Núcleo ${item.nome}` : null);
+
           return {
             ...item,
             status_aprovacao: status,
             docs_pendentes: docsPerto,
+            nucleo_nome: linkedNucleo,
+            em_uso: !!linkedNucleo,
           };
         });
 
@@ -447,19 +495,19 @@ export default function Espacos() {
                     </div>
                   )}
 
-                  {/* Badge de Status de Aprovação e Alerta ÚNICO no Topo */}
+                  {/* Badges do Topo: Lzinho Aprovado + Badge Interativa Info Faltante */}
                   <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
                     {isPendente ? (
-                      <span className="bg-amber-500 text-white text-[11px] font-black px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1 uppercase tracking-wider">
-                        <Clock size={12} /> Solicitação Pendente
+                      <span className="bg-amber-500 text-white text-[11px] font-black px-2 py-0.5 rounded shadow-xs flex items-center gap-1 uppercase tracking-wider">
+                        <Clock size={12} /> Pendente
                       </span>
                     ) : (
-                      <span className="bg-emerald-600 text-white text-[11px] font-black px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1 uppercase tracking-wider">
-                        <CheckCircle2 size={12} /> Aprovado
+                      <span className="bg-emerald-600 text-white text-[11px] font-black px-2 py-0.5 rounded shadow-xs flex items-center gap-1 uppercase tracking-wider">
+                        <CheckCircle2 size={12} /> ✓ Aprovado
                       </span>
                     )}
 
-                    {/* Badge Interativa no Topo (Info Faltante ou Docs OK) */}
+                    {/* Badge do Topo ÚNICA para Info Faltante / Docs OK */}
                     {!isPendente && (
                       <button
                         onClick={() => handleToggleDocsPendentes(espaco)}
@@ -469,11 +517,9 @@ export default function Espacos() {
                             ? "bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200"
                             : "bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200"
                         }`}
-                        title="Clique para alternar o status da documentação"
+                        title="Clique para alternar o status de documentação"
                       >
-                        {togglingDocsId === espaco.id ? (
-                          <Loader2 size={12} className="animate-spin" />
-                        ) : espaco.docs_pendentes ? (
+                        {espaco.docs_pendentes ? (
                           <>
                             <AlertTriangle size={12} className="text-amber-600" />
                             ⚠️ Info faltante
@@ -502,22 +548,37 @@ export default function Espacos() {
                         <span>{[espaco.bairro, espaco.cidade].filter(Boolean).join(" • ")}</span>
                       </p>
                     )}
+
+                    {/* Indicador de "Em Uso" e Vínculo ao Núcleo */}
+                    {espaco.em_uso && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-md mt-2">
+                        <Layers size={12} className="text-blue-500 shrink-0" />
+                        <span>Em uso • Vinculado ao Núcleo {espaco.nucleo_nome}</span>
+                      </span>
+                    )}
                   </div>
 
                   {/* Detalhes do Responsável */}
                   <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-1 text-xs">
-                    {espaco.resp_nome && (
+                    {espaco.resp_nome && espaco.resp_nome !== "temp" ? (
                       <div className="flex items-center gap-1.5 text-slate-700 font-bold">
                         <User size={13} className="text-slate-400 shrink-0" />
                         <span className="truncate">Resp: {espaco.resp_nome}</span>
                       </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-slate-400 italic">
+                        <User size={13} className="shrink-0" />
+                        <span>Responsável não cadastrado</span>
+                      </div>
                     )}
-                    {espaco.resp_telefone && (
+
+                    {espaco.resp_telefone && espaco.resp_telefone !== "00000000000" && (
                       <div className="flex items-center gap-1.5 text-slate-500 font-medium">
                         <Phone size={13} className="text-slate-400 shrink-0" />
                         <span>{espaco.resp_telefone}</span>
                       </div>
                     )}
+
                     {espaco.ponto_referencia && (
                       <div className="text-[11px] text-slate-500 italic line-clamp-1 mt-1 pt-1 border-t border-slate-200/60">
                         Ref: {espaco.ponto_referencia}
@@ -802,6 +863,13 @@ export default function Espacos() {
                       </span>
                     </div>
                   </div>
+
+                  {selectedPrintEspaco.em_uso && (
+                    <div className="pt-2 border-t border-slate-200/60">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Vínculo Operacional</span>
+                      <span className="font-bold text-blue-700">Em Uso pelo Núcleo: {selectedPrintEspaco.nucleo_nome}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Bloco 2: Localização e Endereço */}
