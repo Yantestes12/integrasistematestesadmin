@@ -8,11 +8,14 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "wh-espacos-delete",
-      "name": "Webhook DELETE",
+      "id": "a08140ed-d9f6-4287-ae52-5c9dcdbd7612",
+      "name": "Webhook DELETE1",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [0, 0],
+      "position": [
+        3488,
+        3088
+      ],
       "webhookId": "espacos-delete"
     },
     {
@@ -21,19 +24,33 @@
         "value1": "={{ $json.query.instituto || $json.body.instituto }}",
         "rules": {
           "rules": [
-            { "value2": "GASCTPNA" },
-            { "value2": "IBRASE", "output": 1 },
-            { "value2": "AUNI", "output": 2 },
-            { "value2": "IVEM", "output": 3 }
+            {
+              "value2": "GASCTPNA"
+            },
+            {
+              "value2": "IBRASE",
+              "output": 1
+            },
+            {
+              "value2": "AUNI",
+              "output": 2
+            },
+            {
+              "value2": "IVEM",
+              "output": 3
+            }
           ]
         },
         "fallbackOutput": 0
       },
-      "id": "switch-delete",
-      "name": "Switch DELETE",
+      "id": "3f72dfc6-cfc6-4931-8a20-a5b86b9aae87",
+      "name": "Switch DELETE1",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
-      "position": [220, 0]
+      "position": [
+        3712,
+        3088
+      ]
     },
     {
       "parameters": {
@@ -42,13 +59,19 @@
         "matchColumn": "id",
         "matchValue": "={{ $json.body.id || $json.query.id }}"
       },
-      "id": "sb-gasctpna-delete",
-      "name": "SB GASCTPNA DELETE",
+      "id": "34d30c79-7c26-4c1a-a0f4-38af76c713dd",
+      "name": "SB GASCTPNA DELETE1",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, -300],
+      "position": [
+        3968,
+        2784
+      ],
       "credentials": {
-        "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" }
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
       }
     },
     {
@@ -58,13 +81,19 @@
         "matchColumn": "id",
         "matchValue": "={{ $json.body.id || $json.query.id }}"
       },
-      "id": "sb-ibrase-delete",
-      "name": "SB IBRASE DELETE",
+      "id": "032e0630-1fac-457e-80a1-586bb35e862a",
+      "name": "SB IBRASE DELETE1",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, -100],
+      "position": [
+        3968,
+        2992
+      ],
       "credentials": {
-        "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" }
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
       }
     },
     {
@@ -74,13 +103,19 @@
         "matchColumn": "id",
         "matchValue": "={{ $json.body.id || $json.query.id }}"
       },
-      "id": "sb-auni-delete",
-      "name": "SB AUNI DELETE",
+      "id": "7b7f70f2-adef-4def-8522-998adb798038",
+      "name": "SB AUNI DELETE1",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, 100],
+      "position": [
+        3968,
+        3184
+      ],
       "credentials": {
-        "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" }
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
       }
     },
     {
@@ -90,71 +125,165 @@
         "matchColumn": "id",
         "matchValue": "={{ $json.body.id || $json.query.id }}"
       },
-      "id": "sb-ivem-delete",
-      "name": "SB IVEM DELETE",
+      "id": "2a38ae08-238c-4ae1-84ab-551f00546e71",
+      "name": "SB IVEM DELETE1",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, 300],
+      "position": [
+        3968,
+        3392
+      ],
       "credentials": {
-        "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" }
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
       }
     },
     {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
-      "id": "resp-gasctpna-delete",
-      "name": "Respond GASCTPNA",
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "354ca51e-a810-46c7-b23f-bb9cf1fa1915",
+      "name": "Respond GASCTPNA5",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, -300]
+      "position": [
+        4208,
+        2784
+      ]
     },
     {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
-      "id": "resp-ibrase-delete",
-      "name": "Respond IBRASE",
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "c6af494f-5d58-47a8-b79f-abdd5788897d",
+      "name": "Respond IBRASE5",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, -100]
+      "position": [
+        4208,
+        2992
+      ]
     },
     {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
-      "id": "resp-auni-delete",
-      "name": "Respond AUNI",
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "b5f8249e-6627-4741-b8b9-9521e21a8642",
+      "name": "Respond AUNI5",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, 100]
+      "position": [
+        4208,
+        3184
+      ]
     },
     {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
-      "id": "resp-ivem-delete",
-      "name": "Respond IVEM",
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "7531cfd5-c9f0-48a0-a58e-a4161e8ec324",
+      "name": "Respond IVEM5",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, 300]
+      "position": [
+        4208,
+        3392
+      ]
     }
   ],
   "connections": {
-    "Webhook DELETE": {
-      "main": [[{ "node": "Switch DELETE", "type": "main", "index": 0 }]]
-    },
-    "Switch DELETE": {
+    "Webhook DELETE1": {
       "main": [
-        [{ "node": "SB GASCTPNA DELETE", "type": "main", "index": 0 }],
-        [{ "node": "SB IBRASE DELETE", "type": "main", "index": 0 }],
-        [{ "node": "SB AUNI DELETE", "type": "main", "index": 0 }],
-        [{ "node": "SB IVEM DELETE", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Switch DELETE1",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "SB GASCTPNA DELETE": {
-      "main": [[{ "node": "Respond GASCTPNA", "type": "main", "index": 0 }]]
+    "Switch DELETE1": {
+      "main": [
+        [
+          {
+            "node": "SB GASCTPNA DELETE1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB IBRASE DELETE1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB AUNI DELETE1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB IVEM DELETE1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "SB IBRASE DELETE": {
-      "main": [[{ "node": "Respond IBRASE", "type": "main", "index": 0 }]]
+    "SB GASCTPNA DELETE1": {
+      "main": [
+        [
+          {
+            "node": "Respond GASCTPNA5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "SB AUNI DELETE": {
-      "main": [[{ "node": "Respond AUNI", "type": "main", "index": 0 }]]
+    "SB IBRASE DELETE1": {
+      "main": [
+        [
+          {
+            "node": "Respond IBRASE5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "SB IVEM DELETE": {
-      "main": [[{ "node": "Respond IVEM", "type": "main", "index": 0 }]]
+    "SB AUNI DELETE1": {
+      "main": [
+        [
+          {
+            "node": "Respond AUNI5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SB IVEM DELETE1": {
+      "main": [
+        [
+          {
+            "node": "Respond IVEM5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   }
 }
