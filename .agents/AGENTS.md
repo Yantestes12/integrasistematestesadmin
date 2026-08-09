@@ -33,16 +33,22 @@
 - **Status Físico** = `ativo` (Ativo/Inativo)
 - **Problema pendente**: Verificar se `modalidades-get` existe como endpoint N8N. Se não existir, criar.
 
-## N8N Endpoints
+## N8N Endpoints & Workflows
 - Base: `https://w.ibrase.com.br/webhook/`
-- Endpoints: `nucleos-get`, `nucleos-post`, `nucleos-put`, `nucleos-delete`, `projetos-get`, `modalidades-get` (verificar se existe), `api-hub-cpf`, `consultarcnpj`, `consultarcep`
-- Token Hub: `193160880WeLPJqFrMT348746112`
-- **Respond Webhook**: Todos os GETs devem usar `responseMode: "responseNode"` + nó `Respond to Webhook` com `respondWith: "allIncomingItems"`.
+- Endpoints: `nucleos-get`, `nucleos-post`, `nucleos-put`, `nucleos-delete`, `espacos-get`, `espacos-post`, `espacos-put`, `espacos-delete`, `projetos-get`, `projetos-post`, `projetos-put`, `projetos-delete`
+- **REGRA CRÍTICA DE DELETE NO N8N (SUPABASE NODE)**: Nós de `delete` DEVEM usar `filters` com `conditions: [{ keyName: 'id', condition: 'eq', keyValue: '={{ $json.body.id || $json.query.id }}' }]`. NUNCA usar `matchColumn`/`matchValue` antigos pois ignoram o WHERE e apagam a tabela inteira!
+- **REGRA CRÍTICA DE GET NO N8N**: Usar `limit: 100` em vez de `returnAll: true` para evitar exceção quando a tabela está vazia.
 
-## Supabase - Schema nucleos
-- Colunas reais: `id`, `projeto_id`, `bairro_id`, `nome`, `subnome`, `ativo`, `aceitando_vagas`, `modalidade_id`, `resp_cpf`, `resp_nome`, `resp_email`, `resp_telefone`, `possui_cnpj`, `cnpj`, `cep`, `rua`, `numero`, `bairro`, `ponto_referencia`, `turnos_calculados`, `formulario_id`, `vagas`, `inscritos`, `ip_cadastro`, `user_agent`, `created_by`, `updated_by`, `created_at`, `updated_at`
+## Módulo de Espaços e Núcleos - Estado Atual
+- **Espacos.tsx**: Removido badge/estado de "Info Faltante". Status de aprovação é representado por um badge verde discreto com ícone "L" (CheckCircle2).
+- **Nucleos.tsx**: Proteção com fallback em caso de webhook retornar resposta em branco ou vazia.
+- **Scripts SQL**:
+  - `gerar_nucleos_dos_espacos.sql`: Regenera núcleos automaticamente caso os espaços existam.
+  - `povoar_modalidades_e_profissoes.sql`: Popula 34 modalidades e 30 profissões.
+
+## Supabase - Schema nucleos & espacos
 - Tabelas por instituto: `GASCTPNA_nucleos`, `IBRASE_nucleos`, `AUNI_nucleos`, `IVEM_nucleos`
-- Joins Supabase (`projetos(nome)`) podem NÃO funcionar se as tabelas têm prefixo de instituto.
+- Tabelas de espaços: `GASCTPNA_espacos`, `IBRASE_espacos`, `AUNI_espacos`, `IVEM_espacos`
 
 ## Arquivos Principais
 - `Interno_integra/app/components/Sidebar.tsx` - Navegação lateral
@@ -50,9 +56,10 @@
 - `Interno_integra/app/layouts/MainLayout.tsx` - Layout principal com temas
 - `Interno_integra/app/routes/Dashboard.tsx` - Tela inicial
 - `Interno_integra/app/routes/admin/Iniciativas.tsx` - Lista de projetos/iniciativas
-- `Interno_integra/app/routes/admin/Nucleos.tsx` - Lista de núcleos (REESCRITO)
+- `Interno_integra/app/routes/admin/Nucleos.tsx` - Lista de núcleos
+- `Interno_integra/app/routes/admin/Espacos.tsx` - Lista de espaços físicos
 - `Interno_integra/app/routes/admin/CadastrarNucleo.tsx` - Cadastro/edição de núcleo
-- `Interno_integra/app/routes/admin/CadastrarProjeto.tsx` - Cadastro/edição de projeto
+- `Interno_integra/app/routes/admin/CadastrarEspaco.tsx` - Cadastro/edição de espaço
 
 ## 🔴 REGRA CRÍTICA: Raciocínio Profundo & Validação de Código (Deep Think Mode)
 - **Zero Suposições**: NUNCA assumir que um erro ou falta de atualização é culpa de cache/servidor sem antes inspecionar logs, conferir compilação, testar localmente ou verificar git diff.
@@ -60,6 +67,5 @@
 - **Verificação Rigorosa**: Teste builds (`npm run build`), verifique sintaxe e garanta alinhamento perfeito com os esquemas do N8N e Supabase antes de declarar concluído.
 
 ## Último Commit
-- Hash: `a9ed004` (sincronizado em `main` E `master`)
-- Conteúdo: Módulo Espaço completo (Espacos.tsx, CadastrarEspaco.tsx, N8N JSONs e SQL Migration)
-
+- Hash: `cf6d941` (sincronizado em `main` E `master`)
+- Conteúdo: Fix robust nucleos fallback, espacos badges, n8n delete filters e regeneração de núcleos SQL.
