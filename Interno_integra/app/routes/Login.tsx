@@ -220,32 +220,32 @@ export default function Login() {
           </div>
 
           {/* Título PC */}
-          <div className="hidden md:block mb-10 transition-all duration-700" style={{ opacity: isSuccess ? 0.2 : 1 }}>
+          <div className="hidden md:block mb-8 transition-all duration-700" style={{ opacity: isSuccess ? 0.2 : 1 }}>
             <h2 className="text-2xl lg:text-3xl font-extrabold text-slate-900 mb-2">Bem-vindo de volta</h2>
-            <p className="text-sm text-slate-500 font-medium">Insira suas credenciais para acessar o painel.</p>
+            <p className="text-sm text-slate-500 font-medium">Insira suas credenciais para acessar o painel de gestão.</p>
           </div>
 
           {/* Banner de Erro */}
           {errorMsg && !isSuccess && (
-            <div className="flex items-center gap-2.5 bg-red-50 text-red-700 p-3.5 md:p-4 rounded-2xl md:rounded-xl border border-red-200 text-xs md:text-sm font-semibold mb-6 animate-fadeIn">
-              <AlertCircle className="w-4 h-4 md:w-5 md:h-5 shrink-0 text-red-500" />
+            <div className="flex items-center gap-3 bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 text-xs md:text-sm font-medium mb-6 animate-fadeIn">
+              <AlertCircle className="w-5 h-5 shrink-0 text-red-500" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {/* Formulário */}
-          <form onSubmit={handleLogin} className="space-y-4 md:space-y-5">
+          <form onSubmit={handleLogin} className="space-y-5 md:space-y-6">
             
             <div className="transition-all duration-500" style={{ opacity: (isLoading || isSuccess) ? 0.4 : 1, pointerEvents: (isLoading || isSuccess) ? 'none' : 'auto', filter: isSuccess ? 'blur(2px)' : 'none' }}>
-              <div className="space-y-1.5 md:space-y-2 mb-4 md:mb-5">
-                <label className="block text-[11px] md:text-xs font-bold text-slate-600 md:text-slate-700 uppercase tracking-wider">
+              <div className="space-y-2 mb-5">
+                <label className="block text-xs md:text-sm font-semibold text-slate-700">
                   Usuário ou E-mail Institucional
                 </label>
                 <div className="relative flex items-center">
-                  <User className="absolute left-3.5 md:left-4 text-slate-400 w-4 h-4 md:w-5 md:h-5 pointer-events-none" />
+                  <User className="absolute left-4 text-slate-400 w-5 h-5 pointer-events-none" />
                   <input 
                     type="text" 
-                    className="w-full h-12 md:h-14 pl-10 md:pl-12 pr-4 rounded-xl md:rounded-lg border border-slate-200 md:border-slate-300 bg-slate-50/60 md:bg-white text-slate-900 text-sm md:text-base font-medium placeholder:text-slate-400 md:placeholder:text-slate-400 focus:bg-white focus:border-blue-600 md:focus:border-slate-600 focus:ring-4 focus:ring-blue-500/10 md:focus:ring-0 transition-all outline-none" 
+                    className="w-full h-13 pl-12 pr-4 rounded-xl border border-slate-200 bg-slate-50/50 md:bg-white text-slate-900 text-sm md:text-base font-medium placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-900/10 transition-all outline-none" 
                     placeholder="Digite seu usuário ou e-mail corporativo" 
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
@@ -254,15 +254,15 @@ export default function Login() {
                 </div>
               </div>
 
-              <div className="space-y-1.5 md:space-y-2">
-                <label className="block text-[11px] md:text-xs font-bold text-slate-600 md:text-slate-700 uppercase tracking-wider">
+              <div className="space-y-2">
+                <label className="block text-xs md:text-sm font-semibold text-slate-700">
                   Senha de Acesso
                 </label>
                 <div className="relative flex items-center">
-                  <Lock className="absolute left-3.5 md:left-4 text-slate-400 w-4 h-4 md:w-5 md:h-5 pointer-events-none" />
+                  <Lock className="absolute left-4 text-slate-400 w-5 h-5 pointer-events-none" />
                   <input 
                     type={showPassword ? "text" : "password"} 
-                    className="w-full h-12 md:h-14 pl-10 md:pl-12 pr-24 rounded-xl md:rounded-lg border border-slate-200 md:border-slate-300 bg-slate-50/60 md:bg-white text-slate-900 text-sm md:text-base font-medium placeholder:text-slate-400 md:placeholder:text-slate-400 focus:bg-white focus:border-blue-600 md:focus:border-slate-600 focus:ring-4 focus:ring-blue-500/10 md:focus:ring-0 transition-all outline-none" 
+                    className="w-full h-13 pl-12 pr-20 rounded-xl border border-slate-200 bg-slate-50/50 md:bg-white text-slate-900 text-sm md:text-base font-medium placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-900/10 transition-all outline-none" 
                     placeholder="••••••••" 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -271,22 +271,23 @@ export default function Login() {
                   <button 
                     type="button" 
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 md:right-4 px-2.5 md:px-3 py-1 md:py-1.5 md:bg-slate-100 bg-white border border-slate-200 md:border-transparent rounded-lg text-[10px] md:text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1 hover:bg-slate-50 md:hover:bg-slate-200 hover:text-slate-900 transition-colors shadow-2xs md:shadow-none cursor-pointer"
+                    className="absolute right-3 px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    title={showPassword ? "Ocultar senha" : "Ver senha"}
                   >
-                    {showPassword ? <EyeOff className="w-3.5 h-3.5 md:w-4 md:h-4" /> : <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />} 
-                    <span>{showPassword ? "Ocultar" : "Ver"}</span>
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    <span className="hidden sm:inline">{showPassword ? "Ocultar" : "Ver"}</span>
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-1 pb-1 md:pt-2 md:pb-4 text-xs md:text-sm font-medium">
+              <div className="flex items-center justify-between pt-2 pb-1 text-xs md:text-sm font-medium">
                 <label className="flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900 select-none">
-                  <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 md:focus:ring-slate-900/20 md:text-slate-900" />
+                  <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900/20" />
                   <span>Lembrar acesso</span>
                 </label>
                 <a 
                   href="#" 
-                  className="font-bold text-blue-600 md:text-slate-900 hover:text-blue-700 md:hover:underline transition-colors" 
+                  className="font-semibold text-slate-700 hover:text-slate-900 hover:underline transition-colors" 
                   onClick={(e) => { e.preventDefault(); alert('Solicite a redefinição de senha ao administrador do seu instituto.'); }}
                 >
                   Esqueceu a senha?
@@ -297,10 +298,10 @@ export default function Login() {
             <button 
               type="submit" 
               disabled={isLoading || isSuccess}
-              className={`relative w-full h-12 md:h-14 rounded-xl md:rounded-lg font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all duration-300 cursor-pointer mt-3 md:mt-0 overflow-hidden ${
+              className={`relative w-full h-13 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all duration-300 cursor-pointer mt-2 overflow-hidden ${
                 isSuccess 
-                  ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 md:shadow-none scale-[1.02]" 
-                  : "bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/15 md:shadow-none hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] md:hover:scale-100 md:active:scale-[0.98]"
+                  ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 scale-[1.01]" 
+                  : "bg-slate-900 hover:bg-slate-800 text-white shadow-md shadow-slate-900/10 hover:shadow-lg hover:scale-[1.005] active:scale-[0.99]"
               }`}
             >
               {isSuccess ? (
@@ -316,22 +317,22 @@ export default function Login() {
               ) : (
                 <div className="flex items-center gap-2">
                   <span>Acessar Painel</span>
-                  <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
+                  <ArrowRight className="w-5 h-5" />
                 </div>
               )}
             </button>
           </form>
           
           {/* Rodapé dos Institutos Suportados */}
-          <div className="mt-8 md:mt-12 pt-6 md:pt-8 border-t border-slate-100 md:border-slate-200 text-center transition-all duration-700" style={{ opacity: isSuccess ? 0 : 1 }}>
-            <p className="text-[10px] md:text-xs font-extrabold uppercase tracking-widest text-slate-400 md:text-slate-500 mb-2 md:mb-4">
+          <div className="mt-10 md:mt-12 pt-6 border-t border-slate-100 text-center transition-all duration-700" style={{ opacity: isSuccess ? 0 : 1 }}>
+            <p className="text-xs font-semibold text-slate-400 mb-3">
               Institutos Integrados
             </p>
             <div className="flex items-center justify-center gap-2.5 text-xs font-bold text-slate-600 flex-wrap">
-              <span className="px-2 md:px-3 py-0.5 md:py-1 rounded md:rounded-md bg-orange-50 text-orange-700 border border-orange-200/60 md:border-orange-200">IBRASE</span>
-              <span className="px-2 md:px-3 py-0.5 md:py-1 rounded md:rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60 md:border-emerald-200">GASCTPNA</span>
-              <span className="px-2 md:px-3 py-0.5 md:py-1 rounded md:rounded-md bg-purple-50 text-purple-700 border border-purple-200/60 md:border-purple-200">AUNI</span>
-              <span className="px-2 md:px-3 py-0.5 md:py-1 rounded md:rounded-md bg-blue-50 text-blue-700 border border-blue-200/60 md:border-blue-200">IVEM</span>
+              <span className="px-3 py-1 rounded-md bg-orange-50 text-orange-700 border border-orange-200/60">IBRASE</span>
+              <span className="px-3 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60">GASCTPNA</span>
+              <span className="px-3 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200/60">AUNI</span>
+              <span className="px-3 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200/60">IVEM</span>
             </div>
           </div>
 

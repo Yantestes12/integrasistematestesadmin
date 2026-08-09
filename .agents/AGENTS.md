@@ -76,3 +76,8 @@
 - **NÃO ALTERE LÓGICA QUE JÁ ESTÁ FUNCIONANDO** a menos que seja estritamente solicitado e necessário para a tarefa.
 - **NÃO ADIVINHE SOLUÇÕES COMPLEXAS**: Se um código já funcionava (ex: ID vs UUID no React Hook Form), resolva o problema da forma MENOS invasiva possível, sem reescrever ou destruir o que o usuário já havia validado no passado.
 - **Raciocínio Defensivo:** Antes de alterar qualquer linha de código, pergunte a si mesmo: "Isso vai quebrar outra parte do sistema que não me pediram para mexer?". Use o Deep Think Mode rigorosamente para não cometer erros em cadeia.
+
+## 🔴 REGRA CRÍTICA: NUNCA Alterar Páginas de Login ou Outros Repositórios sem Permissão
+- **NUNCA alterar a página de login** (`login.html` do portal do aluno ou `Login.tsx` do admin) a menos que o usuário peça EXPLICITAMENTE e EXCLUSIVAMENTE para alterar o login.
+- **NUNCA fazer push de diretórios inteiros para repositórios secundários** (como `areadeloginintegra`). Cada repositório tem sua própria estrutura (ex: `matricula.html` em vez de `matricula_aluno.html`).
+- **Modificações Pontuais**: Se for solicitado alterar apenas a matrícula ou o PDF, edite APENAS o arquivo correspondente e JAMAIS toque em arquivos de login, autenticação ou navegação.
