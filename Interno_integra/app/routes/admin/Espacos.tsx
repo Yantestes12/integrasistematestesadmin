@@ -39,10 +39,24 @@ export default function Espacos() {
   const [togglingDocsId, setTogglingDocsId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  // Modal de Exclusão com Animação Lógica de Despinçar do Mapa & Dobrar Planta (Blueprint Fold)
+  // Modal de Exclusão com Trava de 25 Segundos & Animação Lógica de Despinçar do Mapa & Dobrar Planta (Blueprint Fold)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedDeleteEspaco, setSelectedDeleteEspaco] = useState<EspacoItem | null>(null);
+  const [countdown, setCountdown] = useState(25);
   const [isUnpinning, setIsUnpinning] = useState(false);
+
+  useEffect(() => {
+    fetchEspacos();
+  }, []);
+
+  // Timer de Trava de Segurança (25 segundos)
+  useEffect(() => {
+    if (!deleteModalOpen || countdown <= 0) return;
+    const timer = setInterval(() => {
+      setCountdown(prev => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [deleteModalOpen, countdown]);
 
   const fetchEspacos = async () => {
     setLoading(true);
@@ -77,10 +91,6 @@ export default function Espacos() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchEspacos();
-  }, []);
 
   const handleToggleAtivo = async (espaco: EspacoItem) => {
     setTogglingId(espaco.id);
@@ -150,6 +160,7 @@ export default function Espacos() {
 
   const openDeleteModal = (espaco: EspacoItem) => {
     setSelectedDeleteEspaco(espaco);
+    setCountdown(25); // Trava de 25 segundos
     setIsUnpinning(false);
     setDeleteModalOpen(true);
   };
@@ -158,11 +169,12 @@ export default function Espacos() {
     if (deletingId) return;
     setDeleteModalOpen(false);
     setSelectedDeleteEspaco(null);
+    setCountdown(25);
     setIsUnpinning(false);
   };
 
   const handleConfirmDeleteEspaco = async () => {
-    if (!selectedDeleteEspaco || deletingId) return;
+    if (!selectedDeleteEspaco || countdown > 0 || deletingId) return;
     setDeletingId(selectedDeleteEspaco.id);
     setIsUnpinning(true); // Ativa animação de despinçar do mapa e dobrar planta
 
@@ -187,7 +199,7 @@ export default function Espacos() {
           setDeleteModalOpen(false);
           setSelectedDeleteEspaco(null);
         } else {
-          alert("Erro ao excluir espaço via N8N. Importe o novo fluxo N8N_ESPACOS_DELETE no seu N8N.");
+          alert("Erro ao excluir espaço via N8N. Certifique-se de importar o fluxo N8N_ESPACOS_DELETE.");
         }
       } catch (e) {
         console.error("Erro ao excluir espaço:", e);
@@ -519,7 +531,7 @@ export default function Espacos() {
         </div>
       )}
 
-      {/* Modal de Confirmação com Animação Lógica: Despinçar do Mapa & Dobrar Planta da Instalação */}
+      {/* Modal de Confirmação com Trava de Segurança de 25s & Animação Lógica: Despinçar do Mapa & Dobrar Planta */}
       {deleteModalOpen && selectedDeleteEspaco && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in duration-200">
@@ -585,10 +597,17 @@ export default function Espacos() {
                 )}
               </div>
 
+              {/* Mensagem e Trava de Segurança de 25 Segundos */}
               {!isUnpinning && (
-                <p className="mt-2 text-xs text-slate-600 text-center font-medium">
-                  Tem certeza que deseja desvincular do mapa e remover o espaço <strong className="text-slate-900 font-bold">"{selectedDeleteEspaco.nome}"</strong>?
-                </p>
+                <div className="mt-3 w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-center space-y-1">
+                  <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-amber-700">
+                    <Clock size={14} className="text-amber-600" />
+                    <span>Trava de Segurança: {countdown > 0 ? `Aguarde ${countdown}s` : "Liberado para desvincular"}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    {countdown > 0 ? "Aguarde a contagem regressiva para desvincular o espaço." : "Clique no botão para desvincular e remover do mapa."}
+                  </p>
+                </div>
               )}
             </div>
 
@@ -606,12 +625,20 @@ export default function Espacos() {
               <button
                 type="button"
                 onClick={handleConfirmDeleteEspaco}
-                disabled={deletingId === selectedDeleteEspaco.id}
-                className="px-5 py-2.5 rounded-xl font-extrabold text-xs shadow-sm bg-red-600 hover:bg-red-700 text-white cursor-pointer shadow-red-600/20 shadow-md transition-all flex items-center gap-2"
+                disabled={countdown > 0 || deletingId === selectedDeleteEspaco.id}
+                className={`px-5 py-2.5 rounded-xl font-extrabold text-xs shadow-sm transition-all flex items-center gap-2 ${
+                  countdown > 0 || deletingId === selectedDeleteEspaco.id
+                    ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
+                    : "bg-red-600 hover:bg-red-700 text-white cursor-pointer shadow-red-600/20 shadow-md animate-bounce"
+                }`}
               >
                 {deletingId === selectedDeleteEspaco.id ? (
                   <>
                     <Loader2 size={14} className="animate-spin" /> Desvinculando...
+                  </>
+                ) : countdown > 0 ? (
+                  <>
+                    <Clock size={14} /> Aguarde {countdown}s
                   </>
                 ) : (
                   <>

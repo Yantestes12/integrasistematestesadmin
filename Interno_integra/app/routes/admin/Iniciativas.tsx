@@ -22,10 +22,10 @@ export default function Iniciativas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentInstitute, setCurrentInstitute] = useState("IBRASE");
 
-  // Estado do Modal de Confirmação com Contagem de 10 Segundos e Animação FÍSICA de Papel Rasgando por clip-path
+  // Estado do Modal de Confirmação com Contagem de 25 Segundos e Animação FÍSICA de Papel Rasgando por clip-path
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedIniciativa, setSelectedIniciativa] = useState<IniciativaItem | null>(null);
-  const [countdown, setCountdown] = useState(10);
+  const [countdown, setCountdown] = useState(25);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isTearing, setIsTearing] = useState(false);
 
@@ -35,7 +35,7 @@ export default function Iniciativas() {
     fetchIniciativas(savedInstitute);
   }, []);
 
-  // Timer de 10 segundos para habilitar o botão de exclusão
+  // Timer de 25 segundos para habilitar o botão de exclusão
   useEffect(() => {
     if (!deleteModalOpen || countdown <= 0) return;
     const timer = setInterval(() => {
@@ -138,7 +138,7 @@ export default function Iniciativas() {
 
   const openDeleteModal = (item: IniciativaItem) => {
     setSelectedIniciativa(item);
-    setCountdown(10);
+    setCountdown(25);
     setIsTearing(false);
     setDeleteModalOpen(true);
   };
@@ -147,7 +147,7 @@ export default function Iniciativas() {
     if (isDeleting) return;
     setDeleteModalOpen(false);
     setSelectedIniciativa(null);
-    setCountdown(10);
+    setCountdown(25);
     setIsTearing(false);
   };
 
@@ -470,7 +470,7 @@ export default function Iniciativas() {
                 </div>
               )}
 
-              {/* Mensagem e Trava de 10s */}
+              {/* Mensagem e Trava de 25s */}
               {!isTearing && (
                 <div className="mt-4 w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-center space-y-1">
                   <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-amber-700">
