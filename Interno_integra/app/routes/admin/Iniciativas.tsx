@@ -152,18 +152,15 @@ export default function Iniciativas() {
     setIsDeleting(true);
 
     try {
-      // Tenta DELETE primeiro e depois POST caso o webhook exija POST
       let res = await fetch("https://w.ibrase.com.br/webhook/projetos-delete", {
-        method: "DELETE",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: selectedIniciativa.id, instituto: currentInstitute.toUpperCase() }),
       });
 
       if (!res.ok) {
-        res = await fetch("https://w.ibrase.com.br/webhook/projetos-delete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: selectedIniciativa.id, instituto: currentInstitute.toUpperCase() }),
+        res = await fetch(`https://w.ibrase.com.br/webhook/projetos-delete?id=${selectedIniciativa.id}&instituto=${currentInstitute.toUpperCase()}`, {
+          method: "DELETE",
         });
       }
 
@@ -171,7 +168,7 @@ export default function Iniciativas() {
         setIniciativas(prev => prev.filter(item => item.id !== selectedIniciativa.id));
         closeDeleteModal();
       } else {
-        alert("Erro ao excluir iniciativa via N8N.");
+        alert("Erro ao excluir iniciativa via N8N. Importe o novo fluxo N8N_PROJETOS_DELETE no seu N8N.");
       }
     } catch (e) {
       console.error(e);
