@@ -14,9 +14,6 @@ const cadastrarNucleoSchema = z.object({
   cidadeId: z.string().optional(),
   uf: z.string().optional(),
   bairroId: z.string().optional(),
-  numeroVaga: z.string().optional(),
-  vagas: z.string().optional(),
-  
   // Vigência e Status
   ativo: z.boolean().default(true),
   aceitandoVagas: z.boolean().default(true),
@@ -128,9 +125,7 @@ export default function CadastrarNucleo() {
     resolver: customZodResolver(cadastrarNucleoSchema),
     defaultValues: {
       ativo: true,
-      numeroVaga: "1",
-      vagas: "100",
-    },
+      },
   });
 
   const projetoIdWatch = watch("projetoId");
@@ -211,8 +206,6 @@ export default function CadastrarNucleo() {
                 cidadeId: String(nucleo.cidade_id || ""),
                 uf: nucleo.uf || "",
                 bairroId: String(nucleo.bairro_id || ""),
-                numeroVaga: String(nucleo.numero_vaga || nucleo.vaga_numero || "1"),
-                vagas: String(nucleo.vagas || "100"),
                 dataInicio: nucleo.data_inicio || "",
                 dataFim: nucleo.data_fim || "",
                 ativo: nucleo.ativo !== false && nucleo.ativo !== 0 && nucleo.ativo !== "0",
@@ -245,14 +238,6 @@ export default function CadastrarNucleo() {
           formData.append(key, String(value));
         }
       });
-
-      // Passa os campos específicos explícitos para o N8N
-      if (data.numeroVaga) {
-        formData.append("numero_vaga", data.numeroVaga);
-      }
-      if (data.vagas) {
-        formData.append("vagas", data.vagas);
-      }
 
       const response = await fetch(webhookUrl, {
         method: editId ? "PUT" : "POST",
