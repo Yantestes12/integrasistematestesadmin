@@ -2,28 +2,23 @@
   "name": "N8N_NUCLEOS_DELETE",
   "nodes": [
     {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nucleos-delete",
+        "responseMode": "responseNode",
+        "options": {}
+      },
       "id": "wh-nucleos-delete",
       "name": "Webhook DELETE",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [0, 0],
-      "webhookId": "nucleos-delete",
-      "parameters": {
-        "httpMethod": "DELETE",
-        "path": "nucleos-delete",
-        "responseMode": "responseNode",
-        "options": {}
-      }
+      "webhookId": "nucleos-delete"
     },
     {
-      "id": "switch-delete",
-      "name": "Switch DELETE",
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 1,
-      "position": [220, 0],
       "parameters": {
         "dataType": "string",
-        "value1": "={{ $json.body.instituto }}",
+        "value1": "={{ $json.query.instituto || $json.body.instituto }}",
         "rules": {
           "rules": [
             { "value2": "GASCTPNA" },
@@ -32,116 +27,109 @@
             { "value2": "IVEM", "output": 3 }
           ]
         },
-        "fallbackOutput": 1
-      }
+        "fallbackOutput": 0
+      },
+      "id": "switch-delete-nuc",
+      "name": "Switch DELETE",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [220, 0]
     },
     {
-      "id": "sb-gasctpna",
+      "parameters": {
+        "operation": "delete",
+        "tableId": "GASCTPNA_nucleos",
+        "matchColumn": "id",
+        "matchValue": "={{ $json.body.id || $json.query.id }}"
+      },
+      "id": "sb-gasctpna-del-nuc",
       "name": "SB GASCTPNA DELETE",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [480, -300],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } },
-      "parameters": {
-        "operation": "update",
-        "tableId": "GASCTPNA_nucleos",
-        "matchFields": "id",
-        "fieldsUi": {
-          "fieldValues": [
-            { "fieldId": "id", "fieldValue": "={{ $json.body.id }}" },
-            { "fieldId": "ativo", "fieldValue": "0" }
-          ]
-        }
+      "credentials": {
+        "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" }
       }
     },
     {
-      "id": "sb-ibrase",
+      "parameters": {
+        "operation": "delete",
+        "tableId": "IBRASE_nucleos",
+        "matchColumn": "id",
+        "matchValue": "={{ $json.body.id || $json.query.id }}"
+      },
+      "id": "sb-ibrase-del-nuc",
       "name": "SB IBRASE DELETE",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [480, -100],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } },
-      "parameters": {
-        "operation": "update",
-        "tableId": "IBRASE_nucleos",
-        "matchFields": "id",
-        "fieldsUi": {
-          "fieldValues": [
-            { "fieldId": "id", "fieldValue": "={{ $json.body.id }}" },
-            { "fieldId": "ativo", "fieldValue": "0" }
-          ]
-        }
+      "credentials": {
+        "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" }
       }
     },
     {
-      "id": "sb-auni",
+      "parameters": {
+        "operation": "delete",
+        "tableId": "AUNI_nucleos",
+        "matchColumn": "id",
+        "matchValue": "={{ $json.body.id || $json.query.id }}"
+      },
+      "id": "sb-auni-del-nuc",
       "name": "SB AUNI DELETE",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [480, 100],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } },
-      "parameters": {
-        "operation": "update",
-        "tableId": "AUNI_nucleos",
-        "matchFields": "id",
-        "fieldsUi": {
-          "fieldValues": [
-            { "fieldId": "id", "fieldValue": "={{ $json.body.id }}" },
-            { "fieldId": "ativo", "fieldValue": "0" }
-          ]
-        }
+      "credentials": {
+        "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" }
       }
     },
     {
-      "id": "sb-ivem",
+      "parameters": {
+        "operation": "delete",
+        "tableId": "IVEM_nucleos",
+        "matchColumn": "id",
+        "matchValue": "={{ $json.body.id || $json.query.id }}"
+      },
+      "id": "sb-ivem-del-nuc",
       "name": "SB IVEM DELETE",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [480, 300],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } },
-      "parameters": {
-        "operation": "update",
-        "tableId": "IVEM_nucleos",
-        "matchFields": "id",
-        "fieldsUi": {
-          "fieldValues": [
-            { "fieldId": "id", "fieldValue": "={{ $json.body.id }}" },
-            { "fieldId": "ativo", "fieldValue": "0" }
-          ]
-        }
+      "credentials": {
+        "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" }
       }
     },
     {
-      "id": "resp-gasctpna",
+      "parameters": { "respondWith": "allIncomingItems", "options": {} },
+      "id": "resp-gasctpna-del-nuc",
       "name": "Respond GASCTPNA",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, -300],
-      "parameters": { "respondWith": "allIncomingItems", "options": {} }
+      "position": [720, -300]
     },
     {
-      "id": "resp-ibrase",
+      "parameters": { "respondWith": "allIncomingItems", "options": {} },
+      "id": "resp-ibrase-del-nuc",
       "name": "Respond IBRASE",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, -100],
-      "parameters": { "respondWith": "allIncomingItems", "options": {} }
+      "position": [720, -100]
     },
     {
-      "id": "resp-auni",
+      "parameters": { "respondWith": "allIncomingItems", "options": {} },
+      "id": "resp-auni-del-nuc",
       "name": "Respond AUNI",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, 100],
-      "parameters": { "respondWith": "allIncomingItems", "options": {} }
+      "position": [720, 100]
     },
     {
-      "id": "resp-ivem",
+      "parameters": { "respondWith": "allIncomingItems", "options": {} },
+      "id": "resp-ivem-del-nuc",
       "name": "Respond IVEM",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, 300],
-      "parameters": { "respondWith": "allIncomingItems", "options": {} }
+      "position": [720, 300]
     }
   ],
   "connections": {
@@ -168,7 +156,5 @@
     "SB IVEM DELETE": {
       "main": [[{ "node": "Respond IVEM", "type": "main", "index": 0 }]]
     }
-  },
-  "pinData": {},
-  "meta": {}
+  }
 }

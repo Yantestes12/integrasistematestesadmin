@@ -194,23 +194,29 @@ export default function Nucleos() {
   };
 
   const handleDelete = async (id: string | number) => {
-    if (!window.confirm("Deseja realmente alterar o status deste núcleo?")) return;
+    if (!window.confirm("Deseja realmente excluir este núcleo?")) return;
     
     try {
-      const res = await fetch("https://w.ibrase.com.br/webhook/nucleos-delete", {
-        method: "DELETE",
+      let res = await fetch("https://w.ibrase.com.br/webhook/nucleos-delete", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, instituto: currentInstitute }),
+        body: JSON.stringify({ id, instituto: currentInstitute.toUpperCase() }),
       });
+
+      if (!res.ok) {
+        res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-delete?id=${id}&instituto=${currentInstitute.toUpperCase()}`, {
+          method: "DELETE",
+        });
+      }
+
       if (res.ok) {
-        alert("Status do núcleo atualizado com sucesso!");
         fetchNucleos(currentInstitute);
       } else {
-        alert("Erro ao remover/atualizar núcleo via N8N.");
+        alert("Erro ao excluir núcleo via N8N.");
       }
     } catch (e) {
       console.error(e);
-      alert("Erro ao conectar com N8N.");
+      alert("Erro ao conectar com o servidor.");
     }
   };
 
