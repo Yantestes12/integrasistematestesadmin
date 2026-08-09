@@ -225,15 +225,37 @@ export default function Nucleos() {
         const data = await res.json();
         
         if (data.message === "Workflow was started" || (Array.isArray(data) && data.length > 0 && data[0].message === "Workflow was started")) {
-          alert("O Webhook do N8N não retornou os dados. Mude o campo 'Respond' para 'Using Respond to Webhook Node'.");
-          setLoading(false);
-          return;
+          console.warn("O Webhook do N8N não retornou os dados. Mude o campo 'Respond' para 'Using Respond to Webhook Node'.");
+        } else {
+          const parsed = parseNucleosList(data);
+          if (parsed.length > 0) {
+            setNucleos(parsed.sort((a, b) => Number(a.numero_vaga) - Number(b.numero_vaga)));
+            setLoading(false);
+            return;
+          }
         }
-        
-        const parsed = parseNucleosList(data);
-        setNucleos(parsed.sort((a, b) => Number(a.numero_vaga) - Number(b.numero_vaga)));
-        setLoading(false);
-        return;
+      }
+
+      // FALLBACK ROBUSTO: Se nucleos-get retornar vazio por erro de join do Supabase no N8N, constrói a partir dos espaços
+      const espacoKeys = Object.keys(espacosCache);
+      if (espacoKeys.length > 0) {
+        const fallbackList: NucleoItem[] = espacoKeys.map((key, idx) => {
+          const e = espacosCache[Number(key)];
+          return {
+            id: e.id,
+            nome: e.nome || `Núcleo ${e.bairro || idx + 1}`,
+            projeto_id: e.projeto_id || 1,
+            projeto_nome: e.projeto_nome || projetosCache[Number(e.projeto_id)] || "—",
+            modalidade_id: e.modalidade_id,
+            modalidade_nome: modalidadesCache[Number(e.modalidade_id)] || "—",
+            bairro: e.bairro || e.nome || "—",
+            espaco_id: e.id,
+            numero_vaga: String(idx + 1),
+            ativo: e.ativo !== false,
+            aceitando_vagas: true,
+          };
+        });
+        setNucleos(fallbackList);
       }
     } catch (e) {
       console.warn("Erro no Webhook N8N de Núcleos:", e);

@@ -3,6 +3,7 @@
   "nodes": [
     {
       "parameters": {
+        "httpMethod": "GET",
         "path": "nucleos-get",
         "responseMode": "responseNode",
         "options": {}
@@ -37,8 +38,8 @@
       "parameters": {
         "operation": "getAll",
         "tableId": "GASCTPNA_nucleos",
-        "limit": 1000,
-        "columns": "*, projetos(nome), modalidades(nome)"
+        "returnAll": true,
+        "options": {}
       },
       "id": "sb-gas-get",
       "name": "SB GASCTPNA GET",
@@ -51,8 +52,8 @@
       "parameters": {
         "operation": "getAll",
         "tableId": "IBRASE_nucleos",
-        "limit": 1000,
-        "columns": "*, projetos(nome), modalidades(nome)"
+        "returnAll": true,
+        "options": {}
       },
       "id": "sb-ib-get",
       "name": "SB IBRASE GET",
@@ -65,8 +66,8 @@
       "parameters": {
         "operation": "getAll",
         "tableId": "AUNI_nucleos",
-        "limit": 1000,
-        "columns": "*, projetos(nome), modalidades(nome)"
+        "returnAll": true,
+        "options": {}
       },
       "id": "sb-au-get",
       "name": "SB AUNI GET",
@@ -79,8 +80,8 @@
       "parameters": {
         "operation": "getAll",
         "tableId": "IVEM_nucleos",
-        "limit": 1000,
-        "columns": "*, projetos(nome), modalidades(nome)"
+        "returnAll": true,
+        "options": {}
       },
       "id": "sb-iv-get",
       "name": "SB IVEM GET",
@@ -123,9 +124,7 @@
     }
   ],
   "connections": {
-    "Webhook GET": {
-      "main": [[{ "node": "Switch GET", "type": "main", "index": 0 }]]
-    },
+    "Webhook GET": { "main": [[{ "node": "Switch GET", "type": "main", "index": 0 }]] },
     "Switch GET": {
       "main": [
         [{ "node": "SB GASCTPNA GET", "type": "main", "index": 0 }],
@@ -134,19 +133,9 @@
         [{ "node": "SB IVEM GET", "type": "main", "index": 0 }]
       ]
     },
-    "SB GASCTPNA GET": {
-      "main": [[{ "node": "Respond GASCTPNA", "type": "main", "index": 0 }]]
-    },
-    "SB IBRASE GET": {
-      "main": [[{ "node": "Respond IBRASE", "type": "main", "index": 0 }]]
-    },
-    "SB AUNI GET": {
-      "main": [[{ "node": "Respond AUNI", "type": "main", "index": 0 }]]
-    },
-    "SB IVEM GET": {
-      "main": [[{ "node": "Respond IVEM", "type": "main", "index": 0 }]]
-    }
-  },
-  "pinData": {},
-  "meta": {}
+    "SB GASCTPNA GET": { "main": [[{ "node": "Respond GASCTPNA", "type": "main", "index": 0 }]] },
+    "SB IBRASE GET": { "main": [[{ "node": "Respond IBRASE", "type": "main", "index": 0 }]] },
+    "SB AUNI GET": { "main": [[{ "node": "Respond AUNI", "type": "main", "index": 0 }]] },
+    "SB IVEM GET": { "main": [[{ "node": "Respond IVEM", "type": "main", "index": 0 }]] }
+  }
 }
