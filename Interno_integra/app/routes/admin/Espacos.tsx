@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Plus, Search, Edit3, Power, CheckCircle2, Clock, MapPin, Building2, User, Phone, AlertCircle, AlertTriangle, Trash2, Loader2, X } from "lucide-react";
+import { Plus, Search, Edit3, Power, CheckCircle2, Clock, MapPin, Building2, User, Phone, AlertCircle, AlertTriangle, Trash2, Loader2, X, Archive } from "lucide-react";
 
 export interface EspacoItem {
   id: number;
@@ -39,9 +39,10 @@ export default function Espacos() {
   const [togglingDocsId, setTogglingDocsId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  // Modal de Exclusão Clean & Minimalista
+  // Modal de Exclusão com Animação Lógica de Despinçar do Mapa & Dobrar Planta (Blueprint Fold)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedDeleteEspaco, setSelectedDeleteEspaco] = useState<EspacoItem | null>(null);
+  const [isUnpinning, setIsUnpinning] = useState(false);
 
   const fetchEspacos = async () => {
     setLoading(true);
@@ -149,6 +150,7 @@ export default function Espacos() {
 
   const openDeleteModal = (espaco: EspacoItem) => {
     setSelectedDeleteEspaco(espaco);
+    setIsUnpinning(false);
     setDeleteModalOpen(true);
   };
 
@@ -156,41 +158,45 @@ export default function Espacos() {
     if (deletingId) return;
     setDeleteModalOpen(false);
     setSelectedDeleteEspaco(null);
+    setIsUnpinning(false);
   };
 
   const handleConfirmDeleteEspaco = async () => {
     if (!selectedDeleteEspaco || deletingId) return;
     setDeletingId(selectedDeleteEspaco.id);
+    setIsUnpinning(true); // Ativa animação de despinçar do mapa e dobrar planta
 
-    try {
-      const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
-      
-      // Tenta enviar POST primeiro e faz fallback para DELETE com query params
-      let res = await fetch("https://w.ibrase.com.br/webhook/espacos-delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: selectedDeleteEspaco.id, instituto: authInstitute.toUpperCase() }),
-      });
-
-      if (!res.ok) {
-        res = await fetch(`https://w.ibrase.com.br/webhook/espacos-delete?id=${selectedDeleteEspaco.id}&instituto=${authInstitute.toUpperCase()}`, {
-          method: "DELETE",
+    setTimeout(async () => {
+      try {
+        const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
+        
+        let res = await fetch("https://w.ibrase.com.br/webhook/espacos-delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: selectedDeleteEspaco.id, instituto: authInstitute.toUpperCase() }),
         });
-      }
 
-      if (res.ok) {
-        setEspacos(prev => prev.filter(e => e.id !== selectedDeleteEspaco.id));
-        setDeleteModalOpen(false);
-        setSelectedDeleteEspaco(null);
-      } else {
-        alert("Erro ao excluir espaço via N8N. Certifique-se de importar o fluxo N8N_ESPACOS_DELETE.");
+        if (!res.ok) {
+          res = await fetch(`https://w.ibrase.com.br/webhook/espacos-delete?id=${selectedDeleteEspaco.id}&instituto=${authInstitute.toUpperCase()}`, {
+            method: "DELETE",
+          });
+        }
+
+        if (res.ok) {
+          setEspacos(prev => prev.filter(e => e.id !== selectedDeleteEspaco.id));
+          setDeleteModalOpen(false);
+          setSelectedDeleteEspaco(null);
+        } else {
+          alert("Erro ao excluir espaço via N8N. Importe o novo fluxo N8N_ESPACOS_DELETE no seu N8N.");
+        }
+      } catch (e) {
+        console.error("Erro ao excluir espaço:", e);
+        alert("Erro ao conectar com o servidor.");
+      } finally {
+        setDeletingId(null);
+        setIsUnpinning(false);
       }
-    } catch (e) {
-      console.error("Erro ao excluir espaço:", e);
-      alert("Erro ao conectar com o servidor.");
-    } finally {
-      setDeletingId(null);
-    }
+    }, 1100);
   };
 
   // 🔴 REGRA CRÍTICA: Separação ESTRITA por status_aprovacao
@@ -210,6 +216,29 @@ export default function Espacos() {
   return (
     <div className="space-y-6 font-sans">
       
+      {/* Keyframes da Animação Lógica: Despinçar do Mapa & Dobrar Planta da Instalação */}
+      <style>{`
+        @keyframes mapPinPullAnim {
+          0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+          40% { transform: translateY(-32px) scale(1.3) rotate(-12deg); opacity: 1; }
+          100% { transform: translateY(-80px) scale(0); opacity: 0; }
+        }
+        @keyframes blueprintFoldAnim {
+          0% { transform: perspective(900px) rotateX(0deg) scale(1); opacity: 1; }
+          45% { transform: perspective(900px) rotateX(-50deg) scale(0.9); opacity: 0.85; }
+          100% { transform: perspective(900px) rotateX(-90deg) scale(0.2) translateY(60px); opacity: 0; }
+        }
+        @keyframes archiveOpenAnim {
+          0% { transform: scale(0.85) translateY(15px); opacity: 0; }
+          40% { transform: scale(1.1) translateY(0); opacity: 1; }
+          80% { transform: scale(1) translateY(0); opacity: 1; }
+          100% { transform: scale(0.9) translateY(10px); opacity: 0.7; }
+        }
+        .anim-mappin-unpin { animation: mapPinPullAnim 1.1s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .anim-mapcard-fold { animation: blueprintFoldAnim 1.1s cubic-bezier(0.4, 0, 0.2, 1) forwards; transform-origin: center bottom; }
+        .anim-archive-open { animation: archiveOpenAnim 1.1s ease-in-out forwards; }
+      `}</style>
+
       {/* Header */}
       <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -490,21 +519,18 @@ export default function Espacos() {
         </div>
       )}
 
-      {/* Modal de Confirmação Clean e Elegante para Exclusão de Espaço */}
+      {/* Modal de Confirmação com Animação Lógica: Despinçar do Mapa & Dobrar Planta da Instalação */}
       {deleteModalOpen && selectedDeleteEspaco && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in duration-150">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in duration-200">
             
             {/* Header do Modal */}
-            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center font-bold shrink-0">
-                  <AlertTriangle size={20} />
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold">
+                  <AlertTriangle size={18} />
                 </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-slate-900">Excluir Espaço Físico</h3>
-                  <p className="text-xs text-slate-500">Confirmação de exclusão permanente</p>
-                </div>
+                <h3 className="text-base font-extrabold text-slate-800">Desvincular Espaço Físico</h3>
               </div>
 
               <button
@@ -516,21 +542,54 @@ export default function Espacos() {
               </button>
             </div>
 
-            {/* Corpo do Modal */}
-            <div className="space-y-3 text-sm text-slate-600">
-              <p>
-                Tem certeza que deseja excluir permanentemente o espaço físico <strong className="text-slate-900 font-extrabold">"{selectedDeleteEspaco.nome}"</strong>?
-              </p>
+            {/* ÁREA DA ANIMAÇÃO LÓGICA DE DESPINÇAR DO MAPA E DOBRAR A PLANTA FÍSICA */}
+            <div className="relative py-2 flex flex-col items-center justify-between min-h-[210px] overflow-hidden">
               
-              <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs space-y-1 text-slate-600">
-                <div className="font-bold text-slate-800 flex items-center gap-1.5">
-                  <Building2 size={14} className="text-slate-500" />
-                  <span>{selectedDeleteEspaco.nome}</span>
+              <div className="relative w-full h-[190px] flex flex-col items-center justify-end">
+                
+                {/* Ícone de Pin do Mapa Despinçando para Cima */}
+                <div className={`absolute top-0 z-20 ${isUnpinning ? 'anim-mappin-unpin' : ''}`}>
+                  <div className="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg border-2 border-white">
+                    <MapPin size={22} className="animate-bounce" />
+                  </div>
                 </div>
-                <div className="text-slate-500">
-                  {[selectedDeleteEspaco.bairro, selectedDeleteEspaco.cidade].filter(Boolean).join(" • ") || "Espaço Físico"}
+
+                {/* Card de Planta Físicamente Dobrando em 3D */}
+                <div className={`w-full max-w-[300px] bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 shadow-sm relative pt-7 ${
+                  isUnpinning ? 'anim-mapcard-fold' : ''
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 border border-blue-200">
+                      <Building2 size={24} />
+                    </div>
+                    <div className="overflow-hidden">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Localização Operacional</span>
+                      <h4 className="text-slate-900 font-extrabold text-sm truncate">
+                        {selectedDeleteEspaco.nome}
+                      </h4>
+                      <p className="text-xs text-slate-500 truncate mt-0.5">
+                        {[selectedDeleteEspaco.bairro, selectedDeleteEspaco.cidade].filter(Boolean).join(" • ") || 'Campos dos Goytacazes'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Caixa de Arquivo recebendo a Planta Dobrada */}
+                {isUnpinning && (
+                  <div className="absolute bottom-0 z-10 flex flex-col items-center text-slate-600 anim-archive-open">
+                    <div className="w-16 h-12 bg-slate-800 text-white rounded-t-xl flex items-center justify-center shadow-2xl border-2 border-slate-900">
+                      <Archive size={26} className="text-blue-400 animate-pulse" />
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider mt-1">Arquivando...</span>
+                  </div>
+                )}
               </div>
+
+              {!isUnpinning && (
+                <p className="mt-2 text-xs text-slate-600 text-center font-medium">
+                  Tem certeza que deseja desvincular do mapa e remover o espaço <strong className="text-slate-900 font-bold">"{selectedDeleteEspaco.nome}"</strong>?
+                </p>
+              )}
             </div>
 
             {/* Botões de Ação */}
@@ -552,11 +611,11 @@ export default function Espacos() {
               >
                 {deletingId === selectedDeleteEspaco.id ? (
                   <>
-                    <Loader2 size={14} className="animate-spin" /> Excluindo...
+                    <Loader2 size={14} className="animate-spin" /> Desvinculando...
                   </>
                 ) : (
                   <>
-                    <Trash2 size={14} /> Confirmar Exclusão
+                    <Trash2 size={14} /> Confirmar & Desvincular
                   </>
                 )}
               </button>
