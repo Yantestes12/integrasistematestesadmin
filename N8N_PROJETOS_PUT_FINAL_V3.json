@@ -204,7 +204,7 @@
             },
             {
               "fieldId": "limites_modalidades",
-              "fieldValue": "={{ JSON.stringify(.body.limites_modalidade || .body.limites_modalidades || []) }}"
+              "fieldValue": "={{ JSON.stringify(json.body.limites_modalidade || .body.limites_modalidades || []) }}"
             }
           ]
         }
@@ -382,7 +382,7 @@
             },
             {
               "fieldId": "limites_modalidades",
-              "fieldValue": "={{ JSON.stringify(.body.limites_modalidade || .body.limites_modalidades || []) }}"
+              "fieldValue": "={{ JSON.stringify(json.body.limites_modalidade || .body.limites_modalidades || []) }}"
             }
           ]
         }
@@ -560,7 +560,7 @@
             },
             {
               "fieldId": "limites_modalidades",
-              "fieldValue": "={{ JSON.stringify(.body.limites_modalidade || .body.limites_modalidades || []) }}"
+              "fieldValue": "={{ JSON.stringify(json.body.limites_modalidade || .body.limites_modalidades || []) }}"
             }
           ]
         }
@@ -738,7 +738,7 @@
             },
             {
               "fieldId": "limites_modalidades",
-              "fieldValue": "={{ JSON.stringify(.body.limites_modalidade || .body.limites_modalidades || []) }}"
+              "fieldValue": "={{ JSON.stringify(json.body.limites_modalidade || .body.limites_modalidades || []) }}"
             }
           ]
         }

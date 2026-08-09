@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import {
   ArrowLeft, ArrowRight, Check, Loader2, Search,
@@ -170,7 +170,7 @@ export default function CadastrarEspaco() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData | string, string>>>({});
-  const [projetos, setProjetos] = useState<{ id: string; nome: string }[]>([]);
+  const [projetos, setProjetos] = useState<{ id: string; nome: string; limites_modalidades?: any }[]>([]);
   const [modalidades, setModalidades] = useState<{ id: string; nome: string }[]>([]);
   const [existingEspacos, setExistingEspacos] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(!!editId);
@@ -197,7 +197,7 @@ export default function CadastrarEspaco() {
         ]);
         if (rProjetos.ok) {
           const d = await rProjetos.json();
-          setProjetos(flattenResponse(d).map((p: any) => ({ id: String(p.id), nome: p.nome || "" })).filter(p => p.nome));
+          setProjetos(flattenResponse(d).map((p: any) => ({ id: String(p.id), nome: p.nome || "", limites_modalidades: p.limites_modalidades || p.limites_modalidade })).filter(p => p.nome));
         }
         if (rModal.ok) {
           const d = await rModal.json();
@@ -211,6 +211,47 @@ export default function CadastrarEspaco() {
     };
     loadOptions();
   }, [institute]);
+
+  const selectedProjeto = projetos.find(p => String(p.id) === String(form.projetoId));
+
+  const availableModalidades = useMemo(() => {
+    if (!selectedProjeto || !selectedProjeto.limites_modalidades) {
+      return modalidades;
+    }
+
+    let parsed: any[] = [];
+    if (typeof selectedProjeto.limites_modalidades === "string") {
+      try {
+        parsed = JSON.parse(selectedProjeto.limites_modalidades);
+      } catch {
+        parsed = [];
+      }
+    } else if (Array.isArray(selectedProjeto.limites_modalidades)) {
+      parsed = selectedProjeto.limites_modalidades;
+    }
+
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.map((m: any) => {
+        const modId = String(m.id || m.modalidade_id);
+        const modObj = modalidades.find(allM => String(allM.id) === modId);
+        return {
+          id: modId,
+          nome: m.nome || modObj?.nome || `Modalidade ${modId}`
+        };
+      });
+    }
+
+    return modalidades;
+  }, [selectedProjeto, modalidades]);
+
+  useEffect(() => {
+    if (form.modalidadeId && availableModalidades.length > 0) {
+      const exists = availableModalidades.some(m => String(m.id) === String(form.modalidadeId));
+      if (!exists && selectedProjeto) {
+        setForm(f => ({ ...f, modalidadeId: "" }));
+      }
+    }
+  }, [form.projetoId, availableModalidades, selectedProjeto]);
 
   // ─── Load edit data ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -508,7 +549,7 @@ export default function CadastrarEspaco() {
             <Field label="Qual modalidade?" error={errors.modalidadeId}>
               <select className={inputCls(errors.modalidadeId)} value={form.modalidadeId} onChange={e => set("modalidadeId", e.target.value)}>
                 <option value="">Selecione uma modalidade... (opcional)</option>
-                {modalidades.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
+                {availableModalidades.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
               </select>
             </Field>
           </div>

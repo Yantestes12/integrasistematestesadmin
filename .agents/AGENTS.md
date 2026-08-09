@@ -69,3 +69,10 @@
 ## Último Commit
 - Hash: `cf6d941` (sincronizado em `main` E `master`)
 - Conteúdo: Fix robust nucleos fallback, espacos badges, n8n delete filters e regeneração de núcleos SQL.
+
+
+## 🔴 REGRA CRÍTICA: Prevenção de Regressões e Efeitos Colaterais
+- **O Usuário está cansado de regressões (arrumar uma coisa e quebrar outra).**
+- **NÃO ALTERE LÓGICA QUE JÁ ESTÁ FUNCIONANDO** a menos que seja estritamente solicitado e necessário para a tarefa.
+- **NÃO ADIVINHE SOLUÇÕES COMPLEXAS**: Se um código já funcionava (ex: ID vs UUID no React Hook Form), resolva o problema da forma MENOS invasiva possível, sem reescrever ou destruir o que o usuário já havia validado no passado.
+- **Raciocínio Defensivo:** Antes de alterar qualquer linha de código, pergunte a si mesmo: "Isso vai quebrar outra parte do sistema que não me pediram para mexer?". Use o Deep Think Mode rigorosamente para não cometer erros em cadeia.
