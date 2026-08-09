@@ -34,8 +34,10 @@ CREATE TABLE IF NOT EXISTS "GASCTPNA_espacos" (
   foto_url            TEXT,
   termo_url           TEXT,
 
-  -- Status
+  -- Status e Aprovação
   ativo               BOOLEAN DEFAULT TRUE,
+  status_aprovacao    TEXT DEFAULT 'aprovado', -- 'aprovado', 'pendente', 'rejeitado'
+  docs_pendentes      BOOLEAN DEFAULT FALSE,
 
   -- Auditoria
   created_by          TEXT,
@@ -57,3 +59,17 @@ ALTER TABLE "AUNI_espacos" ADD COLUMN IF NOT EXISTS id BIGSERIAL PRIMARY KEY;
 -- IVEM
 CREATE TABLE IF NOT EXISTS "IVEM_espacos" AS TABLE "GASCTPNA_espacos" WITH NO DATA;
 ALTER TABLE "IVEM_espacos" ADD COLUMN IF NOT EXISTS id BIGSERIAL PRIMARY KEY;
+
+-- ALTER TABLEs para tabelas existentes
+ALTER TABLE "GASCTPNA_espacos" ADD COLUMN IF NOT EXISTS status_aprovacao TEXT DEFAULT 'aprovado';
+ALTER TABLE "GASCTPNA_espacos" ADD COLUMN IF NOT EXISTS docs_pendentes BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE "IBRASE_espacos" ADD COLUMN IF NOT EXISTS status_aprovacao TEXT DEFAULT 'aprovado';
+ALTER TABLE "IBRASE_espacos" ADD COLUMN IF NOT EXISTS docs_pendentes BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE "AUNI_espacos" ADD COLUMN IF NOT EXISTS status_aprovacao TEXT DEFAULT 'aprovado';
+ALTER TABLE "AUNI_espacos" ADD COLUMN IF NOT EXISTS docs_pendentes BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE "IVEM_espacos" ADD COLUMN IF NOT EXISTS status_aprovacao TEXT DEFAULT 'aprovado';
+ALTER TABLE "IVEM_espacos" ADD COLUMN IF NOT EXISTS docs_pendentes BOOLEAN DEFAULT FALSE;
+

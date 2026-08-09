@@ -240,6 +240,7 @@ export default function CadastrarEspaco() {
               uf: espaco.uf || "",
               pontoReferencia: espaco.ponto_referencia || "",
               horarios: { ...DEFAULT_HORARIOS, ...(espaco.horarios || {}) },
+              docsPendentes: Boolean(espaco.docs_pendentes || espaco.status_aprovacao === "pendente"),
               fotoUrl: espaco.foto_url || "",
               termoUrl: espaco.termo_url || "",
               fotoFile: null,
@@ -433,6 +434,8 @@ export default function CadastrarEspaco() {
         foto_url: fotoUrl,
         termo_url: termoUrl,
         ativo: true,
+        status_aprovacao: form.docsPendentes ? "pendente" : "aprovado",
+        docs_pendentes: form.docsPendentes,
         created_by: localStorage.getItem("auth_user") || "sistema",
         ...(editId ? { id: Number(editId), updated_by: localStorage.getItem("auth_user") || "sistema" } : {}),
       };

@@ -65,6 +65,8 @@
             { "fieldId": "foto_url", "fieldValue": "={{ $json.body.foto_url }}" },
             { "fieldId": "termo_url", "fieldValue": "={{ $json.body.termo_url }}" },
             { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo ? 1 : 0 }}" },
+            { "fieldId": "status_aprovacao", "fieldValue": "={{ $json.body.status_aprovacao || 'aprovado' }}" },
+            { "fieldId": "docs_pendentes", "fieldValue": "={{ $json.body.docs_pendentes ? true : false }}" },
             { "fieldId": "created_by", "fieldValue": "={{ $json.body.created_by }}" }
           ]
         }
@@ -100,6 +102,8 @@
             { "fieldId": "foto_url", "fieldValue": "={{ $json.body.foto_url }}" },
             { "fieldId": "termo_url", "fieldValue": "={{ $json.body.termo_url }}" },
             { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo ? 1 : 0 }}" },
+            { "fieldId": "status_aprovacao", "fieldValue": "={{ $json.body.status_aprovacao || 'aprovado' }}" },
+            { "fieldId": "docs_pendentes", "fieldValue": "={{ $json.body.docs_pendentes ? true : false }}" },
             { "fieldId": "created_by", "fieldValue": "={{ $json.body.created_by }}" }
           ]
         }
@@ -135,6 +139,8 @@
             { "fieldId": "foto_url", "fieldValue": "={{ $json.body.foto_url }}" },
             { "fieldId": "termo_url", "fieldValue": "={{ $json.body.termo_url }}" },
             { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo ? 1 : 0 }}" },
+            { "fieldId": "status_aprovacao", "fieldValue": "={{ $json.body.status_aprovacao || 'aprovado' }}" },
+            { "fieldId": "docs_pendentes", "fieldValue": "={{ $json.body.docs_pendentes ? true : false }}" },
             { "fieldId": "created_by", "fieldValue": "={{ $json.body.created_by }}" }
           ]
         }
@@ -170,6 +176,8 @@
             { "fieldId": "foto_url", "fieldValue": "={{ $json.body.foto_url }}" },
             { "fieldId": "termo_url", "fieldValue": "={{ $json.body.termo_url }}" },
             { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo ? 1 : 0 }}" },
+            { "fieldId": "status_aprovacao", "fieldValue": "={{ $json.body.status_aprovacao || 'aprovado' }}" },
+            { "fieldId": "docs_pendentes", "fieldValue": "={{ $json.body.docs_pendentes ? true : false }}" },
             { "fieldId": "created_by", "fieldValue": "={{ $json.body.created_by }}" }
           ]
         }

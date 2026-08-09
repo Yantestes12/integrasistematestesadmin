@@ -123,8 +123,10 @@ export default function CadastrarNucleo() {
   const espacoIdWatch = watch("espacoId");
 
   const filteredEspacos = useMemo(() => {
-    if (!projetoIdWatch) return espacos;
-    return espacos.filter(e => String(e.projeto_id) === String(projetoIdWatch));
+    // Regra Crítica: Apenas Espaços APROVADOS (não pendentes) podem ser selecionados para virar Núcleo
+    const apenasAprovados = espacos.filter(e => e.status_aprovacao !== "pendente" && !e.docs_pendentes);
+    if (!projetoIdWatch) return apenasAprovados;
+    return apenasAprovados.filter(e => String(e.projeto_id) === String(projetoIdWatch));
   }, [espacos, projetoIdWatch]);
 
   const selectedEspaco = useMemo(() => {
