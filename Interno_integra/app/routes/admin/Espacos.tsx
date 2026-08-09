@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Plus, Search, Edit3, Power, CheckCircle2, Clock, MapPin, Building2, User, Phone, FileText, AlertCircle, AlertTriangle, Trash2, Loader2, X, Home } from "lucide-react";
+import { Plus, Search, Edit3, Power, CheckCircle2, Clock, MapPin, Building2, User, Phone, AlertCircle, AlertTriangle, Trash2, Loader2, X } from "lucide-react";
 
 export interface EspacoItem {
   id: number;
@@ -36,7 +36,7 @@ export default function Espacos() {
   const [activeTab, setActiveTab] = useState<"cadastrados" | "solicitacoes">("cadastrados");
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [approvingId, setApprovingId] = useState<number | null>(null);
-  const [markingPendingId, setMarkingPendingId] = useState<number | null>(null);
+  const [togglingDocsId, setTogglingDocsId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   // Modal de Exclusão Animação Minimalista (Estrutura Desmoronando/Desfazendo)
@@ -124,27 +124,27 @@ export default function Espacos() {
     }
   };
 
-  const handleMarcarPendente = async (espaco: EspacoItem) => {
-    setMarkingPendingId(espaco.id);
+  const handleToggleDocsPendentes = async (espaco: EspacoItem) => {
+    setTogglingDocsId(espaco.id);
     try {
       const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
+      const nextVal = !espaco.docs_pendentes;
       const res = await fetch("https://w.ibrase.com.br/webhook/espacos-put", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: espaco.id,
-          status_aprovacao: "pendente",
-          docs_pendentes: true,
+          docs_pendentes: nextVal,
           instituto: authInstitute.toUpperCase()
         }),
       });
       if (res.ok) {
-        setEspacos(prev => prev.map(e => e.id === espaco.id ? { ...e, status_aprovacao: "pendente", docs_pendentes: true } : e));
+        setEspacos(prev => prev.map(e => e.id === espaco.id ? { ...e, docs_pendentes: nextVal } : e));
       }
     } catch (e) {
-      console.error("Erro ao marcar como pendente:", e);
+      console.error("Erro ao alterar docs_pendentes:", e);
     } finally {
-      setMarkingPendingId(null);
+      setTogglingDocsId(null);
     }
   };
 
@@ -164,7 +164,7 @@ export default function Espacos() {
   const handleConfirmDeleteEspaco = async () => {
     if (!selectedDeleteEspaco || deletingId) return;
     setDeletingId(selectedDeleteEspaco.id);
-    setIsCollapsing(true); // Ativa animação minimalista de desmoronamento/desfazimento
+    setIsCollapsing(true);
 
     setTimeout(async () => {
       try {
@@ -308,7 +308,7 @@ export default function Espacos() {
             <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
             <div>
               <strong className="font-extrabold block text-amber-950">Solicitações de Espaço Físico Pendentes</strong>
-              Estes espaços foram cadastrados ou solicitados mas ainda aguardam aprovação. Enquanto estiverem pendentes, eles <strong>NÃO</strong> aparecem disponíveis para alocação de Núcleos.
+              Estes espaços aguardam aprovação do administrador. Enquanto estiverem em solicitações pendentes, eles <strong>NÃO</strong> aparecem disponíveis para vincular em Núcleos.
             </div>
           </div>
         )}
@@ -375,7 +375,7 @@ export default function Espacos() {
                           ⚠️ Info faltante
                         </span>
                         <div className="absolute right-0 top-full mt-1 hidden group-hover:block w-48 bg-slate-900 text-white text-[11px] p-2 rounded-lg shadow-lg z-20 font-medium">
-                          Espaço aprovado sem foto ou termo anexado. Clique em editar para complementar os dados.
+                          Espaço aprovado com pendência de foto ou termo. Clique em 'Marcar pendência' para alternar.
                         </div>
                       </div>
                     )}
@@ -442,22 +442,30 @@ export default function Espacos() {
                     </>
                   ) : (
                     <>
-                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
-                        espaco.ativo ? "text-emerald-700 bg-emerald-50" : "text-slate-400 bg-slate-100"
-                      }`}>
-                        {espaco.ativo ? "Ativo" : "Inativo"}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                          espaco.ativo ? "text-emerald-700 bg-emerald-50" : "text-slate-400 bg-slate-100"
+                        }`}>
+                          {espaco.ativo ? "Ativo" : "Inativo"}
+                        </span>
+                      </div>
 
                       <div className="flex items-center gap-1.5">
+                        {/* Botão de Alternar Alerta "Info Faltante" */}
                         <button
-                          onClick={() => handleMarcarPendente(espaco)}
-                          disabled={markingPendingId === espaco.id}
-                          className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors border border-amber-200/60"
-                          title="Marcar como solicitação pendente"
+                          onClick={() => handleToggleDocsPendentes(espaco)}
+                          disabled={togglingDocsId === espaco.id}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors border ${
+                            espaco.docs_pendentes
+                              ? "text-amber-800 bg-amber-100 border-amber-300 hover:bg-amber-200"
+                              : "text-slate-600 bg-slate-100 border-slate-200 hover:bg-slate-200"
+                          }`}
+                          title={espaco.docs_pendentes ? "Remover marcação de info faltante" : "Marcar como info faltante"}
                         >
-                          {markingPendingId === espaco.id ? <Loader2 size={13} className="animate-spin" /> : <Clock size={13} />}
-                          Pendente
+                          {togglingDocsId === espaco.id ? <Loader2 size={13} className="animate-spin" /> : <AlertTriangle size={13} className="text-amber-600" />}
+                          {espaco.docs_pendentes ? "⚠️ Info faltante" : "Info faltante"}
                         </button>
+
                         <Link
                           to={`/admin/cadastrar-espaco?edit=${espaco.id}`}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
@@ -466,6 +474,7 @@ export default function Espacos() {
                           <Edit3 size={13} />
                           Editar
                         </Link>
+
                         <button
                           onClick={() => handleToggleAtivo(espaco)}
                           disabled={togglingId === espaco.id}
@@ -478,6 +487,7 @@ export default function Espacos() {
                         >
                           {togglingId === espaco.id ? <Loader2 size={14} className="animate-spin" /> : <Power size={14} />}
                         </button>
+
                         <button
                           onClick={() => openDeleteModal(espaco)}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
