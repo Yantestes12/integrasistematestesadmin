@@ -7,7 +7,8 @@ export function ModalidadesSection() {
   const { register, control } = useFormContext<ProjetoFormData>();
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "limitesModalidade"
+    name: "limitesModalidade",
+    keyName: "_rhfId"
   });
 
   const [modalidadesDisponiveis, setModalidadesDisponiveis] = useState<any[]>([]);
@@ -216,7 +217,7 @@ export function ModalidadesSection() {
               </tr>
             ) : (
               fields.map((field, index) => (
-                <tr key={field.id} className="hover:bg-slate-50/50 transition-colors">
+                <tr key={field._rhfId} className="hover:bg-slate-50/50 transition-colors">
                   <td className="p-3 font-semibold text-slate-700 flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                     {field.nome}
