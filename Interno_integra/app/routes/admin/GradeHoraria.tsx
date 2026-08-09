@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router";
-import { ArrowLeft, Save, Clock, CheckCircle2, AlertCircle, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, Save, Clock, CheckCircle2, AlertCircle, Loader2, Sparkles, Building2, AlertTriangle } from "lucide-react";
 
 interface SlotData {
   inicio: string; // "08:00"
@@ -29,12 +29,23 @@ const DIAS_MAP: Record<DiasSemana, string> = {
   "6": "Sábado",
 };
 
+const DIA_KEY_MAP: Record<DiasSemana, string> = {
+  "1": "seg",
+  "2": "ter",
+  "3": "qua",
+  "4": "qui",
+  "5": "sex",
+  "6": "sab",
+};
+
 export default function GradeHoraria() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const nucleoId = searchParams.get("nucleo_id");
 
   const [nucleoNome, setNucleoNome] = useState("Carregando...");
+  const [espacoNome, setEspacoNome] = useState<string | null>(null);
+  const [espacoHorarios, setEspacoHorarios] = useState<Record<string, { ativo: boolean; abertura: string; fechamento: string }> | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -62,9 +73,23 @@ export default function GradeHoraria() {
   const fetchNucleo = async (inst: string, id: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst.toUpperCase()}`);
-      if (res.ok) {
-        const data = await res.json();
+      const [resNucleos, resEspacos] = await Promise.all([
+        fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst.toUpperCase()}`),
+        fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${inst.toUpperCase()}`).catch(() => null)
+      ]);
+
+      let espacosMap: Record<string, any> = {};
+      if (resEspacos && resEspacos.ok) {
+        const eData = await resEspacos.json();
+        const eList = Array.isArray(eData) ? eData : eData.data || [eData];
+        eList.forEach((e: any) => {
+          const item = e?.json || e;
+          if (item?.id) espacosMap[String(item.id)] = item;
+        });
+      }
+
+      if (resNucleos.ok) {
+        const data = await resNucleos.json();
         let list: any[] = Array.isArray(data) ? data : data.data || data.items || (Array.isArray(data.json) ? data.json : [data]);
         let flat: any[] = [];
         list.forEach((e: any) => {
@@ -78,6 +103,21 @@ export default function GradeHoraria() {
         const found = flat.find((n: any) => String(n.id || n.id_nucleo) === String(id));
         if (found) {
           setNucleoNome(found.nome || found.nome_nucleo || `Núcleo #${id}`);
+          
+          // Carrega os horários do Espaço vinculado
+          if (found.espaco_id && espacosMap[String(found.espaco_id)]) {
+            const espaco = espacosMap[String(found.espaco_id)];
+            setEspacoNome(espaco.nome);
+            if (espaco.horarios) {
+              try {
+                const parsedH = typeof espaco.horarios === "string" ? JSON.parse(espaco.horarios) : espaco.horarios;
+                setEspacoHorarios(parsedH);
+              } catch (e) {
+                console.warn("Erro ao parsear horários do espaço:", e);
+              }
+            }
+          }
+
           if (found.grade_horaria) {
             try {
               const parsed = typeof found.grade_horaria === "string" ? JSON.parse(found.grade_horaria) : found.grade_horaria;
@@ -116,6 +156,15 @@ export default function GradeHoraria() {
   };
 
   const handleToggleDia = (dia: DiasSemana) => {
+    const diaKey = DIA_KEY_MAP[dia];
+    const limiteEspaco = espacoHorarios?.[diaKey];
+    
+    // Se o Espaço restringe o dia e ele está inativo no espaço, não permite ativar
+    if (limiteEspaco && !limiteEspaco.ativo) {
+      alert(`O dia ${DIAS_MAP[dia]} não possui horário de funcionamento cadastrado no Espaço Físico.`);
+      return;
+    }
+
     setDiasGrade(prev => ({
       ...prev,
       [dia]: {
@@ -123,6 +172,16 @@ export default function GradeHoraria() {
         ativo: !prev[dia].ativo
       }
     }));
+  };
+
+  // Validador de horário dentro dos limites do Espaço Físico
+  const isSlotValidInEspaco = (dia: DiasSemana, slot: SlotData): boolean => {
+    if (!slot.inicio || !slot.fim) return true;
+    const diaKey = DIA_KEY_MAP[dia];
+    const limite = espacoHorarios?.[diaKey];
+    if (!limite || !limite.ativo || !limite.abertura || !limite.fechamento) return true;
+
+    return slot.inicio >= limite.abertura && slot.fim <= limite.fechamento;
   };
 
   // Turnos calculados
@@ -152,7 +211,7 @@ export default function GradeHoraria() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: nucleoId,
-          instituto: authInstitute,
+          instituto: authInstitute.toUpperCase(),
           grade_horaria: JSON.stringify(diasGrade),
           turnos_calculados: turnosCalculados.join(", "),
         }),
@@ -179,7 +238,7 @@ export default function GradeHoraria() {
           <Link to="/admin/nucleos" className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[var(--theme-primary)] transition-colors mb-2">
             <ArrowLeft size={14} /> Voltar aos Núcleos
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800">
               Grade Horária
             </h1>
@@ -197,7 +256,8 @@ export default function GradeHoraria() {
             ))}
           </div>
           <p className="text-slate-500 text-xs sm:text-sm mt-1">
-            Núcleo: <strong className="text-slate-800">{nucleoNome}</strong> — 4 turmas (2h) + 1 planejamento (2h).
+            Núcleo: <strong className="text-slate-800">{nucleoNome}</strong>
+            {espacoNome && <span className="ml-2 text-slate-600 font-semibold">• Espaço Físico: <strong>{espacoNome}</strong></span>}
           </p>
         </div>
 
@@ -220,33 +280,58 @@ export default function GradeHoraria() {
         </div>
       )}
 
-      {/* Dica da Grade */}
-      <div className="bg-indigo-50/80 border border-indigo-200/80 p-4 rounded-xl text-indigo-900 text-xs sm:text-sm flex items-start gap-3">
-        <Sparkles className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
-        <div>
-          <strong>Dica da Grade Horária:</strong> Selecione os dias de funcionamento. Cada dia possui 4 aulas de 2 horas (Turmas A, B, C, D) + 1 período de Planejamento (P). Ao alterar a hora inicial, o término (+2h) é calculado automaticamente!
+      {/* Alerta de limitação pelos Horários do Espaço Físico */}
+      {espacoHorarios ? (
+        <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl text-amber-900 text-xs sm:text-sm flex items-start gap-3">
+          <Building2 className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <strong>Restrição do Espaço Físico ({espacoNome || "Local"}):</strong> A grade horária deste núcleo é estritamente limitada aos horários de funcionamento cadastrados no Espaço. Dias desativados no Espaço não podem ser selecionados.
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-indigo-50/80 border border-indigo-200/80 p-4 rounded-xl text-indigo-900 text-xs sm:text-sm flex items-start gap-3">
+          <Sparkles className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+          <div>
+            <strong>Dica da Grade Horária:</strong> Selecione os dias de funcionamento. Cada dia possui 4 aulas de 2 horas (Turmas A, B, C, D) + 1 período de Planejamento (P).
+          </div>
+        </div>
+      )}
 
       {/* Seletor dos Dias da Semana */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
         <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-3">Dias de Funcionamento do Núcleo:</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
           {(["1", "2", "3", "4", "5", "6"] as DiasSemana[]).map(d => {
+            const diaKey = DIA_KEY_MAP[d];
+            const limiteEspaco = espacoHorarios?.[diaKey];
+            const permitidoNoEspaco = !espacoHorarios || (limiteEspaco && limiteEspaco.ativo);
             const ativo = diasGrade[d]?.ativo;
+
             return (
               <button
                 key={d}
                 type="button"
                 onClick={() => handleToggleDia(d)}
-                className={`py-2.5 px-3 rounded-xl font-bold text-xs border transition-all flex items-center justify-between ${
-                  ativo
+                disabled={!permitidoNoEspaco}
+                className={`py-2.5 px-3 rounded-xl font-bold text-xs border transition-all flex flex-col justify-between gap-1.5 text-left ${
+                  !permitidoNoEspaco
+                    ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60"
+                    : ativo
                     ? "bg-[var(--theme-primary)] text-white border-[var(--theme-primary)] shadow-sm"
                     : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
                 }`}
               >
-                <span>{DIAS_MAP[d]}</span>
-                <span className={`w-2 h-2 rounded-full ${ativo ? "bg-white" : "bg-slate-300"}`} />
+                <div className="flex items-center justify-between w-full">
+                  <span>{DIAS_MAP[d]}</span>
+                  <span className={`w-2 h-2 rounded-full ${!permitidoNoEspaco ? "bg-slate-300" : ativo ? "bg-white" : "bg-slate-300"}`} />
+                </div>
+
+                {/* Exibe o horário cadastrado do Espaço */}
+                {limiteEspaco && (
+                  <span className={`text-[10px] ${ativo ? "text-white/80" : "text-slate-400"}`}>
+                    {limiteEspaco.ativo ? `${limiteEspaco.abertura} - ${limiteEspaco.fechamento}` : "Fechado"}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -297,6 +382,7 @@ export default function GradeHoraria() {
                     {(["1", "2", "3", "4", "5", "6"] as DiasSemana[]).map(d => {
                       const diaAtivo = diasGrade[d]?.ativo;
                       const slotVal = diasGrade[d]?.slots[slot.key as "A" | "B" | "C" | "D" | "P"];
+                      const validoNoEspaco = diaAtivo && slotVal ? isSlotValidInEspaco(d, slotVal) : true;
 
                       return (
                         <td key={d} className={`px-3 py-4 text-center ${!diaAtivo ? "bg-slate-50/50 opacity-40" : ""}`}>
@@ -304,13 +390,23 @@ export default function GradeHoraria() {
                             <div className="flex flex-col items-center gap-1">
                               <input
                                 type="time"
-                                className="w-24 px-2 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-800 text-center focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)]"
+                                className={`w-24 px-2 py-1.5 rounded-lg border text-xs font-bold text-slate-800 text-center focus:outline-none focus:ring-2 ${
+                                  !validoNoEspaco
+                                    ? "border-amber-300 bg-amber-50 text-amber-900 focus:ring-amber-300"
+                                    : "border-slate-200 focus:ring-[var(--theme-primary)]"
+                                }`}
                                 value={slotVal?.inicio || ""}
                                 onChange={e => handleHoraChange(d, slot.key as "A" | "B" | "C" | "D" | "P", e.target.value)}
                               />
                               <span className="text-[11px] font-semibold text-slate-400">
                                 {slotVal?.fim ? `até ${slotVal.fim}` : "--:--"}
                               </span>
+                              {!validoNoEspaco && (
+                                <span className="text-[9px] font-bold text-amber-700 flex items-center gap-0.5 mt-0.5" title="Fora da janela de funcionamento do Espaço Físico">
+                                  <AlertTriangle size={10} className="text-amber-500 shrink-0" />
+                                  Fora do espaço
+                                </span>
+                              )}
                             </div>
                           ) : (
                             <span className="text-xs text-slate-300 font-mono">—</span>
