@@ -278,16 +278,8 @@ export function ModalidadesSection() {
             {/* Content */}
             <div className="p-6 overflow-y-auto flex-1 bg-white">
               
-              <div className="flex justify-between items-center mb-4">
+              <div className="mb-4">
                 <p className="text-sm text-slate-600 font-medium">Selecione as modalidades que farão parte deste projeto:</p>
-                <button
-                  type="button"
-                  onClick={handleCreateModalidade}
-                  className="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 font-semibold rounded-lg text-xs transition-colors flex items-center gap-1.5 shadow-sm"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Criar Nova
-                </button>
               </div>
 
               {/* Delete Warning Box */}
@@ -358,18 +350,6 @@ export function ModalidadesSection() {
                             {mod.nome}
                           </span>
                         </label>
-                        
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            triggerDelete(idStr);
-                          }}
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-100 rounded-md transition-colors"
-                          title="Excluir modalidade do sistema"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
                       </div>
                     );
                   })}
