@@ -168,15 +168,15 @@
             },
             {
               "fieldId": "vigencia_inicio",
-              "fieldValue": "={{ $json.body.vigencia_inicio }}"
+              "fieldValue": "={{ $json.body.vigencia_inicio ? $json.body.vigencia_inicio : undefined }}"
             },
             {
               "fieldId": "vigencia_fim",
-              "fieldValue": "={{ $json.body.vigencia_fim }}"
+              "fieldValue": "={{ $json.body.vigencia_fim ? $json.body.vigencia_fim : undefined }}"
             },
             {
               "fieldId": "vigencia_termino",
-              "fieldValue": "={{ $json.body.vigencia_termino }}"
+              "fieldValue": "={{ $json.body.vigencia_termino ? $json.body.vigencia_termino : undefined }}"
             },
             {
               "fieldId": "idade_min",
@@ -201,6 +201,10 @@
             {
               "fieldId": "ativo",
               "fieldValue": "={{ $json.body.ativo }}"
+            },
+            {
+              "fieldId": "limites_modalidades",
+              "fieldValue": "={{ JSON.stringify(.body.limites_modalidade || .body.limites_modalidades || []) }}"
             }
           ]
         }
@@ -342,15 +346,15 @@
             },
             {
               "fieldId": "vigencia_inicio",
-              "fieldValue": "={{ $json.body.vigencia_inicio }}"
+              "fieldValue": "={{ $json.body.vigencia_inicio ? $json.body.vigencia_inicio : undefined }}"
             },
             {
               "fieldId": "vigencia_fim",
-              "fieldValue": "={{ $json.body.vigencia_fim }}"
+              "fieldValue": "={{ $json.body.vigencia_fim ? $json.body.vigencia_fim : undefined }}"
             },
             {
               "fieldId": "vigencia_termino",
-              "fieldValue": "={{ $json.body.vigencia_termino }}"
+              "fieldValue": "={{ $json.body.vigencia_termino ? $json.body.vigencia_termino : undefined }}"
             },
             {
               "fieldId": "idade_min",
@@ -375,6 +379,10 @@
             {
               "fieldId": "ativo",
               "fieldValue": "={{ $json.body.ativo }}"
+            },
+            {
+              "fieldId": "limites_modalidades",
+              "fieldValue": "={{ JSON.stringify(.body.limites_modalidade || .body.limites_modalidades || []) }}"
             }
           ]
         }
@@ -516,15 +524,15 @@
             },
             {
               "fieldId": "vigencia_inicio",
-              "fieldValue": "={{ $json.body.vigencia_inicio }}"
+              "fieldValue": "={{ $json.body.vigencia_inicio ? $json.body.vigencia_inicio : undefined }}"
             },
             {
               "fieldId": "vigencia_fim",
-              "fieldValue": "={{ $json.body.vigencia_fim }}"
+              "fieldValue": "={{ $json.body.vigencia_fim ? $json.body.vigencia_fim : undefined }}"
             },
             {
               "fieldId": "vigencia_termino",
-              "fieldValue": "={{ $json.body.vigencia_termino }}"
+              "fieldValue": "={{ $json.body.vigencia_termino ? $json.body.vigencia_termino : undefined }}"
             },
             {
               "fieldId": "idade_min",
@@ -549,6 +557,10 @@
             {
               "fieldId": "ativo",
               "fieldValue": "={{ $json.body.ativo }}"
+            },
+            {
+              "fieldId": "limites_modalidades",
+              "fieldValue": "={{ JSON.stringify(.body.limites_modalidade || .body.limites_modalidades || []) }}"
             }
           ]
         }
@@ -690,15 +702,15 @@
             },
             {
               "fieldId": "vigencia_inicio",
-              "fieldValue": "={{ $json.body.vigencia_inicio }}"
+              "fieldValue": "={{ $json.body.vigencia_inicio ? $json.body.vigencia_inicio : undefined }}"
             },
             {
               "fieldId": "vigencia_fim",
-              "fieldValue": "={{ $json.body.vigencia_fim }}"
+              "fieldValue": "={{ $json.body.vigencia_fim ? $json.body.vigencia_fim : undefined }}"
             },
             {
               "fieldId": "vigencia_termino",
-              "fieldValue": "={{ $json.body.vigencia_termino }}"
+              "fieldValue": "={{ $json.body.vigencia_termino ? $json.body.vigencia_termino : undefined }}"
             },
             {
               "fieldId": "idade_min",
@@ -723,6 +735,10 @@
             {
               "fieldId": "ativo",
               "fieldValue": "={{ $json.body.ativo }}"
+            },
+            {
+              "fieldId": "limites_modalidades",
+              "fieldValue": "={{ JSON.stringify(.body.limites_modalidade || .body.limites_modalidades || []) }}"
             }
           ]
         }
