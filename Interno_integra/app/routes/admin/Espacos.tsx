@@ -46,6 +46,7 @@ export default function Espacos() {
   const [activeTab, setActiveTab] = useState<"aprovados" | "solicitacoes">("aprovados");
   const [togglingId, setTogglingId] = useState<string | number | null>(null);
   const [approvingId, setApprovingId] = useState<string | number | null>(null);
+  const [markingPendingId, setMarkingPendingId] = useState<string | number | null>(null);
   const [deletingId, setDeletingId] = useState<string | number | null>(null);
 
   useEffect(() => {
@@ -101,8 +102,20 @@ export default function Espacos() {
         const data = await resEspacos.json();
         const list = flattenResponse(data);
         setEspacos(list.map((e: any) => {
-          // status_aprovacao estrito: se vier 'pendente' é pendente, caso contrário é aprovado por padrão
-          const statusAprovacao = e.status_aprovacao === "pendente" ? "pendente" : (e.status_aprovacao || "aprovado");
+          const statusStr = String(e.status_aprovacao || "").toLowerCase().trim();
+          const isPendenteStatus = statusStr === "pendente";
+          
+          // Verifica se falta documento ou se a flag docs_pendentes é verdadeira
+          const temDocOuFotoFaltando = !e.foto_url || !e.termo_url;
+          const isDocsPendentes = Boolean(
+            e.docs_pendentes === true ||
+            e.docs_pendentes === "true" ||
+            e.docs_pendentes === 1 ||
+            e.docs_pendentes === "1" ||
+            e.docs_pendentes === "t" ||
+            temDocOuFotoFaltando
+          );
+
           return {
             id: e.id,
             nome: e.nome || "",
@@ -115,8 +128,8 @@ export default function Espacos() {
             cidade: e.cidade || "",
             uf: e.uf || "",
             ativo: e.ativo !== false && e.ativo !== 0 && e.ativo !== "0",
-            status_aprovacao: statusAprovacao,
-            docs_pendentes: Boolean(e.docs_pendentes),
+            status_aprovacao: isPendenteStatus ? "pendente" : "aprovado",
+            docs_pendentes: isDocsPendentes,
             nucleo_nome: nucleosMap[String(e.id)] || undefined,
           };
         }));
@@ -170,6 +183,30 @@ export default function Espacos() {
     }
   };
 
+  const handleMarcarPendente = async (espaco: EspacoItem) => {
+    setMarkingPendingId(espaco.id);
+    try {
+      const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
+      const res = await fetch("https://w.ibrase.com.br/webhook/espacos-put", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: espaco.id,
+          status_aprovacao: "pendente",
+          docs_pendentes: true,
+          instituto: authInstitute.toUpperCase()
+        }),
+      });
+      if (res.ok) {
+        setEspacos(prev => prev.map(e => e.id === espaco.id ? { ...e, status_aprovacao: "pendente", docs_pendentes: true } : e));
+      }
+    } catch (e) {
+      console.error("Erro ao marcar como pendente:", e);
+    } finally {
+      setMarkingPendingId(null);
+    }
+  };
+
   const handleDeleteEspaco = async (espaco: EspacoItem) => {
     if (!window.confirm(`Tem certeza que deseja excluir permanentemente o espaço "${espaco.nome}"?`)) return;
     setDeletingId(espaco.id);
@@ -193,7 +230,7 @@ export default function Espacos() {
     }
   };
 
-  // 🔴 REGRA CRÍTICA: Separação ESTRITA por status_aprovacao (Sem duplicatas em ambas as abas)
+  // 🔴 REGRA CRÍTICA: Separação ESTRITA por status_aprovacao
   const solicitacoesPendentes = espacos.filter(e => e.status_aprovacao === "pendente");
   const espacosAprovados = espacos.filter(e => e.status_aprovacao !== "pendente");
 
@@ -341,12 +378,12 @@ export default function Espacos() {
                         {isSolicitacaoPendente ? <Clock className="w-5 h-5" /> : <Building2 className="w-5 h-5" />}
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-extrabold text-slate-800 text-base leading-tight group-hover:text-[var(--theme-primary)] transition-colors break-words flex items-center gap-1.5">
+                        <h3 className="font-extrabold text-slate-800 text-base leading-tight group-hover:text-[var(--theme-primary)] transition-colors break-words flex items-center gap-1.5 flex-wrap">
                           {espaco.nome}
-                          {/* ⚠️ ÍCONE DE AVISO PARA INFORMAÇÃO FALTANTE MESMO SE APROVADO */}
+                          {/* ⚠️ ÍCONE DE AVISO PARA INFORMAÇÃO OU DOCUMENTO FALTANTE */}
                           {espaco.docs_pendentes && (
                             <span 
-                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 cursor-help shrink-0"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 cursor-help shrink-0 shadow-2xs"
                               title="Atenção: Informação ou documento faltante neste espaço"
                             >
                               <AlertTriangle size={12} className="text-amber-600 shrink-0" />
@@ -467,6 +504,15 @@ export default function Espacos() {
                       </span>
 
                       <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleMarcarPendente(espaco)}
+                          disabled={markingPendingId === espaco.id}
+                          className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors border border-amber-200/60"
+                          title="Marcar como solicitação pendente"
+                        >
+                          {markingPendingId === espaco.id ? <Loader2 size={13} className="animate-spin" /> : <Clock size={13} />}
+                          Pendente
+                        </button>
                         <Link
                           to={`/admin/cadastrar-espaco?edit=${espaco.id}`}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
