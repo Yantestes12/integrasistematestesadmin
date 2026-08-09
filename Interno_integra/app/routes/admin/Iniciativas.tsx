@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Plus, Search, Edit3, Power, Loader2, FileText, Filter, Layers, Building2 } from "lucide-react";
-import { supabase } from "../../supabaseClient";
+import { Plus, Search, Edit3, Power, Loader2, Layers, Building2, Trash2, AlertTriangle, Clock, X } from "lucide-react";
 
 export interface IniciativaItem {
   id: string | number;
@@ -14,19 +13,8 @@ export interface IniciativaItem {
   faixa_etaria?: string;
   status?: boolean | string;
   ativo?: boolean;
+  aplicabilidade?: string;
 }
-
-const parseModalidadesHelper = (raw: any) => {
-  if (!raw) return null;
-  if (Array.isArray(raw)) return raw;
-  if (typeof raw === 'string') {
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
-    } catch(e) {}
-  }
-  return null;
-};
 
 export default function Iniciativas() {
   const [iniciativas, setIniciativas] = useState<IniciativaItem[]>([]);
@@ -34,12 +22,26 @@ export default function Iniciativas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentInstitute, setCurrentInstitute] = useState("IBRASE");
 
+  // Estado do Modal de Confirmação com Contagem de 10 Segundos
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedIniciativa, setSelectedIniciativa] = useState<IniciativaItem | null>(null);
+  const [countdown, setCountdown] = useState(10);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   useEffect(() => {
     const savedInstitute = localStorage.getItem("auth_institute") || "IBRASE";
     setCurrentInstitute(savedInstitute);
-
     fetchIniciativas(savedInstitute);
   }, []);
+
+  // Timer de 10 segundos para habilitar o botão de exclusão
+  useEffect(() => {
+    if (!deleteModalOpen || countdown <= 0) return;
+    const timer = setInterval(() => {
+      setCountdown(prev => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [deleteModalOpen, countdown]);
 
   const parseIniciativasList = (rawData: any): IniciativaItem[] => {
     let list: any[] = [];
@@ -53,7 +55,6 @@ export default function Iniciativas() {
       else list = [rawData];
     }
 
-    // Flatten any { json: [...] } or nested arrays
     let flatList: any[] = [];
     list.forEach(entry => {
       if (entry && entry.json) {
@@ -80,56 +81,15 @@ export default function Iniciativas() {
         item.titulo || 
         `Iniciativa ${id}`;
 
-      const descricao = 
-        item.descricao || 
-        item.identificacao?.descricao || 
-        "";
-
-      const termo_fomento = 
-        item.termo_fomento || 
-        item.termoFomento || 
-        item.identificacao?.termoFomento || 
-        "";
-
-      const numero_proposta = 
-        item.numero_proposta || 
-        item.numeroProposta || 
-        item.identificacao?.numeroProposta || 
-        "";
-
-      const numero_processo_adm = 
-        item.numero_processo_adm || 
-        item.numeroProcessoAdm || 
-        item.identificacao?.numeroProcessoAdm || 
-        "";
-
-      const numero_transferegov = 
-        item.numero_transferegov || 
-        item.numeroTransfereGov || 
-        item.identificacao?.numeroTransfereGov || 
-        "";
-
-      const faixa_etaria = 
-        item.faixa_etaria || 
-        (item.faixaEtaria ? `${item.faixaEtaria.idadeMinima || ''} - ${item.faixaEtaria.idadeMaxima || ''}` : "") || 
-        "7 - 65";
+      const descricao = item.descricao || item.identificacao?.descricao || "";
+      const termo_fomento = item.termo_fomento || item.termoFomento || item.identificacao?.termoFomento || "";
+      const numero_proposta = item.numero_proposta || item.numeroProposta || item.identificacao?.numeroProposta || "";
+      const numero_processo_adm = item.numero_processo_adm || item.numeroProcessoAdm || item.identificacao?.numeroProcessoAdm || "";
+      const numero_transferegov = item.numero_transferegov || item.numeroTransfereGov || item.identificacao?.numeroTransfereGov || "";
+      const faixa_etaria = item.faixa_etaria || (item.faixaEtaria ? `${item.faixaEtaria.idadeMinima || ''} - ${item.faixaEtaria.idadeMaxima || ''}` : "") || "7 - 65";
 
       const isAtivo = item.ativo !== false && item.status !== false && item.status !== "inativo";
-      
       const aplicabilidade = item.aplicabilidade || item.identificacao?.aplicabilidade || "";
-
-      let modalidadesList = parseModalidadesHelper(item.limites_modalidade) || 
-        parseModalidadesHelper(item.limites_modalidades) || 
-        parseModalidadesHelper(item.limitesModalidade);
-
-      if (!modalidadesList || modalidadesList.length === 0) {
-        modalidadesList = [];
-        if (item.modalidade_funcional) modalidadesList.push({ nome: "Funcional", limite: item.modalidade_funcional });
-        if (item.modalidade_futebol) modalidadesList.push({ nome: "Futebol", limite: item.modalidade_futebol });
-        if (item.modalidade_luta) modalidadesList.push({ nome: "Luta", limite: item.modalidade_luta });
-        if (item.modalidade_projeto_de_aula) modalidadesList.push({ nome: "Projeto de Aula", limite: item.modalidade_projeto_de_aula });
-        if (item.modalidade_eventos) modalidadesList.push({ nome: "Eventos", limite: item.modalidade_eventos });
-      }
 
       return {
         id,
@@ -143,26 +103,20 @@ export default function Iniciativas() {
         status: isAtivo,
         ativo: isAtivo,
         aplicabilidade,
-        modalidadesList
       };
     });
   };
 
   const fetchIniciativas = async (instituteName: string) => {
     setLoading(true);
-
     try {
-      // 1. Tentar busca via Webhook do N8N enviando o instituto pelo switch
       const n8nEndpoint = `https://w.ibrase.com.br/webhook/projetos-get?instituto=${instituteName.toUpperCase()}`;
-      
       const res = await fetch(n8nEndpoint, { method: 'GET' });
       if (res.ok) {
         const data = await res.json();
-        console.log("Dados recebidos do N8N Webhook (projetos-get):", data);
         
-        // Verifica se o N8N retornou a resposta padrão (acontece quando o Webhook não está com Respond to Webhook configurado corretamente)
         if (data.message === "Workflow was started" || (Array.isArray(data) && data.length > 0 && data[0].message === "Workflow was started")) {
-          alert("O Webhook do N8N não retornou os dados. Ele retornou a mensagem padrão 'Workflow was started'. Vá no n8n, abra o node do Webhook e mude o campo 'Respond' para 'Using Respond to Webhook Node'.");
+          alert("O Webhook do N8N não retornou os dados. Mude a opção 'Respond' para 'Using Respond to Webhook Node' no n8n.");
           setLoading(false);
           return;
         }
@@ -176,31 +130,54 @@ export default function Iniciativas() {
       }
     } catch (e) {
       console.warn("Erro no Webhook N8N de Iniciativas:", e);
-      alert("Falha ao se comunicar com o webhook do n8n para buscar as iniciativas.");
     } finally {
       setLoading(false);
     }
-
   };
 
-  const handleDelete = async (id: string | number) => {
-    if (!window.confirm("Deseja realmente remover/desativar esta iniciativa?")) return;
-    
+  const openDeleteModal = (item: IniciativaItem) => {
+    setSelectedIniciativa(item);
+    setCountdown(10);
+    setDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setSelectedIniciativa(null);
+    setCountdown(10);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedIniciativa || countdown > 0) return;
+    setIsDeleting(true);
+
     try {
-      const res = await fetch("https://w.ibrase.com.br/webhook/projetos-delete", {
+      // Tenta DELETE primeiro e depois POST caso o webhook exija POST
+      let res = await fetch("https://w.ibrase.com.br/webhook/projetos-delete", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, instituto: currentInstitute }),
+        body: JSON.stringify({ id: selectedIniciativa.id, instituto: currentInstitute.toUpperCase() }),
       });
+
+      if (!res.ok) {
+        res = await fetch("https://w.ibrase.com.br/webhook/projetos-delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: selectedIniciativa.id, instituto: currentInstitute.toUpperCase() }),
+        });
+      }
+
       if (res.ok) {
-        alert("Iniciativa desativada/removida com sucesso pelo n8n!");
-        fetchIniciativas(currentInstitute);
+        setIniciativas(prev => prev.filter(item => item.id !== selectedIniciativa.id));
+        closeDeleteModal();
       } else {
-        alert("Erro ao remover iniciativa via N8N.");
+        alert("Erro ao excluir iniciativa via N8N.");
       }
     } catch (e) {
       console.error(e);
-      alert("Erro ao conectar com N8N.");
+      alert("Erro ao conectar com o servidor para excluir.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -210,7 +187,7 @@ export default function Iniciativas() {
   );
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans">
       
       {/* Top Banner / Breadcrumb */}
       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -259,7 +236,7 @@ export default function Iniciativas() {
           </div>
         </div>
 
-        {/* Tabela de Dados Reais com Bolinhas Carregando */}
+        {/* Tabela de Dados Reais */}
         {loading ? (
           <div className="py-20 text-center flex flex-col items-center justify-center gap-4">
             <div className="flex items-center gap-2">
@@ -301,6 +278,7 @@ export default function Iniciativas() {
               <tbody className="divide-y divide-slate-100 text-base md:text-lg">
                 {filteredIniciativas.map((item) => {
                   const isAtivo = item.ativo !== false && item.status !== "inativo" && item.status !== false;
+                  const isEvento = (item.aplicabilidade || "").toLowerCase().includes("evento");
 
                   return (
                     <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
@@ -310,27 +288,13 @@ export default function Iniciativas() {
                         <span className="font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors block text-base sm:text-lg md:text-xl">
                           {item.nome}
                         </span>
-                        {item.aplicabilidade && (
-                          <span className={`inline-block mt-2 px-3 py-1 rounded text-xs md:text-sm font-extrabold uppercase tracking-wider ${
-                            (item.aplicabilidade.toLowerCase() === 'evento' || item.aplicabilidade.toLowerCase() === 'eventos')
-                              ? 'bg-orange-100 text-orange-700' 
-                              : 'bg-blue-100 text-blue-700'
-                          }`}>
-                            {item.aplicabilidade.toLowerCase() === 'aula' ? 'Projeto de Aula' : item.aplicabilidade}
-                          </span>
-                        )}
-
-                        {item.modalidadesList && item.modalidadesList.length > 0 && (
-                          <div className="flex items-center gap-1.5 flex-wrap mt-2.5">
-                            <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider block w-full">Modalidades / Vagas:</span>
-                            {item.modalidadesList.map((m: any, idx: number) => (
-                              <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
-                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                                {m.nome || m.modalidade} {m.limite ? `(${m.limite} vagas)` : ''}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                        
+                        {/* Exibe APENAS se é Evento ou Projeto de Aula */}
+                        <span className={`inline-block mt-2 px-3 py-1 rounded text-xs font-extrabold uppercase tracking-wider ${
+                          isEvento ? 'bg-orange-100 text-orange-800 border border-orange-200' : 'bg-blue-100 text-blue-800 border border-blue-200'
+                        }`}>
+                          {isEvento ? 'Evento' : 'Projeto de Aula'}
+                        </span>
                       </td>
 
                       <td className="py-4 md:py-6 px-4 md:px-6">
@@ -371,16 +335,16 @@ export default function Iniciativas() {
                           <Link
                             to={`/admin/cadastrar-projeto?edit=${item.id}`}
                             className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                            title="Editar"
+                            title="Editar Iniciativa"
                           >
                             <Edit3 size={16} />
                           </Link>
                           <button
-                            onClick={() => handleDelete(item.id)}
+                            onClick={() => openDeleteModal(item)}
                             className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                            title="Desativar / Ativar"
+                            title="Excluir Iniciativa"
                           >
-                            <Power size={16} />
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </td>
@@ -392,6 +356,85 @@ export default function Iniciativas() {
           </div>
         )}
       </div>
+
+      {/* Modal de Confirmação com Contagem de 10 Segundos */}
+      {deleteModalOpen && selectedIniciativa && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-5 animate-in fade-in zoom-in duration-150">
+            
+            {/* Header do Modal */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                <AlertTriangle size={22} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-slate-900">Excluir Iniciativa</h3>
+                <p className="text-xs text-slate-500">Confirmação de segurança</p>
+              </div>
+              <button
+                onClick={closeDeleteModal}
+                disabled={isDeleting}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Corpo com aviso e aviso dos 10s */}
+            <div className="space-y-3 text-sm text-slate-600">
+              <p>
+                Tem certeza que deseja excluir a iniciativa <strong className="text-slate-800 font-extrabold">"{selectedIniciativa.nome}"</strong>?
+              </p>
+              <div className="bg-amber-50 border border-amber-200/80 p-3 rounded-xl text-amber-900 text-xs font-medium space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-amber-800">
+                  <Clock size={14} className="text-amber-600" />
+                  <span>Trava de SegurançaAtiva ({countdown}s)</span>
+                </div>
+                <p>
+                  Para evitar exclusões acidentais, aguarde os <strong className="font-extrabold">{countdown} segundos</strong> antes de confirmar a exclusão.
+                </p>
+              </div>
+            </div>
+
+            {/* Botões de Ação */}
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={closeDeleteModal}
+                disabled={isDeleting}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-xs text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={countdown > 0 || isDeleting}
+                className={`px-5 py-2.5 rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-2 ${
+                  countdown > 0 || isDeleting
+                    ? "bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300"
+                    : "bg-red-600 hover:bg-red-700 text-white cursor-pointer shadow-red-600/20 shadow-md animate-pulse"
+                }`}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" /> Excluindo...
+                  </>
+                ) : countdown > 0 ? (
+                  <>
+                    <Clock size={14} /> Aguarde {countdown}s
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={14} /> Confirmar Exclusão
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
