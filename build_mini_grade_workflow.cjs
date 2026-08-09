@@ -1,0 +1,190 @@
+const fs = require('fs');
+
+const miniWorkflow = {
+  "name": "N8N_MINI_GRADE_HORARIA_PUT",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nucleos-put",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wh-mini-grade",
+      "name": "Webhook Grade",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [-600, 0],
+      "webhookId": "nucleos-put"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ ($json.body.instituto || $json.query.instituto || 'IBRASE').toUpperCase() }}",
+        "rules": {
+          "rules": [
+            { "value2": "GASCTPNA", "output": 0 },
+            { "value2": "IBRASE", "output": 1 },
+            { "value2": "AUNI", "output": 2 },
+            { "value2": "IVEM", "output": 3 }
+          ]
+        },
+        "fallbackOutput": 1
+      },
+      "id": "switch-mini-grade",
+      "name": "Switch Instituto",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [-360, 0]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "GASCTPNA_nucleos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "grade_horaria", "fieldValue": "={{ $json.body.grade_horaria }}" },
+            { "fieldId": "turnos_calculados", "fieldValue": "={{ $json.body.turnos_calculados }}" }
+          ]
+        }
+      },
+      "id": "sb-gasctpna-grade",
+      "name": "Update GASCTPNA Grade",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-100, -200],
+      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "IBRASE_nucleos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "grade_horaria", "fieldValue": "={{ $json.body.grade_horaria }}" },
+            { "fieldId": "turnos_calculados", "fieldValue": "={{ $json.body.turnos_calculados }}" }
+          ]
+        }
+      },
+      "id": "sb-ibrase-grade",
+      "name": "Update IBRASE Grade",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-100, -50],
+      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "AUNI_nucleos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "grade_horaria", "fieldValue": "={{ $json.body.grade_horaria }}" },
+            { "fieldId": "turnos_calculados", "fieldValue": "={{ $json.body.turnos_calculados }}" }
+          ]
+        }
+      },
+      "id": "sb-auni-grade",
+      "name": "Update AUNI Grade",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-100, 100],
+      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "IVEM_nucleos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "grade_horaria", "fieldValue": "={{ $json.body.grade_horaria }}" },
+            { "fieldId": "turnos_calculados", "fieldValue": "={{ $json.body.turnos_calculados }}" }
+          ]
+        }
+      },
+      "id": "sb-ivem-grade",
+      "name": "Update IVEM Grade",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-100, 250],
+      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "resp-grade",
+      "name": "Respond Grade",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [200, 0]
+    }
+  ],
+  "connections": {
+    "Webhook Grade": {
+      "main": [[{ "node": "Switch Instituto", "type": "main", "index": 0 }]]
+    },
+    "Switch Instituto": {
+      "main": [
+        [{ "node": "Update GASCTPNA Grade", "type": "main", "index": 0 }],
+        [{ "node": "Update IBRASE Grade", "type": "main", "index": 0 }],
+        [{ "node": "Update AUNI Grade", "type": "main", "index": 0 }],
+        [{ "node": "Update IVEM Grade", "type": "main", "index": 0 }]
+      ]
+    },
+    "Update GASCTPNA Grade": {
+      "main": [[{ "node": "Respond Grade", "type": "main", "index": 0 }]]
+    },
+    "Update IBRASE Grade": {
+      "main": [[{ "node": "Respond Grade", "type": "main", "index": 0 }]]
+    },
+    "Update AUNI Grade": {
+      "main": [[{ "node": "Respond Grade", "type": "main", "index": 0 }]]
+    },
+    "Update IVEM Grade": {
+      "main": [[{ "node": "Respond Grade", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {},
+  "meta": {}
+};
+
+fs.writeFileSync('N8N_MINI_GRADE_HORARIA_PUT.json', JSON.stringify(miniWorkflow, null, 2));
+console.log('N8N_MINI_GRADE_HORARIA_PUT.json gerado com sucesso!');

@@ -1,0 +1,824 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "projetos-post",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "e0f413e9-123f-46fc-bc81-d24b3bb867df",
+      "name": "Webhook POST2",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -6368,
+        -5392
+      ],
+      "webhookId": "projetos-post"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.query.instituto || $json.body.instituto }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "GASCTPNA"
+            },
+            {
+              "value2": "IBRASE",
+              "output": 1
+            },
+            {
+              "value2": "AUNI",
+              "output": 2
+            },
+            {
+              "value2": "IVEM",
+              "output": 3
+            }
+          ]
+        },
+        "fallbackOutput": 1
+      },
+      "id": "fe8f7ba7-dbef-4ebc-97f0-aa300dcc54a3",
+      "name": "Switch POST2",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        -6144,
+        -5392
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "GASCTPNA_projetos",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nome_projeto }}"
+            },
+            {
+              "fieldId": "numero_proposta",
+              "fieldValue": "={{ $json.body.numero_proposta }}"
+            },
+            {
+              "fieldId": "termo_fomento",
+              "fieldValue": "={{ $json.body.termo_fomento }}"
+            },
+            {
+              "fieldId": "numero_processo_adm",
+              "fieldValue": "={{ $json.body.numero_processo_adm }}"
+            },
+            {
+              "fieldId": "numero_transferegov",
+              "fieldValue": "={{ $json.body.numero_transferegov }}"
+            },
+            {
+              "fieldId": "aplicabilidade",
+              "fieldValue": "={{ $json.body.aplicabilidade }}"
+            },
+            {
+              "fieldId": "descricao",
+              "fieldValue": "={{ $json.body.descricao }}"
+            },
+            {
+              "fieldId": "vigencia_inicio",
+              "fieldValue": "={{ $json.body.vigencia_inicio || null }}"
+            },
+            {
+              "fieldId": "vigencia_fim",
+              "fieldValue": "={{ $json.body.vigencia_fim || null }}"
+            },
+            {
+              "fieldId": "vigencia_termino",
+              "fieldValue": "={{ $json.body.vigencia_termino || null }}"
+            },
+            {
+              "fieldId": "idade_min",
+              "fieldValue": "={{ $json.body.idade_min }}"
+            },
+            {
+              "fieldId": "idade_max",
+              "fieldValue": "={{ $json.body.idade_max }}"
+            },
+            {
+              "fieldId": "limites_cargos",
+              "fieldValue": "={{ JSON.stringify($json.body.limites_cargos || []) }}"
+            },
+            {
+              "fieldId": "vagas_por_nucleo",
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
+            },
+            {
+              "fieldId": "periodos_json",
+              "fieldValue": "={{ JSON.stringify($json.body.periodos_json || []) }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo }}"
+            },
+            {
+              "fieldId": "limites_modalidades",
+              "fieldValue": "={{ JSON.stringify($json$json.body.limites_modalidade || $json$json$json.body.limites_modalidades || []) }}"
+            }
+          ]
+        }
+      },
+      "id": "a82bec1b-b45e-49b0-809e-4d8833edfa74",
+      "name": "SB GASCTPNA POST2",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -5888,
+        -5680
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const projId = $input.first().json.id;\nconst body = $('Webhook POST2').first().json.body;\nconst limites = body.limites_modalidade || body.limites_modalidades || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
+      },
+      "id": "e4ab92e6-ab75-4b33-b2dc-bd71f14c81b1",
+      "name": "Map GASCTPNA Limits1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -5648,
+        -5680
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "GASCTPNA_projeto_modalidade_limites",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "projeto_id",
+              "fieldValue": "={{ $json.projeto_id }}"
+            },
+            {
+              "fieldId": "modalidade_id",
+              "fieldValue": "={{ $json.modalidade_id }}"
+            },
+            {
+              "fieldId": "limite",
+              "fieldValue": "={{ $json.limite }}"
+            }
+          ]
+        }
+      },
+      "id": "060c5619-6fdf-4ce4-b494-ed8f8e7a82a3",
+      "name": "Ins GASCTPNA Limits1",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -5408,
+        -5680
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "092a3d92-9ec0-42cf-a4d1-b931dc162ca1",
+      "name": "Respond GASCTPNA1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -5648,
+        -5568
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "IBRASE_projetos",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nome_projeto }}"
+            },
+            {
+              "fieldId": "numero_proposta",
+              "fieldValue": "={{ $json.body.numero_proposta }}"
+            },
+            {
+              "fieldId": "termo_fomento",
+              "fieldValue": "={{ $json.body.termo_fomento }}"
+            },
+            {
+              "fieldId": "numero_processo_adm",
+              "fieldValue": "={{ $json.body.numero_processo_adm }}"
+            },
+            {
+              "fieldId": "numero_transferegov",
+              "fieldValue": "={{ $json.body.numero_transferegov }}"
+            },
+            {
+              "fieldId": "aplicabilidade",
+              "fieldValue": "={{ $json.body.aplicabilidade }}"
+            },
+            {
+              "fieldId": "descricao",
+              "fieldValue": "={{ $json.body.descricao }}"
+            },
+            {
+              "fieldId": "vigencia_inicio",
+              "fieldValue": "={{ $json.body.vigencia_inicio || null }}"
+            },
+            {
+              "fieldId": "vigencia_fim",
+              "fieldValue": "={{ $json.body.vigencia_fim || null }}"
+            },
+            {
+              "fieldId": "vigencia_termino",
+              "fieldValue": "={{ $json.body.vigencia_termino || null }}"
+            },
+            {
+              "fieldId": "idade_min",
+              "fieldValue": "={{ $json.body.idade_min }}"
+            },
+            {
+              "fieldId": "idade_max",
+              "fieldValue": "={{ $json.body.idade_max }}"
+            },
+            {
+              "fieldId": "limites_cargos",
+              "fieldValue": "={{ JSON.stringify($json.body.limites_cargos || []) }}"
+            },
+            {
+              "fieldId": "vagas_por_nucleo",
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
+            },
+            {
+              "fieldId": "periodos_json",
+              "fieldValue": "={{ JSON.stringify($json.body.periodos_json || []) }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo }}"
+            },
+            {
+              "fieldId": "limites_modalidades",
+              "fieldValue": "={{ JSON.stringify($json$json.body.limites_modalidade || $json$json$json.body.limites_modalidades || []) }}"
+            }
+          ]
+        }
+      },
+      "id": "02293588-3386-467d-a1ee-dbb2f3614f32",
+      "name": "SB IBRASE POST2",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -5888,
+        -5440
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const projId = $input.first().json.id;\nconst body = $('Webhook POST2').first().json.body;\nconst limites = body.limites_modalidade || body.limites_modalidades || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
+      },
+      "id": "d7b732fd-4e83-4d4a-b55b-cda1c387ac90",
+      "name": "Map IBRASE Limits1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -5648,
+        -5440
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "IBRASE_projeto_modalidade_limites",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "projeto_id",
+              "fieldValue": "={{ $json.projeto_id }}"
+            },
+            {
+              "fieldId": "modalidade_id",
+              "fieldValue": "={{ $json.modalidade_id }}"
+            },
+            {
+              "fieldId": "limite",
+              "fieldValue": "={{ $json.limite }}"
+            }
+          ]
+        }
+      },
+      "id": "9ec7d656-eb61-47f3-b132-1ef6c1bf68b2",
+      "name": "Ins IBRASE Limits1",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -5408,
+        -5440
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "274b424b-ee7e-425c-a836-c3f7eab913ed",
+      "name": "Respond IBRASE1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -5648,
+        -5312
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "AUNI_projetos",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nome_projeto }}"
+            },
+            {
+              "fieldId": "numero_proposta",
+              "fieldValue": "={{ $json.body.numero_proposta }}"
+            },
+            {
+              "fieldId": "termo_fomento",
+              "fieldValue": "={{ $json.body.termo_fomento }}"
+            },
+            {
+              "fieldId": "numero_processo_adm",
+              "fieldValue": "={{ $json.body.numero_processo_adm }}"
+            },
+            {
+              "fieldId": "numero_transferegov",
+              "fieldValue": "={{ $json.body.numero_transferegov }}"
+            },
+            {
+              "fieldId": "aplicabilidade",
+              "fieldValue": "={{ $json.body.aplicabilidade }}"
+            },
+            {
+              "fieldId": "descricao",
+              "fieldValue": "={{ $json.body.descricao }}"
+            },
+            {
+              "fieldId": "vigencia_inicio",
+              "fieldValue": "={{ $json.body.vigencia_inicio || null }}"
+            },
+            {
+              "fieldId": "vigencia_fim",
+              "fieldValue": "={{ $json.body.vigencia_fim || null }}"
+            },
+            {
+              "fieldId": "vigencia_termino",
+              "fieldValue": "={{ $json.body.vigencia_termino || null }}"
+            },
+            {
+              "fieldId": "idade_min",
+              "fieldValue": "={{ $json.body.idade_min }}"
+            },
+            {
+              "fieldId": "idade_max",
+              "fieldValue": "={{ $json.body.idade_max }}"
+            },
+            {
+              "fieldId": "limites_cargos",
+              "fieldValue": "={{ JSON.stringify($json.body.limites_cargos || []) }}"
+            },
+            {
+              "fieldId": "vagas_por_nucleo",
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
+            },
+            {
+              "fieldId": "periodos_json",
+              "fieldValue": "={{ JSON.stringify($json.body.periodos_json || []) }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo }}"
+            },
+            {
+              "fieldId": "limites_modalidades",
+              "fieldValue": "={{ JSON.stringify($json$json.body.limites_modalidade || $json$json$json.body.limites_modalidades || []) }}"
+            }
+          ]
+        }
+      },
+      "id": "d24b8fee-0da2-4d94-bc18-473af18b7836",
+      "name": "SB AUNI POST2",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -5888,
+        -5184
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const projId = $input.first().json.id;\nconst body = $('Webhook POST2').first().json.body;\nconst limites = body.limites_modalidade || body.limites_modalidades || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
+      },
+      "id": "bffce1c1-a09e-46c7-8682-5a8449e6f1b3",
+      "name": "Map AUNI Limits1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -5648,
+        -5184
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "AUNI_projeto_modalidade_limites",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "projeto_id",
+              "fieldValue": "={{ $json.projeto_id }}"
+            },
+            {
+              "fieldId": "modalidade_id",
+              "fieldValue": "={{ $json.modalidade_id }}"
+            },
+            {
+              "fieldId": "limite",
+              "fieldValue": "={{ $json.limite }}"
+            }
+          ]
+        }
+      },
+      "id": "462d02d7-510d-4582-9905-8f2cbb91607b",
+      "name": "Ins AUNI Limits1",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -5408,
+        -5184
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "4375f40b-5a64-4e3a-9e3b-2b4417c26a65",
+      "name": "Respond AUNI1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -5648,
+        -5072
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "IVEM_projetos",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.body.nome_projeto }}"
+            },
+            {
+              "fieldId": "numero_proposta",
+              "fieldValue": "={{ $json.body.numero_proposta }}"
+            },
+            {
+              "fieldId": "termo_fomento",
+              "fieldValue": "={{ $json.body.termo_fomento }}"
+            },
+            {
+              "fieldId": "numero_processo_adm",
+              "fieldValue": "={{ $json.body.numero_processo_adm }}"
+            },
+            {
+              "fieldId": "numero_transferegov",
+              "fieldValue": "={{ $json.body.numero_transferegov }}"
+            },
+            {
+              "fieldId": "aplicabilidade",
+              "fieldValue": "={{ $json.body.aplicabilidade }}"
+            },
+            {
+              "fieldId": "descricao",
+              "fieldValue": "={{ $json.body.descricao }}"
+            },
+            {
+              "fieldId": "vigencia_inicio",
+              "fieldValue": "={{ $json.body.vigencia_inicio || null }}"
+            },
+            {
+              "fieldId": "vigencia_fim",
+              "fieldValue": "={{ $json.body.vigencia_fim || null }}"
+            },
+            {
+              "fieldId": "vigencia_termino",
+              "fieldValue": "={{ $json.body.vigencia_termino || null }}"
+            },
+            {
+              "fieldId": "idade_min",
+              "fieldValue": "={{ $json.body.idade_min }}"
+            },
+            {
+              "fieldId": "idade_max",
+              "fieldValue": "={{ $json.body.idade_max }}"
+            },
+            {
+              "fieldId": "limites_cargos",
+              "fieldValue": "={{ JSON.stringify($json.body.limites_cargos || []) }}"
+            },
+            {
+              "fieldId": "vagas_por_nucleo",
+              "fieldValue": "={{ $json.body.vagas_por_nucleo }}"
+            },
+            {
+              "fieldId": "periodos_json",
+              "fieldValue": "={{ JSON.stringify($json.body.periodos_json || []) }}"
+            },
+            {
+              "fieldId": "ativo",
+              "fieldValue": "={{ $json.body.ativo }}"
+            },
+            {
+              "fieldId": "limites_modalidades",
+              "fieldValue": "={{ JSON.stringify($json$json.body.limites_modalidade || $json$json$json.body.limites_modalidades || []) }}"
+            }
+          ]
+        }
+      },
+      "id": "81b4cf59-01c0-47b5-90f8-c7ceff4c7ac1",
+      "name": "SB IVEM POST2",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -5888,
+        -4928
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const projId = $input.first().json.id;\nconst body = $('Webhook POST2').first().json.body;\nconst limites = body.limites_modalidade || body.limites_modalidades || [];\nif (!limites || limites.length === 0) return [];\nreturn limites.map(l => ({\n  json: { projeto_id: projId, modalidade_id: l.id, limite: parseInt(l.limite) || 0 }\n}));"
+      },
+      "id": "107654ec-43e1-47d2-aed4-a392158db3fd",
+      "name": "Map IVEM Limits1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -5648,
+        -4928
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "IVEM_projeto_modalidade_limites",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "projeto_id",
+              "fieldValue": "={{ $json.projeto_id }}"
+            },
+            {
+              "fieldId": "modalidade_id",
+              "fieldValue": "={{ $json.modalidade_id }}"
+            },
+            {
+              "fieldId": "limite",
+              "fieldValue": "={{ $json.limite }}"
+            }
+          ]
+        }
+      },
+      "id": "0cbd3d2a-a374-4f1d-8364-94d63c64b259",
+      "name": "Ins IVEM Limits1",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -5408,
+        -4928
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "6a8906a0-6add-4b0a-a810-2edf1716666c",
+      "name": "Respond IVEM1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -5648,
+        -4816
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook POST2": {
+      "main": [
+        [
+          {
+            "node": "Switch POST2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch POST2": {
+      "main": [
+        [
+          {
+            "node": "SB GASCTPNA POST2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB IBRASE POST2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB AUNI POST2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB IVEM POST2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SB GASCTPNA POST2": {
+      "main": [
+        [
+          {
+            "node": "Map GASCTPNA Limits1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond GASCTPNA1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map GASCTPNA Limits1": {
+      "main": [
+        [
+          {
+            "node": "Ins GASCTPNA Limits1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SB IBRASE POST2": {
+      "main": [
+        [
+          {
+            "node": "Map IBRASE Limits1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond IBRASE1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map IBRASE Limits1": {
+      "main": [
+        [
+          {
+            "node": "Ins IBRASE Limits1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SB AUNI POST2": {
+      "main": [
+        [
+          {
+            "node": "Map AUNI Limits1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond AUNI1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map AUNI Limits1": {
+      "main": [
+        [
+          {
+            "node": "Ins AUNI Limits1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SB IVEM POST2": {
+      "main": [
+        [
+          {
+            "node": "Map IVEM Limits1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond IVEM1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map IVEM Limits1": {
+      "main": [
+        [
+          {
+            "node": "Ins IVEM Limits1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "04b49febf1077a59f1cea62e77926c7134032a8d129079a8658a3019ec7ba664"
+  }
+}

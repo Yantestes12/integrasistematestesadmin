@@ -59,7 +59,7 @@ export default function Dashboard() {
               Iniciativas
             </h2>
             <p className="text-slate-500 text-sm lg:text-base mt-2 leading-relaxed">
-              Crie e gerencie projetos de aula, eventos e iniciativas educacionais ou esportivas da instituição.
+              Crie e gerencie projetos de aula ou eventos
             </p>
           </div>
 
