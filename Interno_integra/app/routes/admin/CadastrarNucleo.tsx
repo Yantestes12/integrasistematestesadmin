@@ -15,7 +15,6 @@ const cadastrarNucleoSchema = z.object({
   uf: z.string().optional(),
   bairroId: z.string().optional(),
   numeroVaga: z.string().optional(),
-  vagas: z.string().optional(),
   
   // Vigência e Status
   ativo: z.boolean().default(true),
@@ -129,7 +128,6 @@ export default function CadastrarNucleo() {
     defaultValues: {
       ativo: true,
       numeroVaga: "1",
-      vagas: "100",
     },
   });
 
@@ -212,7 +210,6 @@ export default function CadastrarNucleo() {
                 uf: nucleo.uf || "",
                 bairroId: String(nucleo.bairro_id || ""),
                 numeroVaga: String(nucleo.numero_vaga || nucleo.vaga_numero || "1"),
-                vagas: String(nucleo.vagas || "100"),
                 dataInicio: nucleo.data_inicio || "",
                 dataFim: nucleo.data_fim || "",
                 ativo: nucleo.ativo !== false && nucleo.ativo !== 0 && nucleo.ativo !== "0",
@@ -249,9 +246,6 @@ export default function CadastrarNucleo() {
       // Passa os campos específicos explícitos para o N8N
       if (data.numeroVaga) {
         formData.append("numero_vaga", data.numeroVaga);
-      }
-      if (data.vagas) {
-        formData.append("vagas", data.vagas);
       }
 
       const response = await fetch(webhookUrl, {
@@ -371,7 +365,18 @@ export default function CadastrarNucleo() {
             >
               {(() => {
                 const proj = projetos.find(p => String(p.id) === String(projetoIdWatch));
-                const totalSlots = proj?.vagas_por_nucleo ? Number(proj.vagas_por_nucleo) : 20;
+                let totalSlots = 20;
+                if (proj) {
+                  const limStr = proj.limites_modalidades || proj.limitesModalidades || proj.limites_modalidade;
+                  if (limStr && limStr !== '[]') {
+                    try {
+                      const limArr = typeof limStr === 'string' ? JSON.parse(limStr) : limStr;
+                      if (Array.isArray(limArr) && limArr.length > 0) {
+                        totalSlots = limArr.reduce((acc, curr) => acc + (Number(curr.limite) || 0), 0);
+                      }
+                    } catch (e) { console.warn("Erro ao ler limites_modalidades:", e); }
+                  }
+                }
                 const options = Array.from({ length: totalSlots > 0 ? totalSlots : 20 }, (_, i) => i + 1);
                 
                 return options.map(vaga => {
