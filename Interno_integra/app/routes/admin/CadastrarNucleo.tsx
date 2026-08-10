@@ -15,6 +15,7 @@ const cadastrarNucleoSchema = z.object({
   uf: z.string().optional(),
   bairroId: z.string().optional(),
   numeroVaga: z.string().optional(),
+  vagas: z.string().optional(),
   
   // Vigência e Status
   ativo: z.boolean().default(true),
@@ -128,6 +129,7 @@ export default function CadastrarNucleo() {
     defaultValues: {
       ativo: true,
       numeroVaga: "1",
+      vagas: "100",
     },
   });
 
@@ -210,6 +212,7 @@ export default function CadastrarNucleo() {
                 uf: nucleo.uf || "",
                 bairroId: String(nucleo.bairro_id || ""),
                 numeroVaga: String(nucleo.numero_vaga || nucleo.vaga_numero || "1"),
+                vagas: String(nucleo.vagas || "100"),
                 dataInicio: nucleo.data_inicio || "",
                 dataFim: nucleo.data_fim || "",
                 ativo: nucleo.ativo !== false && nucleo.ativo !== 0 && nucleo.ativo !== "0",
@@ -246,6 +249,9 @@ export default function CadastrarNucleo() {
       // Passa os campos específicos explícitos para o N8N
       if (data.numeroVaga) {
         formData.append("numero_vaga", data.numeroVaga);
+      }
+      if (data.vagas) {
+        formData.append("vagas", data.vagas);
       }
 
       const response = await fetch(webhookUrl, {
@@ -443,6 +449,23 @@ export default function CadastrarNucleo() {
               />
             </div>
             <div>
+              
+              {/* CAMPO DE CAPACIDADE DE ALUNOS DO NÚCLEO */}
+              <div className="pt-2">
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Capacidade de Alunos
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: 100"
+                  {...register("vagas")}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <span className="text-[11px] text-slate-400 mt-1 block">
+                  Quantos alunos no total esse núcleo comporta.
+                </span>
+              </div>
+
               <label className="block text-xs font-semibold text-slate-700 mb-1">Data de Encerramento</label>
               <input
                 type="date"
