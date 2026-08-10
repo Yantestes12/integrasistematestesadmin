@@ -203,7 +203,16 @@ export default function Nucleos() {
       }
 
       // 4. VAGA DO NÚCLEO (Número da Vaga Alocada no Projeto)
-      const numeroVaga = item.numero_vaga || item.vaga_numero || item.vaga_alocada || (idx + 1);
+      let numeroVaga = item.numero_vaga;
+      if (numeroVaga === undefined || numeroVaga === null || numeroVaga === "") {
+        numeroVaga = item.vaga_numero;
+      }
+      if (numeroVaga === undefined || numeroVaga === null || numeroVaga === "") {
+        numeroVaga = item.vaga_alocada;
+      }
+      if (numeroVaga === undefined || numeroVaga === null || numeroVaga === "") {
+        numeroVaga = "—";
+      }
 
       // 5. RESPONSÁVEL E ENDEREÇO
       let respNome = item.resp_nome || item.espacos?.resp_nome;
@@ -273,7 +282,11 @@ export default function Nucleos() {
         } else {
           const parsed = parseNucleosList(fetchedData);
           if (parsed.length > 0) {
-            setNucleos(parsed.sort((a, b) => Number(a.numero_vaga) - Number(b.numero_vaga)));
+            setNucleos(parsed.sort((a, b) => {
+              const aVaga = a.numero_vaga === "—" ? 99999 : Number(a.numero_vaga);
+              const bVaga = b.numero_vaga === "—" ? 99999 : Number(b.numero_vaga);
+              return aVaga - bVaga;
+            }));
             setLoading(false);
             return;
           }
@@ -295,7 +308,7 @@ export default function Nucleos() {
             modalidade_nome: modalidadesCache[Number(e.modalidade_id)] || "—",
             bairro: e.bairro || e.nome || "—",
             espaco_id: e.id,
-            numero_vaga: String(idx + 1),
+            numero_vaga: "—",
             resp_nome: e.resp_nome || "—",
             endereco: [e.rua, e.numero, e.bairro].filter(Boolean).join(", ") || e.bairro || "—",
             ativo: e.ativo !== false,
@@ -508,7 +521,7 @@ export default function Nucleos() {
                       {/* Vaga do Núcleo (Exibe o número da vaga exato) */}
                       <td className="py-4 md:py-5 px-4 md:px-6 text-center">
                         <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs md:text-sm font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs">
-                          Nº {item.numero_vaga}
+                          {item.numero_vaga !== "—" ? `Nº ${item.numero_vaga}` : "Sem Vaga"}
                         </span>
                       </td>
 

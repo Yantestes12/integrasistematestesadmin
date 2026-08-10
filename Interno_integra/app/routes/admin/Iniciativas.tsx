@@ -14,6 +14,8 @@ export interface IniciativaItem {
   status?: boolean | string;
   ativo?: boolean;
   aplicabilidade?: string;
+  vagas_por_nucleo?: string | number;
+  total_nucleos?: number;
 }
 
 export default function Iniciativas() {
@@ -92,6 +94,35 @@ export default function Iniciativas() {
       const isAtivo = item.ativo !== false && item.status !== false && item.status !== "inativo";
       const aplicabilidade = item.aplicabilidade || item.identificacao?.aplicabilidade || "";
 
+      let vagasPN: string | number = "";
+      if (item.limites) {
+        if (typeof item.limites === 'string') {
+          try {
+            const parsedLimites = JSON.parse(item.limites);
+            vagasPN = parsedLimites.vagasPorNucleo || "";
+          } catch (e) {}
+        } else {
+          vagasPN = item.limites.vagasPorNucleo || "";
+        }
+      }
+      if (!vagasPN) {
+        vagasPN = item.vagas_por_nucleo || item.vagasPorNucleo || item.limites_vagasPorNucleo || "";
+      }
+
+      let totalNucleos = 0;
+      const limitesModalidadeRaw = item.limites_modalidades || item.limitesModalidades || item.limites_modalidade || item.limitesModalidade;
+      if (limitesModalidadeRaw) {
+        let parsedMod = limitesModalidadeRaw;
+        if (typeof parsedMod === 'string') {
+          try {
+            parsedMod = JSON.parse(parsedMod);
+          } catch (e) {}
+        }
+        if (Array.isArray(parsedMod)) {
+          totalNucleos = parsedMod.reduce((acc, curr) => acc + (Number(curr.limite) || 0), 0);
+        }
+      }
+
       return {
         id,
         nome,
@@ -104,6 +135,8 @@ export default function Iniciativas() {
         status: isAtivo,
         ativo: isAtivo,
         aplicabilidade,
+        vagas_por_nucleo: vagasPN,
+        total_nucleos: totalNucleos,
       };
     });
   };
@@ -328,6 +361,8 @@ export default function Iniciativas() {
                   <th className="py-4 px-4 md:px-6">Nome da Iniciativa</th>
                   <th className="py-4 px-4 md:px-6">Documentação</th>
                   <th className="py-4 px-4 md:px-6 w-36">Faixa Etária</th>
+                  <th className="py-4 px-4 md:px-6 w-36 text-center">Vagas (Núcleos)</th>
+                  <th className="py-4 px-4 md:px-6 w-36 text-center">Capac. (Alunos)</th>
                   <th className="py-4 px-4 md:px-6 w-32 text-center">Status</th>
                   <th className="py-4 px-4 md:px-6 w-32 text-center">Ações</th>
                 </tr>
@@ -372,6 +407,14 @@ export default function Iniciativas() {
 
                       <td className="py-4 md:py-6 px-4 md:px-6 font-extrabold text-slate-700 text-sm md:text-base">
                         {item.faixa_etaria || "7 - 65"}
+                      </td>
+
+                      <td className="py-4 md:py-6 px-4 md:px-6 text-center font-extrabold text-blue-700 text-sm md:text-base">
+                        {item.total_nucleos ? `${item.total_nucleos} núcleos` : "—"}
+                      </td>
+
+                      <td className="py-4 md:py-6 px-4 md:px-6 text-center font-extrabold text-indigo-700 text-sm md:text-base">
+                        {item.vagas_por_nucleo ? `${item.vagas_por_nucleo} alunos` : "—"}
                       </td>
 
                       <td className="py-4 md:py-6 px-4 md:px-6 text-center">

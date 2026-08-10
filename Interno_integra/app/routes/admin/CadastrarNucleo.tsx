@@ -142,9 +142,12 @@ export default function CadastrarNucleo() {
     const map: Record<number, string> = {};
     nucleosExistentes.forEach((n: any) => {
       if (String(n.projeto_id) === String(projetoIdWatch) && String(n.id) !== editId) {
-        const vagaNum = Number(n.numero_vaga || n.vaga_numero || n.id);
-        if (vagaNum) {
-          map[vagaNum] = n.nome || `Núcleo ID ${n.id}`;
+        const vagaNumStr = n.numero_vaga ?? n.vaga_numero ?? n.vaga_alocada;
+        if (vagaNumStr !== undefined && vagaNumStr !== null && vagaNumStr !== "") {
+          const vagaNum = Number(vagaNumStr);
+          if (!isNaN(vagaNum) && vagaNum > 0) {
+            map[vagaNum] = n.nome || n.nome_nucleo || `Núcleo ID ${n.id}`;
+          }
         }
       }
     });
@@ -211,7 +214,9 @@ export default function CadastrarNucleo() {
                 cidadeId: String(nucleo.cidade_id || ""),
                 uf: nucleo.uf || "",
                 bairroId: String(nucleo.bairro_id || ""),
-                numeroVaga: String(nucleo.numero_vaga || nucleo.vaga_numero || "1"),
+                numeroVaga: (nucleo.numero_vaga ?? nucleo.vaga_numero ?? nucleo.vaga_alocada ?? "") !== "" 
+                              ? String(nucleo.numero_vaga ?? nucleo.vaga_numero ?? nucleo.vaga_alocada) 
+                              : "1",
                 vagas: String(nucleo.vagas || "100"),
                 dataInicio: nucleo.data_inicio || "",
                 dataFim: nucleo.data_fim || "",
