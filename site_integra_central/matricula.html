@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -3286,11 +3286,15 @@ window.dadosRecentesCPF = null;
             if(!bId||!pId) return;
 
             // Buscar núcleos para descobrir quais modalidades existem neste espaço+projeto
-            function processar(nucleos, modalidades) {
-                var nucleosFiltrados = nucleos.filter(function(n){ return parseInt(n.espaco_id)===bId && parseInt(n.projeto_id)===pId && (n.ativo===true||n.ativo===1); });
+            function processar(espacosLocal, modalidadesLocal) {
                 var modIds = {};
-                nucleosFiltrados.forEach(function(n){ if(n.modalidade_id) modIds[n.modalidade_id] = true; });
-                var modsAtivas = modalidades.filter(function(m){ return modIds[m.id] && (m.ativo===true||m.ativo===1); });
+                if (espacosLocal && espacosLocal.length) {
+                    var espacoFiltrado = espacosLocal.find(function(e){ return parseInt(e.id)===bId && parseInt(e.projeto_id)===pId; });
+                    if (espacoFiltrado && espacoFiltrado.modalidade_id) {
+                        modIds[espacoFiltrado.modalidade_id] = true;
+                    }
+                }
+                var modsAtivas = (modalidadesLocal || []).filter(function(m){ return modIds[m.id] && (m.ativo===true||m.ativo===1||m.ativo==='true'); });
                 if(!modsAtivas.length){
                     mostrarMensagem('info','Nenhuma modalidade disponível para este bairro.');
                     return;
@@ -3329,7 +3333,7 @@ window.dadosRecentesCPF = null;
             if(!_cacheModalidades) {
                 promises.push(fetch(API.buscarModalidades, getReqOptions()).then(function(r){return r.json();}).then(function(raw){ _cacheModalidades = _parseN8N(raw, 'modalidades'); }));
             } else { promises.push(Promise.resolve()); }
-            Promise.all(promises).then(function(){ processar(_cacheNucleos, _cacheModalidades); }).catch(function(){ mostrarMensagem('erro','Erro ao buscar modalidades. Tente novamente.'); });
+            Promise.all(promises).then(function(){ processar(_cacheEspacos, _cacheModalidades); }).catch(function(){ mostrarMensagem('erro','Erro ao buscar modalidades. Tente novamente.'); });
         });
 
         // ── Modalidade → Lista de Núcleos Manuais ─────────────────────────────
