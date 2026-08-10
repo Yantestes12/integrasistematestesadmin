@@ -55,10 +55,12 @@
       "parameters": {
         "operation": "update",
         "tableId": "GASCTPNA_espacos",
-        "matchColumn": "id",
-        "matchValue": "={{ $json.body.id }}",
         "fieldsUi": {
           "fieldValues": [
+            {
+              "fieldId": "id",
+              "fieldValue": "={{ .body.id }}"
+            },
             {
               "fieldId": "projeto_id",
               "fieldValue": "={{ $json.body.projeto_id }}"
@@ -141,7 +143,6 @@
             },
             {
               "fieldId": "docs_pendentes",
-              "fieldId": "docs_pendentes",
               "fieldValue": "={{ $json.body.docs_pendentes }}"
             },
             {
@@ -149,7 +150,8 @@
               "fieldValue": "={{ $json.body.updated_by }}"
             }
           ]
-        }
+        },
+        "matchFields": "id"
       },
       "id": "753c446d-ef62-4bb3-895f-a72eae72417f",
       "name": "SB GASCTPNA PUT1",
@@ -170,10 +172,12 @@
       "parameters": {
         "operation": "update",
         "tableId": "IBRASE_espacos",
-        "matchColumn": "id",
-        "matchValue": "={{ $json.body.id }}",
         "fieldsUi": {
           "fieldValues": [
+            {
+              "fieldId": "id",
+              "fieldValue": "={{ .body.id }}"
+            },
             {
               "fieldId": "projeto_id",
               "fieldValue": "={{ $json.body.projeto_id }}"
@@ -263,7 +267,8 @@
               "fieldValue": "={{ $json.body.updated_by }}"
             }
           ]
-        }
+        },
+        "matchFields": "id"
       },
       "id": "12f2affb-3b40-4007-8184-11cb59b6ba42",
       "name": "SB IBRASE PUT1",
@@ -284,10 +289,12 @@
       "parameters": {
         "operation": "update",
         "tableId": "AUNI_espacos",
-        "matchColumn": "id",
-        "matchValue": "={{ $json.body.id }}",
         "fieldsUi": {
           "fieldValues": [
+            {
+              "fieldId": "id",
+              "fieldValue": "={{ .body.id }}"
+            },
             {
               "fieldId": "projeto_id",
               "fieldValue": "={{ $json.body.projeto_id }}"
@@ -377,7 +384,8 @@
               "fieldValue": "={{ $json.body.updated_by }}"
             }
           ]
-        }
+        },
+        "matchFields": "id"
       },
       "id": "00d0dcec-993e-4aa9-834a-633848684f0c",
       "name": "SB AUNI PUT1",
@@ -398,10 +406,12 @@
       "parameters": {
         "operation": "update",
         "tableId": "IVEM_espacos",
-        "matchColumn": "id",
-        "matchValue": "={{ $json.body.id }}",
         "fieldsUi": {
           "fieldValues": [
+            {
+              "fieldId": "id",
+              "fieldValue": "={{ .body.id }}"
+            },
             {
               "fieldId": "projeto_id",
               "fieldValue": "={{ $json.body.projeto_id }}"
@@ -491,7 +501,8 @@
               "fieldValue": "={{ $json.body.updated_by }}"
             }
           ]
-        }
+        },
+        "matchFields": "id"
       },
       "id": "08888dbf-3f63-43ae-a72a-b2ab39454a2e",
       "name": "SB IVEM PUT1",

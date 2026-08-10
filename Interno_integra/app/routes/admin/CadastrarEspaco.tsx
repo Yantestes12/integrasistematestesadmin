@@ -477,7 +477,7 @@ export default function CadastrarEspaco() {
         termo_url: termoUrl,
         ativo: true,
         status_aprovacao: form.docsPendentes ? "pendente" : "aprovado",
-        docs_pendentes: Boolean(form.docsPendentes || !fotoUrl || !termoUrl),
+        docs_pendentes: Boolean(form.docsPendentes),
         created_by: localStorage.getItem("auth_user") || "sistema",
         ...(editId ? { id: Number(editId), updated_by: localStorage.getItem("auth_user") || "sistema" } : {}),
       };
