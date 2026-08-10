@@ -50,6 +50,7 @@
             { "fieldId": "nome", "fieldValue": "={{ $json.body.nomeNucleo }}" },
             { "fieldId": "modalidade_id", "fieldValue": "={{ $json.body.modalidadeId }}" },
             { "fieldId": "bairro_id", "fieldValue": "={{ $json.body.bairroId }}" },
+            { "fieldId": "numero_vaga", "fieldValue": "={{ $json.body.numeroVaga }}" },
             { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}" },
             { "fieldId": "endereco", "fieldValue": "={{ $json.body.rua }}, {{ $json.body.numero }} - {{ $json.body.bairroEnd }} | CEP {{ $json.body.cep }}" }
           ]
@@ -71,6 +72,7 @@
             { "fieldId": "nome", "fieldValue": "={{ $json.body.nomeNucleo }}" },
             { "fieldId": "modalidade_id", "fieldValue": "={{ $json.body.modalidadeId }}" },
             { "fieldId": "bairro_id", "fieldValue": "={{ $json.body.bairroId }}" },
+            { "fieldId": "numero_vaga", "fieldValue": "={{ $json.body.numeroVaga }}" },
             { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}" },
             { "fieldId": "endereco", "fieldValue": "={{ $json.body.rua }}, {{ $json.body.numero }} - {{ $json.body.bairroEnd }} | CEP {{ $json.body.cep }}" }
           ]
@@ -92,6 +94,7 @@
             { "fieldId": "nome", "fieldValue": "={{ $json.body.nomeNucleo }}" },
             { "fieldId": "modalidade_id", "fieldValue": "={{ $json.body.modalidadeId }}" },
             { "fieldId": "bairro_id", "fieldValue": "={{ $json.body.bairroId }}" },
+            { "fieldId": "numero_vaga", "fieldValue": "={{ $json.body.numeroVaga }}" },
             { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}" },
             { "fieldId": "endereco", "fieldValue": "={{ $json.body.rua }}, {{ $json.body.numero }} - {{ $json.body.bairroEnd }} | CEP {{ $json.body.cep }}" }
           ]
@@ -113,6 +116,7 @@
             { "fieldId": "nome", "fieldValue": "={{ $json.body.nomeNucleo }}" },
             { "fieldId": "modalidade_id", "fieldValue": "={{ $json.body.modalidadeId }}" },
             { "fieldId": "bairro_id", "fieldValue": "={{ $json.body.bairroId }}" },
+            { "fieldId": "numero_vaga", "fieldValue": "={{ $json.body.numeroVaga }}" },
             { "fieldId": "ativo", "fieldValue": "={{ $json.body.ativo === 'true' ? 1 : 0 }}" },
             { "fieldId": "endereco", "fieldValue": "={{ $json.body.rua }}, {{ $json.body.numero }} - {{ $json.body.bairroEnd }} | CEP {{ $json.body.cep }}" }
           ]
