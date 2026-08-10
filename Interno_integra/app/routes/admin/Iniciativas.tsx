@@ -361,8 +361,8 @@ export default function Iniciativas() {
                   <th className="py-4 px-4 md:px-6">Nome da Iniciativa</th>
                   <th className="py-4 px-4 md:px-6">Documentação</th>
                   <th className="py-4 px-4 md:px-6 w-36">Faixa Etária</th>
-                  <th className="py-4 px-4 md:px-6 w-36 text-center">Vagas (Núcleos)</th>
-                  <th className="py-4 px-4 md:px-6 w-36 text-center">Capac. (Alunos)</th>
+                  <th className="py-4 px-4 md:px-6 w-36 text-center">Qtd. de Núcleos</th>
+                  <th className="py-4 px-4 md:px-6 w-36 text-center">Vagas p/ Núcleo</th>
                   <th className="py-4 px-4 md:px-6 w-32 text-center">Status</th>
                   <th className="py-4 px-4 md:px-6 w-32 text-center">Ações</th>
                 </tr>
