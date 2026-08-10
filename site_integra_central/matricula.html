@@ -3915,7 +3915,7 @@ window.dadosRecentesCPF = null;
             // fd.set('cidade', elCidSelect.value); // Removido para nao sobrescrever a cidade do aluno
             fd.set('cidade_polo', elCidSelect.value);
             fd.set('cidade_nome', elCidSelect.value);
-            fd.set('cidade_id', 0);
+            fd.delete('cidade_id');
         }
 
         // Bairro / Polo do Projeto (agora carrega o espaco_id da localidade, mantendo o name legado)
@@ -4350,6 +4350,7 @@ window.dadosRecentesCPF = null;
 </script>
 </body>
 </html>
+
 
 
 
