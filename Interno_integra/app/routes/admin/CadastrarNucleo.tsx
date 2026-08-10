@@ -72,9 +72,16 @@ export default function CadastrarNucleo() {
       ]);
       let nMap: Record<string, string> = {};
       if (resN && resN.ok) {
-        const nData = await resN.json();
-        const list = Array.isArray(nData) ? nData : nData.data || [nData];
-        list.forEach((n: any) => { if (n.espaco_id) nMap[String(n.espaco_id)] = n.nome; });
+        try {
+          const nText = await resN.text();
+          if (nText) {
+            const nData = JSON.parse(nText);
+            const list = Array.isArray(nData) ? nData : nData.data || [nData];
+            list.forEach((n: any) => { if (n.espaco_id) nMap[String(n.espaco_id)] = n.nome; });
+          }
+        } catch (e) {
+          console.warn("Erro ao fazer parse dos núcleos no fetchEspacos:", e);
+        }
       }
       if (resE.ok) {
         const data = await resE.json();
