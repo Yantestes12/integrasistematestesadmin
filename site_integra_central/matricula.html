@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -3357,11 +3357,11 @@ window.dadosRecentesCPF = null;
             if(listaNucleos) listaNucleos.innerHTML='<div style="font-size:13px;color:var(--muted);">Buscando núcleos disponíveis...</div>';
             
             function processarNucleos(nucleosData) {
-                var filtrados = nucleosData.filter(function(n){ 
+                var filtrados = nucleosData.filter(function(n){
                     return parseInt(n.projeto_id)===parseInt(pId) && 
                            parseInt(n.espaco_id)===parseInt(bId) && 
-                           parseInt(n.modalidade_id)===parseInt(mId) && 
-                           (n.ativo===true||n.ativo===1); 
+                           (!n.modalidade_id || parseInt(n.modalidade_id)===parseInt(mId)) && 
+                           (n.ativo===true||n.ativo===1||n.ativo==='true');
                 });
                 if(filtrados.length===0){
                     if(listaNucleos) listaNucleos.innerHTML='<div style="color:var(--red);font-size:13px;font-weight:700;">Nenhum núcleo ativo encontrado para esta modalidade.</div>';
@@ -4349,3 +4349,5 @@ window.dadosRecentesCPF = null;
 </script>
 </body>
 </html>
+
+
