@@ -140,6 +140,18 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
             if (fallback.length > 0) mappedLimitesCargos = fallback;
           }
 
+          let vagasAlunoExtraidas = 0;
+          if (item.limites) {
+            let parsedLimites = item.limites;
+            if (typeof parsedLimites === 'string') {
+              try { parsedLimites = JSON.parse(parsedLimites); } catch(e) {}
+            }
+            vagasAlunoExtraidas = Number(parsedLimites?.vagasPorAluno || parsedLimites?.vagas_por_aluno || parsedLimites?.vagasPorNucleo || parsedLimites?.vagas_por_nucleo || 0);
+          }
+          if (!vagasAlunoExtraidas) {
+            vagasAlunoExtraidas = Number(item.vagas_por_aluno || item.vagas_de_aluno || item.vagasPorAluno || item.vagas_por_nucleo || item.vagasPorNucleo || 0);
+          }
+
           const defaultValues: Partial<ProjetoFormData> = {
             identificacao: {
               nomeProjeto: item.identificacao?.nomeProjeto || item.nome || item.nome_projeto || item.nomeProjeto || item.name || item.titulo || "",
@@ -155,8 +167,8 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
               dataTermino: formatDateForInput(rawTermino),
             },
             limites: {
-              vagasPorNucleo: Number(item.vagas_por_nucleo || item.vagas_por_nucleos || item.vagasPorNucleo || 0),
-              vagasPorAluno: Number(item.vagas_por_aluno || item.vagas_de_aluno || item.vagasPorAluno || 0),
+              vagasPorNucleo: vagasAlunoExtraidas, // Compatibilidade com formulários legados
+              vagasPorAluno: vagasAlunoExtraidas,
             },
             limitesCargos: mappedLimitesCargos,
             faixaEtaria: {
