@@ -1137,7 +1137,7 @@
                 <div class="field-row">
                     <div class="field-group">
                         <label for="cidade_id">Cidade <span class="req">*</span></label>
-                        <select id="cidade_id" name="cidade_id" required disabled>
+                        <select id="cidade_id" required disabled>
                             <option value="">Selecione o projeto primeiro…</option>
                         </select>
                     </div>
@@ -3910,11 +3910,12 @@ window.dadosRecentesCPF = null;
         }
 
         // Cidade / Polo do Projeto
-        var elCidSelect = document.getElementById('cidade_id') || document.querySelector('select[name="cidade_id"]');
+        var elCidSelect = document.getElementById('cidade_id') || document.getElementById('cidade_id');
         if (elCidSelect && elCidSelect.value) {
             fd.set('cidade', elCidSelect.value);
             fd.set('cidade_polo', elCidSelect.value);
             fd.set('cidade_nome', elCidSelect.value);
+            fd.delete('cidade_id');
         }
 
         // Bairro / Polo do Projeto (agora carrega o espaco_id da localidade, mantendo o name legado)
@@ -4088,7 +4089,7 @@ window.dadosRecentesCPF = null;
                     var bairro = bairroInput || bairroSelectText || '';
 
                     var cidInput = getV('cidade');
-                    var selectCid = document.querySelector('select[name="cidade_id"]');
+                    var selectCid = document.getElementById('cidade_id');
                     var cidSelectText = (selectCid && selectCid.selectedIndex >= 0) ? selectCid.options[selectCid.selectedIndex].text : '';
                     cidSelectText = cleanText(cidSelectText).replace(/Selecione.*$/gi, '').trim();
                     var cid = cidInput || cidSelectText || '';
@@ -4349,5 +4350,8 @@ window.dadosRecentesCPF = null;
 </script>
 </body>
 </html>
+
+
+
 
 
