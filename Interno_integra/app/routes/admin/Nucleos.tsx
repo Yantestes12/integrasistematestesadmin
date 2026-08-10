@@ -64,7 +64,7 @@ export default function Nucleos() {
 
   const fetchProjetos = async (instituteName: string) => {
     try {
-      const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${instituteName.toUpperCase()}`);
+      const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         const list = flattenResponse(data);
@@ -82,7 +82,7 @@ export default function Nucleos() {
 
   const fetchModalidades = async (instituteName: string) => {
     try {
-      const res = await fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${instituteName.toUpperCase()}`);
+      const res = await fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         const list = flattenResponse(data);
@@ -100,7 +100,7 @@ export default function Nucleos() {
 
   const fetchEspacos = async (instituteName: string) => {
     try {
-      const res = await fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${instituteName.toUpperCase()}`);
+      const res = await fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         const list = flattenResponse(data);
@@ -260,7 +260,7 @@ export default function Nucleos() {
     try {
       const n8nEndpoint = `https://w.ibrase.com.br/webhook/nucleos-get?instituto=${instituteName.toUpperCase()}`;
       
-      const res = await fetch(n8nEndpoint, { method: 'GET' });
+      const res = await fetch(n8nEndpoint, { method: 'GET', cache: 'no-store' });
       if (res.ok) {
         const text = await res.text();
         if (text) {
@@ -287,41 +287,11 @@ export default function Nucleos() {
               const bVaga = b.numero_vaga === "—" ? 99999 : Number(b.numero_vaga);
               return aVaga - bVaga;
             }));
-            setLoading(false);
-            return;
           }
         }
       }
-
-      // FALLBACK ROBUSTO: Se nucleos-get retornar vazio, falhar ou não trouxer os dados
-      const espacoKeys = Object.keys(espacosCache);
-      if (espacoKeys.length > 0) {
-        console.warn("Usando cache de espaços como fallback para núcleos.");
-        const fallbackList: NucleoItem[] = espacoKeys.map((key, idx) => {
-          const e = espacosCache[Number(key)];
-          return {
-            id: e.id,
-            nome: e.nome || `Núcleo ${e.bairro || idx + 1}`,
-            projeto_id: e.projeto_id || 1,
-            projeto_nome: e.projeto_nome || projetosCache[Number(e.projeto_id)] || "—",
-            modalidade_id: e.modalidade_id,
-            modalidade_nome: modalidadesCache[Number(e.modalidade_id)] || "—",
-            bairro: e.bairro || e.nome || "—",
-            espaco_id: e.id,
-            numero_vaga: "—",
-            resp_nome: e.resp_nome || "—",
-            endereco: [e.rua, e.numero, e.bairro].filter(Boolean).join(", ") || e.bairro || "—",
-            ativo: e.ativo !== false,
-            aceitando_vagas: true,
-          };
-        });
-        setNucleos(fallbackList);
-      } else {
-        setNucleos([]);
-      }
     } catch (e) {
       console.warn("Erro ao processar dados de Núcleos:", e);
-      setNucleos([]);
     } finally {
       setLoading(false);
     }

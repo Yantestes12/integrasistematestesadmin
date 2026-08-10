@@ -67,8 +67,8 @@ export default function CadastrarNucleo() {
   const fetchEspacos = async (inst: string) => {
     try {
       const [resE, resN] = await Promise.all([
-        fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${inst.toUpperCase()}`),
-        fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst.toUpperCase()}`).catch(() => null)
+        fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${inst.toUpperCase()}`, { cache: "no-store" }),
+        fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst.toUpperCase()}`, { cache: "no-store" }).catch(() => null)
       ]);
       let nMap: Record<string, string> = {};
       if (resN && resN.ok) {
@@ -86,7 +86,7 @@ export default function CadastrarNucleo() {
 
   const fetchProjetos = async (inst: string) => {
     try {
-      const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${inst.toUpperCase()}`);
+      const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${inst.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         const list = Array.isArray(data) ? data : data.data || [data];
@@ -97,7 +97,7 @@ export default function CadastrarNucleo() {
 
   const fetchModalidades = async (inst: string) => {
     try {
-      const res = await fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${inst.toUpperCase()}`);
+      const res = await fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${inst.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         const list = Array.isArray(data) ? data : data.data || [data];
@@ -108,7 +108,7 @@ export default function CadastrarNucleo() {
 
   const fetchNucleos = async (inst: string) => {
     try {
-      const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst.toUpperCase()}`);
+      const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         let list = Array.isArray(data) ? data : data.data || data.items || (Array.isArray(data.json) ? data.json : [data.json]);
@@ -190,7 +190,7 @@ export default function CadastrarNucleo() {
       const fetchNucleo = async () => {
         try {
           const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
-          const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${authInstitute}`);
+          const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${authInstitute}`, { cache: "no-store" });
           if (res.ok) {
             const data = await res.json();
             let list = Array.isArray(data) ? data : data.data || data.items || (Array.isArray(data.json) ? data.json : [data.json]);
