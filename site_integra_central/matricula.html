@@ -984,7 +984,7 @@
         <div class="logo-partnership">
             <img src="logo_integra_simbolo.gif" onerror="this.onerror=null; this.src='logo_integra.png';" alt="INTEGRA" style="max-height: 55px; width: auto; border-radius:8px;">
             <span class="logo-separator">×</span>
-            <img src="logo_gasctpna.jpg" onerror="this.onerror=null; this.src='logo_integra.png';" alt="GASCTPNA" style="max-height: 55px; width: auto; border-radius:8px;">
+            <img id="logo-header-instituto" src="logo_gasctpna.jpg" onerror="this.onerror=null; this.src='logo_integra.png';" alt="INSTITUTO" style="max-height: 55px; width: auto; border-radius:8px;">
         </div>
         <div class="login-title">Matrícula Online</div>
         <div class="login-sub">Ficha de matrícula simplificada</div>
@@ -1001,7 +1001,7 @@
 
         <form id="form-matricula" action="#" method="post" enctype="multipart/form-data" autocomplete="off" novalidate>
             <input type="hidden" name="instituicao"            value="GASCTPNA">
-            <input type="hidden" name="instituto"              value="GASCTPNA">
+            <input type="hidden" name="instituto"              value="AUNI">
             <input type="hidden" name="acao"                   value="salvar_matricula">
             <input type="hidden" id="numero_matricula"         name="numero_matricula"         value="">
             <input type="hidden" id="lgpd_aceite"              name="lgpd_aceite"              value="0">
@@ -1823,14 +1823,66 @@
 <script>
 
     // ═══════ CONFIGURAÇÃO CENTRALIZADA DE APIS ═══════
-    // Para trocar qualquer endpoint, basta alterar aqui:
+    var getInst = function() { 
+        if (window.integraInstitutoFinal) return window.integraInstitutoFinal;
+        try {
+            var urlParams = new URLSearchParams(window.location.search);
+            var urlInst = urlParams.get('instituto') || urlParams.get('instituicao') || urlParams.get('inst');
+            if (urlInst && urlInst.trim()) return urlInst.trim().toUpperCase();
+        } catch(e) {}
+        try {
+            var stInst = sessionStorage.getItem('instituto_ativo') || localStorage.getItem('instituto_ativo') || sessionStorage.getItem('instituto') || localStorage.getItem('instituto');
+            if (stInst && stInst.trim()) return stInst.trim().toUpperCase();
+        } catch(e) {}
+        var h = window.location.hostname.toLowerCase();
+        if(h.indexOf('auni') !== -1) return 'AUNI';
+        if(h.indexOf('ivem') !== -1) return 'IVEM';
+        if(h.indexOf('gasctpna') !== -1) return 'GASCTPNA';
+        if(h.indexOf('ibrase') !== -1) return 'IBRASE';
+        var el = document.querySelector('input[name="instituto"]'); 
+        if (el && el.value) return el.value;
+        var el2 = document.querySelector('input[name="instituicao"]'); 
+        if (el2 && el2.value) return el2.value;
+        return 'AUNI'; 
+    };
+    function getInstitutoLogoInfo() {
+        var inst = getInst();
+        if (inst === 'IBRASE') return { src: 'logo_ibrase.png', alt: 'IBRASE' };
+        if (inst === 'AUNI') return { src: 'logo_auni.png', alt: 'AUNI' };
+        if (inst === 'IVEM') return { src: 'logo_ivem.png', alt: 'IVEM' };
+        return { src: 'logo_gasctpna.jpg', alt: 'GASCTPNA' };
+    }
+    function atualizarLogosFormulario() {
+        var info = getInstitutoLogoInfo();
+        var imgHeader = document.getElementById('logo-header-instituto');
+        if (imgHeader) {
+            imgHeader.src = info.src;
+            imgHeader.alt = info.alt;
+            if (info.alt === 'AUNI') {
+                imgHeader.style.background = '#2e1065';
+                imgHeader.style.padding = '3px 6px';
+            } else {
+                imgHeader.style.background = 'transparent';
+                imgHeader.style.padding = '0';
+            }
+        }
+    }
+    function getGetOptions() {
+        return { method: 'GET' };
+    }
+    function getReqOptions() {
+        return {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ instituto: getInst(), instituicao: getInst() })
+        };
+    }
     var API = {
         consultarCPF:      'https://w.ibrase.com.br/webhook/consultarcpf',
         buscarProjetos:    'https://w.ibrase.com.br/webhook/buscarprojetosaluno',
-        buscarCidades:     'https://w.ibrase.com.br/webhook/buscarcidadealuno',
-        buscarBairros:     'https://w.ibrase.com.br/webhook/buscarbairro',
+        get buscarEspacos() { return 'https://w.ibrase.com.br/webhook/espacos-get?instituto=' + getInst(); },
         buscarModalidades: 'https://w.ibrase.com.br/webhook/buscarmodalidade',
-        buscarNucleos:     'https://w.ibrase.com.br/webhook/buscarnucleo'
+        get buscarNucleos() { return 'https://w.ibrase.com.br/webhook/nucleos-get?instituto=' + getInst(); }
     };
 
     window.carregarCidadesIBGENaturalidade = function(uf) {
@@ -1865,10 +1917,32 @@
     };
 
     // Cache dos dados dos webhooks (carrega uma vez, filtra no front)
-    var _cacheCidades = null;
-    var _cacheBairros = null;
+    var _cacheEspacos = null;
     var _cacheModalidades = null;
     var _cacheNucleos = null;
+
+    function _parseN8N(raw, key) {
+        if (!raw) return [];
+        if (Array.isArray(raw)) {
+            if (raw.length > 0 && typeof raw[0] === 'object') {
+                if (Array.isArray(raw[0][key])) return raw[0][key];
+                if (Array.isArray(raw[0]['value'])) return raw[0]['value'];
+                if (Array.isArray(raw[0]['projetos'])) return raw[0]['projetos'];
+                if (Array.isArray(raw[0]['data'])) return raw[0]['data'];
+            }
+            return raw;
+        }
+        if (typeof raw === 'object') {
+            if (Array.isArray(raw[key])) return raw[key];
+            if (Array.isArray(raw['value'])) return raw['value'];
+            if (Array.isArray(raw['projetos'])) return raw['projetos'];
+            if (Array.isArray(raw['data'])) return raw['data'];
+            if (Array.isArray(raw['espacos'])) return raw['espacos'];
+            if (Array.isArray(raw['nucleos'])) return raw['nucleos'];
+            if (Array.isArray(raw['modalidades'])) return raw['modalidades'];
+        }
+        return [];
+    }
 
     // Controle de passos do Quiz (1 a 10)
     var currentStep = 1;
@@ -2335,7 +2409,7 @@ window.dadosRecentesCPF = null;
             var ctrl = new AbortController();
             var abortId = setTimeout(function() { ctrl.abort(); }, reqTimeout);
 
-            var url = API.consultarCPF + '?cpf=' + encodeURIComponent(cpfNum) + '&data_nascimento=&instituicao=GASCTPNA&instituto=GASCTPNA';
+            var url = API.consultarCPF + '?cpf=' + encodeURIComponent(cpfNum) + '&data_nascimento=&instituicao=' + getInst() + '&instituto=' + getInst();
             fetch(url, {
                 method:  'GET',
                 signal:  ctrl.signal
@@ -2926,10 +3000,7 @@ window.dadosRecentesCPF = null;
         }
         container.innerHTML='<div style="color:var(--text-muted);font-size:13px;padding:20px 0;">Carregando projetos do Supabase…</div>';
         
-        fetch(API.buscarProjetos, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'}
-        })
+        fetch(API.buscarProjetos, getReqOptions())
             .then(function(r){ return r.json(); })
             .then(function(data){
                 if (Array.isArray(data)) {
@@ -3032,56 +3103,78 @@ window.dadosRecentesCPF = null;
        CIDADES / BAIRROS / MODALIDADE / TURNO
     ════════════════════════════════════════════════════════════════ */
     function carregarCidadesPorProjeto(projetoId){
+        window.currentProjetoIdSelecionado = parseInt(projetoId) || 0;
         var cs = document.getElementById('cidade_id');
         var bs = document.getElementById('bairro_id');
-        ['bloco-local','bloco-modalidade','bloco-nucleo'].forEach(function(id){
-            var el = document.getElementById(id); if(el){ el.style.display='none'; setRequiredIn(id,false); }
-        });
-        if(!projetoId) return;
-        if(cs){ cs.innerHTML='<option value="">Carregando cidades…</option>'; cs.disabled=true; }
-        if(bs){ bs.innerHTML='<option value="">Selecione a cidade primeiro…</option>'; bs.disabled=true; }
+        function isAtivo(val) {
+            if (val === undefined || val === null) return true;
+            return val === true || val === 1 || val === 'true' || val === '1' || val === 't';
+        }
 
-        function preencherCidades(cidades, bairros, nucleos) {
+        function preencherCidades(espacos, nucleos) {
             var blocoLocal = document.getElementById('bloco-local');
             if(blocoLocal) blocoLocal.style.display = 'block';
             var cs2 = document.getElementById('cidade_id');
             
-            // Simula INNER JOIN: apenas cidades que tem núcleo ativo no projeto
-            var nucleosAtivos = nucleos.filter(function(n) { return parseInt(n.projeto_id) === parseInt(projetoId) && (n.ativo===true||n.ativo===1); });
-            var bairroIds = {};
-            nucleosAtivos.forEach(function(n) { if(n.bairro_id) bairroIds[n.bairro_id] = true; });
+            var pIdCurrent = window.currentProjetoIdSelecionado;
+            var nucleosAtivos = (nucleos || []).filter(function(n) { 
+                return (!pIdCurrent || parseInt(n.projeto_id) === pIdCurrent) && isAtivo(n.ativo); 
+            });
+            var espacosIds = {};
+            nucleosAtivos.forEach(function(n) { if(n.espaco_id) espacosIds[n.espaco_id] = true; });
             
-            var bairrosAtivos = bairros.filter(function(b) { return bairroIds[b.id] && (b.ativo===true||b.ativo===1); });
-            var cidadeIds = {};
-            bairrosAtivos.forEach(function(b) { if(b.cidade_id) cidadeIds[b.cidade_id] = true; });
+            var espacosAtivos = (espacos || []).filter(function(e) { 
+                var matchNucleo = Object.keys(espacosIds).length === 0 || espacosIds[e.id] || espacosIds[String(e.id)];
+                var matchProjeto = !pIdCurrent || !e.projeto_id || parseInt(e.projeto_id) === pIdCurrent;
+                return matchNucleo && matchProjeto && isAtivo(e.ativo); 
+            });
+
+            if (!espacosAtivos.length) {
+                espacosAtivos = (espacos || []).filter(function(e) { return isAtivo(e.ativo); });
+            }
+
+            var nomesCidades = [];
+            espacosAtivos.forEach(function(e) {
+                var cName = (e.cidade && String(e.cidade).trim()) ? String(e.cidade).trim() : (e.bairro && String(e.bairro).trim() ? String(e.bairro).trim() : "Campos dos Goytacazes");
+                if(nomesCidades.indexOf(cName) === -1) {
+                    nomesCidades.push(cName);
+                }
+            });
+            nomesCidades.sort();
             
-            var ativas = cidades.filter(function(c){ return cidadeIds[c.id] && (c.ativo === true || c.ativo === 1); });
-            
-            if(!ativas.length){
+            if(!nomesCidades.length){
                 if(cs2){ cs2.innerHTML='<option value="">Nenhuma cidade disponível.</option>'; cs2.disabled=true; }
                 mostrarMensagem('info', 'Este projeto não possui núcleos ativos. Escolha outro projeto.');
                 return;
             }
             if(cs2){
                 cs2.disabled=false; cs2.innerHTML='<option value="">Selecione…</option>';
-                ativas.forEach(function(c){
-                    var o=document.createElement('option'); o.value=c.id; o.textContent=c.nome; cs2.appendChild(o);
+                nomesCidades.forEach(function(c){
+                    var o=document.createElement('option'); o.value=c; o.textContent=c; cs2.appendChild(o);
                 });
+                if (nomesCidades.length === 1) {
+                    cs2.value = nomesCidades[0];
+                }
             }
             setRequiredIn('bloco-local', true);
+
+            // Popula os Bairros/Polos de imediato para a cidade selecionada
+            var cidadeSelecionada = (cs2 && cs2.value) ? cs2.value : nomesCidades[0];
+            if (cidadeSelecionada) {
+                if (typeof window.preencherBairrosGlobal === 'function') {
+                    window.preencherBairrosGlobal(espacos, nucleos, cidadeSelecionada, pIdCurrent);
+                }
+            }
         }
 
         var promises = [];
-        var req = {method:'POST',headers:{'Content-Type':'application/json'}};
-        if(!_cacheCidades) promises.push(fetch(API.buscarCidades, req).then(function(r){return r.json();}).then(function(raw){ var d=Array.isArray(raw)?raw[0]:raw; _cacheCidades=d.projetos||d.cidades||[]; }));
+        if(!_cacheEspacos) promises.push(fetch(API.buscarEspacos, getGetOptions()).then(function(r){return r.json();}).then(function(raw){ _cacheEspacos = _parseN8N(raw, 'espacos'); }));
         else promises.push(Promise.resolve());
-        if(!_cacheBairros) promises.push(fetch(API.buscarBairros, req).then(function(r){return r.json();}).then(function(raw){ var d=Array.isArray(raw)?raw[0]:raw; _cacheBairros=d.projetos||d.bairros||[]; }));
-        else promises.push(Promise.resolve());
-        if(!_cacheNucleos) promises.push(fetch(API.buscarNucleos, req).then(function(r){return r.json();}).then(function(raw){ var d=Array.isArray(raw)?raw[0]:raw; _cacheNucleos=d.projetos||d.nucleos||[]; }));
+        if(!_cacheNucleos) promises.push(fetch(API.buscarNucleos, getGetOptions()).then(function(r){return r.json();}).then(function(raw){ _cacheNucleos = _parseN8N(raw, 'nucleos'); }));
         else promises.push(Promise.resolve());
 
         Promise.all(promises).then(function(){
-            preencherCidades(_cacheCidades, _cacheBairros, _cacheNucleos);
+            preencherCidades(_cacheEspacos, _cacheNucleos);
         }).catch(function(){
             var cs2 = document.getElementById('cidade_id');
             if(cs2) cs2.innerHTML='<option value="">Erro ao carregar cidades.</option>';
@@ -3089,6 +3182,13 @@ window.dadosRecentesCPF = null;
     }
 
     document.addEventListener('DOMContentLoaded', function(){
+        var activeInst = getInst();
+        var elInst = document.querySelector('input[name="instituto"]');
+        if (elInst) elInst.value = activeInst;
+        var elInst2 = document.querySelector('input[name="instituicao"]');
+        if (elInst2) elInst2.value = activeInst;
+        atualizarLogosFormulario();
+
         function getCs(){ return document.getElementById('cidade_id'); }
         function getBs(){ return document.getElementById('bairro_id'); }
 
@@ -3103,42 +3203,74 @@ window.dadosRecentesCPF = null;
         // ── Cidade → Bairros (via webhook) ──────────────────────────────
         document.addEventListener('change', function(e){
             if(!e.target || e.target.id !== 'cidade_id') return;
-            var cId=parseInt(e.target.value);
+            var cNome=e.target.value; 
             var pId=parseInt((document.querySelector('input[name="projeto_id"]:checked')||{}).value||0);
             var bs=getBs();
             if(bs){ bs.innerHTML='<option value="">Carregando bairros…</option>'; bs.disabled=true; }
             esconder(['bloco-modalidade','bloco-nucleo']);
-            if(!cId || !pId) return;
+            if(!cNome || !pId) return;
 
-            function preencherBairros(bairros, nucleos) {
-                var bs2=getBs();
-                // Simula INNER JOIN: bairros daquela cidade que tenham nucleos ativos no projeto
-                var nucleosAtivos = nucleos.filter(function(n) { return parseInt(n.projeto_id) === pId && (n.ativo===true||n.ativo===1); });
-                var bairroIds = {};
-                nucleosAtivos.forEach(function(n) { if(n.bairro_id) bairroIds[n.bairro_id] = true; });
+            window.preencherBairrosGlobal = function(espacos, nucleos, cNomeParam, pIdParam) {
+                var bs2 = getBs();
+                if(!bs2) return;
+                var cNome = cNomeParam || (getCs() ? getCs().value : '');
+                var pIdNum = parseInt(pIdParam) || window.currentProjetoIdSelecionado || parseInt((document.querySelector('input[name="projeto_id"]:checked')||{}).value||0);
+                if (!cNome || !pIdNum) return;
+
+                function isAtivo(val) {
+                    if (val === undefined || val === null) return true;
+                    return val === true || val === 1 || val === 'true' || val === '1' || val === 't';
+                }
+
+                var nucleosAtivos = (nucleos || []).filter(function(n) { 
+                    return (!pIdNum || parseInt(n.projeto_id) === pIdNum) && isAtivo(n.ativo); 
+                });
+                var espacoIds = {};
+                nucleosAtivos.forEach(function(n) { if(n.espaco_id) espacoIds[n.espaco_id] = n.nome || true; });
                 
-                var filtrados = bairros.filter(function(b){ return parseInt(b.cidade_id)===cId && bairroIds[b.id] && (b.ativo===true||b.ativo===1); });
+                var filtrados = (espacos || []).filter(function(e){ 
+                    var matchCidade = (e.cidade === cNome) || (e.bairro === cNome) || (!e.cidade && cNome === "Campos dos Goytacazes") || (cNome && String(e.cidade).trim().toLowerCase() === String(cNome).trim().toLowerCase());
+                    var matchNucleo = Object.keys(espacoIds).length === 0 || espacoIds[e.id] || espacoIds[String(e.id)];
+                    return matchCidade && matchNucleo && isAtivo(e.ativo); 
+                });
+
                 if(!filtrados.length){
-                    if(bs2) bs2.innerHTML='<option value="">Nenhum bairro disponível.</option>';
+                    filtrados = (espacos || []).filter(function(e){ return isAtivo(e.ativo); });
+                }
+
+                if(!filtrados.length){
+                    bs2.innerHTML='<option value="">Nenhum bairro disponível.</option>';
                     return;
                 }
                 if(bs2){
                     bs2.disabled=false; bs2.innerHTML='<option value="">Selecione…</option>';
-                    filtrados.forEach(function(b){
-                        var o=document.createElement('option'); o.value=b.id; o.textContent=b.nome; bs2.appendChild(o);
+                    filtrados.forEach(function(e){
+                        var o=document.createElement('option'); 
+                        o.value=e.id; 
+                        var nomeDoNucleo = (typeof espacoIds[e.id] === 'string' ? espacoIds[e.id] : (typeof espacoIds[String(e.id)] === 'string' ? espacoIds[String(e.id)] : null));
+                        o.textContent = nomeDoNucleo ? nomeDoNucleo : (e.nome ? e.nome : (e.bairro || ('Polo ' + e.id))); 
+                        bs2.appendChild(o);
                     });
+                    if (filtrados.length === 1) {
+                        bs2.value = filtrados[0].id;
+                        setTimeout(function() {
+                            bs2.dispatchEvent(new Event('change', { bubbles: true }));
+                        }, 50);
+                    }
                 }
+            };
+            function preencherBairros(espacos, nucleos) {
+                window.preencherBairrosGlobal(espacos, nucleos);
             }
 
             var promises = [];
-            var req = {method:'POST',headers:{'Content-Type':'application/json'}};
-            if(!_cacheBairros) promises.push(fetch(API.buscarBairros, req).then(function(r){return r.json();}).then(function(raw){ var d=Array.isArray(raw)?raw[0]:raw; _cacheBairros=d.projetos||d.bairros||[]; }));
+            if(!_cacheEspacos) promises.push(fetch(API.buscarEspacos, getGetOptions()).then(function(r){return r.json();}).then(function(raw){ _cacheEspacos = _parseN8N(raw, 'espacos'); }));
             else promises.push(Promise.resolve());
-            if(!_cacheNucleos) promises.push(fetch(API.buscarNucleos, req).then(function(r){return r.json();}).then(function(raw){ var d=Array.isArray(raw)?raw[0]:raw; _cacheNucleos=d.projetos||d.nucleos||[]; }));
+            if(!_cacheNucleos) promises.push(fetch(API.buscarNucleos, getGetOptions()).then(function(r){return r.json();}).then(function(raw){ _cacheNucleos = _parseN8N(raw, 'nucleos'); }));
             else promises.push(Promise.resolve());
 
             Promise.all(promises).then(function(){
-                preencherBairros(_cacheBairros, _cacheNucleos);
+                preencherBairros(_cacheEspacos, _cacheNucleos);
             }).catch(function(){ var bs2=getBs(); if(bs2) bs2.innerHTML='<option value="">Erro ao carregar.</option>'; });
         });
 
@@ -3153,9 +3285,9 @@ window.dadosRecentesCPF = null;
             esconder(['bloco-modalidade','bloco-nucleo']);
             if(!bId||!pId) return;
 
-            // Buscar núcleos para descobrir quais modalidades existem neste bairro+projeto
+            // Buscar núcleos para descobrir quais modalidades existem neste espaço+projeto
             function processar(nucleos, modalidades) {
-                var nucleosFiltrados = nucleos.filter(function(n){ return parseInt(n.bairro_id)===bId && parseInt(n.projeto_id)===pId && (n.ativo===true||n.ativo===1); });
+                var nucleosFiltrados = nucleos.filter(function(n){ return parseInt(n.espaco_id)===bId && parseInt(n.projeto_id)===pId && (n.ativo===true||n.ativo===1); });
                 var modIds = {};
                 nucleosFiltrados.forEach(function(n){ if(n.modalidade_id) modIds[n.modalidade_id] = true; });
                 var modsAtivas = modalidades.filter(function(m){ return modIds[m.id] && (m.ativo===true||m.ativo===1); });
@@ -3192,10 +3324,10 @@ window.dadosRecentesCPF = null;
             // Carregar ambos os caches em paralelo
             var promises = [];
             if(!_cacheNucleos) {
-                promises.push(fetch(API.buscarNucleos, {method:'POST',headers:{'Content-Type':'application/json'}}).then(function(r){return r.json();}).then(function(raw){ var d=Array.isArray(raw)?raw[0]:raw; _cacheNucleos=d.projetos||d.nucleos||[]; }));
+                promises.push(fetch(API.buscarNucleos, getGetOptions()).then(function(r){return r.json();}).then(function(raw){ _cacheNucleos = _parseN8N(raw, 'nucleos'); }));
             } else { promises.push(Promise.resolve()); }
             if(!_cacheModalidades) {
-                promises.push(fetch(API.buscarModalidades, {method:'POST',headers:{'Content-Type':'application/json'}}).then(function(r){return r.json();}).then(function(raw){ var d=Array.isArray(raw)?raw[0]:raw; _cacheModalidades=d.projetos||d.modalidades||[]; }));
+                promises.push(fetch(API.buscarModalidades, getReqOptions()).then(function(r){return r.json();}).then(function(raw){ _cacheModalidades = _parseN8N(raw, 'modalidades'); }));
             } else { promises.push(Promise.resolve()); }
             Promise.all(promises).then(function(){ processar(_cacheNucleos, _cacheModalidades); }).catch(function(){ mostrarMensagem('erro','Erro ao buscar modalidades. Tente novamente.'); });
         });
@@ -3223,7 +3355,7 @@ window.dadosRecentesCPF = null;
             function processarNucleos(nucleosData) {
                 var filtrados = nucleosData.filter(function(n){ 
                     return parseInt(n.projeto_id)===parseInt(pId) && 
-                           parseInt(n.bairro_id)===parseInt(bId) && 
+                           parseInt(n.espaco_id)===parseInt(bId) && 
                            parseInt(n.modalidade_id)===parseInt(mId) && 
                            (n.ativo===true||n.ativo===1); 
                 });
@@ -3773,10 +3905,18 @@ window.dadosRecentesCPF = null;
             fd.set('bairro_residencia', valBairroResidencia);
         }
 
-        // Bairro / Polo do Projeto (com ID da localidade)
+        // Cidade / Polo do Projeto
+        var elCidSelect = document.getElementById('cidade_id') || document.querySelector('select[name="cidade_id"]');
+        if (elCidSelect && elCidSelect.value) {
+            fd.set('cidade', elCidSelect.value);
+            fd.set('cidade_polo', elCidSelect.value);
+            fd.set('cidade_nome', elCidSelect.value);
+        }
+
+        // Bairro / Polo do Projeto (agora carrega o espaco_id da localidade, mantendo o name legado)
         var elBairroSelect = document.getElementById('bairro_id') || document.querySelector('select[name="bairro_id"]');
         if (elBairroSelect && elBairroSelect.value) {
-            fd.set('bairro_id', elBairroSelect.value);
+            fd.set('bairro_id', elBairroSelect.value); // ATENÇÃO: O valor enviado aqui agora é o ID do ESPAÇO
             if (elBairroSelect.selectedIndex >= 0) {
                 var txtPolo = elBairroSelect.options[elBairroSelect.selectedIndex].text;
                 if (txtPolo && !txtPolo.includes('Selecione') && !txtPolo.includes('Carregando')) {
@@ -3951,16 +4091,19 @@ window.dadosRecentesCPF = null;
 
                     var uf = getV('uf') || getV('estado') || '';
 
-                    var projSel = document.querySelector('input[name="projeto_id"]:checked');
-                    var rawProj = (projSel && projSel.parentNode ? projSel.parentNode.innerText : '') || getV('projeto_nome') || 'GASCTPNA';
-                    var proj = cleanText(rawProj).replace(/GASCTPNA\s*[\/\-]\s*GASCTPNA/gi, 'GASCTPNA').trim() || 'GASCTPNA';
-                    if (!proj || proj.toUpperCase() === 'GASCTPNA') {
-                        proj = 'GASCTPNA';
-                    }
+                    var logoInfo = getInstitutoLogoInfo();
+                    var instName = getInst();
+                    var logoInstHtml = (logoInfo.alt === 'AUNI') 
+                        ? '<div style="background:#2e1065;padding:2px 6px;border-radius:4px;display:flex;"><img src="' + logoInfo.src + '" alt="' + logoInfo.alt + '"></div>'
+                        : '<img src="' + logoInfo.src + '" alt="' + logoInfo.alt + '">';
 
-                    var subTitleHeader = (proj && proj !== 'GASCTPNA')
-                        ? ('GASCTPNA — ' + proj)
-                        : 'Grupo de Apoio Social aos Cultivadores da Terra e Preservação da Natureza';
+                    var projSel = document.querySelector('input[name="projeto_id"]:checked');
+                    var rawProj = (projSel && projSel.parentNode ? projSel.parentNode.innerText : '') || getV('projeto_nome') || instName;
+                    var proj = cleanText(rawProj).trim() || instName;
+
+                    var subTitleHeader = (proj && proj.toUpperCase() !== instName)
+                        ? (instName + ' — ' + proj)
+                        : instName;
 
                     var nucSel = document.querySelector('input[name="nucleo_id_radio"]:checked');
                     var rawNuc = (nucSel && nucSel.parentNode ? nucSel.parentNode.innerText : '') || getV('nucleo_nome') || 'Núcleo Central';
@@ -3985,29 +4128,22 @@ window.dadosRecentesCPF = null;
                     var parResp = getV('grau_parentesco') || getV('resp_parentesco');
                     var tResp = getV('resp_whatsapp') || getV('telefone_responsavel');
 
-                    var agoraMat = new Date();
-                    var timestampExato = agoraMat.toLocaleString('pt-BR');
-                    
-                    // Timestamp do Coordenador (aleatório entre 1m11s [71s] e 3m21s [201s] após a inscrição do aluno)
-                    var offsetSegundosCoord = Math.floor(Math.random() * (201 - 71 + 1)) + 71;
-                    var dataCoordenador = new Date(agoraMat.getTime() + offsetSegundosCoord * 1000);
-                    var timestampCoordenador = dataCoordenador.toLocaleString('pt-BR');
-
-                    var instSlug = 'gasctpna';
-                    var projSlug = (proj || 'projeto').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'gasctpna';
+                    var instSlug = instName.toLowerCase();
+                    var projSlug = (proj || 'projeto').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || instSlug;
                     var urlAutenticador = 'https://plataformaintegra.com.br/autenticador/' + numMatricula + '/' + instSlug + '/' + projSlug;
                     var qrApi = 'https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=' + encodeURIComponent(urlAutenticador);
 
-                    var tokenProtocolo = (Math.random().toString(16).substring(2) + Math.random().toString(16).substring(2) + Math.random().toString(16).substring(2)).substring(0, 32);
-                    var tokenProtocoloCoord = (Math.random().toString(16).substring(2) + Math.random().toString(16).substring(2) + Math.random().toString(16).substring(2)).substring(0, 32);
-
+                    var win = window.open('', '_blank');
+                    if (!win) {
+                        mostrarMensagem('erro', 'Bloqueador de pop-ups ativado. Permita pop-ups para visualizar a Ficha.');
+                        return;
+                    }
                     win.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Ficha de Matrícula - ' + numMatricula + '</title>' +
-                        '<style>@page{size:A4;margin:8mm 10mm;}*{box-sizing:border-box;margin:0;padding:0;}' +
-                        'body{font-family:sans-serif;font-size:9pt;color:#0f172a;line-height:1.3;background:#fff;padding:8px;}' +
-                        '.header{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #10b981;padding-bottom:6px;margin-bottom:8px;}' +
-                        '.logo-box{display:flex;align-items:center;gap:8px;}.logo-box img{max-height:36px;border-radius:4px;}.logo-sep{font-size:16px;color:#94a3b8;font-weight:bold;}' +
-                        '.header-titles{text-align:right;}.main-title{font-size:12.5pt;font-weight:800;color:#065f46;margin:0;}.sub-title{font-size:8.5pt;color:#64748b;font-weight:600;}' +
-                        '.section-box{border:1px solid #cbd5e1;border-radius:6px;margin-bottom:6px;padding:6px 8px;background:#f8fafc;}' +
+                        '<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#0f172a;background:#fff;padding:12px;font-size:9pt;line-height:1.2;}' +
+                        '.header{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #0284c7;padding-bottom:6px;margin-bottom:8px;}' +
+                        '.logo-box{display:flex;align-items:center;gap:6px;}.logo-box img{height:30px;width:auto;object-fit:contain;}.logo-sep{font-weight:700;color:#94a3b8;font-size:11pt;}' +
+                        '.header-titles{text-align:right;}.main-title{font-size:12pt;font-weight:900;color:#0369a1;letter-spacing:0.5px;}.sub-title{font-size:8.5pt;font-weight:700;color:#475569;}' +
+                        '.section-box{border:1px solid #cbd5e1;border-radius:6px;padding:6px 8px;margin-bottom:6px;background:#fff;}' +
                         '.section-title{font-size:9pt;font-weight:800;color:#0f172a;border-bottom:1px solid #e2e8f0;padding-bottom:2px;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;}' +
                         '.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:3px 10px;}.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px 10px;}' +
                         '.field-item{font-size:8.5pt;}.field-label{font-weight:700;color:#475569;}.field-value{color:#0f172a;}' +
@@ -4017,12 +4153,12 @@ window.dadosRecentesCPF = null;
                         '.sig-block{text-align:center;}.sig-line{border-top:1.5px solid #334155;margin-bottom:3px;}.sig-label{font-size:8.5pt;font-weight:800;color:#0f172a;text-transform:uppercase;}' +
                         '.page-break{page-break-before:always;}@media print{.no-print{display:none!important;}}</style></head><body>' +
                         
-                        '<div class="header"><div class="logo-box"><img src="logo_integra.png" alt="INTEGRA"><span class="logo-sep">×</span><img src="logo_gasctpna.jpg" alt="GASCTPNA"></div>' +
+                        '<div class="header"><div class="logo-box"><img src="logo_integra.png" alt="INTEGRA"><span class="logo-sep">×</span>' + logoInstHtml + '</div>' +
                         '<div class="header-titles"><div class="main-title">FICHA OFICIAL DE MATRÍCULA</div><div class="sub-title">' + subTitleHeader + '</div></div></div>' +
                         
                         '<div class="section-box" style="background:#e0f2fe;border-color:#bae6fd;"><div class="grid-3">' +
                         '<div class="field-item"><span class="field-label">Nº de Matrícula:</span> <span class="field-value" style="font-weight:bold;font-size:10pt;color:#0369a1;">' + numMatricula + '</span></div>' +
-                        '<div class="field-item"><span class="field-label">Projeto:</span> <span class="field-value" style="font-weight:bold;">' + (proj && proj !== 'GASCTPNA' ? 'GASCTPNA — ' + proj : 'GASCTPNA') + '</span></div>' +
+                        '<div class="field-item"><span class="field-label">Projeto:</span> <span class="field-value" style="font-weight:bold;">' + (proj && proj !== instName ? instName + ' — ' + proj : instName) + '</span></div>' +
                         '<div class="field-item"><span class="field-label">Núcleo:</span> <span class="field-value">' + nuc + '</span></div>' +
                         '<div class="field-item"><span class="field-label">Modalidade:</span> <span class="field-value">' + modalidade + '</span></div>' +
                         '<div class="field-item"><span class="field-label">Turno:</span> <span class="field-value">' + tur + '</span></div></div></div>' +
@@ -4075,10 +4211,8 @@ window.dadosRecentesCPF = null;
                         
                         '<div class="page-break"></div>' +
                         
-                        '<div class="header"><div class="logo-box"><img src="logo_integra.png" alt="INTEGRA"><span class="logo-sep">×</span><img src="logo_gasctpna.jpg" alt="GASCTPNA"></div>' +
+                        '<div class="header"><div class="logo-box"><img src="logo_integra.png" alt="INTEGRA"><span class="logo-sep">×</span>' + logoInstHtml + '</div>' +
                         '<div class="header-titles"><div class="main-title">DECLARAÇÃO DE RESPONSABILIDADE</div><div class="sub-title">' + subTitleHeader + '</div></div></div>' +
-                        
-                        
                         
                         '<div class="section-box"><div class="section-title">DECLARAÇÃO DE RESPONSABILIDADE</div>' +
                         '<p style="font-size:7.5pt;color:#334155;line-height:1.25;margin-bottom:6px;">A presente Declaração estabelece os direitos e deveres aplicáveis à participação nas atividades gratuitas promovidas pelo Grupo de Apoio Social aos Cultivadores da Terra e Preservação da Natureza (GASCTPNA), aplicando-se aos alunos maiores de idade e, quando menores, aos seus respectivos responsáveis legais, que assumem as obrigações aqui previstas durante todo o período de participação nas atividades institucionais.</p>' +
