@@ -171,11 +171,13 @@ export default function CadastrarNucleo() {
   }, [projetoIdWatch, nucleosExistentes, editId]);
 
   const filteredEspacos = useMemo(() => {
-    // Apenas Espaços APROVADOS (não pendentes) podem ser selecionados para virar Núcleo, documentos pendentes agora são permitidos
+    // Apenas Espaços APROVADOS (não pendentes) podem ser selecionados para virar Núcleo
     const apenasAprovados = espacos.filter(e => e.status_aprovacao !== "pendente");
     if (!projetoIdWatch) return apenasAprovados;
-    return apenasAprovados.filter(e => String(e.projeto_id) === String(projetoIdWatch));
-  }, [espacos, projetoIdWatch]);
+    return apenasAprovados.filter(e => 
+      String(e.projeto_id) === String(projetoIdWatch) || String(e.id) === String(espacoIdWatch)
+    );
+  }, [espacos, projetoIdWatch, espacoIdWatch]);
 
   const selectedEspaco = useMemo(() => {
     if (!espacoIdWatch) return null;
