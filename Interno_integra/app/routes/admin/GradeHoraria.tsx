@@ -53,9 +53,9 @@ export default function GradeHoraria() {
   // Estado dos dias da semana e horários
   const [diasGrade, setDiasGrade] = useState<Record<DiasSemana, DiaGrade>>({
     "1": { ativo: false, slots: { A: { inicio: "", fim: "" }, B: { inicio: "", fim: "" }, C: { inicio: "", fim: "" }, D: { inicio: "", fim: "" }, P: { inicio: "", fim: "" } } },
-    "2": { ativo: true, slots: { A: { inicio: "08:00", fim: "10:00" }, B: { inicio: "10:00", fim: "12:00" }, C: { inicio: "14:00", fim: "16:00" }, D: { inicio: "16:00", fim: "18:00" }, P: { inicio: "18:00", fim: "20:00" } } },
+    "2": { ativo: false, slots: { A: { inicio: "", fim: "" }, B: { inicio: "", fim: "" }, C: { inicio: "", fim: "" }, D: { inicio: "", fim: "" }, P: { inicio: "", fim: "" } } },
     "3": { ativo: false, slots: { A: { inicio: "", fim: "" }, B: { inicio: "", fim: "" }, C: { inicio: "", fim: "" }, D: { inicio: "", fim: "" }, P: { inicio: "", fim: "" } } },
-    "4": { ativo: true, slots: { A: { inicio: "08:00", fim: "10:00" }, B: { inicio: "10:00", fim: "12:00" }, C: { inicio: "14:00", fim: "16:00" }, D: { inicio: "16:00", fim: "18:00" }, P: { inicio: "18:00", fim: "20:00" } } },
+    "4": { ativo: false, slots: { A: { inicio: "", fim: "" }, B: { inicio: "", fim: "" }, C: { inicio: "", fim: "" }, D: { inicio: "", fim: "" }, P: { inicio: "", fim: "" } } },
     "5": { ativo: false, slots: { A: { inicio: "", fim: "" }, B: { inicio: "", fim: "" }, C: { inicio: "", fim: "" }, D: { inicio: "", fim: "" }, P: { inicio: "", fim: "" } } },
     "6": { ativo: false, slots: { A: { inicio: "", fim: "" }, B: { inicio: "", fim: "" }, C: { inicio: "", fim: "" }, D: { inicio: "", fim: "" }, P: { inicio: "", fim: "" } } },
   });
