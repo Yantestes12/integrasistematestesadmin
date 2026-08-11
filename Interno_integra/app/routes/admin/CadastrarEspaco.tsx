@@ -899,7 +899,7 @@ export default function CadastrarEspaco() {
                 <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold shrink-0">!</div>
                 <div>
                   <h4 className="text-sm font-bold text-slate-800">Documentação Pendente?</h4>
-                  <p className="text-xs text-slate-500">Marque a opção ao lado se for anexar a foto ou o termo de uso posteriormente.</p>
+                  <p className="text-xs text-slate-500">Marque a opção ao lado se for anexar a foto posteriormente.</p>
                 </div>
               </div>
               <label className="flex items-center gap-2 cursor-pointer bg-white px-3.5 py-2 rounded-lg border border-amber-300 shadow-sm hover:bg-amber-100 transition-colors shrink-0">
@@ -913,9 +913,15 @@ export default function CadastrarEspaco() {
               </label>
             </div>
 
-            <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5">
-              ℹ️ <strong>Obs:</strong> Somente o arquivo mais recente é mantido. Enviar um novo arquivo substitui o anterior.
-            </p>
+            <div className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-xs text-slate-600 space-y-2">
+              <strong className="text-slate-800 block mb-1">Registro Fotográfico Comprobatório</strong>
+              <p>Para realizar o registro comprobatório, instale em seu celular um aplicativo de fotografia com geolocalização, como GPS Photo Camera, TimeStamp ou outro que desempenhe a mesma função.</p>
+              <p>Nas configurações do aplicativo, ative a exibição das coordenadas geográficas. A fotografia deverá apresentar, obrigatoriamente, localização, coordenadas geográficas, data e horário do registro. Lembrese de deixar o local vazio para a foto (se possível).</p>
+              <p>Somente serão aceitas para anexação a este documento as fotografias que contenham todas essas informações.</p>
+              <p className="pt-2 text-slate-500 border-t border-slate-200/60">
+                ℹ️ <strong>Obs:</strong> Somente o arquivo fotográfico mais recente é mantido.
+              </p>
+            </div>
 
             {/* Foto georeferenciada */}
             <div className="space-y-2">
@@ -952,40 +958,7 @@ export default function CadastrarEspaco() {
               />
             </div>
 
-            {/* Termo de Uso */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Termo de Uso assinado (PDF) <span className="text-slate-400 font-normal">(opcional)</span></label>
-              <div
-                onClick={() => termoInputRef.current?.click()}
-                className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center cursor-pointer hover:border-[var(--theme-primary)]/50 hover:bg-slate-50 transition-colors"
-              >
-                {form.termoFile ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-                    <p className="text-sm font-medium text-slate-700">{form.termoFile.name}</p>
-                    <p className="text-xs text-slate-400">{(form.termoFile.size / 1024).toFixed(0)} KB</p>
-                  </div>
-                ) : form.termoUrl ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-                    <p className="text-sm text-slate-600">Termo já enviado — clique para substituir</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <FileUp className="w-8 h-8 text-slate-300" />
-                    <p className="text-sm text-slate-500">Clique para selecionar o PDF</p>
-                    <p className="text-xs text-slate-400">Somente PDF — máx. 20MB</p>
-                  </div>
-                )}
-              </div>
-              <input
-                ref={termoInputRef}
-                type="file"
-                accept=".pdf"
-                className="hidden"
-                onChange={e => { if (e.target.files?.[0]) set("termoFile", e.target.files[0]); }}
-              />
-            </div>
+
           </div>
         );
 
