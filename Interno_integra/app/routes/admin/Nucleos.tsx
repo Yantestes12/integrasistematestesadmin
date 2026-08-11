@@ -66,16 +66,14 @@ export default function Nucleos() {
     try {
       const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
-        try {
-          const text = await res.text();
-          const data = JSON.parse(text);
-          const list = flattenResponse(data);
-          list.forEach((p: any) => {
-            if (p.id && p.nome) {
-              projetosCache[Number(p.id)] = p.nome;
-            }
-          });
-        } catch (e) {}
+        const data = await res.json();
+        const list = flattenResponse(data);
+        projetosCache = {};
+        list.forEach((p: any) => {
+          if (p.id && p.nome) {
+            projetosCache[Number(p.id)] = p.nome;
+          }
+        });
       }
     } catch (e) {
       console.warn("Erro ao buscar projetos para mapear nomes:", e);
@@ -86,16 +84,14 @@ export default function Nucleos() {
     try {
       const res = await fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
-        try {
-          const text = await res.text();
-          const data = JSON.parse(text);
-          const list = flattenResponse(data);
-          list.forEach((m: any) => {
-            if (m.id && m.nome) {
-              modalidadesCache[Number(m.id)] = m.nome;
-            }
-          });
-        } catch (e) {}
+        const data = await res.json();
+        const list = flattenResponse(data);
+        modalidadesCache = {};
+        list.forEach((m: any) => {
+          if (m.id && m.nome) {
+            modalidadesCache[Number(m.id)] = m.nome;
+          }
+        });
       }
     } catch (e) {
       console.warn("Erro ao buscar modalidades para mapear nomes:", e);
@@ -106,16 +102,14 @@ export default function Nucleos() {
     try {
       const res = await fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
-        try {
-          const text = await res.text();
-          const data = JSON.parse(text);
-          const list = flattenResponse(data);
-          list.forEach((e: any) => {
-            if (e.id) {
-              espacosCache[Number(e.id)] = e;
-            }
-          });
-        } catch (e) {}
+        const data = await res.json();
+        const list = flattenResponse(data);
+        espacosCache = {};
+        list.forEach((e: any) => {
+          if (e.id) {
+            espacosCache[Number(e.id)] = e;
+          }
+        });
       }
     } catch (e) {
       console.warn("Erro ao buscar espaços para mapear bairros:", e);
