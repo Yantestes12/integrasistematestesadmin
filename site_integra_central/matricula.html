@@ -3123,15 +3123,9 @@ window.dadosRecentesCPF = null;
             var espacosIds = {};
             nucleosAtivos.forEach(function(n) { if(n.espaco_id) espacosIds[n.espaco_id] = true; });
             
-            var espacosAtivos = (espacos || []).filter(function(e) { 
-                var matchNucleo = espacosIds[e.id] || espacosIds[String(e.id)];
-                var matchProjeto = !pIdCurrent || !e.projeto_id || parseInt(e.projeto_id) === pIdCurrent;
-                return matchNucleo && matchProjeto && isAtivo(e.ativo); 
-            });
-
             var nomesCidades = [];
-            espacosAtivos.forEach(function(e) {
-                var cName = (e.cidade && String(e.cidade).trim()) ? String(e.cidade).trim() : (e.bairro && String(e.bairro).trim() ? String(e.bairro).trim() : "Campos dos Goytacazes");
+            nucleosAtivos.forEach(function(n) {
+                var cName = (n.cidade && String(n.cidade).trim()) ? String(n.cidade).trim() : "Campos dos Goytacazes";
                 if(nomesCidades.indexOf(cName) === -1) {
                     nomesCidades.push(cName);
                 }
@@ -3164,13 +3158,11 @@ window.dadosRecentesCPF = null;
         }
 
         var promises = [];
-        if(!_cacheEspacos) promises.push(fetch(API.buscarEspacos, getGetOptions()).then(function(r){return r.json();}).then(function(raw){ _cacheEspacos = _parseN8N(raw, 'espacos'); }));
-        else promises.push(Promise.resolve());
         if(!_cacheNucleos) promises.push(fetch(API.buscarNucleos, getGetOptions()).then(function(r){return r.json();}).then(function(raw){ _cacheNucleos = _parseN8N(raw, 'nucleos'); }));
         else promises.push(Promise.resolve());
 
         Promise.all(promises).then(function(){
-            preencherCidades(_cacheEspacos, _cacheNucleos);
+            preencherCidades(null, _cacheNucleos);
         }).catch(function(){
             var cs2 = document.getElementById('cidade_id');
             if(cs2) cs2.innerHTML='<option value="">Erro ao carregar cidades.</option>';
@@ -3212,13 +3204,16 @@ window.dadosRecentesCPF = null;
                 var nucleosAtivos = (nucleos || []).filter(function(n) { 
                     return (!pIdNum || parseInt(n.projeto_id) === pIdNum) && isAtivo(n.ativo); 
                 });
-                var espacoIds = {};
-                nucleosAtivos.forEach(function(n) { if(n.espaco_id) espacoIds[n.espaco_id] = n.nome || true; });
-                
-                var filtrados = (espacos || []).filter(function(e){ 
-                    var matchCidade = (e.cidade === cNome) || (e.bairro === cNome) || (!e.cidade && cNome === "Campos dos Goytacazes") || (cNome && String(e.cidade).trim().toLowerCase() === String(cNome).trim().toLowerCase());
-                    var matchNucleo = espacoIds[e.id] || espacoIds[String(e.id)];
-                    return matchCidade && matchNucleo && isAtivo(e.ativo); 
+                var espacosUnicos = {};
+                var filtrados = [];
+                nucleosAtivos.forEach(function(n) {
+                    var nCid = (n.cidade && String(n.cidade).trim()) ? String(n.cidade).trim() : "Campos dos Goytacazes";
+                    var matchCidade = (String(nCid).trim().toLowerCase() === String(cNome).trim().toLowerCase());
+                    if (matchCidade && n.espaco_id && !espacosUnicos[n.espaco_id]) {
+                        espacosUnicos[n.espaco_id] = true;
+                        var nomeExibicao = n.bairro || n.nome || ('Polo ' + n.espaco_id);
+                        filtrados.push({ id: n.espaco_id, nome: nomeExibicao });
+                    }
                 });
 
                 if(!filtrados.length){
@@ -3230,8 +3225,7 @@ window.dadosRecentesCPF = null;
                     filtrados.forEach(function(e){
                         var o=document.createElement('option'); 
                         o.value=e.id; 
-                        var nomeDoNucleo = (typeof espacoIds[e.id] === 'string' ? espacoIds[e.id] : (typeof espacoIds[String(e.id)] === 'string' ? espacoIds[String(e.id)] : null));
-                        o.textContent = nomeDoNucleo ? nomeDoNucleo : (e.nome ? e.nome : (e.bairro || ('Polo ' + e.id))); 
+                        o.textContent = e.nome; 
                         bs2.appendChild(o);
                     });
                     if (filtrados.length === 1) {
@@ -3252,17 +3246,15 @@ window.dadosRecentesCPF = null;
             esconder(['bloco-modalidade','bloco-nucleo']);
             if(!cNome || !pId) return;
             function preencherBairros(espacos, nucleos) {
-                window.preencherBairrosGlobal(espacos, nucleos);
+                window.preencherBairrosGlobal(null, nucleos);
             }
 
             var promises = [];
-            if(!_cacheEspacos) promises.push(fetch(API.buscarEspacos, getGetOptions()).then(function(r){return r.json();}).then(function(raw){ _cacheEspacos = _parseN8N(raw, 'espacos'); }));
-            else promises.push(Promise.resolve());
             if(!_cacheNucleos) promises.push(fetch(API.buscarNucleos, getGetOptions()).then(function(r){return r.json();}).then(function(raw){ _cacheNucleos = _parseN8N(raw, 'nucleos'); }));
             else promises.push(Promise.resolve());
 
             Promise.all(promises).then(function(){
-                preencherBairros(_cacheEspacos, _cacheNucleos);
+                preencherBairros(null, _cacheNucleos);
             }).catch(function(){ var bs2=getBs(); if(bs2) bs2.innerHTML='<option value="">Erro ao carregar.</option>'; });
         });
 
@@ -3278,13 +3270,14 @@ window.dadosRecentesCPF = null;
             if(!bId||!pId) return;
 
             // Buscar núcleos para descobrir quais modalidades existem neste espaço+projeto
-            function processar(espacosLocal, modalidadesLocal) {
+            function processar(nucleosLocal, modalidadesLocal) {
                 var modIds = {};
-                if (espacosLocal && espacosLocal.length) {
-                    var espacoFiltrado = espacosLocal.find(function(e){ return parseInt(e.id)===bId && parseInt(e.projeto_id)===pId; });
-                    if (espacoFiltrado && espacoFiltrado.modalidade_id) {
-                        modIds[espacoFiltrado.modalidade_id] = true;
-                    }
+                if (nucleosLocal && nucleosLocal.length) {
+                    nucleosLocal.forEach(function(n) {
+                        if (parseInt(n.espaco_id) === bId && (!pId || parseInt(n.projeto_id) === pId) && (n.ativo===true||n.ativo===1||n.ativo==='true')) {
+                            if (n.modalidade_id) modIds[n.modalidade_id] = true;
+                        }
+                    });
                 }
                 var modsAtivas = (modalidadesLocal || []).filter(function(m){ return modIds[m.id] && (m.ativo===true||m.ativo===1||m.ativo==='true'); });
                 if(!modsAtivas.length){
@@ -3325,7 +3318,7 @@ window.dadosRecentesCPF = null;
             if(!_cacheModalidades) {
                 promises.push(fetch(API.buscarModalidades, getReqOptions()).then(function(r){return r.json();}).then(function(raw){ _cacheModalidades = _parseN8N(raw, 'modalidades'); }));
             } else { promises.push(Promise.resolve()); }
-            Promise.all(promises).then(function(){ processar(_cacheEspacos, _cacheModalidades); }).catch(function(){ mostrarMensagem('erro','Erro ao buscar modalidades. Tente novamente.'); });
+            Promise.all(promises).then(function(){ processar(_cacheNucleos, _cacheModalidades); }).catch(function(){ mostrarMensagem('erro','Erro ao buscar modalidades. Tente novamente.'); });
         });
 
         // ── Modalidade → Lista de Núcleos Manuais ─────────────────────────────
@@ -3374,10 +3367,16 @@ window.dadosRecentesCPF = null;
                     
                     var turnos = [];
                     if (n.turnos_calculados) {
-                        try {
-                            turnos = typeof n.turnos_calculados === 'string' ? JSON.parse(n.turnos_calculados) : n.turnos_calculados;
-                            turnos = [...new Set(turnos)];
-                        } catch(e){}
+                        if (typeof n.turnos_calculados === 'string') {
+                            if (n.turnos_calculados.trim().startsWith('[')) {
+                                try { turnos = JSON.parse(n.turnos_calculados); } catch(e){}
+                            } else {
+                                turnos = n.turnos_calculados.split(',').map(function(t) { return t.trim(); }).filter(function(t) { return t; });
+                            }
+                        } else if (Array.isArray(n.turnos_calculados)) {
+                            turnos = n.turnos_calculados;
+                        }
+                        turnos = [...new Set(turnos)];
                     }
                     n.turnos = turnos;
                     
