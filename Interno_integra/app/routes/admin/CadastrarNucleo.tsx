@@ -382,11 +382,14 @@ export default function CadastrarNucleo() {
                 ) : (
                   <option value="">Selecione um espaço físico para este projeto...</option>
                 )}
-                {filteredEspacos.map(e => (
-                  <option key={e.id} value={e.id} disabled={!!e.nucleo_nome}>
-                    {e.nome} {e.bairro ? `(${e.bairro})` : ""} {e.nucleo_nome ? `— 🔴 Ocupado (${e.nucleo_nome})` : "— 🟢 Disponível"}
-                  </option>
-                ))}
+                {filteredEspacos.map(e => {
+                  const isCurrent = editId && String(espacoIdWatch) === String(e.id);
+                  return (
+                    <option key={e.id} value={e.id} disabled={!!e.nucleo_nome}>
+                      {e.nome} {e.bairro ? `(${e.bairro})` : ""} {e.nucleo_nome ? `— 🔴 Ocupado (${e.nucleo_nome})` : (isCurrent ? "— 🔵 Em Uso (Atual)" : "— 🟢 Disponível")}
+                    </option>
+                  );
+                })}
               </select>
               {errors.espacoId && (
                 <span className="text-[11px] text-red-500 mt-1 block">{errors.espacoId.message}</span>
@@ -422,9 +425,10 @@ export default function CadastrarNucleo() {
                 
                 return options.map(vaga => {
                   const ocupadoPor = vagasOcupadasNoProjeto[vaga];
+                  const isCurrent = editId && String(numeroVagaWatch) === String(vaga);
                   return (
                     <option key={vaga} value={vaga} disabled={!!ocupadoPor}>
-                      Vaga Nº {vaga} {ocupadoPor ? `— 🔴 Ocupada (${ocupadoPor})` : "— 🟢 Livre"}
+                      Vaga Nº {vaga} {ocupadoPor ? `— 🔴 Ocupada (${ocupadoPor})` : (isCurrent ? "— 🔵 Em Uso (Atual)" : "— 🟢 Livre")}
                     </option>
                   );
                 });
