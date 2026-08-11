@@ -46,6 +46,7 @@ interface FormData {
   termoUrl: string;
   fotoFile: File | null;
   termoFile: File | null;
+  status_aprovacao: string;
 }
 
 const DIAS = [
@@ -69,6 +70,7 @@ const INITIAL_FORM: FormData = {
   horarios: DEFAULT_HORARIOS,
   docsPendentes: false,
   fotoUrl: "", termoUrl: "", fotoFile: null, termoFile: null,
+  status_aprovacao: "pendente",
 };
 
 const STEPS = [
@@ -287,6 +289,7 @@ export default function CadastrarEspaco() {
               termoUrl: espaco.termo_url || "",
               fotoFile: null,
               termoFile: null,
+              status_aprovacao: espaco.status_aprovacao || "pendente",
             });
           }
         }
@@ -512,7 +515,7 @@ export default function CadastrarEspaco() {
         foto_url: fotoUrl,
         termo_url: termoUrl,
         ativo: true,
-        status_aprovacao: "pendente",
+        status_aprovacao: form.status_aprovacao,
         docs_pendentes: Boolean(form.docsPendentes),
         created_by: localStorage.getItem("auth_user") || "sistema",
         ...(editId ? { id: editId, updated_by: localStorage.getItem("auth_user") || "sistema" } : {}),
