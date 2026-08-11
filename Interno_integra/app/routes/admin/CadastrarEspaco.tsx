@@ -366,6 +366,30 @@ export default function CadastrarEspaco() {
     finally { setIsSearchingCnpj(false); }
   };
 
+  // ─── Efeitos Automáticos de Consulta ──────────────────────────────────────
+  useEffect(() => {
+    const clean = form.cep.replace(/\D/g, "");
+    if (clean.length === 8) buscarCep();
+  }, [form.cep]);
+
+  useEffect(() => {
+    const clean = form.respCpf.replace(/\D/g, "");
+    if (clean.length === 11) {
+      buscarCpf();
+    } else if (clean.length > 0 && clean.length < 11 && form.respNome) {
+      set("respNome", "");
+    }
+  }, [form.respCpf]);
+
+  useEffect(() => {
+    const clean = form.respCnpj.replace(/\D/g, "");
+    if (clean.length === 14) {
+      buscarCnpj();
+    } else if (clean.length > 0 && clean.length < 14 && form.respNome) {
+      set("respNome", "");
+    }
+  }, [form.respCnpj]);
+
   // ─── Convert File to Base64 ───────────────────────────────────────────────
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -573,23 +597,20 @@ export default function CadastrarEspaco() {
               error={errors.respCpf} 
               required={!temCnpjValido}
             >
-              <div className="flex gap-2">
+              <div className="relative">
                 <input
                   type="text"
                   placeholder="000.000.000-00"
-                  className={inputCls(errors.respCpf) + " flex-1"}
+                  className={inputCls(errors.respCpf) + " pr-10"}
                   value={form.respCpf}
                   onChange={e => set("respCpf", formatCpf(e.target.value))}
                   maxLength={14}
                 />
-                <button
-                  type="button"
-                  onClick={buscarCpf}
-                  disabled={isSearchingCpf}
-                  className="px-4 py-3 bg-[var(--theme-primary)] text-white rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60 shrink-0"
-                >
-                  {isSearchingCpf ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
-                </button>
+                {isSearchingCpf && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--theme-primary)]">
+                    <Loader2 size={18} className="animate-spin" />
+                  </div>
+                )}
               </div>
             </Field>
 
@@ -628,23 +649,20 @@ export default function CadastrarEspaco() {
                 error={errors.respCnpj} 
                 required={!form.respCpf.replace(/\D/g, "").length}
               >
-                <div className="flex gap-2">
+                <div className="relative">
                   <input
                     type="text"
                     placeholder="00.000.000/0000-00"
-                    className={inputCls(errors.respCnpj) + " flex-1"}
+                    className={inputCls(errors.respCnpj) + " pr-10"}
                     value={form.respCnpj}
                     onChange={e => set("respCnpj", formatCnpj(e.target.value))}
                     maxLength={18}
                   />
-                  <button
-                    type="button"
-                    onClick={buscarCnpj}
-                    disabled={isSearchingCnpj}
-                    className="px-4 py-3 bg-[var(--theme-primary)] text-white rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60 shrink-0"
-                  >
-                    {isSearchingCnpj ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
-                  </button>
+                  {isSearchingCnpj && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--theme-primary)]">
+                      <Loader2 size={18} className="animate-spin" />
+                    </div>
+                  )}
                 </div>
               </Field>
             )}
@@ -692,23 +710,20 @@ export default function CadastrarEspaco() {
         return (
           <div className="space-y-5">
             <Field label="CEP" error={errors.cep} required>
-              <div className="flex gap-2">
+              <div className="relative">
                 <input
                   type="text"
                   placeholder="00000-000"
-                  className={inputCls(errors.cep) + " flex-1"}
+                  className={inputCls(errors.cep) + " pr-10"}
                   value={form.cep}
                   onChange={e => set("cep", formatCep(e.target.value))}
                   maxLength={9}
                 />
-                <button
-                  type="button"
-                  onClick={buscarCep}
-                  disabled={isSearchingCep}
-                  className="px-4 py-3 bg-[var(--theme-primary)] text-white rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60 shrink-0"
-                >
-                  {isSearchingCep ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
-                </button>
+                {isSearchingCep && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--theme-primary)]">
+                    <Loader2 size={18} className="animate-spin" />
+                  </div>
+                )}
               </div>
             </Field>
 

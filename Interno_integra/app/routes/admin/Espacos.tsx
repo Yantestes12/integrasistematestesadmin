@@ -407,7 +407,7 @@ export default function Espacos() {
               <img src="${instituteLogo}" class="logo" alt="Logo" />
               <div>
                 <span class="tag">INSTITUTO ${authInstitute} • PLATAFORMA INTEGRA</span>
-                <h1 class="title">Ficha Técnica de Espaço Físico</h1>
+                <h1 class="title">Ficha Técnica do Espaço</h1>
                 <p class="subtitle">Documento Oficial de Cadastramento e Infraestrutura Operacional</p>
               </div>
             </div>
@@ -421,7 +421,7 @@ export default function Espacos() {
             <div class="section-title">1. Identificação da Instalação Física</div>
             <div class="grid-2">
               <div>
-                <div class="field-label">Nome do Espaço Físico</div>
+                <div class="field-label">Descrição do Espaço</div>
                 <div class="field-value" style="font-size: 14px;">${espaco.nome}</div>
               </div>
               <div>
@@ -589,7 +589,7 @@ export default function Espacos() {
             <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Módulo Operacional</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            Espaços Físicos
+            Espaços
           </h1>
           <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
             Gerencie os locais cadastrados e acompanhe solicitações de novos espaços.
@@ -703,7 +703,7 @@ export default function Espacos() {
           <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3.5 flex items-start gap-3 text-xs text-amber-900">
             <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
             <div>
-              <strong className="font-extrabold block text-amber-950">Espaços Físicos Incompletos (Faltando Endereço ou Responsável)</strong>
+              <strong className="font-extrabold block text-amber-950">Espaços Incompletos (Faltando Endereço ou Responsável)</strong>
               Estes espaços vieram de migrações ou cadastros legados sem o endereço completo ou sem o responsável. Clique em <strong>Editar</strong> para preencher os dados e liberá-los como <strong>Disponíveis</strong> para vinculação nos Núcleos.
             </div>
           </div>
@@ -713,7 +713,7 @@ export default function Espacos() {
           <div className="bg-purple-50/80 border border-purple-200/80 rounded-xl p-3.5 flex items-start gap-3 text-xs text-purple-900">
             <AlertCircle size={18} className="text-purple-600 shrink-0 mt-0.5" />
             <div>
-              <strong className="font-extrabold block text-purple-950">Solicitações de Espaço Físico Pendentes de Aprovação</strong>
+              <strong className="font-extrabold block text-purple-950">Solicitações de Espaços Pendentes de Aprovação</strong>
               Cadastros novos enviados por cedentes/externos que aguardam aprovação do Administrador. Após aprovados, eles passam para a aba de Espaços Disponíveis.
             </div>
           </div>
@@ -724,7 +724,7 @@ export default function Espacos() {
       {loading ? (
         <div className="bg-white p-12 rounded-2xl border border-slate-200 shadow-sm text-center space-y-3">
           <Loader2 size={32} className="animate-spin text-blue-600 mx-auto" />
-          <p className="text-slate-500 text-xs font-semibold">Carregando espaços físicos...</p>
+          <p className="text-slate-500 text-xs font-semibold">Carregando espaços...</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-white p-12 rounded-2xl border border-slate-200 shadow-sm text-center space-y-3">
@@ -733,11 +733,11 @@ export default function Espacos() {
           <p className="text-slate-400 text-xs max-w-sm mx-auto">
             {activeTab === "solicitacoes"
               ? "Não existem solicitações de espaço pendentes no momento."
-              : "Nenhum espaço físico cadastrado corresponde aos critérios da busca."}
+              : "Nenhum espaço cadastrado corresponde aos critérios da busca."}
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
           {filtered.map(espaco => {
             const isPendente = String(espaco.status_aprovacao || "").toLowerCase().trim() === "pendente";
 
@@ -747,7 +747,7 @@ export default function Espacos() {
                 className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-all overflow-hidden flex flex-col justify-between"
               >
                 {/* Imagem de Capa ou Placeholder */}
-                <div className="relative h-44 bg-slate-100 overflow-hidden">
+                <div className="relative h-32 bg-slate-100 overflow-hidden">
                   {espaco.foto_url ? (
                     <img
                       src={espaco.foto_url}
@@ -780,7 +780,7 @@ export default function Espacos() {
                 </div>
 
                 {/* Conteúdo Principal do Card */}
-                <div className="p-4 sm:p-5 space-y-3 flex-1 flex flex-col justify-between">
+                <div className="p-3 sm:p-4 space-y-3 flex-1 flex flex-col justify-between">
                   <div>
                     <h3 className="text-base sm:text-lg font-black text-slate-900 line-clamp-1">
                       {espaco.nome}
@@ -923,7 +923,7 @@ export default function Espacos() {
                 <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold">
                   <AlertTriangle size={18} />
                 </div>
-                <h3 className="text-base font-extrabold text-slate-800">Desvincular Espaço Físico</h3>
+                <h3 className="text-base font-extrabold text-slate-800">Desvincular Espaço</h3>
               </div>
 
               <button
@@ -1051,7 +1051,7 @@ export default function Espacos() {
                     INSTITUTO {authInstitute} • PLATAFORMA INTEGRA
                   </span>
                   <h2 className={`text-xl font-black ${theme.textPrimary} uppercase tracking-tight`}>
-                    Ficha Técnica de Espaço Físico
+                    Ficha Técnica do Espaço
                   </h2>
                   <p className="text-xs text-slate-500 font-medium">
                     Documento Oficial de Cadastramento e Infraestrutura Operacional
@@ -1188,7 +1188,7 @@ export default function Espacos() {
                 Documento emitido digitalmente pela Plataforma Integra em <strong className={theme.textCode}>{printTimestamp}</strong>.
               </p>
               <p className="text-[9px] text-slate-400 font-medium">
-                Instituto {authInstitute} • Sistema Oficial de Gestão de Projetos e Espaços Físicos
+                Instituto {authInstitute} • Sistema Oficial de Gestão de Projetos e Espaços
               </p>
             </div>
 
