@@ -449,7 +449,7 @@ export default function CadastrarNucleo() {
                 <span>Informações Herdadas do Espaço Físico</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
                 <div className="bg-white p-3 rounded-lg border border-indigo-100 shadow-2xs">
                   <span className="text-slate-400 font-semibold block text-[10px] uppercase">Nome do Núcleo:</span>
                   <span className="font-extrabold text-indigo-700 text-sm">{selectedEspaco.nome}</span>
@@ -463,11 +463,6 @@ export default function CadastrarNucleo() {
                 <div className="bg-white p-3 rounded-lg border border-indigo-100 shadow-2xs">
                   <span className="text-slate-400 font-semibold block text-[10px] uppercase">Local / Bairro:</span>
                   <span className="font-extrabold text-slate-800 text-sm">{[selectedEspaco.bairro, selectedEspaco.cidade].filter(Boolean).join(" · ") || "—"}</span>
-                </div>
-
-                <div className="bg-white p-3 rounded-lg border border-indigo-100 shadow-2xs">
-                  <span className="text-slate-400 font-semibold block text-[10px] uppercase">Responsável Cedente:</span>
-                  <span className="font-extrabold text-slate-800 text-sm">{selectedEspaco.resp_nome || "—"}</span>
                 </div>
               </div>
             </div>
