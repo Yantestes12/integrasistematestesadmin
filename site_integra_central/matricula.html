@@ -3933,10 +3933,11 @@ window.dadosRecentesCPF = null;
             fd.delete('cidade_id');
         }
 
-        // Bairro / Polo do Projeto (agora carrega o espaco_id da localidade, mantendo o name legado)
+        // Bairro / Polo do Projeto (carrega o espaco_id da localidade)
         var elBairroSelect = document.getElementById('bairro_id') || document.querySelector('select[name="bairro_id"]');
         if (elBairroSelect && elBairroSelect.value) {
-            fd.set('bairro_id', elBairroSelect.value); // ATENÇÃO: O valor enviado aqui agora é o ID do ESPAÇO
+            fd.set('espaco_id', elBairroSelect.value);
+            fd.delete('bairro_id'); // Evita violação de Foreign Key no Supabase (GASCTPNA_matricula_bairro_id_fkey)
             if (elBairroSelect.selectedIndex >= 0) {
                 var txtPolo = elBairroSelect.options[elBairroSelect.selectedIndex].text;
                 if (txtPolo && !txtPolo.includes('Selecione') && !txtPolo.includes('Carregando')) {
