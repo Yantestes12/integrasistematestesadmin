@@ -663,7 +663,7 @@ export default function Espacos() {
       <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Módulo Operacional</span>
+            {/* Módulo Operacional span removed as requested */}
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             Descrição do Espaço
