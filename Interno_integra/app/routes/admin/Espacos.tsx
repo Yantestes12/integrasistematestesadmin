@@ -821,16 +821,10 @@ export default function Espacos() {
                 {/* Conteúdo Principal do Card */}
                 <div className="p-3 sm:p-4 space-y-3 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-base sm:text-lg font-black text-slate-900 line-clamp-1">
-                      {espaco.nome}
+                    <h3 className="text-lg sm:text-xl font-black text-slate-900 line-clamp-2 flex items-start gap-1.5 leading-tight">
+                      <MapPin size={20} className="text-slate-400 shrink-0 mt-0.5" />
+                      <span>{[espaco.bairro, espaco.cidade].filter(Boolean).join(" • ") || espaco.nome}</span>
                     </h3>
-                    
-                    {(espaco.bairro || espaco.cidade) && (
-                      <p className="text-xs text-slate-500 flex items-center gap-1 font-medium mt-0.5">
-                        <MapPin size={13} className="text-slate-400 shrink-0" />
-                        <span>{[espaco.bairro, espaco.cidade].filter(Boolean).join(" • ")}</span>
-                      </p>
-                    )}
 
                     {/* Indicador de "Em Uso" e Vínculo ao Núcleo */}
                     {espaco.em_uso && (
