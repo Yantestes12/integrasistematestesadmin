@@ -375,13 +375,6 @@ export default function Nucleos() {
           </p>
         </div>
 
-        <Link
-          to="/admin/cadastrar-nucleo"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-3 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 text-sm shrink-0"
-        >
-          <Plus size={18} />
-          <span>Cadastrar Novo Núcleo</span>
-        </Link>
       </div>
 
       {/* Card da Tabela de Núcleos */}
