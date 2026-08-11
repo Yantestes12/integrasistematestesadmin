@@ -35,7 +35,7 @@ export default function Espacos() {
   const [espacos, setEspacos] = useState<EspacoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<"todos" | "em_uso" | "disponiveis" | "incompletos" | "solicitacoes">("todos");
+  const [activeTab, setActiveTab] = useState<"todos" | "aprovados" | "pendentes">("todos");
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [approvingId, setApprovingId] = useState<number | null>(null);
   const [togglingDocsId, setTogglingDocsId] = useState<number | null>(null);
@@ -596,18 +596,12 @@ export default function Espacos() {
   const solicitacoesPendentes = espacos.filter(e => String(e.status_aprovacao || "").toLowerCase().trim() === "pendente");
   const espacosAprovados = espacos.filter(e => String(e.status_aprovacao || "").toLowerCase().trim() !== "pendente");
 
-  const emUsoList = espacosAprovados.filter(e => e.em_uso || !!e.nucleo_nome);
-  const disponiveisList = espacosAprovados.filter(e => !e.em_uso && !e.nucleo_nome && !isIncompleto(e));
-  const incompletosList = espacosAprovados.filter(e => isIncompleto(e));
-
   const getCurrentList = () => {
     switch (activeTab) {
-      case "em_uso": return emUsoList;
-      case "disponiveis": return disponiveisList;
-      case "incompletos": return incompletosList;
-      case "solicitacoes": return solicitacoesPendentes;
+      case "aprovados": return espacosAprovados;
+      case "pendentes": return solicitacoesPendentes;
       case "todos":
-      default: return espacosAprovados;
+      default: return espacos;
     }
   };
 
@@ -692,7 +686,7 @@ export default function Espacos() {
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
           
-          {/* Navegação de Abas (Todos, Disponíveis, Em Uso, Incompletos, Solicitações) */}
+          {/* Navegação de Abas (Todos, Aprovados, Pendentes) */}
           <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl">
             <button
               onClick={() => setActiveTab("todos")}
@@ -705,61 +699,33 @@ export default function Espacos() {
               <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
                 activeTab === "todos" ? "bg-blue-100 text-blue-700" : "bg-slate-200 text-slate-600"
               }`}>
+                {espacos.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("aprovados")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
+                activeTab === "aprovados" ? "bg-white text-emerald-800 shadow-xs" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <CheckCircle2 size={14} className="text-emerald-500" />
+              <span>Aprovados</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                activeTab === "aprovados" ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600"
+              }`}>
                 {espacosAprovados.length}
               </span>
             </button>
 
             <button
-              onClick={() => setActiveTab("disponiveis")}
+              onClick={() => setActiveTab("pendentes")}
               className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
-                activeTab === "disponiveis" ? "bg-white text-emerald-800 shadow-xs" : "text-slate-500 hover:text-slate-800"
-              }`}
-            >
-              <CheckCircle2 size={14} className="text-emerald-500" />
-              <span>Disponíveis</span>
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
-                activeTab === "disponiveis" ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600"
-              }`}>
-                {disponiveisList.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("em_uso")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
-                activeTab === "em_uso" ? "bg-white text-blue-800 shadow-xs" : "text-slate-500 hover:text-slate-800"
-              }`}
-            >
-              <Layers size={14} className="text-blue-500" />
-              <span>Em Uso</span>
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
-                activeTab === "em_uso" ? "bg-blue-100 text-blue-700" : "bg-slate-200 text-slate-600"
-              }`}>
-                {emUsoList.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("incompletos")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
-                activeTab === "incompletos" ? "bg-amber-500 text-white shadow-xs" : "text-amber-700 bg-amber-50 hover:bg-amber-100"
-              }`}
-            >
-              <AlertTriangle size={14} />
-              <span>Pendente de Dados (???)</span>
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-700 text-white">
-                {incompletosList.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("solicitacoes")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
-                activeTab === "solicitacoes" ? "bg-white text-purple-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
+                activeTab === "pendentes" ? "bg-white text-purple-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
               }`}
             >
               <Clock size={14} className={solicitacoesPendentes.length > 0 ? "text-purple-600 animate-pulse" : ""} />
-              <span>Solicitações</span>
+              <span>Pendentes</span>
               {solicitacoesPendentes.length > 0 && (
                 <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">
                   {solicitacoesPendentes.length}
@@ -782,22 +748,12 @@ export default function Espacos() {
         </div>
 
         {/* Banners Informativos das Abas */}
-        {activeTab === "incompletos" && (
-          <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3.5 flex items-start gap-3 text-xs text-amber-900">
-            <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <strong className="font-extrabold block text-amber-950">Espaços Incompletos (Faltando Endereço ou Responsável)</strong>
-              Estes espaços vieram de migrações ou cadastros legados sem o endereço completo ou sem o responsável. Clique em <strong>Editar</strong> para preencher os dados e liberá-los como <strong>Disponíveis</strong> para vinculação nos Núcleos.
-            </div>
-          </div>
-        )}
-
-        {activeTab === "solicitacoes" && (
+        {activeTab === "pendentes" && (
           <div className="bg-purple-50/80 border border-purple-200/80 rounded-xl p-3.5 flex items-start gap-3 text-xs text-purple-900">
             <AlertCircle size={18} className="text-purple-600 shrink-0 mt-0.5" />
             <div>
               <strong className="font-extrabold block text-purple-950">Solicitações de Espaços Pendentes de Aprovação</strong>
-              Cadastros novos enviados por cedentes/externos que aguardam aprovação do Administrador. Após aprovados, eles passam para a aba de Espaços Disponíveis.
+              Cadastros novos enviados por cedentes/externos que aguardam aprovação do Administrador. Após aprovados, eles passam para a aba de Aprovados.
             </div>
           </div>
         )}
@@ -814,7 +770,7 @@ export default function Espacos() {
           <Building2 size={40} className="text-slate-300 mx-auto" />
           <h3 className="text-base font-bold text-slate-700">Nenhum espaço encontrado</h3>
           <p className="text-slate-400 text-xs max-w-sm mx-auto">
-            {activeTab === "solicitacoes"
+            {activeTab === "pendentes"
               ? "Não existem solicitações de espaço pendentes no momento."
               : "Nenhum espaço cadastrado corresponde aos critérios da busca."}
           </p>
