@@ -921,6 +921,14 @@ export default function Espacos() {
                         <span>Aprovar Espaço</span>
                       </button>
 
+                      <Link
+                        to={`/admin/cadastrar-espaco?edit=${espaco.id}`}
+                        className="p-2 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                        title="Editar Espaço"
+                      >
+                        <Edit3 size={16} />
+                      </Link>
+
                       <button
                         onClick={() => openDeleteModal(espaco)}
                         className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
