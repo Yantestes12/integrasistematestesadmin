@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams, useNavigate } from "react-router";
 import * as z from "zod";
-import { ArrowLeft, Save, MapPin, Building2, Loader2, Award } from "lucide-react";
+import { ArrowLeft, Save, MapPin, Building2, Loader2, Award, User } from "lucide-react";
 
 // Schemas de Validação (Zod)
 const cadastrarNucleoSchema = z.object({
@@ -16,6 +16,7 @@ const cadastrarNucleoSchema = z.object({
   bairroId: z.string().optional(),
   numeroVaga: z.string().optional(),
   vagas: z.string().optional(),
+  respNome: z.string().optional(),
   
   // Vigência e Status
   ativo: z.boolean().default(true),
@@ -242,6 +243,7 @@ export default function CadastrarNucleo() {
                               ? String(nucleo.numero_vaga ?? nucleo.vaga_numero ?? nucleo.vaga_alocada) 
                               : "1",
                 vagas: String(nucleo.vagas || "100"),
+                respNome: nucleo.resp_nome || "",
                 dataInicio: nucleo.data_inicio || "",
                 dataFim: nucleo.data_fim || "",
                 ativo: nucleo.ativo !== false && nucleo.ativo !== 0 && nucleo.ativo !== "0",
@@ -287,6 +289,9 @@ export default function CadastrarNucleo() {
       }
       if (data.vagas) {
         formData.append("vagas", data.vagas);
+      }
+      if (data.respNome !== undefined) {
+        formData.append("resp_nome", data.respNome);
       }
 
       const response = await fetch(webhookUrl, {
@@ -437,6 +442,20 @@ export default function CadastrarNucleo() {
             <span className="text-[11px] text-slate-400 mt-1 block">
               Cada núcleo ocupa uma posição de Vaga única no projeto. Vagas já alocadas ficam bloqueadas para evitar duplicidade.
             </span>
+          </div>
+
+          {/* INSTRUTOR DO NÚCLEO */}
+          <div className="pt-2 border-t border-slate-100 mt-2">
+            <label className="block text-xs font-bold text-slate-800 mb-1 flex items-center gap-1.5 mt-2">
+              <User className="w-4 h-4 text-indigo-600" />
+              <span>Nome do Instrutor Responsável</span>
+            </label>
+            <input
+              type="text"
+              {...register("respNome")}
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+              placeholder="Ex: João da Silva (Opcional)"
+            />
           </div>
 
 

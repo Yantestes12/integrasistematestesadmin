@@ -439,7 +439,7 @@ export default function Nucleos() {
                   <th className="py-4 px-4 md:px-6">Núcleo / Endereço</th>
                   <th className="py-4 px-4 md:px-6">Iniciativa</th>
                   <th className="py-4 px-4 md:px-6">Modalidade</th>
-                  <th className="py-4 px-4 md:px-6">Responsável Cedente</th>
+                  <th className="py-4 px-4 md:px-6">Instrutor</th>
                   <th className="py-4 px-4 md:px-6 text-center">Vaga (Slot)</th>
                   <th className="py-4 px-4 md:px-6 text-center">Status Físico</th>
                   <th className="py-4 px-4 md:px-6 w-28 text-center">Ações</th>
