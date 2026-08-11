@@ -85,8 +85,9 @@ export default function CadastrarNucleo() {
       }
       if (resE.ok) {
         const data = await resE.json();
-        const list = Array.isArray(data) ? data : data.data || [data];
-        setEspacos(list.map((e: any) => ({ ...e, nucleo_nome: nMap[String(e.id)] })));
+        let list = Array.isArray(data) ? data : data.data || [data];
+        if (!Array.isArray(list)) list = [list];
+        setEspacos(list.filter(Boolean).map((e: any) => ({ ...e, nucleo_nome: nMap[String(e.id)] })));
       }
     } catch (e) { console.warn("Erro espacos:", e); }
   };
@@ -96,8 +97,9 @@ export default function CadastrarNucleo() {
       const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${inst.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
-        const list = Array.isArray(data) ? data : data.data || [data];
-        setProjetos(list);
+        let list = Array.isArray(data) ? data : data.data || [data];
+        if (!Array.isArray(list)) list = [list];
+        setProjetos(list.filter(Boolean));
       }
     } catch (e) { console.warn("Erro projetos:", e); }
   };
@@ -107,8 +109,9 @@ export default function CadastrarNucleo() {
       const res = await fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${inst.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
-        const list = Array.isArray(data) ? data : data.data || [data];
-        setModalidades(list);
+        let list = Array.isArray(data) ? data : data.data || [data];
+        if (!Array.isArray(list)) list = [list];
+        setModalidades(list.filter(Boolean));
       }
     } catch (e) { console.warn("Erro modalidades:", e); }
   };
@@ -123,6 +126,7 @@ export default function CadastrarNucleo() {
            return;
         }
         let list = Array.isArray(data) ? data : data.data || data.items || (data.json ? (Array.isArray(data.json) ? data.json : [data.json]) : [data]);
+        if (!Array.isArray(list)) list = [list];
         let flatList: any[] = [];
         list.forEach((entry: any) => {
           if (!entry) return;
@@ -218,7 +222,7 @@ export default function CadastrarNucleo() {
             if (data.message === "Workflow was started" || data.error) return;
 
             let list = Array.isArray(data) ? data : data.data || data.items || (data.json ? (Array.isArray(data.json) ? data.json : [data.json]) : [data]);
-            
+            if (!Array.isArray(list)) list = [list];
             let flatList: any[] = [];
             list.forEach((entry: any) => {
               if (!entry) return;
