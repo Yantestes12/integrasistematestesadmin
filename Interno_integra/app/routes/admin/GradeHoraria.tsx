@@ -133,16 +133,7 @@ export default function GradeHoraria() {
     }
   };
 
-  const calcularHorarioFim = (horaInicio: string): string => {
-    if (!horaInicio || !horaInicio.includes(":")) return "";
-    const [h, m] = horaInicio.split(":").map(Number);
-    if (isNaN(h) || isNaN(m)) return "";
-    const hFim = (h + 2) % 24;
-    return `${String(hFim).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-  };
-
-  const handleHoraChange = (dia: DiasSemana, slotKey: "A" | "B" | "C" | "D" | "P", inicio: string) => {
-    const fim = calcularHorarioFim(inicio);
+  const handleHoraChange = (dia: DiasSemana, slotKey: "A" | "B" | "C" | "D" | "P", inicio: string, fim: string) => {
     setDiasGrade(prev => ({
       ...prev,
       [dia]: {
@@ -299,7 +290,9 @@ export default function GradeHoraria() {
 
       {/* Seletor dos Dias da Semana */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-3">Dias de Funcionamento do Núcleo:</h3>
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-3">
+          Selecione os Dias de Funcionamento do Núcleo:
+        </h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
           {(["1", "2", "3", "4", "5", "6"] as DiasSemana[]).map(d => {
             const diaKey = DIA_KEY_MAP[d];
@@ -308,31 +301,35 @@ export default function GradeHoraria() {
             const ativo = diasGrade[d]?.ativo;
 
             return (
-              <button
+              <label
                 key={d}
-                type="button"
-                onClick={() => handleToggleDia(d)}
-                disabled={!permitidoNoEspaco}
-                className={`py-2.5 px-3 rounded-xl font-bold text-xs border transition-all flex flex-col justify-between gap-1.5 text-left ${
+                className={`py-3 px-3 rounded-xl border transition-all flex items-start gap-3 cursor-pointer ${
                   !permitidoNoEspaco
-                    ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60"
+                    ? "bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed opacity-70"
                     : ativo
-                    ? "bg-[var(--theme-primary)] text-white border-[var(--theme-primary)] shadow-sm"
-                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                    ? "bg-emerald-50/50 border-emerald-300 shadow-sm"
+                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
                 }`}
               >
-                <div className="flex items-center justify-between w-full">
-                  <span>{DIAS_MAP[d]}</span>
-                  <span className={`w-2 h-2 rounded-full ${!permitidoNoEspaco ? "bg-slate-300" : ativo ? "bg-white" : "bg-slate-300"}`} />
-                </div>
-
-                {/* Exibe o horário cadastrado do Espaço */}
-                {limiteEspaco && (
-                  <span className={`text-[10px] ${ativo ? "text-white/80" : "text-slate-400"}`}>
-                    {limiteEspaco.ativo ? `${limiteEspaco.abertura} - ${limiteEspaco.fechamento}` : "Fechado"}
+                <input
+                  type="checkbox"
+                  checked={ativo}
+                  disabled={!permitidoNoEspaco}
+                  onChange={() => handleToggleDia(d)}
+                  className="w-4 h-4 mt-0.5 text-emerald-600 rounded focus:ring-emerald-500 disabled:opacity-50 cursor-pointer"
+                />
+                <div className="flex flex-col">
+                  <span className={`text-sm font-bold ${!permitidoNoEspaco ? "text-slate-400" : ativo ? "text-emerald-900" : "text-slate-700"}`}>
+                    {DIAS_MAP[d]}
                   </span>
-                )}
-              </button>
+                  {/* Exibe o horário cadastrado do Espaço */}
+                  {limiteEspaco && (
+                    <span className={`text-[10px] font-medium mt-0.5 ${!permitidoNoEspaco ? "text-red-400" : ativo ? "text-emerald-600" : "text-slate-400"}`}>
+                      {limiteEspaco.ativo ? `${limiteEspaco.abertura} às ${limiteEspaco.fechamento}` : "Fechado no Espaço"}
+                    </span>
+                  )}
+                </div>
+              </label>
             );
           })}
         </div>
@@ -360,11 +357,11 @@ export default function GradeHoraria() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {[
-                  { key: "A", name: "Turma A", desc: "Aula · 2h", badgeBg: "bg-blue-100 text-blue-800" },
-                  { key: "B", name: "Turma B", desc: "Aula · 2h", badgeBg: "bg-emerald-100 text-emerald-800" },
-                  { key: "C", name: "Turma C", desc: "Aula · 2h", badgeBg: "bg-amber-100 text-amber-800" },
-                  { key: "D", name: "Turma D", desc: "Aula · 2h", badgeBg: "bg-rose-100 text-rose-800" },
-                  { key: "P", name: "Planejamento", desc: "2h · Sem Turma", badgeBg: "bg-purple-100 text-purple-800" },
+                  { key: "A", name: "Turma A", desc: "Aula", badgeBg: "bg-blue-100 text-blue-800" },
+                  { key: "B", name: "Turma B", desc: "Aula", badgeBg: "bg-emerald-100 text-emerald-800" },
+                  { key: "C", name: "Turma C", desc: "Aula", badgeBg: "bg-amber-100 text-amber-800" },
+                  { key: "D", name: "Turma D", desc: "Aula", badgeBg: "bg-rose-100 text-rose-800" },
+                  { key: "P", name: "Planejamento", desc: "Sem Turma", badgeBg: "bg-purple-100 text-purple-800" },
                 ].map(slot => (
                   <tr key={slot.key} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-5 py-4">
@@ -385,26 +382,40 @@ export default function GradeHoraria() {
                       const validoNoEspaco = diaAtivo && slotVal ? isSlotValidInEspaco(d, slotVal) : true;
 
                       return (
-                        <td key={d} className={`px-3 py-4 text-center ${!diaAtivo ? "bg-slate-50/50 opacity-40" : ""}`}>
+                        <td key={d} className={`px-2 py-4 text-center ${!diaAtivo ? "bg-slate-50/50 opacity-40" : ""}`}>
                           {diaAtivo ? (
-                            <div className="flex flex-col items-center gap-1">
-                              <input
-                                type="time"
-                                className={`w-24 px-2 py-1.5 rounded-lg border text-xs font-bold text-slate-800 text-center focus:outline-none focus:ring-2 ${
-                                  !validoNoEspaco
-                                    ? "border-amber-300 bg-amber-50 text-amber-900 focus:ring-amber-300"
-                                    : "border-slate-200 focus:ring-[var(--theme-primary)]"
-                                }`}
-                                value={slotVal?.inicio || ""}
-                                onChange={e => handleHoraChange(d, slot.key as "A" | "B" | "C" | "D" | "P", e.target.value)}
-                              />
-                              <span className="text-[11px] font-semibold text-slate-400">
-                                {slotVal?.fim ? `até ${slotVal.fim}` : "--:--"}
-                              </span>
+                            <div className="flex flex-col items-center gap-1.5">
+                              <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-200">
+                                <input
+                                  type="time"
+                                  min="06:00"
+                                  max="22:00"
+                                  className={`w-20 px-1 py-1 rounded text-xs font-bold text-slate-800 text-center focus:outline-none focus:ring-2 bg-white ${
+                                    !validoNoEspaco
+                                      ? "border-amber-300 text-amber-900 focus:ring-amber-300"
+                                      : "border-slate-200 focus:ring-emerald-500"
+                                  }`}
+                                  value={slotVal?.inicio || ""}
+                                  onChange={e => handleHoraChange(d, slot.key as "A" | "B" | "C" | "D" | "P", e.target.value, slotVal?.fim || "")}
+                                />
+                                <span className="text-[10px] text-slate-400 font-bold">às</span>
+                                <input
+                                  type="time"
+                                  min="06:00"
+                                  max="22:00"
+                                  className={`w-20 px-1 py-1 rounded text-xs font-bold text-slate-800 text-center focus:outline-none focus:ring-2 bg-white ${
+                                    !validoNoEspaco
+                                      ? "border-amber-300 text-amber-900 focus:ring-amber-300"
+                                      : "border-slate-200 focus:ring-emerald-500"
+                                  }`}
+                                  value={slotVal?.fim || ""}
+                                  onChange={e => handleHoraChange(d, slot.key as "A" | "B" | "C" | "D" | "P", slotVal?.inicio || "", e.target.value)}
+                                />
+                              </div>
                               {!validoNoEspaco && (
-                                <span className="text-[9px] font-bold text-amber-700 flex items-center gap-0.5 mt-0.5" title="Fora da janela de funcionamento do Espaço Físico">
+                                <span className="text-[9px] font-bold text-amber-700 flex items-center gap-0.5 mt-0.5 leading-tight max-w-[100px] text-center" title="Fora da janela de funcionamento do Espaço Físico">
                                   <AlertTriangle size={10} className="text-amber-500 shrink-0" />
-                                  Fora do espaço
+                                  Fora do horário do espaço
                                 </span>
                               )}
                             </div>
