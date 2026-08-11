@@ -118,15 +118,20 @@ export default function CadastrarNucleo() {
       const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
-        let list = Array.isArray(data) ? data : data.data || data.items || (Array.isArray(data.json) ? data.json : [data.json]);
+        if (data.message === "Workflow was started" || data.error) {
+           setNucleosExistentes([]);
+           return;
+        }
+        let list = Array.isArray(data) ? data : data.data || data.items || (data.json ? (Array.isArray(data.json) ? data.json : [data.json]) : [data]);
         let flatList: any[] = [];
         list.forEach((entry: any) => {
+          if (!entry) return;
           if (entry && entry.json) {
             if (Array.isArray(entry.json)) flatList.push(...entry.json);
             else flatList.push(entry.json);
           } else flatList.push(entry);
         });
-        setNucleosExistentes(flatList);
+        setNucleosExistentes(flatList.filter(n => n !== null && n !== undefined));
       }
     } catch (e) { console.warn("Erro nucleos:", e); }
   };
