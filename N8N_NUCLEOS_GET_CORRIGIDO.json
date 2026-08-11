@@ -1,18 +1,20 @@
 {
-  "name": "N8N_NUCLEOS_GET_CORRIGIDO",
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "GET",
         "path": "nucleos-get",
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "wh-get",
+      "id": "d7c2c3f8-0827-4f6c-a4d4-3eeef4b596c4",
       "name": "Webhook GET",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [0, 0]
+      "position": [
+        -672,
+        1936
+      ],
+      "webhookId": "5f599e98-62df-45fe-bde9-0159ec18f44b"
     },
     {
       "parameters": {
@@ -20,122 +22,270 @@
         "value1": "={{ $json.query.instituto }}",
         "rules": {
           "rules": [
-            { "value2": "GASCTPNA" },
-            { "value2": "IBRASE", "output": 1 },
-            { "value2": "AUNI", "output": 2 },
-            { "value2": "IVEM", "output": 3 }
+            {
+              "value2": "GASCTPNA"
+            },
+            {
+              "value2": "IBRASE",
+              "output": 1
+            },
+            {
+              "value2": "AUNI",
+              "output": 2
+            },
+            {
+              "value2": "IVEM",
+              "output": 3
+            }
           ]
         },
         "fallbackOutput": 1
       },
-      "id": "sw-get",
+      "id": "4d8df2a4-7b78-4a8a-a011-a406dcefcc78",
       "name": "Switch GET",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
-      "position": [220, 0]
+      "position": [
+        -448,
+        1936
+      ]
     },
     {
       "parameters": {
         "operation": "getAll",
         "tableId": "GASCTPNA_nucleos",
-        "limit": 100,
-        "options": {}
+        "returnAll": false,
+        "limit": 100
       },
-      "id": "sb-gas-get",
-      "name": "SB GASCTPNA GET",
+      "id": "d5a8f722-93e3-43bf-a798-8876437a4432",
+      "name": "SB GASCTPNA GET2",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, -300],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } }
+      "position": [
+        -192,
+        1632
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
     },
     {
       "parameters": {
         "operation": "getAll",
         "tableId": "IBRASE_nucleos",
-        "limit": 100,
-        "options": {}
+        "returnAll": false,
+        "limit": 100
       },
-      "id": "sb-ib-get",
-      "name": "SB IBRASE GET",
+      "id": "f0356c4a-1dc7-43db-af94-0ae43597fa9b",
+      "name": "SB IBRASE GET2",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, -100],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } }
+      "position": [
+        -192,
+        1840
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
     },
     {
       "parameters": {
         "operation": "getAll",
         "tableId": "AUNI_nucleos",
-        "limit": 100,
-        "options": {}
+        "returnAll": false,
+        "limit": 100
       },
-      "id": "sb-au-get",
-      "name": "SB AUNI GET",
+      "id": "d4f7e252-0250-4230-ad85-1b39e6d73b79",
+      "name": "SB AUNI GET2",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, 100],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } }
+      "position": [
+        -192,
+        2032
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
     },
     {
       "parameters": {
         "operation": "getAll",
         "tableId": "IVEM_nucleos",
-        "limit": 100,
-        "options": {}
+        "returnAll": false,
+        "limit": 100
       },
-      "id": "sb-iv-get",
-      "name": "SB IVEM GET",
+      "id": "9da6451c-1f91-4b04-9063-8e015a1d3430",
+      "name": "SB IVEM GET2",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [480, 300],
-      "credentials": { "supabaseApi": { "id": "9PCPmBxs55B86AyO", "name": "IBRASE" } }
+      "position": [
+        -192,
+        2240
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9PCPmBxs55B86AyO",
+          "name": "IBRASE"
+        }
+      }
     },
     {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
-      "id": "res-gas-get",
-      "name": "Respond GASCTPNA",
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "e9d3b5af-5159-4573-823a-3a7321a6fef8",
+      "name": "Respond GASCTPNA2",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, -300]
+      "position": [
+        48,
+        1632
+      ]
     },
     {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
-      "id": "res-ib-get",
-      "name": "Respond IBRASE",
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "b24f8f11-6fcc-4b19-b3a2-451dbb22ab10",
+      "name": "Respond IBRASE2",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, -100]
+      "position": [
+        48,
+        1840
+      ]
     },
     {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
-      "id": "res-au-get",
-      "name": "Respond AUNI",
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "c2f5e8de-ec84-49b2-9363-8707c970dd2e",
+      "name": "Respond AUNI2",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, 100]
+      "position": [
+        48,
+        2032
+      ]
     },
     {
-      "parameters": { "respondWith": "allIncomingItems", "options": {} },
-      "id": "res-iv-get",
-      "name": "Respond IVEM",
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "efdc49a2-a411-428e-8f8d-9dbee6d4122a",
+      "name": "Respond IVEM2",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, 300]
+      "position": [
+        48,
+        2240
+      ]
     }
   ],
   "connections": {
-    "Webhook GET": { "main": [[{ "node": "Switch GET", "type": "main", "index": 0 }]] },
-    "Switch GET": {
+    "Webhook GET": {
       "main": [
-        [{ "node": "SB GASCTPNA GET", "type": "main", "index": 0 }],
-        [{ "node": "SB IBRASE GET", "type": "main", "index": 0 }],
-        [{ "node": "SB AUNI GET", "type": "main", "index": 0 }],
-        [{ "node": "SB IVEM GET", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Switch GET",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "SB GASCTPNA GET": { "main": [[{ "node": "Respond GASCTPNA", "type": "main", "index": 0 }]] },
-    "SB IBRASE GET": { "main": [[{ "node": "Respond IBRASE", "type": "main", "index": 0 }]] },
-    "SB AUNI GET": { "main": [[{ "node": "Respond AUNI", "type": "main", "index": 0 }]] },
-    "SB IVEM GET": { "main": [[{ "node": "Respond IVEM", "type": "main", "index": 0 }]] }
+    "Switch GET": {
+      "main": [
+        [
+          {
+            "node": "SB GASCTPNA GET2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB IBRASE GET2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB AUNI GET2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SB IVEM GET2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SB GASCTPNA GET2": {
+      "main": [
+        [
+          {
+            "node": "Respond GASCTPNA2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SB IBRASE GET2": {
+      "main": [
+        [
+          {
+            "node": "Respond IBRASE2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SB AUNI GET2": {
+      "main": [
+        [
+          {
+            "node": "Respond AUNI2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SB IVEM GET2": {
+      "main": [
+        [
+          {
+            "node": "Respond IVEM2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "04b49febf1077a59f1cea62e77926c7134032a8d129079a8658a3019ec7ba664"
   }
 }

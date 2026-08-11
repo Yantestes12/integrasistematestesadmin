@@ -242,63 +242,74 @@ export default function Espacos() {
       
       if (resP.ok && espaco.projeto_id) {
         mustFilterByProject = true;
-        const pData = await resP.json();
-        const pList = flattenResponse(pData);
-        const proj = pList.find((p: any) => String(p.id) === String(espaco.projeto_id));
-        if (proj) {
-          try {
-             const limitStr = proj.limites_modalidades || proj.limites_modalidade;
-             const parsedLimits = typeof limitStr === 'string' ? JSON.parse(limitStr) : (Array.isArray(limitStr) ? limitStr : []);
-             parsedLimits.forEach((l: any) => {
-               if (l.id) projLimitesMap[Number(l.id)] = Number(l.limite) || 0;
-             });
-          } catch(err) {
-             console.warn("Erro ao ler limites_modalidades", err);
+        try {
+          const pText = await resP.text();
+          const pData = JSON.parse(pText);
+          const pList = flattenResponse(pData);
+          const proj = pList.find((p: any) => String(p.id) === String(espaco.projeto_id));
+          if (proj) {
+            const limitStr = proj.limites_modalidades || proj.limites_modalidade;
+            const parsedLimits = typeof limitStr === 'string' ? JSON.parse(limitStr) : (Array.isArray(limitStr) ? limitStr : []);
+            parsedLimits.forEach((l: any) => {
+              if (l.id) projLimitesMap[Number(l.id)] = Number(l.limite) || 0;
+            });
           }
+        } catch (err) {
+          console.warn("Erro ao ler projetos:", err);
         }
       }
 
       const mCount: Record<number, number> = {};
       const oMap: Record<number, string> = {};
       if (resN.ok) {
-        const nData = await resN.json();
-        const nList = flattenResponse(nData);
-        nList.forEach((n: any) => {
-          if (String(n.projeto_id) === String(espaco.projeto_id)) {
-            const v = Number(n.numero_vaga ?? n.vaga_numero ?? n.vaga_alocada);
-            if (!isNaN(v) && v > 0) {
-              oMap[v] = n.nome || `Núcleo #${n.id}`;
+        try {
+          const nText = await resN.text();
+          const nData = JSON.parse(nText);
+          const nList = flattenResponse(nData);
+          nList.forEach((n: any) => {
+            if (String(n.projeto_id) === String(espaco.projeto_id)) {
+              const v = Number(n.numero_vaga ?? n.vaga_numero ?? n.vaga_alocada);
+              if (!isNaN(v) && v > 0) {
+                oMap[v] = n.nome || `Núcleo #${n.id}`;
+              }
+              if (n.modalidade_id) {
+                const mid = Number(n.modalidade_id);
+                mCount[mid] = (mCount[mid] || 0) + 1;
+              }
             }
-            if (n.modalidade_id) {
-               const mid = Number(n.modalidade_id);
-               mCount[mid] = (mCount[mid] || 0) + 1;
-            }
-          }
-        });
+          });
+        } catch (err) {
+          console.warn("Erro ao ler nucleos:", err);
+        }
       }
       setVagasOcupadasNoProjeto(oMap);
 
       if (resM.ok) {
-        const mData = await resM.json();
-        let mList = flattenResponse(mData).map((m: any) => ({ id: String(m.id), nome: m.nome || "" })).filter((m: any) => m.nome);
-        
-        const options = mList.reduce((acc: any[], m: any) => {
-          const mid = Number(m.id);
-          if (mustFilterByProject && projLimitesMap[mid] === undefined) return acc;
+        try {
+          const mText = await resM.text();
+          const mData = JSON.parse(mText);
+          let mList = flattenResponse(mData).map((m: any) => ({ id: String(m.id), nome: m.nome || "" })).filter((m: any) => m.nome);
           
-          const limit = projLimitesMap[mid] || 0;
-          const used = mCount[mid] || 0;
-          const isFull = limit > 0 && used >= limit;
-          
-          let label = m.nome;
-          if (limit > 0) {
-            label += ` (${used}/${limit} Núcleos ${isFull ? '- ESGOTADA' : ''})`;
-          }
-          
-          acc.push({ id: m.id, nome: m.nome, label, disabled: isFull });
-          return acc;
-        }, []);
-        setModalidadesOptions(options);
+          const options = mList.reduce((acc: any[], m: any) => {
+            const mid = Number(m.id);
+            if (mustFilterByProject && projLimitesMap[mid] === undefined) return acc;
+            
+            const limit = projLimitesMap[mid] || 0;
+            const used = mCount[mid] || 0;
+            const isFull = limit > 0 && used >= limit;
+            
+            let label = m.nome;
+            if (limit > 0) {
+              label += ` (${used}/${limit} Núcleos ${isFull ? '- ESGOTADA' : ''})`;
+            }
+            
+            acc.push({ id: m.id, nome: m.nome, label, disabled: isFull });
+            return acc;
+          }, []);
+          setModalidadesOptions(options);
+        } catch (err) {
+          console.warn("Erro ao ler modalidades:", err);
+        }
       }
 
       // Auto seleciona a primeira vaga livre
