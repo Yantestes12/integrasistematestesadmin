@@ -1341,13 +1341,23 @@ export default function Espacos() {
                 <select
                   value={selectedModalidadeId}
                   onChange={e => setSelectedModalidadeId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  disabled={modalidadesOptions.length === 0}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
                 >
                   <option value="">Selecione uma modalidade...</option>
                   {modalidadesOptions.map(m => (
                     <option key={m.id} value={m.id} disabled={m.disabled}>{m.label || m.nome}</option>
                   ))}
                 </select>
+                
+                {modalidadesOptions.length === 0 && espacoToApprove.projeto_id && (
+                  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                    <AlertTriangle size={14} className="text-red-600 shrink-0 mt-0.5" />
+                    <span className="text-[10px] md:text-xs text-red-700 font-medium">
+                      <strong>Atenção:</strong> A iniciativa vinculada a este espaço não possui modalidades com vagas disponíveis. Vá na aba "Iniciativas" e configure as modalidades permitidas.
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Seletor de Vaga de Núcleo (Slot no Projeto) */}
