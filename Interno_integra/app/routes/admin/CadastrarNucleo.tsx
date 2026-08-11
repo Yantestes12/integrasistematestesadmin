@@ -77,7 +77,11 @@ export default function CadastrarNucleo() {
           if (nText) {
             const nData = JSON.parse(nText);
             const list = Array.isArray(nData) ? nData : nData.data || [nData];
-            list.forEach((n: any) => { if (n.espaco_id) nMap[String(n.espaco_id)] = n.nome; });
+            list.forEach((n: any) => { 
+              if (n && n.espaco_id && String(n.id) !== editId) {
+                nMap[String(n.espaco_id)] = n.nome || n.nome_nucleo || `Núcleo ${n.id}`; 
+              } 
+            });
           }
         } catch (e) {
           console.warn("Erro ao fazer parse dos núcleos no fetchEspacos:", e);
@@ -390,8 +394,8 @@ export default function CadastrarNucleo() {
                   <option value="">Selecione um espaço físico para este projeto...</option>
                 )}
                 {filteredEspacos.map(e => (
-                  <option key={e.id} value={e.id}>
-                    {e.nome} {e.bairro ? `(${e.bairro})` : ""} {e.nucleo_nome ? "— 🟢 Em Uso" : "— ⚪ Disponível"}
+                  <option key={e.id} value={e.id} disabled={!!e.nucleo_nome}>
+                    {e.nome} {e.bairro ? `(${e.bairro})` : ""} {e.nucleo_nome ? `— 🔴 Ocupado (${e.nucleo_nome})` : "— 🟢 Disponível"}
                   </option>
                 ))}
               </select>
