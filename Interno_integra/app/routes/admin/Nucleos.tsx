@@ -361,12 +361,7 @@ export default function Nucleos() {
       {/* Top Banner / Breadcrumb */}
       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-blue-100">
-              <Building2 size={14} /> {currentInstitute}
-            </span>
-            <span className="text-slate-400 text-xs">• Módulo Administrativo</span>
-          </div>
+
           <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight">
             Núcleos
           </h1>
@@ -375,6 +370,13 @@ export default function Nucleos() {
           </p>
         </div>
 
+        <button
+          onClick={() => alert("🚧 Tela em construção: Em breve você poderá visualizar todo o histórico de núcleos e relatórios aqui.")}
+          className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-5 py-3 rounded-xl shadow-xs border border-slate-200 transition-all flex items-center gap-2 text-sm shrink-0"
+        >
+          <Calendar size={18} className="text-slate-500" />
+          <span>Histórico de Núcleos</span>
+        </button>
       </div>
 
       {/* Card da Tabela de Núcleos */}
