@@ -281,13 +281,11 @@ export default function Nucleos() {
           console.warn("O Webhook do N8N não retornou os dados corretamente.");
         } else {
           const parsed = parseNucleosList(fetchedData);
-          if (parsed.length > 0) {
-            setNucleos(parsed.sort((a, b) => {
-              const aVaga = a.numero_vaga === "—" ? 99999 : Number(a.numero_vaga);
-              const bVaga = b.numero_vaga === "—" ? 99999 : Number(b.numero_vaga);
-              return aVaga - bVaga;
-            }));
-          }
+          setNucleos(parsed.sort((a, b) => {
+            const aVaga = a.numero_vaga === "—" ? 99999 : Number(a.numero_vaga);
+            const bVaga = b.numero_vaga === "—" ? 99999 : Number(b.numero_vaga);
+            return aVaga - bVaga;
+          }));
         }
       }
     } catch (e) {
