@@ -64,6 +64,19 @@ export default function CadastrarNucleo() {
     fetchNucleos(savedInst);
   }, []);
 
+  const flattenResponse = (data: any): any[] => {
+    if (!data) return [];
+    let list: any[] = Array.isArray(data) ? data : data.data || data.items || (data.json ? (Array.isArray(data.json) ? data.json : [data.json]) : [data]);
+    if (!Array.isArray(list)) list = [list];
+    let flat: any[] = [];
+    list.forEach((entry: any) => {
+      if (!entry) return;
+      if (entry?.json) Array.isArray(entry.json) ? flat.push(...entry.json) : flat.push(entry.json);
+      else flat.push(entry);
+    });
+    return flat;
+  };
+
   const fetchEspacos = async (inst: string) => {
     try {
       const [resE, resN] = await Promise.all([
@@ -76,8 +89,8 @@ export default function CadastrarNucleo() {
           const nText = await resN.text();
           if (nText) {
             const nData = JSON.parse(nText);
-            const list = Array.isArray(nData) ? nData : nData.data || [nData];
-            list.forEach((n: any) => { 
+            const flatN = flattenResponse(nData);
+            flatN.forEach((n: any) => { 
               if (n && n.espaco_id && String(n.id) !== editId) {
                 nMap[String(n.espaco_id)] = n.nome || n.nome_nucleo || `Núcleo ${n.id}`; 
               } 
@@ -89,9 +102,7 @@ export default function CadastrarNucleo() {
       }
       if (resE.ok) {
         const data = await resE.json();
-        let list = Array.isArray(data) ? data : data.data || [data];
-        if (!Array.isArray(list)) list = [list];
-        setEspacos(list.filter(Boolean).map((e: any) => ({ ...e, nucleo_nome: nMap[String(e.id)] })));
+        setEspacos(flattenResponse(data).map((e: any) => ({ ...e, nucleo_nome: nMap[String(e.id)] })));
       }
     } catch (e) { console.warn("Erro espacos:", e); }
   };
@@ -101,9 +112,7 @@ export default function CadastrarNucleo() {
       const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${inst.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
-        let list = Array.isArray(data) ? data : data.data || [data];
-        if (!Array.isArray(list)) list = [list];
-        setProjetos(list.filter(Boolean));
+        setProjetos(flattenResponse(data));
       }
     } catch (e) { console.warn("Erro projetos:", e); }
   };
@@ -113,9 +122,7 @@ export default function CadastrarNucleo() {
       const res = await fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${inst.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
-        let list = Array.isArray(data) ? data : data.data || [data];
-        if (!Array.isArray(list)) list = [list];
-        setModalidades(list.filter(Boolean));
+        setModalidades(flattenResponse(data));
       }
     } catch (e) { console.warn("Erro modalidades:", e); }
   };
@@ -129,16 +136,7 @@ export default function CadastrarNucleo() {
            setNucleosExistentes([]);
            return;
         }
-        let list = Array.isArray(data) ? data : data.data || data.items || (data.json ? (Array.isArray(data.json) ? data.json : [data.json]) : [data]);
-        if (!Array.isArray(list)) list = [list];
-        let flatList: any[] = [];
-        list.forEach((entry: any) => {
-          if (!entry) return;
-          if (entry && entry.json) {
-            if (Array.isArray(entry.json)) flatList.push(...entry.json);
-            else flatList.push(entry.json);
-          } else flatList.push(entry);
-        });
+        const flatList = flattenResponse(data);
         setNucleosExistentes(flatList.filter(n => n !== null && n !== undefined));
       }
     } catch (e) { console.warn("Erro nucleos:", e); }
@@ -227,16 +225,7 @@ export default function CadastrarNucleo() {
             const data = await res.json();
             if (data.message === "Workflow was started" || data.error) return;
 
-            let list = Array.isArray(data) ? data : data.data || data.items || (data.json ? (Array.isArray(data.json) ? data.json : [data.json]) : [data]);
-            if (!Array.isArray(list)) list = [list];
-            let flatList: any[] = [];
-            list.forEach((entry: any) => {
-              if (!entry) return;
-              if (entry && entry.json) {
-                if (Array.isArray(entry.json)) flatList.push(...entry.json);
-                else flatList.push(entry.json);
-              } else flatList.push(entry);
-            });
+            const flatList = flattenResponse(data);
 
             const nucleo = flatList.find(n => n && String(n.id || n.id_nucleo) === editId);
 
