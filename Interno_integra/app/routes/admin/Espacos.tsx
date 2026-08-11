@@ -347,14 +347,18 @@ export default function Espacos() {
 
       // 2. Cria o Núcleo Operacional automaticamente
       const formData = new FormData();
-      formData.append("nome", espacoToApprove.nome);
-      formData.append("espaco_id", String(espacoToApprove.id));
-      if (espacoToApprove.projeto_id) formData.append("projeto_id", String(espacoToApprove.projeto_id));
-      formData.append("modalidade_id", selectedModalidadeId);
-      formData.append("numero_vaga", selectedNumeroVaga);
+      formData.append("nomeNucleo", espacoToApprove.bairro || espacoToApprove.nome);
+      formData.append("espacoId", String(espacoToApprove.id));
+      if (espacoToApprove.projeto_id) formData.append("projetoId", String(espacoToApprove.projeto_id));
+      formData.append("modalidadeId", selectedModalidadeId);
+      formData.append("numeroVaga", selectedNumeroVaga);
+      formData.append("bairroId", ""); // Não usamos mais bairro_id, manda vazio para anular
+      
+      // Opcionais (apenas se N8N aceitar, não faz mal mandar)
       if (espacoToApprove.bairro) formData.append("bairro", espacoToApprove.bairro);
       if (espacoToApprove.cidade) formData.append("cidade", espacoToApprove.cidade);
       if (espacoToApprove.uf) formData.append("uf", espacoToApprove.uf);
+      
       formData.append("ativo", "true");
       formData.append("aceitando_vagas", "true");
 
