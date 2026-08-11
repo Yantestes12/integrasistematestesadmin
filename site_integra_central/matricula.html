@@ -1162,11 +1162,13 @@
                     <h2>Modalidade e Núcleo</h2>
                     <p>Selecione a modalidade esportiva e o núcleo desejados.</p>
                 </div>
-                <div id="bloco-modalidade"  >
+                <div id="bloco-nucleo" style="display:none;margin-top:24px;">
             <div class="mat-section-header" style="display:none;">
-                <div class="mat-section-num">5</div>
-                <div class="mat-section-title">Modalidade</div>
+                <div class="mat-section-num">6</div>
+                <div class="mat-section-title">Escolha do Turno</div>
             </div>
+            <div style="background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.04);padding:24px;border:1px solid #e2e8f0;">
+                <h3 style="margin-top:0;font-size:16px;color:#0f172a;margin-bottom:16px;">Selecione o Turno Desejado</h3></div>
             <div >
                 <div id="modalidade-lista" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
                 <input type="hidden" id="modalidade_id" name="modalidade_id" value="">
@@ -3545,26 +3547,46 @@ window.dadosRecentesCPF = null;
             return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>';
         }
 
-        function renderModalidadeCard(m){
-            var nome = m.nome ? m.nome.toUpperCase() : '';
+        function renderModalidadeCard(m, bairroNome){
+            var n = m.nome ? m.nome.toUpperCase() : '';
             var icone = '🏅';
-            if (nome.includes('FUTEBOL') || nome.includes('FUTSAL')) icone = '⚽';
-            else if (nome.includes('LUTA') || nome.includes('JIU') || nome.includes('JUDO') || nome.includes('CAPOEIRA') || nome.includes('KARAT')) icone = '🥋';
-            else if (nome.includes('MUAY THAI') || nome.includes('BOXE')) icone = '🥊';
-            else if (nome.includes('FUNCIONAL') || nome.includes('CROSS')) icone = '🏋️‍♂️';
-            else if (nome.includes('VOLEI')) icone = '🏐';
-            else if (nome.includes('BASQUETE')) icone = '🏀';
-            else if (nome.includes('DANCA') || nome.includes('BALLET') || nome.includes('ZUMBA')) icone = '💃';
-            else if (nome.includes('NATACAO') || nome.includes('HIDRO')) icone = '🏊‍♀️';
+            if (n.includes('ATLETISMO') || n.includes('CORRIDA')) icone = '🏃';
+            else if (n.includes('BALÉ') || n.includes('BALE')) icone = '🩰';
+            else if (n.includes('GINÁSTICA RÍTMICA') || n.includes('GINASTICA RITMICA')) icone = '🤸‍♀️';
+            else if (n.includes('JUDÔ') || n.includes('JUDO') || n.includes('JIU-JITSU') || n.includes('JIU JITSU') || n.includes('TAEKWONDO') || n.includes('KARATÊ') || n.includes('KARATE')) icone = '🥋';
+            else if (n.includes('CAPOEIRA')) icone = '🤸‍♂️';
+            else if (n.includes('FUTEBOL') || n.includes('FUTSAL')) icone = '⚽';
+            else if (n.includes('BASQUETE')) icone = '🏀';
+            else if (n.includes('VOLEI DE PRAIA') || n.includes('VÔLEI DE PRAIA')) icone = '🏖️';
+            else if (n.includes('VOLEI') || n.includes('VÔLEI')) icone = '🏐';
+            else if (n.includes('HANDEBOL')) icone = '🤾‍♂️';
+            else if (n.includes('FUNCIONAL')) icone = '🏋️‍♂️';
+            else if (n.includes('PILATES')) icone = '🧘‍♀️';
+            else if (n.includes('HIDROGINÁSTICA') || n.includes('HIDROGINASTICA') || n.includes('NATAÇÃO') || n.includes('NATACAO')) icone = '🏊‍♀️';
+            else if (n.includes('XADREZ')) icone = '♟️';
+            else if (n.includes('SAMBA') || n.includes('FORRÓ') || n.includes('FORRO') || n.includes('DANÇA') || n.includes('DANCA')) icone = '💃';
+            else if (n.includes('TEATRO')) icone = '🎭';
+            else if (n.includes('CIRCO')) icone = '🎪';
+            else if (n.includes('MÚSICA') || n.includes('MUSICA')) icone = '🎵';
+            else if (n.includes('PINTURA')) icone = '🎨';
+            else if (n.includes('FOTOGRAFIA')) icone = '📷';
+            else if (n.includes('CERÂMICA') || n.includes('CERAMICA')) icone = '🏺';
+            else if (n.includes('COSTURA') || n.includes('BORDADO')) icone = '🧵';
+            else if (n.includes('MANICURE')) icone = '💅';
+            else if (n.includes('DESIGNER') || n.includes('SOBRANCELHA')) icone = '👁️';
+            else if (n.includes('CABELEIREIRO')) icone = '💇‍♀️';
+            else if (n.includes('REFORÇO') || n.includes('REFORCO')) icone = '📚';
             
             return '<div class="mod-card" data-id="'+m.id+'" data-nome="'+m.nome+'" style="'
                 +'display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:10px;'
                 +'border:1.5px solid rgba(255,255,255,0.08);background:rgba(15,23,42,0.3);cursor:pointer;transition:all 0.3s;user-select:none;'
-                +'min-width:180px;flex:1;color:var(--text-main);">'
+                +'min-width:220px;flex:1;color:var(--text-main);">'
                 +'<div class="mod-radio" style="flex-shrink:0;">'+iconCircle()+'</div>'
-                +'<div style="font-size:24px;line-height:1;">'+icone+'</div>'
-                +'<div style="font-weight:800;font-size:15px;color:#0f172a;">'+m.nome+'</div>'
-                +'</div>';
+                +'<div style="font-size:32px;line-height:1;margin-right:4px;">'+icone+'</div>'
+                +'<div style="display:flex;flex-direction:column;gap:4px;">'
+                +'<div style="font-weight:800;font-size:16px;color:#0f172a;line-height:1.2;">'+m.nome+'</div>'
+                +'<div style="font-size:13px;color:#475569;font-weight:600;"><i class="fas fa-map-marker-alt"></i> Polo: '+bairroNome+'</div>'
+                +'</div></div>';
         }
 
         // Hover delegado
