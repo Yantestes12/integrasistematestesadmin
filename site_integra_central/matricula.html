@@ -1185,7 +1185,7 @@
                 <h3 style="margin-top:0;font-size:16px;color:#0f172a;margin-bottom:16px;">Selecione o Turno Desejado</h3>
                 <input type="hidden" id="nucleo_id" name="nucleo_id" value="" required>
                 
-                <div class="hint info" style="margin-bottom:12px;">
+                <div id="hint-nucleo" class="hint info" style="margin-bottom:12px;">
                     Selecione o núcleo desejado. Núcleos marcados em vermelho já atingiram a capacidade máxima e não podem ser selecionados.
                 </div>
 
@@ -3286,8 +3286,10 @@ window.dadosRecentesCPF = null;
                     return;
                 }
                 if(lista) lista.innerHTML='';
+                var elBairroSelect = document.getElementById('bairro_id');
+                var txtBairro = (elBairroSelect && elBairroSelect.selectedIndex >= 0) ? elBairroSelect.options[elBairroSelect.selectedIndex].text : '';
                 modsAtivas.forEach(function(m){
-                    if(lista) lista.innerHTML+=renderModalidadeCard(m);
+                    if(lista) lista.innerHTML+=renderModalidadeCard(m, txtBairro);
                 });
                 mostrar('bloco-modalidade'); setRequiredIn('bloco-modalidade',true);
                 if(lista){
@@ -3382,15 +3384,18 @@ window.dadosRecentesCPF = null;
                     n.turnos = turnos;
                 });
 
+                var hintNucleo = document.getElementById('hint-nucleo');
                 if (filtrados.length === 1) {
                     var n = filtrados[0];
                     if (hidNucleo) hidNucleo.value = n.id;
                     if (listaNucleos) listaNucleos.style.display = 'none';
+                    if (hintNucleo) hintNucleo.style.display = 'none';
                     renderizarTurnos(n.turnos);
                     verificarResponsavel();
                     verificarMaioridade();
                 } else {
                     if (listaNucleos) listaNucleos.style.display = 'block';
+                    if (hintNucleo) hintNucleo.style.display = 'block';
                     filtrados.forEach(function(n) {
                         var card = document.createElement('label');
                         card.className = 'projeto-card' + (n.lotado ? ' disabled' : '');
@@ -4006,7 +4011,6 @@ window.dadosRecentesCPF = null;
                 var cpfAluno = (document.getElementById('cpf_aluno') || {}).value || '';
 
                 window.gerarComprovantePDF = function() {
-                    var win = window.open('', '_blank');
                     var getV = function(idOrName) {
                         if (!idOrName) return '';
                         var el = document.getElementById(idOrName);
