@@ -60,7 +60,7 @@ const DIAS = [
 ];
 
 const DEFAULT_HORARIOS: Record<string, HorarioDia> = Object.fromEntries(
-  DIAS.map(d => [d.key, { ativo: false, abertura: "08:00", fechamento: "17:00" }])
+  DIAS.map(d => [d.key, { ativo: false, abertura: "06:00", fechamento: "22:00" }])
 );
 
 const INITIAL_FORM: FormData = {
@@ -460,8 +460,8 @@ export default function CadastrarEspaco() {
     }
 
     if (step === 3) {
-      const algumDia = DIAS.some(d => form.horarios[d.key]?.ativo);
-      if (!algumDia) errs.horarios = "Selecione pelo menos um dia de funcionamento";
+      const diasSelecionados = DIAS.filter(d => form.horarios[d.key]?.ativo).length;
+      if (diasSelecionados < 2) errs.horarios = "Selecione pelo menos DOIS dias de funcionamento na semana";
     }
 
     setErrors(errs);
