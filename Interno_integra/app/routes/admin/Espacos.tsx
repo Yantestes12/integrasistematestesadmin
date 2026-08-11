@@ -945,7 +945,19 @@ export default function Espacos() {
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                        {/* Botão de Virar Núcleo para espaços disponíveis */}
+                        {!espaco.em_uso && !isIncompleto(espaco) && (
+                          <button
+                            onClick={() => handleAprovarEspaco(espaco)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors"
+                            title="Aprovar e Virar Núcleo"
+                          >
+                            <Plus size={13} />
+                            Virar Núcleo
+                          </button>
+                        )}
+
                         {/* Botão de Download / Imprimir Ficha Oficial */}
                         <button
                           onClick={() => handleOpenPrintFicha(espaco)}
@@ -953,7 +965,7 @@ export default function Espacos() {
                           title="Baixar Ficha Oficial em PDF / Imprimir"
                         >
                           <Download size={13} />
-                          Download Ficha
+                          Ficha
                         </button>
 
                         <Link
