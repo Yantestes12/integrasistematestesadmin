@@ -215,17 +215,20 @@ export default function CadastrarNucleo() {
           const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${authInstitute}`, { cache: "no-store" });
           if (res.ok) {
             const data = await res.json();
-            let list = Array.isArray(data) ? data : data.data || data.items || (Array.isArray(data.json) ? data.json : [data.json]);
+            if (data.message === "Workflow was started" || data.error) return;
+
+            let list = Array.isArray(data) ? data : data.data || data.items || (data.json ? (Array.isArray(data.json) ? data.json : [data.json]) : [data]);
             
             let flatList: any[] = [];
             list.forEach((entry: any) => {
+              if (!entry) return;
               if (entry && entry.json) {
                 if (Array.isArray(entry.json)) flatList.push(...entry.json);
                 else flatList.push(entry.json);
               } else flatList.push(entry);
             });
 
-            const nucleo = flatList.find(n => String(n.id || n.id_nucleo) === editId);
+            const nucleo = flatList.find(n => n && String(n.id || n.id_nucleo) === editId);
 
             if (nucleo) {
               reset({
