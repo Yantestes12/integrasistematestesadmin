@@ -325,9 +325,11 @@ export default function CadastrarEspaco() {
             nomeEspaco: autoNome || f.nomeEspaco || novoBairro,
           }));
           setErrors(e => { const n = { ...e }; delete n.cep; delete n.bairro; return n; });
-        } else { setErrors(e => ({ ...e, cep: "CEP não encontrado" })); }
+        } else { setErrors(e => ({ ...e, cep: "CEP não encontrado. Preencha o endereço manualmente." })); }
+      } else {
+        setErrors(e => ({ ...e, cep: "Erro na busca. Preencha manualmente." }));
       }
-    } catch { setErrors(e => ({ ...e, cep: "Erro ao buscar CEP" })); }
+    } catch { setErrors(e => ({ ...e, cep: "Erro ao buscar CEP. Preencha manualmente." })); }
     finally { setIsSearchingCep(false); }
   };
 
@@ -342,9 +344,15 @@ export default function CadastrarEspaco() {
         const item = Array.isArray(d) ? d[0] : d;
         const info = item?.result || item?.data || item;
         const nome = info?.nome_da_pf || info?.nome || info?.nome_razao_social || d?.nome || "";
-        if (nome) { set("respNome", nome); }
+        if (nome) { 
+          set("respNome", nome); 
+        } else {
+          setErrors(e => ({ ...e, respCpf: "CPF não localizado. Digite o nome manualmente." }));
+        }
+      } else {
+        setErrors(e => ({ ...e, respCpf: "Erro na busca. Digite o nome manualmente." }));
       }
-    } catch { console.warn("Erro CPF"); }
+    } catch { setErrors(e => ({ ...e, respCpf: "Erro ao buscar CPF. Digite manualmente." })); }
     finally { setIsSearchingCpf(false); }
   };
 
@@ -360,9 +368,13 @@ export default function CadastrarEspaco() {
         const info = item?.result || item?.data || item;
         if (info?.nome || info?.razao_social || info?.nome_fantasia) {
           set("respNome", info.nome || info.razao_social || info.nome_fantasia || form.respNome);
+        } else {
+          setErrors(e => ({ ...e, respCnpj: "CNPJ não localizado. Digite a Razão Social manualmente." }));
         }
+      } else {
+        setErrors(e => ({ ...e, respCnpj: "Erro na busca. Digite manualmente." }));
       }
-    } catch { console.warn("Erro CNPJ"); }
+    } catch { setErrors(e => ({ ...e, respCnpj: "Erro ao buscar CNPJ. Digite manualmente." })); }
     finally { setIsSearchingCnpj(false); }
   };
 
