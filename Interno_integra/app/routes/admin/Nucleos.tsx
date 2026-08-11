@@ -277,8 +277,9 @@ export default function Nucleos() {
 
     try {
       if (fetchedData) {
-        if (fetchedData.message === "Workflow was started" || (Array.isArray(fetchedData) && fetchedData.length > 0 && fetchedData[0].message === "Workflow was started")) {
+        if (fetchedData.message === "Workflow was started" || (Array.isArray(fetchedData) && fetchedData.length > 0 && fetchedData[0].message === "Workflow was started") || fetchedData.error) {
           console.warn("O Webhook do N8N não retornou os dados corretamente.");
+          setNucleos([]);
         } else {
           const parsed = parseNucleosList(fetchedData);
           setNucleos(parsed.sort((a, b) => {
