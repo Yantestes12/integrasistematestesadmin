@@ -589,7 +589,7 @@ export default function Espacos() {
             <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Módulo Operacional</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            Espaços
+            Descrição do Espaço
           </h1>
           <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
             Gerencie os locais cadastrados e acompanhe solicitações de novos espaços.
@@ -744,7 +744,7 @@ export default function Espacos() {
             return (
               <div
                 key={espaco.id}
-                className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-all overflow-hidden flex flex-col justify-between"
+                className="bg-white rounded-2xl border-2 border-slate-200 shadow-sm hover:border-[var(--theme-primary)] hover:shadow-md transition-all overflow-hidden flex flex-col justify-between"
               >
                 {/* Imagem de Capa ou Placeholder */}
                 <div className="relative h-32 bg-slate-100 overflow-hidden">
