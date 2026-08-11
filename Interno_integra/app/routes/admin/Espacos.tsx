@@ -44,7 +44,7 @@ export default function Espacos() {
   // Modal de Aprovação de Espaço -> Criar Núcleo Automático
   const [approveModalOpen, setApproveModalOpen] = useState(false);
   const [espacoToApprove, setEspacoToApprove] = useState<EspacoItem | null>(null);
-  const [modalidadesOptions, setModalidadesOptions] = useState<{ id: string; nome: string }[]>([]);
+  const [modalidadesOptions, setModalidadesOptions] = useState<{ id: string; nome: string; label: string; disabled: boolean }[]>([]);
   const [selectedModalidadeId, setSelectedModalidadeId] = useState<string>("");
   const [vagasOcupadasNoProjeto, setVagasOcupadasNoProjeto] = useState<Record<number, string>>({});
   const [selectedNumeroVaga, setSelectedNumeroVaga] = useState<string>("1");
@@ -231,17 +231,34 @@ export default function Espacos() {
     
     try {
       const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
-      const [resM, resN] = await Promise.all([
+      const [resM, resN, resP] = await Promise.all([
         fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${authInstitute.toUpperCase()}`),
-        fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${authInstitute.toUpperCase()}`)
+        fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${authInstitute.toUpperCase()}`),
+        fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${authInstitute.toUpperCase()}`)
       ]);
 
-      if (resM.ok) {
-        const mData = await resM.json();
-        const mList = flattenResponse(mData).map((m: any) => ({ id: String(m.id), nome: m.nome || "" })).filter(m => m.nome);
-        setModalidadesOptions(mList);
+      const projLimitesMap: Record<number, number> = {};
+      let mustFilterByProject = false;
+      
+      if (resP.ok && espaco.projeto_id) {
+        mustFilterByProject = true;
+        const pData = await resP.json();
+        const pList = flattenResponse(pData);
+        const proj = pList.find((p: any) => String(p.id) === String(espaco.projeto_id));
+        if (proj) {
+          try {
+             const limitStr = proj.limites_modalidades || proj.limites_modalidade;
+             const parsedLimits = typeof limitStr === 'string' ? JSON.parse(limitStr) : (Array.isArray(limitStr) ? limitStr : []);
+             parsedLimits.forEach((l: any) => {
+               if (l.id) projLimitesMap[Number(l.id)] = Number(l.limite) || 0;
+             });
+          } catch(err) {
+             console.warn("Erro ao ler limites_modalidades", err);
+          }
+        }
       }
 
+      const mCount: Record<number, number> = {};
       const oMap: Record<number, string> = {};
       if (resN.ok) {
         const nData = await resN.json();
@@ -252,10 +269,37 @@ export default function Espacos() {
             if (!isNaN(v) && v > 0) {
               oMap[v] = n.nome || `Núcleo #${n.id}`;
             }
+            if (n.modalidade_id) {
+               const mid = Number(n.modalidade_id);
+               mCount[mid] = (mCount[mid] || 0) + 1;
+            }
           }
         });
       }
       setVagasOcupadasNoProjeto(oMap);
+
+      if (resM.ok) {
+        const mData = await resM.json();
+        let mList = flattenResponse(mData).map((m: any) => ({ id: String(m.id), nome: m.nome || "" })).filter((m: any) => m.nome);
+        
+        const options = mList.reduce((acc: any[], m: any) => {
+          const mid = Number(m.id);
+          if (mustFilterByProject && projLimitesMap[mid] === undefined) return acc;
+          
+          const limit = projLimitesMap[mid] || 0;
+          const used = mCount[mid] || 0;
+          const isFull = limit > 0 && used >= limit;
+          
+          let label = m.nome;
+          if (limit > 0) {
+            label += ` (${used}/${limit} Núcleos ${isFull ? '- ESGOTADA' : ''})`;
+          }
+          
+          acc.push({ id: m.id, nome: m.nome, label, disabled: isFull });
+          return acc;
+        }, []);
+        setModalidadesOptions(options);
+      }
 
       // Auto seleciona a primeira vaga livre
       let free = 1;
@@ -1278,7 +1322,7 @@ export default function Espacos() {
                 >
                   <option value="">Selecione uma modalidade...</option>
                   {modalidadesOptions.map(m => (
-                    <option key={m.id} value={m.id}>{m.nome}</option>
+                    <option key={m.id} value={m.id} disabled={m.disabled}>{m.label || m.nome}</option>
                   ))}
                 </select>
               </div>
