@@ -582,13 +582,6 @@ export default function CadastrarEspaco() {
                 {projetos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
               </select>
             </Field>
-
-            <Field label="Qual modalidade?" error={errors.modalidadeId}>
-              <select className={inputCls(errors.modalidadeId)} value={form.modalidadeId} onChange={e => set("modalidadeId", e.target.value)}>
-                <option value="">Selecione uma modalidade... (opcional)</option>
-                {availableModalidades.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
-              </select>
-            </Field>
           </div>
         );
 

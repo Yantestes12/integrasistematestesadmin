@@ -41,6 +41,15 @@ export default function Espacos() {
   const [togglingDocsId, setTogglingDocsId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
+  // Modal de Aprovação de Espaço -> Criar Núcleo Automático
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
+  const [espacoToApprove, setEspacoToApprove] = useState<EspacoItem | null>(null);
+  const [modalidadesOptions, setModalidadesOptions] = useState<{ id: string; nome: string }[]>([]);
+  const [selectedModalidadeId, setSelectedModalidadeId] = useState<string>("");
+  const [vagasOcupadasNoProjeto, setVagasOcupadasNoProjeto] = useState<Record<number, string>>({});
+  const [selectedNumeroVaga, setSelectedNumeroVaga] = useState<string>("1");
+  const [isSubmittingApprove, setIsSubmittingApprove] = useState(false);
+
   // Sistema de Notificações Flutuantes (Toasts)
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -217,27 +226,101 @@ export default function Espacos() {
   };
 
   const handleAprovarEspaco = async (espaco: EspacoItem) => {
-    setApprovingId(espaco.id);
+    setEspacoToApprove(espaco);
+    setSelectedModalidadeId("");
+    
     try {
       const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
-      const res = await fetch("https://w.ibrase.com.br/webhook/espacos-put", {
+      const [resM, resN] = await Promise.all([
+        fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${authInstitute.toUpperCase()}`),
+        fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${authInstitute.toUpperCase()}`)
+      ]);
+
+      if (resM.ok) {
+        const mData = await resM.json();
+        const mList = flattenResponse(mData).map((m: any) => ({ id: String(m.id), nome: m.nome || "" })).filter(m => m.nome);
+        setModalidadesOptions(mList);
+      }
+
+      const oMap: Record<number, string> = {};
+      if (resN.ok) {
+        const nData = await resN.json();
+        const nList = flattenResponse(nData);
+        nList.forEach((n: any) => {
+          if (String(n.projeto_id) === String(espaco.projeto_id)) {
+            const v = Number(n.numero_vaga ?? n.vaga_numero ?? n.vaga_alocada);
+            if (!isNaN(v) && v > 0) {
+              oMap[v] = n.nome || `Núcleo #${n.id}`;
+            }
+          }
+        });
+      }
+      setVagasOcupadasNoProjeto(oMap);
+
+      // Auto seleciona a primeira vaga livre
+      let free = 1;
+      while (oMap[free]) free++;
+      setSelectedNumeroVaga(String(free));
+
+      setApproveModalOpen(true);
+    } catch (e) {
+      console.error("Erro ao preparar aprovação:", e);
+      addToast("error", "Erro ao carregar dados", "Não foi possível carregar as modalidades.");
+    }
+  };
+
+  const handleConfirmAprovarEspaco = async () => {
+    if (!espacoToApprove || !selectedModalidadeId) {
+      addToast("warning", "Atenção", "Selecione uma modalidade para gerar o núcleo.");
+      return;
+    }
+    setIsSubmittingApprove(true);
+    try {
+      const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
+      
+      // 1. Atualiza status do Espaço para Aprovado
+      const resE = await fetch("https://w.ibrase.com.br/webhook/espacos-put", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: espaco.id,
+          id: espacoToApprove.id,
           status_aprovacao: "aprovado",
+          modalidade_id: Number(selectedModalidadeId),
           instituto: authInstitute.toUpperCase()
         }),
       });
-      if (res.ok) {
-        setEspacos(prev => prev.map(e => e.id === espaco.id ? { ...e, status_aprovacao: "aprovado" } : e));
-        addToast("success", "ESPAÇO APROVADO!", `O espaço "${espaco.nome}" foi aprovado e inserido nos Espaços Cadastrados.`);
+
+      // 2. Cria o Núcleo Operacional automaticamente
+      const formData = new FormData();
+      formData.append("nome", espacoToApprove.nome);
+      formData.append("espaco_id", String(espacoToApprove.id));
+      if (espacoToApprove.projeto_id) formData.append("projeto_id", String(espacoToApprove.projeto_id));
+      formData.append("modalidade_id", selectedModalidadeId);
+      formData.append("numero_vaga", selectedNumeroVaga);
+      if (espacoToApprove.bairro) formData.append("bairro", espacoToApprove.bairro);
+      if (espacoToApprove.cidade) formData.append("cidade", espacoToApprove.cidade);
+      if (espacoToApprove.uf) formData.append("uf", espacoToApprove.uf);
+      formData.append("ativo", "true");
+      formData.append("aceitando_vagas", "true");
+
+      const resN = await fetch(`https://w.ibrase.com.br/webhook/nucleos-post?instituto=${authInstitute.toUpperCase()}`, {
+        method: "POST",
+        body: formData
+      });
+
+      if (resE.ok && resN.ok) {
+        addToast("success", "ESPAÇO APROVADO E NÚCLEO CRIADO!", `O espaço "${espacoToApprove.nome}" foi aprovado e o Núcleo (Vaga Nº ${selectedNumeroVaga}) foi gerado automaticamente.`);
+        setApproveModalOpen(false);
+        setEspacoToApprove(null);
+        fetchEspacos();
+      } else {
+        addToast("error", "Erro ao Processar", "Ocorreu uma falha ao criar o núcleo automático.");
       }
     } catch (e) {
-      console.error("Erro ao aprovar espaço:", e);
-      addToast("error", "Erro na Aprovação", "Não foi possível aprovar a solicitação.");
+      console.error(e);
+      addToast("error", "Erro na Conexão", "Não foi possível concluir a aprovação.");
     } finally {
-      setApprovingId(null);
+      setIsSubmittingApprove(false);
     }
   };
 
@@ -1195,6 +1278,93 @@ export default function Espacos() {
           </div>
         );
       })()}
+
+      {/* Modal de Aprovação de Espaço -> Gerar Núcleo */}
+      {approveModalOpen && espacoToApprove && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 border border-slate-100">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                  <CheckCircle2 size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-800">Aprovar Espaço & Criar Núcleo</h3>
+                  <p className="text-xs text-slate-500">Configure a modalidade e a vaga do novo núcleo</p>
+                </div>
+              </div>
+              <button onClick={() => setApproveModalOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80 text-xs space-y-1">
+                <div className="font-bold text-slate-800 text-sm">{espacoToApprove.nome}</div>
+                {espacoToApprove.bairro && <div className="text-slate-500">Local: {espacoToApprove.bairro} {espacoToApprove.cidade ? `• ${espacoToApprove.cidade}` : ""}</div>}
+              </div>
+
+              {/* Seletor de Modalidade */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Selecione a Modalidade para o Núcleo <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedModalidadeId}
+                  onChange={e => setSelectedModalidadeId(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="">Selecione uma modalidade...</option>
+                  {modalidadesOptions.map(m => (
+                    <option key={m.id} value={m.id}>{m.nome}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Seletor de Vaga de Núcleo (Slot no Projeto) */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Número da Vaga do Núcleo (Slot no Projeto)
+                </label>
+                <select
+                  value={selectedNumeroVaga}
+                  onChange={e => setSelectedNumeroVaga(e.target.value)}
+                  className="w-full bg-emerald-50/60 border border-emerald-200 rounded-xl p-3 text-xs font-extrabold text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  {Array.from({ length: 20 }, (_, i) => i + 1).map(vaga => {
+                    const ocupadoPor = vagasOcupadasNoProjeto[vaga];
+                    return (
+                      <option key={vaga} value={vaga} disabled={!!ocupadoPor}>
+                        Vaga Nº {vaga} {ocupadoPor ? `— 🔴 Ocupada (${ocupadoPor})` : "— 🟢 Livre"}
+                      </option>
+                    );
+                  })}
+                </select>
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  A menor vaga livre foi pré-selecionada automaticamente. Vagas já ocupadas estão bloqueadas.
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                onClick={handleConfirmAprovarEspaco}
+                disabled={isSubmittingApprove || !selectedModalidadeId}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 px-4 rounded-xl text-xs shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isSubmittingApprove ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                <span>Aprovar e Gerar Núcleo</span>
+              </button>
+              <button
+                onClick={() => setApproveModalOpen(false)}
+                className="py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

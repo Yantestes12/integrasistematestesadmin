@@ -192,6 +192,16 @@ export default function CadastrarNucleo() {
     }
   }, [selectedEspaco, setFormValue]);
 
+  // Auto-seleciona a menor vaga (slot) de núcleo livre no projeto
+  useEffect(() => {
+    if (editId) return;
+    let firstFree = 1;
+    while (vagasOcupadasNoProjeto[firstFree]) {
+      firstFree++;
+    }
+    setValue("numeroVaga", String(firstFree));
+  }, [projetoIdWatch, vagasOcupadasNoProjeto, editId, setValue]);
+
   useEffect(() => {
     if (editId) {
       const fetchNucleo = async () => {
@@ -245,6 +255,12 @@ export default function CadastrarNucleo() {
     try {
       const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
       
+      // Validação de Vaga de Núcleo Ocupada
+      if (data.numeroVaga && vagasOcupadasNoProjeto[Number(data.numeroVaga)]) {
+        alert(`A Vaga de Núcleo Nº ${data.numeroVaga} já está ocupada por "${vagasOcupadasNoProjeto[Number(data.numeroVaga)]}". Escolha uma vaga livre.`);
+        return;
+      }
+
       const webhookUrl = editId 
         ? `https://w.ibrase.com.br/webhook/nucleos-put?instituto=${authInstitute}`
         : `https://w.ibrase.com.br/webhook/nucleos-post?instituto=${authInstitute}`;
@@ -462,21 +478,7 @@ export default function CadastrarNucleo() {
             </div>
             <div>
               
-              {/* CAMPO DE CAPACIDADE DE ALUNOS DO NÚCLEO */}
-              <div className="pt-2">
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Capacidade de Alunos
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ex: 100"
-                  {...register("vagas")}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <span className="text-[11px] text-slate-400 mt-1 block">
-                  Quantos alunos no total esse núcleo comporta.
-                </span>
-              </div>
+
 
               <label className="block text-xs font-semibold text-slate-700 mb-1">Data de Encerramento</label>
               <input
