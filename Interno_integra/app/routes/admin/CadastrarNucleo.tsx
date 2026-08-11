@@ -208,8 +208,8 @@ export default function CadastrarNucleo() {
     while (vagasOcupadasNoProjeto[firstFree]) {
       firstFree++;
     }
-    setValue("numeroVaga", String(firstFree));
-  }, [projetoIdWatch, vagasOcupadasNoProjeto, editId, setValue]);
+    setFormValue("numeroVaga", String(firstFree));
+  }, [projetoIdWatch, vagasOcupadasNoProjeto, editId, setFormValue]);
 
   useEffect(() => {
     if (editId) {
