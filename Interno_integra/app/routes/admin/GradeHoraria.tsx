@@ -156,17 +156,31 @@ export default function GradeHoraria() {
     }
   };
 
-  const handleHoraChange = (dia: DiasSemana, slotKey: "A" | "B" | "C" | "D" | "P", inicio: string, fim: string) => {
-    setDiasGrade(prev => ({
-      ...prev,
-      [dia]: {
-        ...prev[dia],
-        slots: {
-          ...prev[dia].slots,
-          [slotKey]: { inicio, fim }
-        }
+  const handleHoraChange = (dia: DiasSemana, slotKey: "A" | "B" | "C" | "D" | "P", type: "inicio" | "fim", value: string) => {
+    setDiasGrade(prev => {
+      const prevSlot = prev[dia].slots[slotKey];
+      let newInicio = type === "inicio" ? value : prevSlot.inicio;
+      let newFim = type === "fim" ? value : prevSlot.fim;
+
+      // Se mudou o INICIO e o valor é válido, auto-calcula o FIM para +2 horas
+      if (type === "inicio" && value && value.includes(":")) {
+        const [hStr, mStr] = value.split(":");
+        let newH = parseInt(hStr, 10) + 2;
+        if (newH > 22) newH = 22; // limite máximo
+        newFim = `${String(newH).padStart(2, '0')}:${mStr}`;
       }
-    }));
+
+      return {
+        ...prev,
+        [dia]: {
+          ...prev[dia],
+          slots: {
+            ...prev[dia].slots,
+            [slotKey]: { inicio: newInicio, fim: newFim }
+          }
+        }
+      };
+    });
   };
 
   const handleToggleDia = (dia: DiasSemana) => {
@@ -421,7 +435,7 @@ export default function GradeHoraria() {
                                       : "border-slate-200 focus:ring-emerald-500"
                                   }`}
                                   value={slotVal?.inicio || ""}
-                                  onChange={e => handleHoraChange(d, slot.key as "A" | "B" | "C" | "D" | "P", e.target.value, slotVal?.fim || "")}
+                                  onChange={e => handleHoraChange(d, slot.key as "A" | "B" | "C" | "D" | "P", "inicio", e.target.value)}
                                 />
                                 <span className="text-[10px] text-slate-400 font-bold">às</span>
                                 <input
@@ -434,7 +448,7 @@ export default function GradeHoraria() {
                                       : "border-slate-200 focus:ring-emerald-500"
                                   }`}
                                   value={slotVal?.fim || ""}
-                                  onChange={e => handleHoraChange(d, slot.key as "A" | "B" | "C" | "D" | "P", slotVal?.inicio || "", e.target.value)}
+                                  onChange={e => handleHoraChange(d, slot.key as "A" | "B" | "C" | "D" | "P", "fim", e.target.value)}
                                 />
                               </div>
                               {!validoNoEspaco && (
