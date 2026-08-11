@@ -48,7 +48,6 @@ export default function Espacos() {
   const [selectedModalidadeId, setSelectedModalidadeId] = useState<string>("");
   const [vagasOcupadasNoProjeto, setVagasOcupadasNoProjeto] = useState<Record<number, string>>({});
   const [selectedNumeroVaga, setSelectedNumeroVaga] = useState<string>("1");
-  const [selectedPeriodos, setSelectedPeriodos] = useState<string[]>(["Manhã", "Tarde"]);
   const [isSubmittingApprove, setIsSubmittingApprove] = useState(false);
 
   // Sistema de Notificações Flutuantes (Toasts)
@@ -354,7 +353,6 @@ export default function Espacos() {
       formData.append("modalidadeId", selectedModalidadeId);
       formData.append("numeroVaga", selectedNumeroVaga);
       formData.append("bairroId", ""); // Não usamos mais bairro_id, manda vazio para anular
-      formData.append("grade_horaria", JSON.stringify(selectedPeriodos));
       
       // Opcionais (apenas se N8N aceitar, não faz mal mandar)
       if (espacoToApprove.bairro) formData.append("bairro", espacoToApprove.bairro);
@@ -373,7 +371,6 @@ export default function Espacos() {
         addToast("success", "ESPAÇO APROVADO E NÚCLEO CRIADO!", `O espaço "${espacoToApprove.nome}" foi aprovado e o Núcleo (Vaga Nº ${selectedNumeroVaga}) foi gerado automaticamente.`);
         setApproveModalOpen(false);
         setEspacoToApprove(null);
-        setSelectedPeriodos(["Manhã", "Tarde"]); // reseta
         fetchEspacos();
       } else {
         addToast("error", "Erro ao Processar", "Ocorreu uma falha ao criar o núcleo automático.");
@@ -1386,39 +1383,12 @@ export default function Espacos() {
                   A menor vaga livre foi pré-selecionada automaticamente. Vagas já ocupadas estão bloqueadas.
                 </span>
               </div>
-
-              {/* Seletor de Grade Horária (Períodos Disponíveis) */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-2">
-                  Grade Horária Disponível (Turnos) <span className="text-red-500">*</span>
-                </label>
-                <div className="flex items-center gap-3">
-                  {["Manhã", "Tarde", "Noite"].map(turno => (
-                    <label key={turno} className="flex items-center gap-2 cursor-pointer bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors flex-1 justify-center">
-                      <input
-                        type="checkbox"
-                        checked={selectedPeriodos?.includes(turno) || false}
-                        onChange={(e) => {
-                          const current = selectedPeriodos || [];
-                          if (e.target.checked) {
-                            setSelectedPeriodos([...current, turno]);
-                          } else {
-                            setSelectedPeriodos(current.filter(t => t !== turno));
-                          }
-                        }}
-                        className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
-                      />
-                      <span className="text-xs font-bold text-slate-700">{turno}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
             </div>
 
             <div className="flex items-center gap-2 pt-2">
               <button
                 onClick={handleConfirmAprovarEspaco}
-                disabled={isSubmittingApprove || !selectedModalidadeId || selectedPeriodos.length === 0}
+                disabled={isSubmittingApprove || !selectedModalidadeId}
                 className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 px-4 rounded-xl text-xs shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isSubmittingApprove ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
