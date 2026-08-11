@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -3124,14 +3124,10 @@ window.dadosRecentesCPF = null;
             nucleosAtivos.forEach(function(n) { if(n.espaco_id) espacosIds[n.espaco_id] = true; });
             
             var espacosAtivos = (espacos || []).filter(function(e) { 
-                var matchNucleo = Object.keys(espacosIds).length === 0 || espacosIds[e.id] || espacosIds[String(e.id)];
+                var matchNucleo = espacosIds[e.id] || espacosIds[String(e.id)];
                 var matchProjeto = !pIdCurrent || !e.projeto_id || parseInt(e.projeto_id) === pIdCurrent;
                 return matchNucleo && matchProjeto && isAtivo(e.ativo); 
             });
-
-            if (!espacosAtivos.length) {
-                espacosAtivos = (espacos || []).filter(function(e) { return isAtivo(e.ativo); });
-            }
 
             var nomesCidades = [];
             espacosAtivos.forEach(function(e) {
@@ -3221,13 +3217,9 @@ window.dadosRecentesCPF = null;
                 
                 var filtrados = (espacos || []).filter(function(e){ 
                     var matchCidade = (e.cidade === cNome) || (e.bairro === cNome) || (!e.cidade && cNome === "Campos dos Goytacazes") || (cNome && String(e.cidade).trim().toLowerCase() === String(cNome).trim().toLowerCase());
-                    var matchNucleo = Object.keys(espacoIds).length === 0 || espacoIds[e.id] || espacoIds[String(e.id)];
+                    var matchNucleo = espacoIds[e.id] || espacoIds[String(e.id)];
                     return matchCidade && matchNucleo && isAtivo(e.ativo); 
                 });
-
-                if(!filtrados.length){
-                    filtrados = (espacos || []).filter(function(e){ return isAtivo(e.ativo); });
-                }
 
                 if(!filtrados.length){
                     bs2.innerHTML='<option value="">Nenhum bairro disponível.</option>';
