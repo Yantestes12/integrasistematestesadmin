@@ -104,14 +104,15 @@ export default function GradeHoraria() {
         if (found) {
           setNucleoNome(found.nome || found.nome_nucleo || `Núcleo #${id}`);
           
+          let parsedEspacoHorarios = null;
           // Carrega os horários do Espaço vinculado
           if (found.espaco_id && espacosMap[String(found.espaco_id)]) {
             const espaco = espacosMap[String(found.espaco_id)];
             setEspacoNome(espaco.nome);
             if (espaco.horarios) {
               try {
-                const parsedH = typeof espaco.horarios === "string" ? JSON.parse(espaco.horarios) : espaco.horarios;
-                setEspacoHorarios(parsedH);
+                parsedEspacoHorarios = typeof espaco.horarios === "string" ? JSON.parse(espaco.horarios) : espaco.horarios;
+                setEspacoHorarios(parsedEspacoHorarios);
               } catch (e) {
                 console.warn("Erro ao parsear horários do espaço:", e);
               }
@@ -120,9 +121,31 @@ export default function GradeHoraria() {
 
           if (found.grade_horaria) {
             try {
-              const parsed = typeof found.grade_horaria === "string" ? JSON.parse(found.grade_horaria) : found.grade_horaria;
-              if (parsed) setDiasGrade(parsed);
+              let parsedGrade = typeof found.grade_horaria === "string" ? JSON.parse(found.grade_horaria) : found.grade_horaria;
+              
+              // Sincroniza forçadamente com os limites do Espaço (corrige dados velhos)
+              if (parsedGrade && parsedEspacoHorarios) {
+                Object.entries(DIA_KEY_MAP).forEach(([dKey, eKey]) => {
+                   const limite = parsedEspacoHorarios[eKey];
+                   if (limite && !limite.ativo) {
+                     parsedGrade[dKey].ativo = false; // Força fechar se no Espaço tá fechado
+                   }
+                });
+              }
+              if (parsedGrade) setDiasGrade(parsedGrade);
             } catch (e) { console.warn("Erro ao parsear grade:", e); }
+          } else if (parsedEspacoHorarios) {
+            // Se for um Núcleo virgem, pré-seleciona os dias baseados no Espaço
+            setDiasGrade(prev => {
+               const newGrade = JSON.parse(JSON.stringify(prev));
+               Object.entries(DIA_KEY_MAP).forEach(([dKey, eKey]) => {
+                  const limite = parsedEspacoHorarios[eKey];
+                  if (limite && limite.ativo) {
+                     newGrade[dKey].ativo = true;
+                  }
+               });
+               return newGrade;
+            });
           }
         }
       }
@@ -150,19 +173,21 @@ export default function GradeHoraria() {
     const diaKey = DIA_KEY_MAP[dia];
     const limiteEspaco = espacoHorarios?.[diaKey];
     
-    // Se o Espaço restringe o dia e ele está inativo no espaço, não permite ativar
-    if (limiteEspaco && !limiteEspaco.ativo) {
-      alert(`O dia ${DIAS_MAP[dia]} não possui horário de funcionamento cadastrado no Espaço Físico.`);
-      return;
-    }
-
-    setDiasGrade(prev => ({
-      ...prev,
-      [dia]: {
-        ...prev[dia],
-        ativo: !prev[dia].ativo
+    // Se o Espaço restringe o dia e ele está inativo no espaço, só bloqueia se tentar ATIVAR
+    setDiasGrade(prev => {
+      const isCurrentlyActive = prev[dia].ativo;
+      if (!isCurrentlyActive && limiteEspaco && !limiteEspaco.ativo) {
+        alert(`O dia ${DIAS_MAP[dia]} não possui horário de funcionamento cadastrado no Espaço Físico.`);
+        return prev;
       }
-    }));
+      return {
+        ...prev,
+        [dia]: {
+          ...prev[dia],
+          ativo: !isCurrentlyActive
+        }
+      };
+    });
   };
 
   // Validador de horário dentro dos limites do Espaço Físico
