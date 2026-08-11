@@ -3380,98 +3380,101 @@ window.dadosRecentesCPF = null;
                         turnos = [...new Set(turnos)];
                     }
                     n.turnos = turnos;
-                    
-                    var card = document.createElement('label');
-                    // Reaproveita o estilo do CSS "projeto-card" que já existe na sua página
-                    card.className = 'projeto-card' + (isLotado ? ' disabled' : '');
-                    card.style.position = 'relative';
-                    
-                    var header = document.createElement('div');
-                    header.className = 'projeto-header';
-                    header.style.alignItems = 'flex-start';
-                    
-                    var inp = document.createElement('input');
-                    inp.type = 'radio';
-                    inp.name = 'nucleo_id_radio';
-                    inp.value = n.id;
-                    if(isLotado) inp.disabled = true;
-                    
-                    var textWrap = document.createElement('div');
-                    
-                    var title = document.createElement('div');
-                    title.textContent = n.nome;
-                    title.style.lineHeight = '1.2';
-                    title.style.color = 'var(--primary)';
-                    textWrap.appendChild(title);
-                    
-                    if(n.subnome) {
-                        var sub = document.createElement('div');
-                        sub.textContent = n.subnome;
-                        sub.style.fontSize = '12px';
-                        sub.style.color = 'var(--muted)';
-                        sub.style.fontWeight = '400';
-                        sub.style.marginTop = '2px';
-                        textWrap.appendChild(sub);
-                    }
-                    
-                    // Exibição de vagas vs lotado
-                    if (isLotado) {
-                        var lotadoBadge = document.createElement('div');
-                        lotadoBadge.textContent = 'VAGAS ESGOTADAS';
-                        lotadoBadge.style.fontSize = '10.5px';
-                        lotadoBadge.style.fontWeight = '900';
-                        lotadoBadge.style.color = '#fff';
-                        lotadoBadge.style.background = 'var(--red)';
-                        lotadoBadge.style.padding = '3px 7px';
-                        lotadoBadge.style.borderRadius = '4px';
-                        lotadoBadge.style.display = 'inline-block';
-                        lotadoBadge.style.marginTop = '6px';
-                        textWrap.appendChild(lotadoBadge);
-                    } else if (n.vagas > 0) {
-                        var vagasInfo = document.createElement('div');
-                        var disponiveis = n.vagasRestantes !== null ? n.vagasRestantes : n.vagas;
-                        vagasInfo.textContent = 'Vagas disponíveis: ' + disponiveis + ' de ' + n.vagas;
-                        vagasInfo.style.fontSize = '11.5px';
-                        vagasInfo.style.color = '#059669';
-                        vagasInfo.style.fontWeight = '700';
-                        vagasInfo.style.marginTop = '4px';
-                        textWrap.appendChild(vagasInfo);
-                    } else {
-                        var ilimitadoInfo = document.createElement('div');
-                        ilimitadoInfo.textContent = 'Vagas abertas';
-                        ilimitadoInfo.style.fontSize = '11.5px';
-                        ilimitadoInfo.style.color = '#059669';
-                        ilimitadoInfo.style.fontWeight = '700';
-                        ilimitadoInfo.style.marginTop = '4px';
-                        textWrap.appendChild(ilimitadoInfo);
-                    }
-                    
-                    header.appendChild(inp);
-                    header.appendChild(textWrap);
-                    card.appendChild(header);
-                    
-                    // Listener quando o usuário escolhe o núcleo
-                    inp.addEventListener('change', function() {
-                        if(this.checked) {
-                            if(hidNucleo) hidNucleo.value = this.value;
-                            
-                            // Visual active classes
-                            listaNucleos.querySelectorAll('.projeto-card').forEach(function(c) {
-                                c.classList.remove('active');
-                            });
-                            card.classList.add('active');
-                            
-                            // Monta os turnos correspondentes a ESTE núcleo
-                            renderizarTurnos(n.turnos);
-                            
-                            // Mostra o restante da página
-                            verificarResponsavel();
-                            verificarMaioridade();
-                        }
-                    });
-                    
-                    listaNucleos.appendChild(card);
                 });
+
+                if (filtrados.length === 1) {
+                    var n = filtrados[0];
+                    if (hidNucleo) hidNucleo.value = n.id;
+                    if (listaNucleos) listaNucleos.style.display = 'none';
+                    renderizarTurnos(n.turnos);
+                    verificarResponsavel();
+                    verificarMaioridade();
+                } else {
+                    if (listaNucleos) listaNucleos.style.display = 'block';
+                    filtrados.forEach(function(n) {
+                        var card = document.createElement('label');
+                        card.className = 'projeto-card' + (n.lotado ? ' disabled' : '');
+                        card.style.position = 'relative';
+                        
+                        var header = document.createElement('div');
+                        header.className = 'projeto-header';
+                        header.style.alignItems = 'flex-start';
+                        
+                        var inp = document.createElement('input');
+                        inp.type = 'radio';
+                        inp.name = 'nucleo_id_radio';
+                        inp.value = n.id;
+                        if(n.lotado) inp.disabled = true;
+                        
+                        var textWrap = document.createElement('div');
+                        
+                        var title = document.createElement('div');
+                        title.textContent = n.nome;
+                        title.style.lineHeight = '1.2';
+                        title.style.color = 'var(--primary)';
+                        textWrap.appendChild(title);
+                        
+                        if(n.subnome) {
+                            var sub = document.createElement('div');
+                            sub.textContent = n.subnome;
+                            sub.style.fontSize = '12px';
+                            sub.style.color = 'var(--muted)';
+                            sub.style.fontWeight = '400';
+                            sub.style.marginTop = '2px';
+                            textWrap.appendChild(sub);
+                        }
+                        
+                        if (n.lotado) {
+                            var lotadoBadge = document.createElement('div');
+                            lotadoBadge.textContent = 'VAGAS ESGOTADAS';
+                            lotadoBadge.style.fontSize = '10.5px';
+                            lotadoBadge.style.fontWeight = '900';
+                            lotadoBadge.style.color = '#fff';
+                            lotadoBadge.style.background = 'var(--red)';
+                            lotadoBadge.style.padding = '3px 7px';
+                            lotadoBadge.style.borderRadius = '4px';
+                            lotadoBadge.style.display = 'inline-block';
+                            lotadoBadge.style.marginTop = '6px';
+                            textWrap.appendChild(lotadoBadge);
+                        } else if (n.vagas > 0) {
+                            var vagasInfo = document.createElement('div');
+                            var disponiveis = n.vagasRestantes !== null ? n.vagasRestantes : n.vagas;
+                            vagasInfo.textContent = 'Vagas disponíveis: ' + disponiveis + ' de ' + n.vagas;
+                            vagasInfo.style.fontSize = '11.5px';
+                            vagasInfo.style.color = '#059669';
+                            vagasInfo.style.fontWeight = '700';
+                            vagasInfo.style.marginTop = '4px';
+                            textWrap.appendChild(vagasInfo);
+                        } else {
+                            var ilimitadoInfo = document.createElement('div');
+                            ilimitadoInfo.textContent = 'Vagas abertas';
+                            ilimitadoInfo.style.fontSize = '11.5px';
+                            ilimitadoInfo.style.color = '#059669';
+                            ilimitadoInfo.style.fontWeight = '700';
+                            ilimitadoInfo.style.marginTop = '4px';
+                            textWrap.appendChild(ilimitadoInfo);
+                        }
+                        
+                        header.appendChild(inp);
+                        header.appendChild(textWrap);
+                        card.appendChild(header);
+                        
+                        inp.addEventListener('change', function() {
+                            if(this.checked) {
+                                if(hidNucleo) hidNucleo.value = this.value;
+                                listaNucleos.querySelectorAll('.projeto-card').forEach(function(c) {
+                                    c.classList.remove('active');
+                                });
+                                card.classList.add('active');
+                                renderizarTurnos(n.turnos);
+                                verificarResponsavel();
+                                verificarMaioridade();
+                            }
+                        });
+                        
+                        listaNucleos.appendChild(card);
+                    });
+                }
                 
                 // Função local para atualizar os turnos
                     function renderizarTurnos(turnos) {
