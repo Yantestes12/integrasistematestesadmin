@@ -14,6 +14,7 @@ export interface NucleoItem {
   espaco_id?: number;
   numero_vaga?: string | number;
   vagas?: string | number;
+  instrutor?: string;
   resp_nome?: string;
   endereco?: string;
   ativo: boolean;
@@ -231,12 +232,12 @@ export default function Nucleos() {
       }
 
       // 5. RESPONSÁVEL E ENDEREÇO
-      let respNome = item.resp_nome || item.espacos?.resp_nome;
-      if (!respNome && item.espaco_id && espacosCache[Number(item.espaco_id)]) {
-        respNome = espacosCache[Number(item.espaco_id)].resp_nome;
+      let instrutor = item.instrutor || item.resp_nome || item.espacos?.resp_nome;
+      if (!instrutor && item.espaco_id && espacosCache[Number(item.espaco_id)]) {
+        instrutor = espacosCache[Number(item.espaco_id)].resp_nome;
       }
-      if (!respNome || respNome === "temp" || respNome === "x" || respNome === "—") {
-        respNome = "??? (Ajeitar depois)";
+      if (!instrutor || instrutor === "temp" || instrutor === "x" || instrutor === "—") {
+        instrutor = "—";
       }
 
       const rua = item.rua || espacoObj?.rua;
@@ -261,7 +262,8 @@ export default function Nucleos() {
         espaco_id: item.espaco_id,
         numero_vaga: numeroVaga,
         vagas: item.vagas,
-        resp_nome: respNome,
+        instrutor: instrutor,
+        resp_nome: item.resp_nome,
         endereco: enderecoFormatado,
         ativo: isAtivo,
         aceitando_vagas: isAceitandoVagas,
@@ -489,17 +491,11 @@ export default function Nucleos() {
                         </span>
                       </td>
 
-                      {/* Responsável Cedente */}
+                      {/* Instrutor */}
                       <td className="py-4 md:py-5 px-4 md:px-6">
-                        {item.resp_nome && item.resp_nome.includes("???") ? (
-                          <span className="font-extrabold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md text-xs inline-flex items-center gap-1">
-                            ⚠️ {item.resp_nome}
-                          </span>
-                        ) : (
-                          <span className="font-semibold text-slate-700 text-sm md:text-base block">
-                            👤 {item.resp_nome || "—"}
-                          </span>
-                        )}
+                        <span className="font-semibold text-slate-700 text-sm md:text-base block">
+                          👤 {item.instrutor || "—"}
+                        </span>
                       </td>
 
                       {/* Vaga do Núcleo (Exibe o número da vaga exato) */}

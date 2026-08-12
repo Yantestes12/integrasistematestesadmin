@@ -16,7 +16,7 @@ const cadastrarNucleoSchema = z.object({
   bairroId: z.string().optional(),
   numeroVaga: z.string().optional(),
   vagas: z.string().optional(),
-  respNome: z.string().optional(),
+  instrutor: z.string().optional(),
   
   // Vigência e Status
   ativo: z.boolean().default(true),
@@ -264,7 +264,7 @@ export default function CadastrarNucleo() {
                               ? String(nucleo.numero_vaga ?? nucleo.vaga_numero ?? nucleo.vaga_alocada) 
                               : "1",
                 vagas: String(nucleo.vagas || "100"),
-                respNome: nucleo.resp_nome || "",
+                instrutor: nucleo.instrutor || nucleo.resp_nome || "",
                 dataInicio: nucleo.data_inicio || "",
                 dataFim: nucleo.data_fim || "",
                 ativo: nucleo.ativo !== false && nucleo.ativo !== 0 && nucleo.ativo !== "0",
@@ -311,8 +311,8 @@ export default function CadastrarNucleo() {
       if (data.vagas) {
         formData.append("vagas", data.vagas);
       }
-      if (data.respNome !== undefined) {
-        formData.append("resp_nome", data.respNome);
+      if (data.instrutor !== undefined) {
+        formData.append("instrutor", data.instrutor);
       }
 
       const response = await fetch(webhookUrl, {
@@ -473,7 +473,7 @@ export default function CadastrarNucleo() {
             </label>
             <input
               type="text"
-              {...register("respNome")}
+              {...register("instrutor")}
               className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
               placeholder="Ex: João da Silva (Opcional)"
             />
