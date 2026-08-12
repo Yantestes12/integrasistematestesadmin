@@ -149,6 +149,7 @@ export const Topbar = () => {
               ))}
             </div>
           )}
+        </div>
       </div>
 
       {/* Lado Direito: Perfil e Botões de Utilidade */}
