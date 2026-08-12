@@ -393,10 +393,9 @@ export default function CadastrarEspaco() {
   };
 
   // ─── Efeitos Automáticos de Consulta ──────────────────────────────────────
+  // Busca de CEP removida do automático a pedido do usuário (para evitar sobrescrever dados na edição)
+
   useEffect(() => {
-    const clean = form.cep.replace(/\D/g, "");
-    if (clean.length === 8) buscarCep();
-  }, [form.cep]);
 
   useEffect(() => {
     const clean = form.respCpf.replace(/\D/g, "");
@@ -729,20 +728,31 @@ export default function CadastrarEspaco() {
         return (
           <div className="space-y-5">
             <Field label="CEP" error={errors.cep} required>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="00000-000"
-                  className={inputCls(errors.cep) + " pr-10"}
-                  value={form.cep}
-                  onChange={e => set("cep", formatCep(e.target.value))}
-                  maxLength={9}
-                />
-                {isSearchingCep && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--theme-primary)]">
-                    <Loader2 size={18} className="animate-spin" />
-                  </div>
-                )}
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    placeholder="00000-000"
+                    className={inputCls(errors.cep) + " pr-10"}
+                    value={form.cep}
+                    onChange={e => set("cep", formatCep(e.target.value))}
+                    maxLength={9}
+                  />
+                  {isSearchingCep && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--theme-primary)]">
+                      <Loader2 size={18} className="animate-spin" />
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={buscarCep}
+                  disabled={isSearchingCep}
+                  className="px-4 py-3 bg-[var(--theme-primary)] text-white rounded-xl text-sm font-bold hover:bg-[var(--theme-primary)]/90 transition-colors flex items-center justify-center min-w-[100px]"
+                >
+                  <Search size={18} className="mr-2" />
+                  Buscar
+                </button>
               </div>
             </Field>
 
