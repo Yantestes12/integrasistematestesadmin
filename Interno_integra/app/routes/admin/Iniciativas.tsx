@@ -23,6 +23,7 @@ export default function Iniciativas() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentInstitute, setCurrentInstitute] = useState("IBRASE");
+  const [globalFilter, setGlobalFilter] = useState("all");
 
   // Estado do Modal de Confirmação com Contagem de 25 Segundos e Animação FÍSICA de Papel Rasgando por clip-path
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -35,6 +36,16 @@ export default function Iniciativas() {
     const savedInstitute = localStorage.getItem("auth_institute") || "IBRASE";
     setCurrentInstitute(savedInstitute);
     fetchIniciativas(savedInstitute);
+
+    const updateGlobalFilter = () => {
+      setGlobalFilter(localStorage.getItem("global_projeto_filter") || "all");
+    };
+    updateGlobalFilter();
+    window.addEventListener("globalFilterChanged", updateGlobalFilter);
+    
+    return () => {
+      window.removeEventListener("globalFilterChanged", updateGlobalFilter);
+    };
   }, []);
 
   // Timer de 25 segundos para habilitar o botão de exclusão
@@ -220,10 +231,13 @@ export default function Iniciativas() {
     }, 1100);
   };
 
-  const filteredIniciativas = iniciativas.filter((item) =>
-    (item.nome || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.termo_fomento || "").toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredIniciativas = iniciativas.filter((item) => {
+    if (globalFilter !== "all" && String(item.id) !== globalFilter) return false;
+    return (
+      (item.nome || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.termo_fomento || "").toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   // Componente interno da Ficha em Papel (Única e física)
   const RenderFichaCard = ({ item }: { item: IniciativaItem }) => (
