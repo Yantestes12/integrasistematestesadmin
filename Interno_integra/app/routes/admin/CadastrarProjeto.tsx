@@ -40,17 +40,11 @@ export default function CadastrarProjeto() {
   }
 
   const methods = useForm<ProjetoFormData>({
-    resolver: zodResolver(projetoSchema),
+    resolver: zodResolver(projetoSchema) as any,
     defaultValues: {
       status: { ativo: true },
       periodos: [],
       limites: {
-        instrutoresPorNucleo: 0,
-        auxiliaresPorNucleo: 0,
-        coordGeral: 0,
-        coordNucleo: 0,
-        coordPedagogico: 0,
-        supervisores: 0,
         vagasPorNucleo: 0,
         vagasPorAluno: 0,
       },
@@ -61,7 +55,7 @@ export default function CadastrarProjeto() {
   const { isLoading, saveProjeto } = useProjetoWebhook(editModeId, methods.reset);
   const navigate = useNavigate();
 
-  const onSubmit = async (data: ProjetoFormData) => {
+  const onSubmit = async (data: any) => {
     try {
       await saveProjeto(editModeId, data);
       alert(editModeId ? "Iniciativa atualizada com sucesso!" : "Iniciativa cadastrada com sucesso!");

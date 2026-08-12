@@ -80,6 +80,16 @@ export default function Espacos() {
     fetchEspacos();
   }, []);
 
+  const [globalFilter, setGlobalFilter] = useState("all");
+  useEffect(() => {
+    const updateGlobalFilter = () => {
+      setGlobalFilter(localStorage.getItem("global_projeto_filter") || "all");
+    };
+    updateGlobalFilter();
+    window.addEventListener("globalFilterChanged", updateGlobalFilter);
+    return () => window.removeEventListener("globalFilterChanged", updateGlobalFilter);
+  }, []);
+
   // Timer de Trava de Segurança (25 segundos)
   useEffect(() => {
     if (!deleteModalOpen || countdown <= 0) return;
@@ -666,13 +676,16 @@ export default function Espacos() {
 
   const currentList = getCurrentList();
 
-  const filtered = currentList.filter(e =>
-    !searchTerm ||
-    e.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (e.resp_nome || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (e.bairro || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (e.projeto_nome || "").toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filtered = currentList.filter(e => {
+    if (globalFilter !== "all" && String(e.projeto_id) !== globalFilter) return false;
+    if (!searchTerm) return true;
+    return (
+      e.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (e.resp_nome || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (e.bairro || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (e.projeto_nome || "").toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   const authInstitute = (localStorage.getItem("auth_institute") || "IBRASE").toUpperCase();
 

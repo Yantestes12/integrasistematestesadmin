@@ -27,8 +27,10 @@ const cadastrarNucleoSchema = z.object({
 
 type CadastrarNucleoFormData = z.infer<typeof cadastrarNucleoSchema>;
 
+import type { Resolver } from "react-hook-form";
+
 // Resolver customizado
-const customZodResolver = (schema: z.ZodSchema) => async (values: any) => {
+const customZodResolver = (schema: z.ZodSchema): Resolver<any> => async (values: any) => {
   const result = schema.safeParse(values);
   if (result.success) {
     return { values: result.data, errors: {} };
@@ -154,6 +156,7 @@ export default function CadastrarNucleo() {
 
   const projetoIdWatch = watch("projetoId");
   const espacoIdWatch = watch("espacoId");
+  const numeroVagaWatch = watch("numeroVaga");
 
   // Vagas ocupadas do projeto selecionado
   const vagasOcupadasNoProjeto = useMemo(() => {
@@ -260,7 +263,7 @@ export default function CadastrarNucleo() {
     }
   }, [editId, reset]);
 
-  const onSubmit = async (data: CadastrarNucleoFormData) => {
+  const onSubmit = async (data: any) => {
     try {
       const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
       

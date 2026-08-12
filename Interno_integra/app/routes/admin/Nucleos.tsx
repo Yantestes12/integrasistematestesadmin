@@ -45,10 +45,17 @@ export default function Nucleos() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentInstitute, setCurrentInstitute] = useState("IBRASE");
+  const [globalFilter, setGlobalFilter] = useState("all");
 
   useEffect(() => {
     const savedInstitute = localStorage.getItem("auth_institute") || "IBRASE";
     setCurrentInstitute(savedInstitute);
+
+    const updateGlobalFilter = () => {
+      setGlobalFilter(localStorage.getItem("global_projeto_filter") || "all");
+    };
+    updateGlobalFilter();
+    window.addEventListener("globalFilterChanged", updateGlobalFilter);
 
     async function loadAll() {
       await Promise.allSettled([
@@ -60,7 +67,10 @@ export default function Nucleos() {
     }
 
     loadAll();
+    return () => window.removeEventListener("globalFilterChanged", updateGlobalFilter);
   }, []);
+
+
 
   const fetchProjetos = async (instituteName: string) => {
     try {
@@ -353,12 +363,16 @@ export default function Nucleos() {
     }
   };
 
-  const filteredNucleos = nucleos.filter((item) =>
-    (item.nome || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.bairro || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.projeto_nome || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.modalidade_nome || "").toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredNucleos = nucleos.filter((item) => {
+    if (globalFilter !== "all" && String(item.projeto_id) !== globalFilter) return false;
+    if (!searchTerm) return true;
+    return (
+      (item.nome || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.bairro || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.projeto_nome || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.modalidade_nome || "").toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans">
