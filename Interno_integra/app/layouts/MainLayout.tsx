@@ -2,6 +2,7 @@ import { Outlet, useNavigate, useNavigation } from "react-router";
 import { useEffect, useState } from "react";
 import { Sidebar } from "~/components/Sidebar";
 import { Topbar } from "~/components/Topbar";
+import { GlobalFilterBar } from "~/components/GlobalFilterBar";
 
 const themes = {
   IBRASE: {
@@ -88,7 +89,9 @@ export const MainLayout = () => {
         <Sidebar />
 
         {/* 2. O scroll DEVE ser nesta div <main>, sem divs com h-full por dentro */}
-        <main className="flex-1 overflow-y-auto h-[calc(100vh-64px)] w-full relative">
+        <main className="flex-1 overflow-y-auto h-[calc(100vh-64px)] w-full relative flex flex-col">
+          
+          <GlobalFilterBar />
           
           {/* Indicador de Bolinhas Carregando durante a navegação entre páginas */}
           {isNavigating && (

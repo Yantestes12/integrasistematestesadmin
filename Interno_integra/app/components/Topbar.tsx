@@ -10,9 +10,6 @@ export const Topbar = () => {
   const [userRole, setUserRole] = useState("Colaborador");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
-  const [projetos, setProjetos] = useState<any[]>([]);
-  const [selectedProjeto, setSelectedProjeto] = useState<string>("all");
 
   useEffect(() => {
     const savedInstitute = localStorage.getItem("auth_institute");
@@ -44,40 +41,8 @@ export const Topbar = () => {
     };
     document.addEventListener("mousedown", handleClickOutside);
 
-    // Fetch projetos para o filtro
-    const fetchProjetos = async (inst: string) => {
-      try {
-        const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${inst}`, { cache: "no-store" });
-        if (res.ok) {
-          const text = await res.text();
-          let data = JSON.parse(text);
-          if (data && data.message !== "Workflow was started" && !data.error) {
-            let list = Array.isArray(data) ? data : data.data || data.items || [];
-            let flat: any[] = [];
-            list.forEach((entry: any) => {
-              if (entry?.json) Array.isArray(entry.json) ? flat.push(...entry.json) : flat.push(entry.json);
-              else if (Array.isArray(entry)) flat.push(...entry);
-              else flat.push(entry);
-            });
-            setProjetos(flat);
-          }
-        }
-      } catch (e) {}
-    };
-    fetchProjetos(savedInstitute || "IBRASE");
-
-    const savedFilter = localStorage.getItem("global_projeto_filter");
-    if (savedFilter) setSelectedProjeto(savedFilter);
-
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    setSelectedProjeto(val);
-    localStorage.setItem("global_projeto_filter", val);
-    window.dispatchEvent(new Event("globalFilterChanged"));
-  };
 
   const handleLogout = () => {
     localStorage.removeItem("auth_institute");
@@ -184,32 +149,6 @@ export const Topbar = () => {
               ))}
             </div>
           )}
-        </div>
-        
-        {/* Filtro Global de Projeto */}
-        <div className="hidden lg:flex items-center gap-2 ml-4 bg-white/10 px-3 py-1.5 rounded-lg border border-white/20 hover:bg-white/15 transition-colors">
-          <span className="text-xs font-bold text-slate-500 lg:text-white/80 uppercase tracking-wider">Iniciativa:</span>
-          <select 
-            value={selectedProjeto}
-            onChange={handleFilterChange}
-            className="bg-transparent text-slate-800 lg:text-white text-sm font-bold outline-none cursor-pointer appearance-none pr-6 custom-select-arrow"
-            style={{ 
-              WebkitAppearance: 'none', 
-              MozAppearance: 'none', 
-              background: 'transparent',
-              backgroundImage: 'url("data:image/svg+xml;utf8,<svg fill=\'white\' height=\'24\' viewBox=\'0 0 24 24\' width=\'24\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M7 10l5 5 5-5z\'/></svg>")',
-              backgroundRepeat: 'no-repeat',
-              backgroundPositionX: '100%',
-              backgroundPositionY: '50%'
-            }}
-          >
-            <option value="all" className="text-slate-800 font-bold">Todas</option>
-            {projetos.map(p => (
-              <option key={p.id} value={p.id} className="text-slate-800 font-bold">{p.nome || p.iniciativa}</option>
-            ))}
-          </select>
-        </div>
-
       </div>
 
       {/* Lado Direito: Perfil e Botões de Utilidade */}
