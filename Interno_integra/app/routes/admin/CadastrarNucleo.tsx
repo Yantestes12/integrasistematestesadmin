@@ -77,7 +77,7 @@ export default function CadastrarNucleo() {
       if (entry?.json) Array.isArray(entry.json) ? flat.push(...entry.json) : flat.push(entry.json);
       else flat.push(entry);
     });
-    return flat;
+    return flat.filter(item => item !== null && item !== undefined);
   };
 
   const fetchEspacos = async (inst: string) => {
@@ -104,8 +104,15 @@ export default function CadastrarNucleo() {
         }
       }
       if (resE.ok) {
-        const data = await resE.json();
-        setEspacos(flattenResponse(data).map((e: any) => ({ ...e, nucleo_nome: nMap[String(e.id)] })));
+        const textE = await resE.text();
+        if (textE) {
+          try {
+            const data = JSON.parse(textE);
+            setEspacos(flattenResponse(data).map((e: any) => ({ ...e, nucleo_nome: nMap[String(e.id)] })));
+          } catch(e) {
+            console.warn("Erro json espacos:", e);
+          }
+        }
       }
     } catch (e) { console.warn("Erro espacos:", e); }
   };
@@ -114,8 +121,11 @@ export default function CadastrarNucleo() {
     try {
       const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${inst.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
-        const data = await res.json();
-        setProjetos(flattenResponse(data));
+        const text = await res.text();
+        if (text) {
+          const data = JSON.parse(text);
+          setProjetos(flattenResponse(data));
+        }
       }
     } catch (e) { console.warn("Erro projetos:", e); }
   };
@@ -124,8 +134,11 @@ export default function CadastrarNucleo() {
     try {
       const res = await fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${inst.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
-        const data = await res.json();
-        setModalidades(flattenResponse(data));
+        const text = await res.text();
+        if (text) {
+          const data = JSON.parse(text);
+          setModalidades(flattenResponse(data));
+        }
       }
     } catch (e) { console.warn("Erro modalidades:", e); }
   };
@@ -134,13 +147,16 @@ export default function CadastrarNucleo() {
     try {
       const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
-        const data = await res.json();
-        if (data.message === "Workflow was started" || data.error) {
-           setNucleosExistentes([]);
-           return;
+        const text = await res.text();
+        if (text) {
+          const data = JSON.parse(text);
+          if (data.message === "Workflow was started" || data.error) {
+             setNucleosExistentes([]);
+             return;
+          }
+          const flatList = flattenResponse(data);
+          setNucleosExistentes(flatList.filter(n => n !== null && n !== undefined));
         }
-        const flatList = flattenResponse(data);
-        setNucleosExistentes(flatList.filter(n => n !== null && n !== undefined));
       }
     } catch (e) { console.warn("Erro nucleos:", e); }
   };
@@ -178,16 +194,16 @@ export default function CadastrarNucleo() {
 
   const filteredEspacos = useMemo(() => {
     // Apenas Espaços APROVADOS (não pendentes) podem ser selecionados para virar Núcleo
-    const apenasAprovados = espacos.filter(e => e.status_aprovacao !== "pendente");
+    const apenasAprovados = espacos.filter(e => e && e.status_aprovacao !== "pendente");
     if (!projetoIdWatch) return apenasAprovados;
     return apenasAprovados.filter(e => 
-      String(e.projeto_id) === String(projetoIdWatch) || String(e.id) === String(espacoIdWatch)
+      e && (String(e.projeto_id) === String(projetoIdWatch) || String(e.id) === String(espacoIdWatch))
     );
   }, [espacos, projetoIdWatch, espacoIdWatch]);
 
   const selectedEspaco = useMemo(() => {
     if (!espacoIdWatch) return null;
-    return espacos.find(e => String(e.id) === String(espacoIdWatch));
+    return espacos.find(e => e && String(e.id) === String(espacoIdWatch));
   }, [espacos, espacoIdWatch]);
 
   const getModalidadeNome = (espaco: any) => {
@@ -196,7 +212,7 @@ export default function CadastrarNucleo() {
     if (espaco.modalidades?.nome) return espaco.modalidades.nome;
     if (espaco.modalidade) return espaco.modalidade;
     if (espaco.modalidade_id) {
-      const mod = modalidades.find(m => String(m.id) === String(espaco.modalidade_id));
+      const mod = modalidades.find(m => m && String(m.id) === String(espaco.modalidade_id));
       if (mod?.nome) return mod.nome;
       return `Modalidade ID ${espaco.modalidade_id}`;
     }
@@ -226,7 +242,9 @@ export default function CadastrarNucleo() {
           const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
           const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${authInstitute}`, { cache: "no-store" });
           if (res.ok) {
-            const data = await res.json();
+            const text = await res.text();
+            if (!text) return;
+            const data = JSON.parse(text);
             if (data.message === "Workflow was started" || data.error) return;
 
             const flatList = flattenResponse(data);
@@ -416,7 +434,7 @@ export default function CadastrarNucleo() {
               className="w-full bg-indigo-50/50 border border-indigo-200 rounded-lg p-2.5 text-sm font-extrabold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               {(() => {
-                const proj = projetos.find(p => String(p.id) === String(projetoIdWatch));
+                const proj = projetos.find(p => p && String(p.id) === String(projetoIdWatch));
                 let totalSlots = 20;
                 if (proj) {
                   const limStr = proj.limites_modalidades || proj.limitesModalidades || proj.limites_modalidade;
@@ -424,7 +442,7 @@ export default function CadastrarNucleo() {
                     try {
                       const limArr = typeof limStr === 'string' ? JSON.parse(limStr) : limStr;
                       if (Array.isArray(limArr) && limArr.length > 0) {
-                        totalSlots = limArr.reduce((acc, curr) => acc + (Number(curr.limite) || 0), 0);
+                        totalSlots = limArr.reduce((acc, curr) => acc + (Number(curr?.limite) || 0), 0);
                       }
                     } catch (e) { console.warn("Erro ao ler limites_modalidades:", e); }
                   }

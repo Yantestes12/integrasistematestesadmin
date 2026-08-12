@@ -91,7 +91,7 @@ const flattenResponse = (data: any): any[] => {
     else if (Array.isArray(entry)) flat.push(...entry);
     else flat.push(entry);
   });
-  return flat;
+  return flat.filter(item => item !== null && item !== undefined);
 };
 
 const formatCpf = (v: string) => {
@@ -198,16 +198,25 @@ export default function CadastrarEspaco() {
           fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${institute.toUpperCase()}`),
         ]);
         if (rProjetos.ok) {
-          const d = await rProjetos.json();
-          setProjetos(flattenResponse(d).map((p: any) => ({ id: String(p.id), nome: p.nome || "", limites_modalidades: p.limites_modalidades || p.limites_modalidade })).filter(p => p.nome));
+          const t = await rProjetos.text();
+          if (t) {
+            const d = JSON.parse(t);
+            setProjetos(flattenResponse(d).map((p: any) => ({ id: String(p.id), nome: p.nome || "", limites_modalidades: p.limites_modalidades || p.limites_modalidade })).filter(p => p.nome));
+          }
         }
         if (rModal.ok) {
-          const d = await rModal.json();
-          setModalidades(flattenResponse(d).map((m: any) => ({ id: String(m.id), nome: m.nome || "" })).filter(m => m.nome));
+          const t = await rModal.text();
+          if (t) {
+            const d = JSON.parse(t);
+            setModalidades(flattenResponse(d).map((m: any) => ({ id: String(m.id), nome: m.nome || "" })).filter(m => m.nome));
+          }
         }
         if (rEspacos.ok) {
-          const d = await rEspacos.json();
-          setExistingEspacos(flattenResponse(d));
+          const t = await rEspacos.text();
+          if (t) {
+            const d = JSON.parse(t);
+            setExistingEspacos(flattenResponse(d));
+          }
         }
       } catch (e) { console.warn("Erro ao carregar opções:", e); }
     };
@@ -262,7 +271,9 @@ export default function CadastrarEspaco() {
       try {
         const res = await fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${institute.toUpperCase()}`);
         if (res.ok) {
-          const data = await res.json();
+          const t = await res.text();
+          if (!t) return;
+          const data = JSON.parse(t);
           const espaco = flattenResponse(data).find((e: any) => String(e.id) === editId);
           if (espaco) {
             setForm({
