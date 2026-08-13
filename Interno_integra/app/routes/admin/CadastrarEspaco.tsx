@@ -396,8 +396,6 @@ export default function CadastrarEspaco() {
   // Busca de CEP removida do automático a pedido do usuário (para evitar sobrescrever dados na edição)
 
   useEffect(() => {
-
-  useEffect(() => {
     const clean = form.respCpf.replace(/\D/g, "");
     if (clean.length === 11) {
       buscarCpf();
