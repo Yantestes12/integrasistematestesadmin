@@ -242,10 +242,10 @@ export default function Login() {
                   Usuário ou E-mail Institucional
                 </label>
                 <div className="relative flex items-center">
-                  <User className="absolute left-4 text-slate-400 w-5 h-5 pointer-events-none" />
+                  <User className="absolute left-4 z-10 text-slate-400 w-5 h-5 pointer-events-none" />
                   <input 
                     type="text" 
-                    className="w-full h-13 pl-12 pr-4 rounded-xl border border-slate-200 bg-slate-50/50 md:bg-white text-slate-900 text-sm md:text-base font-medium placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-900/10 transition-all outline-none" 
+                    className="w-full h-14 pl-12 pr-4 rounded-xl border border-slate-200 bg-slate-50/50 md:bg-white text-slate-900 text-sm md:text-base font-medium placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-900/10 transition-all outline-none" 
                     placeholder="Digite seu usuário ou e-mail corporativo" 
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
@@ -259,10 +259,10 @@ export default function Login() {
                   Senha de Acesso
                 </label>
                 <div className="relative flex items-center">
-                  <Lock className="absolute left-4 text-slate-400 w-5 h-5 pointer-events-none" />
+                  <Lock className="absolute left-4 z-10 text-slate-400 w-5 h-5 pointer-events-none" />
                   <input 
                     type={showPassword ? "text" : "password"} 
-                    className="w-full h-13 pl-12 pr-20 rounded-xl border border-slate-200 bg-slate-50/50 md:bg-white text-slate-900 text-sm md:text-base font-medium placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-900/10 transition-all outline-none" 
+                    className="w-full h-14 pl-12 pr-20 rounded-xl border border-slate-200 bg-slate-50/50 md:bg-white text-slate-900 text-sm md:text-base font-medium placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-900/10 transition-all outline-none" 
                     placeholder="••••••••" 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -298,7 +298,7 @@ export default function Login() {
             <button 
               type="submit" 
               disabled={isLoading || isSuccess}
-              className={`relative w-full h-13 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all duration-300 cursor-pointer mt-2 overflow-hidden ${
+              className={`relative w-full h-14 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all duration-300 cursor-pointer mt-2 overflow-hidden ${
                 isSuccess 
                   ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 scale-[1.01]" 
                   : "bg-slate-900 hover:bg-slate-800 text-white shadow-md shadow-slate-900/10 hover:shadow-lg hover:scale-[1.005] active:scale-[0.99]"
@@ -323,18 +323,7 @@ export default function Login() {
             </button>
           </form>
           
-          {/* Rodapé dos Institutos Suportados */}
-          <div className="mt-10 md:mt-12 pt-6 border-t border-slate-100 text-center transition-all duration-700" style={{ opacity: isSuccess ? 0 : 1 }}>
-            <p className="text-xs font-semibold text-slate-400 mb-3">
-              Institutos Integrados
-            </p>
-            <div className="flex items-center justify-center gap-2.5 text-xs font-bold text-slate-600 flex-wrap">
-              <span className="px-3 py-1 rounded-md bg-orange-50 text-orange-700 border border-orange-200/60">IBRASE</span>
-              <span className="px-3 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60">GASCTPNA</span>
-              <span className="px-3 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200/60">AUNI</span>
-              <span className="px-3 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200/60">IVEM</span>
-            </div>
-          </div>
+          {/* Rodapé dos Institutos Suportados Removido */}
 
         </div>
       </div>
