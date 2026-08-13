@@ -1,0 +1,44 @@
+# ==============================================================================
+# .gitignore - Sistema Integra
+# ==============================================================================
+
+# Dependências
+node_modules/
+package-lock.json
+
+# Scripts e migrações SQL de banco de dados
+*.sql
+*.sqlite
+*.db
+
+# Fluxos, exports e dumps do N8N / Supabase
+*n8n*
+*N8N*
+workflow_*
+*_dump.json
+user_clipboard_raw.json
+projetos_put_*.json
+projetos_put_raw.json
+modalidades_raw.json
+projetos.json
+generate_n8n_*.cjs
+patch_n8n.cjs
+clean_*.cjs
+append_*.cjs
+build_*.cjs
+fix_*.cjs
+update_*.cjs
+gerar_*.cjs
+gerar_*.js
+
+# Arquivos de log e temporários
+*.log
+scratch/
+.DS_Store
+.env
+.env.*
+
+# Builds do Vite / React Router
+.react-router/
+build/
+dist/
