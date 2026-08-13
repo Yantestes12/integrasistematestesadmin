@@ -242,10 +242,11 @@ export default function Login() {
                   Usuário ou E-mail Institucional
                 </label>
                 <div className="relative flex items-center">
-                  <User className="absolute left-4 z-10 text-slate-400 w-5 h-5 pointer-events-none" />
+                  <User className="absolute left-4 text-slate-400 w-5 h-5" style={{ position: 'absolute', left: '16px', zIndex: 10, pointerEvents: 'none' }} />
                   <input 
                     type="text" 
-                    className="w-full h-14 pl-12 pr-4 rounded-xl border border-slate-200 bg-slate-50/50 md:bg-white text-slate-900 text-sm md:text-base font-medium placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-900/10 transition-all outline-none" 
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 md:bg-white text-slate-900 text-sm md:text-base font-medium placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-900/10 transition-all outline-none" 
+                    style={{ paddingLeft: '48px', paddingRight: '16px', height: '56px' }}
                     placeholder="Digite seu usuário ou e-mail corporativo" 
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
@@ -259,10 +260,11 @@ export default function Login() {
                   Senha de Acesso
                 </label>
                 <div className="relative flex items-center">
-                  <Lock className="absolute left-4 z-10 text-slate-400 w-5 h-5 pointer-events-none" />
+                  <Lock className="absolute left-4 text-slate-400 w-5 h-5" style={{ position: 'absolute', left: '16px', zIndex: 10, pointerEvents: 'none' }} />
                   <input 
                     type={showPassword ? "text" : "password"} 
-                    className="w-full h-14 pl-12 pr-20 rounded-xl border border-slate-200 bg-slate-50/50 md:bg-white text-slate-900 text-sm md:text-base font-medium placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-900/10 transition-all outline-none" 
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 md:bg-white text-slate-900 text-sm md:text-base font-medium placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-900/10 transition-all outline-none" 
+                    style={{ paddingLeft: '48px', paddingRight: '80px', height: '56px' }}
                     placeholder="••••••••" 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -272,6 +274,7 @@ export default function Login() {
                     type="button" 
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    style={{ position: 'absolute', right: '12px', zIndex: 10 }}
                     title={showPassword ? "Ocultar senha" : "Ver senha"}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
