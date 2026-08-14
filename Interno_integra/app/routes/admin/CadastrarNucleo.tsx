@@ -308,12 +308,6 @@ export default function CadastrarNucleo() {
       if (data.numeroVaga) {
         formData.append("numero_vaga", data.numeroVaga);
       }
-      if (data.vagas) {
-        formData.append("vagas", data.vagas);
-      }
-      if (data.instrutor !== undefined) {
-        formData.append("instrutor", data.instrutor);
-      }
 
       const response = await fetch(webhookUrl, {
         method: editId ? "PUT" : "POST",
