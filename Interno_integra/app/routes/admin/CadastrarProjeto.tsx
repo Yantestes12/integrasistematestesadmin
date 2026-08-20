@@ -48,7 +48,7 @@ export default function CadastrarProjeto() {
         vagasPorNucleo: 0,
         vagasPorAluno: 0,
       },
-      limitesModalidade: [],
+      vagasNucleo: [],
     }
   });
 
@@ -58,8 +58,8 @@ export default function CadastrarProjeto() {
   const onSubmit = async (data: any) => {
     try {
       await saveProjeto(editModeId, data);
-      alert(editModeId ? "Iniciativa atualizada com sucesso!" : "Iniciativa cadastrada com sucesso!");
-      navigate("/admin/iniciativas");
+      alert(editModeId ? "Proposta atualizada com sucesso!" : "Proposta cadastrada com sucesso!");
+      navigate("/admin/propostas");
     } catch (error) {
       alert("Erro ao enviar para o N8N.");
     }
@@ -78,7 +78,7 @@ export default function CadastrarProjeto() {
     return (
       <div className="flex items-center justify-center p-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-3 text-slate-600 font-medium">Carregando dados da iniciativa...</span>
+        <span className="ml-3 text-slate-600 font-medium">Carregando dados da proposta...</span>
       </div>
     );
   }
@@ -87,11 +87,11 @@ export default function CadastrarProjeto() {
     <FormProvider {...methods}>
       <div className="space-y-6 max-w-5xl mx-auto pb-12">
         {/* CABEÇALHO */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div>
             <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
               <FolderPlus className="w-7 h-7 text-blue-600" />
-              {editModeId ? "Atualizar Iniciativa" : "Cadastrar Iniciativa"}
+              {editModeId ? "Atualizar Proposta" : "Cadastrar Proposta"}
             </h1>
             <p className="text-slate-500 text-sm">
               Campos marcados com <span className="text-red-500 font-bold">*</span> são obrigatórios.
@@ -117,19 +117,19 @@ export default function CadastrarProjeto() {
           <FaixaEtariaSection />
 
           {/* Status Section */}
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
             <h2 className="text-base font-bold text-slate-800">Status</h2>
             
             {(!vagasPorAluno || vagasPorAluno <= 0) && (
               <div className="p-3 bg-amber-50 text-amber-700 rounded-lg text-sm border border-amber-200 flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 shrink-0" />
-                <span>Para ativar a iniciativa, é necessário definir o limite de <strong>Vagas por Aluno</strong> na seção Aluno.</span>
+                <span>Para ativar a proposta, é necessário definir o limite de <strong>Vagas por Aluno</strong> na seção Aluno.</span>
               </div>
             )}
             
             <label className={`flex items-center justify-between w-full sm:max-w-xs p-4 border border-slate-200 rounded-xl bg-slate-50 transition-colors ${(!vagasPorAluno || vagasPorAluno <= 0) ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:bg-slate-100"}`}>
               <span className="text-sm font-bold text-slate-700">
-                {methods.watch("status.ativo") ? "Iniciativa Ativa" : "Iniciativa Inativa"}
+                {methods.watch("status.ativo") ? "Proposta Ativa" : "Proposta Inativa"}
               </span>
               <div className="relative">
                 <input 
@@ -142,7 +142,7 @@ export default function CadastrarProjeto() {
                   className={`block w-14 h-8 rounded-full transition-colors ${methods.watch("status.ativo") ? "" : "bg-slate-300"}`}
                   style={methods.watch("status.ativo") ? { backgroundColor: "var(--theme-primary)" } : {}}
                 ></div>
-                <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform shadow-sm ${methods.watch("status.ativo") ? "translate-x-6" : ""}`}></div>
+                <div className={`dot absolute left-1 top-1 bg-white dark:bg-slate-800 w-6 h-6 rounded-full transition-transform shadow-sm ${methods.watch("status.ativo") ? "translate-x-6" : ""}`}></div>
               </div>
             </label>
           </div>
@@ -154,7 +154,7 @@ export default function CadastrarProjeto() {
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-lg shadow-sm transition-colors text-sm flex items-center gap-2"
             >
               <Check className="w-4 h-4" />
-              {editModeId ? "Atualizar" : "Cadastrar Iniciativa"}
+              {editModeId ? "Atualizar" : "Cadastrar Proposta"}
             </button>
             <button
               type="button"

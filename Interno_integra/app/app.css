@@ -7,9 +7,129 @@
 
 html,
 body {
-  @apply bg-white dark:bg-gray-950;
-
+  @apply bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-300;
+  
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
   }
 }
+
+/* Permitir usar .dark para ativar modo escuro (necessário no Tailwind v4) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ========================================================================= */
+/* Scrollbar Personalizada com as cores do Instituto (Clean & Moderna)      */
+/* ========================================================================= */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--theme-primary, #cbd5e1);
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-primary-hover, #94a3b8);
+}
+
+/* Suporte Firefox / W3C */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--theme-primary, #cbd5e1) #f1f5f9;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--theme-primary, #cbd5e1);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-primary-hover, #94a3b8);
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+
+/* ========================================================================= */
+/* Micro-interações Fluidas & Motion Scroll (After Effects / Apple UI Grade)  */
+/* ========================================================================= */
+.motion-scroll-section {
+  opacity: 0;
+  transform: translateY(28px) scale(0.985);
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.motion-scroll-section.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.motion-stagger-1 {
+  transition-delay: 0.04s;
+}
+
+.motion-stagger-2 {
+  transition-delay: 0.10s;
+}
+
+.motion-stagger-3 {
+  transition-delay: 0.16s;
+}
+
+.motion-stagger-4 {
+  transition-delay: 0.22s;
+}
+
+@keyframes subtle-fade-slide {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-slide {
+  animation: subtle-fade-slide 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { transform: scale(1); opacity: 1; filter: brightness(1); }
+  50% { transform: scale(1.03); opacity: 0.85; filter: brightness(1.1); }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+@keyframes float-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-float {
+  animation: float-subtle 3s ease-in-out infinite;
+}
+

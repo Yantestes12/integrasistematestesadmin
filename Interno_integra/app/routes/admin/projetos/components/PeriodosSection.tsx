@@ -10,9 +10,9 @@ export function PeriodosSection() {
   });
 
   return (
-    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
       <div>
-        <h2 className="text-base font-bold text-slate-800">Períodos da Iniciativa</h2>
+        <h2 className="text-base font-bold text-slate-800">Períodos da Proposta</h2>
         <p className="text-xs text-slate-500 mt-0.5">
           Configure as janelas de <strong>Iniciação</strong> e <strong>Trimestre</strong>. 
           Elas serão utilizadas para construir o histórico e a linha do tempo da ocupação das vagas.

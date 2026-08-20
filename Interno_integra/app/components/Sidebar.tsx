@@ -21,20 +21,34 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [isPcCollapsed, setIsPcCollapsed] = useState(false);
 
-  // Mantém os submenus abertos por padrão (ex: 'Administrativo')
-  const [openPaths, setOpenPaths] = useState<string[]>(['Administrativo']);
+  // Mantém os submenus fechados por padrão, abrindo somente via clique do usuário
+  const [openPaths, setOpenPaths] = useState<string[]>([]);
+  const [userRole, setUserRole] = useState("colaborador");
 
-  // Atualiza os submenus abertos com base na rota atual para que NUNCA fechem sozinhos ao clicar
+  // Recupera o cargo do usuário para o RBAC e o estado recolhido do menu no PC
   useEffect(() => {
-    if (location.pathname.startsWith('/admin')) {
-      setOpenPaths((prev) => prev.includes('Administrativo') ? prev : [...prev, 'Administrativo']);
-    }
-  }, [location.pathname]);
+    const cargo = (localStorage.getItem("auth_cargo") || "colaborador").toLowerCase().trim();
+    const accountType = (localStorage.getItem("auth_account_type") || "colaborador").toLowerCase().trim();
+    setUserRole(`${cargo} ${accountType}`);
+
+    const savedPcCollapsed = localStorage.getItem("sidebar_collapsed_pc") === "true";
+    setIsPcCollapsed(savedPcCollapsed);
+
+    const handleTogglePC = () => {
+      setIsPcCollapsed((prev) => {
+        const next = !prev;
+        localStorage.setItem("sidebar_collapsed_pc", String(next));
+        return next;
+      });
+    };
+
+    window.addEventListener("toggleSidebarPC", handleTogglePC);
+    return () => window.removeEventListener("toggleSidebarPC", handleTogglePC);
+  }, []);
 
   const togglePath = (itemPath: any, e: any, item: any) => {
-    if (!item.path) e.preventDefault();
-
     setOpenPaths((prev) => {
       if (prev.includes(itemPath)) {
         return prev.filter((path) => !path.startsWith(itemPath));
@@ -42,6 +56,16 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
         return [...prev, itemPath];
       }
     });
+
+    // Se o item pai tiver uma rota (como o dashboard do setor), navega para ela
+    if (item.path) {
+      navigate(item.path);
+      if (window.innerWidth < 1024) {
+        setIsOpen(false);
+      }
+    } else {
+      e.preventDefault();
+    }
   };
 
   const handleItemClick = (item: any, e: any) => {
@@ -53,19 +77,38 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
     setIsOpen(false);
   };
 
-  // Estrutura hierárquica atualizada com as rotas reais do app/routes.ts
+  // Estrutura hierárquica atualizada com as rotas e regras de acesso
   const menuTree = [
-    { name: 'Dashboard', path: "/", icon: <LayoutDashboard className="w-5 h-5" /> },
     {
       name: 'Administrativo',
       icon: <BookOpen className="w-5 h-5" />,
+      roles: ['master', 'admin'],
+      path: "/?view=geral", // Rota do dashboard do setor
       children: [
-        { name: 'Iniciativas', path: "/admin/iniciativas" },
+        { name: 'Propostas', path: "/admin/propostas" },
         { name: 'Espaços', path: "/admin/espacos" },
         { name: 'Núcleos', path: "/admin/nucleos" },
       ]
+    },
+    {
+      name: 'Pedagógico',
+      icon: <Users className="w-5 h-5" />,
+      roles: ['master', 'pedagogico'],
+      path: "/?view=pedagogico", // Rota do dashboard do setor
+      children: [
+        { name: 'Inscrições', path: "/pedagogico/inscricoes" },
+        { name: 'Matrículas', path: "/pedagogico/matriculas" },
+        { name: 'Turmas', path: "/pedagogico/turmas" },
+        { name: 'Relatórios', path: "/pedagogico/relatorios" },
+      ]
     }
   ];
+
+  // Filtra o menu com base no cargo do usuário
+  const filteredMenuTree = menuTree.filter(item => {
+    if (!item.roles) return true;
+    return item.roles.some(allowedRole => userRole.includes(allowedRole));
+  });
 
   // Componente recursivo para renderizar N níveis de submenus
   const renderMenuItems = (items: any, level = 0, currentPath = '') => {
@@ -77,9 +120,11 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
       // Estilos dinâmicos baseados na profundidade da árvore (level)
       const paddingLeft = level === 0 ? 'px-5' : level === 1 ? 'pl-8 pr-5' : level === 2 ? 'pl-12 pr-5' : 'pl-14 pr-5';
 
+      const isActiveParent = item.path && location.pathname === '/' && location.search.includes(item.path.split('?')[1]);
+
       const levelBg =
         level === 0
-          ? isExpanded ? 'bg-[var(--theme-primary)]' : 'hover:bg-[var(--theme-primary-hover)]'
+          ? isActiveParent || isExpanded ? 'bg-[var(--theme-primary)]' : 'hover:bg-[var(--theme-primary-hover)]'
           : level === 1
             ? 'bg-[var(--theme-level-1)] hover:bg-[var(--theme-level-1-hover)] text-blue-50'
             : level === 2
@@ -91,7 +136,7 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
           <div key={index} className="w-full">
             <div
               onClick={(e) => togglePath(itemKey, e, item)}
-              className={`flex items-center justify-between py-3 cursor-pointer ${paddingLeft} ${levelBg}`}
+              className={`flex items-center justify-between py-3 cursor-pointer ${paddingLeft} ${levelBg} ${isActiveParent ? 'border-l-4 border-white font-bold shadow-inner' : ''}`}
             >
               <div className="flex items-center gap-3 min-w-0 w-full pointer-events-none">
                 {item.icon && <span>{item.icon}</span>}
@@ -145,7 +190,7 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
       {/* Botão Flutuante Mobile */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-3 left-4 z-50 p-2 rounded-xl bg-[var(--theme-primary)] text-white shadow-lg focus:outline-none"
+        className="lg:hidden fixed top-3 left-4 z-50 p-2 rounded-xl bg-[var(--theme-primary)] dark:bg-[var(--theme-sidebar-dark)] text-white shadow-lg focus:outline-none transition-colors duration-300"
         aria-label="Abrir Menu"
       >
         {isOpen ? <X size={22} /> : <Menu size={22} />}
@@ -155,21 +200,22 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
       {isOpen && (
         <div
           onClick={() => setIsOpen(false)}
-          className="lg:hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 transition-opacity"
+          className="lg:hidden fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 transition-opacity"
         />
       )}
 
       {/* Sidebar Container */}
       <aside
         className={`
-          w-64 bg-[var(--theme-primary)] text-white flex flex-col shadow-inner select-none
-          fixed lg:sticky top-0 lg:top-16 z-50 lg:z-20 h-screen lg:h-[calc(100vh-64px)]
-          transition-transform duration-300 ease-in-out lg:transition-none
-          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          bg-[var(--theme-primary)] dark:bg-[var(--theme-sidebar-dark)] text-white flex flex-col shadow-inner select-none
+          fixed lg:sticky top-0 lg:top-[52px] z-50 lg:z-20 h-screen lg:h-[calc(100vh-52px)]
+          transition-all duration-300 ease-in-out border-r border-white/10 dark:border-white/5
+          ${isOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0'}
+          ${isPcCollapsed ? 'lg:w-0 lg:min-w-0 lg:max-w-0 lg:overflow-hidden lg:opacity-0 lg:pointer-events-none' : 'lg:w-64 lg:min-w-[16rem] lg:opacity-100'}
         `}
       >
-        <nav className="flex-1 py-4 overflow-y-auto custom-scrollbar mt-12 lg:mt-0">
-          {renderMenuItems(menuTree)}
+        <nav className="flex-1 py-4 overflow-y-auto custom-scrollbar mt-12 lg:mt-0 w-64">
+          {renderMenuItems(filteredMenuTree)}
         </nav>
       </aside>
     </>

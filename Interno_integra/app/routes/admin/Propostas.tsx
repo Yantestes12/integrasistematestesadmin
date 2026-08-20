@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Plus, Search, Edit3, Loader2, Layers, Building2, Trash2, AlertTriangle, Clock, X, FileText } from "lucide-react";
 
-export interface IniciativaItem {
+export interface PropostaItem {
   id: string | number;
   nome: string;
   descricao?: string;
@@ -18,8 +18,8 @@ export interface IniciativaItem {
   total_nucleos?: number;
 }
 
-export default function Iniciativas() {
-  const [iniciativas, setIniciativas] = useState<IniciativaItem[]>([]);
+export default function Propostas() {
+  const [propostas, setPropostas] = useState<PropostaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentInstitute, setCurrentInstitute] = useState("IBRASE");
@@ -27,7 +27,7 @@ export default function Iniciativas() {
 
   // Estado do Modal de Confirmação com Contagem de 25 Segundos e Animação FÍSICA de Papel Rasgando por clip-path
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [selectedIniciativa, setSelectedIniciativa] = useState<IniciativaItem | null>(null);
+  const [selectedProposta, setSelectedProposta] = useState<PropostaItem | null>(null);
   const [countdown, setCountdown] = useState(25);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isTearing, setIsTearing] = useState(false);
@@ -35,7 +35,7 @@ export default function Iniciativas() {
   useEffect(() => {
     const savedInstitute = localStorage.getItem("auth_institute") || "IBRASE";
     setCurrentInstitute(savedInstitute);
-    fetchIniciativas(savedInstitute);
+    fetchPropostas(savedInstitute);
 
     const updateGlobalFilter = () => {
       setGlobalFilter(localStorage.getItem("global_projeto_filter") || "all");
@@ -57,7 +57,7 @@ export default function Iniciativas() {
     return () => clearInterval(timer);
   }, [deleteModalOpen, countdown]);
 
-  const parseIniciativasList = (rawData: any): IniciativaItem[] => {
+  const parsePropostasList = (rawData: any): PropostaItem[] => {
     let list: any[] = [];
 
     if (Array.isArray(rawData)) {
@@ -85,7 +85,7 @@ export default function Iniciativas() {
     });
 
     return flatList.map((item, idx) => {
-      const id = item.id || item.id_projeto || item.id_iniciativa || idx + 1;
+      const id = item.id || item.id_projeto || item.id_proposta || idx + 1;
       const nome = 
         item.nome || 
         item.nome_projeto || 
@@ -93,7 +93,7 @@ export default function Iniciativas() {
         item.identificacao?.nomeProjeto || 
         item.name || 
         item.titulo || 
-        `Iniciativa ${id}`;
+        `Proposta ${id}`;
 
       const descricao = item.descricao || item.identificacao?.descricao || "";
       const termo_fomento = item.termo_fomento || item.termoFomento || item.identificacao?.termoFomento || "";
@@ -152,7 +152,7 @@ export default function Iniciativas() {
     });
   };
 
-  const fetchIniciativas = async (instituteName: string) => {
+  const fetchPropostas = async (instituteName: string) => {
     setLoading(true);
     try {
       const n8nEndpoint = `https://w.ibrase.com.br/webhook/projetos-get?instituto=${instituteName.toUpperCase()}`;
@@ -166,22 +166,22 @@ export default function Iniciativas() {
           return;
         }
         
-        const parsed = parseIniciativasList(data);
+        const parsed = parsePropostasList(data);
         if (parsed.length > 0) {
-          setIniciativas(parsed.sort((a, b) => Number(b.id) - Number(a.id)));
+          setPropostas(parsed.sort((a, b) => Number(b.id) - Number(a.id)));
           setLoading(false);
           return;
         }
       }
     } catch (e) {
-      console.warn("Erro no Webhook N8N de Iniciativas:", e);
+      console.warn("Erro no Webhook N8N de Propostas:", e);
     } finally {
       setLoading(false);
     }
   };
 
-  const openDeleteModal = (item: IniciativaItem) => {
-    setSelectedIniciativa(item);
+  const openDeleteModal = (item: PropostaItem) => {
+    setSelectedProposta(item);
     setCountdown(25);
     setIsTearing(false);
     setDeleteModalOpen(true);
@@ -190,13 +190,13 @@ export default function Iniciativas() {
   const closeDeleteModal = () => {
     if (isDeleting) return;
     setDeleteModalOpen(false);
-    setSelectedIniciativa(null);
+    setSelectedProposta(null);
     setCountdown(25);
     setIsTearing(false);
   };
 
   const handleConfirmDelete = async () => {
-    if (!selectedIniciativa || countdown > 0 || isDeleting) return;
+    if (!selectedProposta || countdown > 0 || isDeleting) return;
     setIsDeleting(true);
     setIsTearing(true); // Inicia animação de rasgo físico com corte exato por clip-path
 
@@ -205,21 +205,21 @@ export default function Iniciativas() {
         let res = await fetch("https://w.ibrase.com.br/webhook/projetos-delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: selectedIniciativa.id, instituto: currentInstitute.toUpperCase() }),
+          body: JSON.stringify({ id: selectedProposta.id, instituto: currentInstitute.toUpperCase() }),
         });
 
         if (!res.ok) {
-          res = await fetch(`https://w.ibrase.com.br/webhook/projetos-delete?id=${selectedIniciativa.id}&instituto=${currentInstitute.toUpperCase()}`, {
+          res = await fetch(`https://w.ibrase.com.br/webhook/projetos-delete?id=${selectedProposta.id}&instituto=${currentInstitute.toUpperCase()}`, {
             method: "DELETE",
           });
         }
 
         if (res.ok) {
-          setIniciativas(prev => prev.filter(item => item.id !== selectedIniciativa.id));
+          setPropostas(prev => prev.filter(item => item.id !== selectedProposta.id));
           setDeleteModalOpen(false);
-          setSelectedIniciativa(null);
+          setSelectedProposta(null);
         } else {
-          alert("Erro ao excluir iniciativa via N8N. Certifique-se de importar o fluxo N8N_PROJETOS_DELETE.");
+          alert("Erro ao excluir proposta via N8N. Certifique-se de importar o fluxo N8N_PROJETOS_DELETE.");
         }
       } catch (e) {
         console.error(e);
@@ -231,7 +231,7 @@ export default function Iniciativas() {
     }, 1100);
   };
 
-  const filteredIniciativas = iniciativas.filter((item) => {
+  const filteredPropostas = propostas.filter((item) => {
     if (globalFilter !== "all" && String(item.id) !== globalFilter) return false;
     return (
       (item.nome || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -240,7 +240,7 @@ export default function Iniciativas() {
   });
 
   // Componente interno da Ficha em Papel (Única e física)
-  const RenderFichaCard = ({ item }: { item: IniciativaItem }) => (
+  const RenderFichaCard = ({ item }: { item: PropostaItem }) => (
     <div className="w-full bg-amber-50/95 border-2 border-amber-200/90 rounded-2xl p-4 shadow-md relative select-none">
       {/* Fita adesiva / Durex no topo */}
       <div className="w-14 h-3.5 bg-amber-200/70 backdrop-blur-xs absolute -top-2 left-1/2 -translate-x-1/2 rounded-xs shadow-2xs border border-amber-300/50" />
@@ -250,7 +250,7 @@ export default function Iniciativas() {
         <span>{currentInstitute} • Ficha Oficial do Projeto</span>
       </div>
 
-      <h4 className="text-slate-900 font-black text-base md:text-lg border-b border-amber-200/80 pb-2 mb-2 leading-snug">
+      <h4 className="text-slate-900 font-black text-sm md:text-base border-b border-amber-200/80 pb-2 mb-2 leading-snug">
         {item.nome}
       </h4>
 
@@ -262,7 +262,7 @@ export default function Iniciativas() {
   );
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans">
+    <div className="space-y-6 pb-12 font-sans">
       
       {/* Keyframes da Rasgadura FÍSICA por CLIP-PATH zig-zag cortando as letras ao meio */}
       <style>{`
@@ -294,19 +294,19 @@ export default function Iniciativas() {
       `}</style>
 
       {/* Top Banner / Breadcrumb */}
-      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-blue-100">
+            <span className="bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-blue-100 dark:border-blue-800">
               <Building2 size={14} /> {currentInstitute}
             </span>
-            <span className="text-slate-400 text-xs">• Módulo Administrativo</span>
+            <span className="text-slate-400 dark:text-slate-500 text-xs">• Módulo Administrativo</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight">
-            Iniciativas
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-white tracking-tight">
+            Propostas
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Gerencie as iniciativas cadastradas para o instituto <strong className="text-slate-700">{currentInstitute}</strong>.
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+            Gerencie as propostas cadastradas para o instituto <strong className="text-slate-700 dark:text-slate-200">{currentInstitute}</strong>.
           </p>
         </div>
 
@@ -315,28 +315,28 @@ export default function Iniciativas() {
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-3 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 text-sm shrink-0"
         >
           <Plus size={18} />
-          <span>Cadastrar Nova Iniciativa</span>
+          <span>Cadastrar Nova Proposta</span>
         </Link>
       </div>
 
-      {/* Card da Tabela de Iniciativas */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      {/* Card da Tabela de Propostas */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         
         {/* Barra de Filtros e Busca */}
-        <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50/50">
+        <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50/50 dark:bg-slate-850/50">
           <div className="relative w-full sm:w-80">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
             <input
               type="text"
               placeholder="Buscar por nome ou termo..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             />
           </div>
 
-          <div className="text-xs text-slate-500 font-medium">
-            Exibindo <strong className="text-slate-800">{filteredIniciativas.length}</strong> iniciativas
+          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            Exibindo <strong className="text-slate-800 dark:text-slate-200">{filteredPropostas.length}</strong> propostas
           </div>
         </div>
 
@@ -348,95 +348,97 @@ export default function Iniciativas() {
               <div className="w-3.5 h-3.5 rounded-full bg-[var(--theme-primary)] animate-bounce" style={{ animationDelay: '150ms' }} />
               <div className="w-3.5 h-3.5 rounded-full bg-[var(--theme-primary)] animate-bounce" style={{ animationDelay: '300ms' }} />
             </div>
-            <p className="text-slate-600 text-sm font-bold animate-pulse">Carregando iniciativas do instituto...</p>
+            <p className="text-slate-600 dark:text-slate-400 text-sm font-bold animate-pulse">Carregando propostas do instituto...</p>
           </div>
-        ) : filteredIniciativas.length === 0 ? (
+        ) : filteredPropostas.length === 0 ? (
           <div className="py-16 text-center px-4">
-            <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-200 dark:border-slate-700">
               <Layers size={32} />
             </div>
-            <h3 className="text-lg font-bold text-slate-800">Nenhuma iniciativa encontrada</h3>
-            <p className="text-slate-500 text-sm mt-1 max-w-md mx-auto">
-              Não existem registros de iniciativas cadastradas para o instituto {currentInstitute} no momento.
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white">Nenhuma proposta encontrada</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1 max-w-md mx-auto">
+              Não existem registros de propostas cadastradas para o instituto {currentInstitute} no momento.
             </p>
             <Link
               to="/admin/cadastrar-projeto"
-              className="inline-flex items-center gap-2 mt-6 text-sm font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-4 py-2.5 rounded-xl border border-blue-100 transition-colors"
+              className="inline-flex items-center gap-2 mt-6 text-sm font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-4 py-2.5 rounded-xl border border-blue-100 dark:border-blue-800 transition-colors"
             >
-              <Plus size={16} /> Cadastrar a primeira iniciativa
+              <Plus size={16} /> Cadastrar a primeira proposta
             </Link>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-xs sm:text-sm md:text-base font-black uppercase tracking-wider text-slate-700">
-                  <th className="py-4 px-4 md:px-6 w-16 text-center">ID</th>
-                  <th className="py-4 px-4 md:px-6">Nome da Iniciativa</th>
-                  <th className="py-4 px-4 md:px-6">Documentação</th>
-                  <th className="py-4 px-4 md:px-6 w-36">Faixa Etária</th>
-                  <th className="py-4 px-4 md:px-6 w-36 text-center">Qtd. de Núcleos</th>
-                  <th className="py-4 px-4 md:px-6 w-36 text-center">Vagas p/ Núcleo</th>
-                  <th className="py-4 px-4 md:px-6 w-32 text-center">Status</th>
-                  <th className="py-4 px-4 md:px-6 w-32 text-center">Ações</th>
+                <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 text-xs sm:text-sm md:text-base font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  <th className="py-4 px-3 md:px-4 w-16 text-center">ID</th>
+                  <th className="py-4 px-3 md:px-4">Nome da Proposta</th>
+                  <th className="py-4 px-3 md:px-4">Documentação</th>
+                  <th className="py-4 px-3 md:px-4 w-36">Faixa Etária</th>
+                  <th className="py-4 px-3 md:px-4 w-36 text-center">Qtd. de Núcleos</th>
+                  <th className="py-4 px-3 md:px-4 w-36 text-center">Vagas p/ Núcleo</th>
+                  <th className="py-4 px-3 md:px-4 w-32 text-center">Status</th>
+                  <th className="py-4 px-3 md:px-4 w-32 text-center">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-base md:text-lg">
-                {filteredIniciativas.map((item) => {
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm md:text-base">
+                {filteredPropostas.map((item) => {
                   const isAtivo = item.ativo !== false && item.status !== "inativo" && item.status !== false;
                   const isEvento = (item.aplicabilidade || "").toLowerCase().includes("evento");
 
                   return (
-                    <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
-                      <td className="py-4 md:py-6 px-4 md:px-6 font-bold text-slate-400 text-center text-base md:text-lg">{item.id}</td>
+                    <tr key={item.id} className="hover:bg-blue-50/30 dark:hover:bg-slate-800/50 transition-colors group">
+                      <td className="py-3 md:py-4 px-3 md:px-4 font-bold text-slate-400 dark:text-slate-500 text-center text-sm md:text-base">{item.id}</td>
                       
-                      <td className="py-4 md:py-6 px-4 md:px-6">
-                        <span className="font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors block text-base sm:text-lg md:text-xl">
+                      <td className="py-3 md:py-4 px-3 md:px-4">
+                        <span className="font-extrabold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors block text-sm sm:text-sm md:text-base">
                           {item.nome}
                         </span>
                         
                         <span className={`inline-block mt-2 px-3 py-1 rounded text-xs font-extrabold uppercase tracking-wider ${
-                          isEvento ? 'bg-orange-100 text-orange-800 border border-orange-200' : 'bg-blue-100 text-blue-800 border border-blue-200'
+                          isEvento 
+                            ? 'bg-orange-100 dark:bg-orange-950/70 text-orange-800 dark:text-orange-300 border border-orange-200 dark:border-orange-800/60' 
+                            : 'bg-blue-100 dark:bg-blue-950/70 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60'
                         }`}>
                           {isEvento ? 'Evento' : 'Projeto de Aula'}
                         </span>
                       </td>
 
-                      <td className="py-4 md:py-6 px-4 md:px-6">
+                      <td className="py-3 md:py-4 px-3 md:px-4">
                         {item.termo_fomento && (
-                          <div className="font-extrabold text-sm md:text-base text-slate-800">
+                          <div className="font-extrabold text-sm md:text-base text-slate-800 dark:text-slate-200">
                             Termo: {item.termo_fomento}
                           </div>
                         )}
                         {item.numero_proposta && (
-                          <div className="text-xs md:text-sm text-slate-600 font-semibold mt-0.5">Prop: {item.numero_proposta}</div>
+                          <div className="text-xs md:text-sm text-slate-600 dark:text-slate-400 font-semibold mt-0.5">Prop: {item.numero_proposta}</div>
                         )}
                         {item.numero_processo_adm && (
-                          <div className="text-xs md:text-sm text-slate-600 font-semibold mt-0.5">Proc: {item.numero_processo_adm}</div>
+                          <div className="text-xs md:text-sm text-slate-600 dark:text-slate-400 font-semibold mt-0.5">Proc: {item.numero_processo_adm}</div>
                         )}
                         {item.numero_transferegov && (
-                          <div className="text-xs md:text-sm text-slate-600 font-semibold mt-0.5">Transf: {item.numero_transferegov}</div>
+                          <div className="text-xs md:text-sm text-slate-600 dark:text-slate-400 font-semibold mt-0.5">Transf: {item.numero_transferegov}</div>
                         )}
                       </td>
 
-                      <td className="py-4 md:py-6 px-4 md:px-6 font-extrabold text-slate-700 text-sm md:text-base">
+                      <td className="py-3 md:py-4 px-3 md:px-4 font-extrabold text-slate-700 dark:text-slate-300 text-sm md:text-base">
                         {item.faixa_etaria || "7 - 65"}
                       </td>
 
-                      <td className="py-4 md:py-6 px-4 md:px-6 text-center font-extrabold text-blue-700 text-sm md:text-base">
+                      <td className="py-3 md:py-4 px-3 md:px-4 text-center font-extrabold text-blue-700 dark:text-blue-400 text-sm md:text-base">
                         {item.total_nucleos ? `${item.total_nucleos} núcleos` : "—"}
                       </td>
 
-                      <td className="py-4 md:py-6 px-4 md:px-6 text-center font-extrabold text-indigo-700 text-sm md:text-base">
+                      <td className="py-3 md:py-4 px-3 md:px-4 text-center font-extrabold text-indigo-700 dark:text-indigo-400 text-sm md:text-base">
                         {item.vagas_por_nucleo ? `${item.vagas_por_nucleo} alunos` : "—"}
                       </td>
 
-                      <td className="py-4 md:py-6 px-4 md:px-6 text-center">
+                      <td className="py-3 md:py-4 px-3 md:px-4 text-center">
                         <span
                           className={`inline-flex items-center px-3 md:px-4 py-1.5 rounded-full text-xs md:text-sm font-extrabold border ${
                             isAtivo
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200/80"
-                              : "bg-red-50 text-red-700 border-red-200/80"
+                              ? "bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60"
+                              : "bg-red-50 dark:bg-red-950/70 text-red-700 dark:text-red-300 border-red-200/80 dark:border-red-800/60"
                           }`}
                         >
                           {isAtivo ? "Ativo" : "Inativo"}
@@ -447,15 +449,15 @@ export default function Iniciativas() {
                         <div className="flex items-center justify-center gap-1">
                           <Link
                             to={`/admin/cadastrar-projeto?edit=${item.id}`}
-                            className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                            title="Editar Iniciativa"
+                            className="p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors"
+                            title="Editar Proposta"
                           >
                             <Edit3 size={16} />
                           </Link>
                           <button
                             onClick={() => openDeleteModal(item)}
-                            className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                            title="Excluir Iniciativa"
+                            className="p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors"
+                            title="Excluir Proposta"
                           >
                             <Trash2 size={16} />
                           </button>
@@ -471,23 +473,23 @@ export default function Iniciativas() {
       </div>
 
       {/* Modal de Confirmação com Rasgadura FÍSICA por CLIP-PATH e Lixeira */}
-      {deleteModalOpen && selectedIniciativa && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in duration-200">
+      {deleteModalOpen && selectedProposta && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 animate-in fade-in zoom-in duration-200">
             
             {/* Header do Modal */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold">
+                <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center font-bold">
                   <AlertTriangle size={18} />
                 </div>
-                <h3 className="text-base font-extrabold text-slate-800">Excluir Iniciativa</h3>
+                <h3 className="text-base font-extrabold text-slate-800 dark:text-white">Excluir Proposta</h3>
               </div>
 
               <button
                 onClick={closeDeleteModal}
                 disabled={isDeleting}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 <X size={18} />
               </button>
@@ -499,7 +501,7 @@ export default function Iniciativas() {
               {!isTearing ? (
                 /* Ficha Inteira Antes do Rasgo */
                 <div className="w-full px-2">
-                  <RenderFichaCard item={selectedIniciativa} />
+                  <RenderFichaCard item={selectedProposta} />
                 </div>
               ) : (
                 /* EFEITO FÍSICO REAL: A mesma Ficha é dividida por clip-path zig-zag cortando o texto exato */
@@ -507,12 +509,12 @@ export default function Iniciativas() {
                   
                   {/* Metade Esquerda Físicamente Cortada */}
                   <div className="absolute inset-x-2 top-0 clip-tear-left anim-physical-left z-10">
-                    <RenderFichaCard item={selectedIniciativa} />
+                    <RenderFichaCard item={selectedProposta} />
                   </div>
 
                   {/* Metade Direita Físicamente Cortada */}
                   <div className="absolute inset-x-2 top-0 clip-tear-right anim-physical-right z-10">
-                    <RenderFichaCard item={selectedIniciativa} />
+                    <RenderFichaCard item={selectedProposta} />
                   </div>
 
                   {/* Lixeira no fundo abrindo a tampa para receber os pedaços cortados */}
@@ -529,12 +531,12 @@ export default function Iniciativas() {
 
               {/* Mensagem e Trava de 25s */}
               {!isTearing && (
-                <div className="mt-4 w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-center space-y-1">
-                  <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-amber-700">
-                    <Clock size={14} className="text-amber-600" />
+                <div className="mt-4 w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-3 rounded-xl text-center space-y-1">
+                  <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-300">
+                    <Clock size={14} className="text-amber-600 dark:text-amber-400" />
                     <span>Trava de Segurança: {countdown > 0 ? `Aguarde ${countdown}s` : "Liberado para excluir"}</span>
                   </div>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
                     {countdown > 0 ? "Aguarde a contagem regressiva para confirmar a exclusão." : "Clique no botão abaixo para rasgar a ficha e jogar na lixeira."}
                   </p>
                 </div>
@@ -542,12 +544,12 @@ export default function Iniciativas() {
             </div>
 
             {/* Botões de Ação */}
-            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
                 onClick={closeDeleteModal}
                 disabled={isDeleting}
-                className="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-xs text-slate-600 hover:bg-slate-50 transition-colors"
+                className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
               >
                 Cancelar
               </button>
@@ -558,7 +560,7 @@ export default function Iniciativas() {
                 disabled={countdown > 0 || isDeleting}
                 className={`px-5 py-2.5 rounded-xl font-extrabold text-xs shadow-sm transition-all flex items-center gap-2 ${
                   countdown > 0 || isDeleting
-                    ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
+                    ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed border border-slate-200 dark:border-slate-700"
                     : "bg-red-600 hover:bg-red-700 text-white cursor-pointer shadow-red-600/20 shadow-md animate-bounce"
                 }`}
               >
@@ -584,3 +586,4 @@ export default function Iniciativas() {
     </div>
   );
 }
+

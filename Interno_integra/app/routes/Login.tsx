@@ -59,18 +59,22 @@ export default function Login() {
           const inst = resData.instituto_ativo || resData.instituto || "IBRASE";
           const nome = resData.nome || resData.username || cleanUser;
           const cargo = resData.cargo || resData.account_type || "Colaborador";
-          const id = resData.id || "1";
-
-          localStorage.setItem("auth_institute", inst);
-          localStorage.setItem("auth_user", nome);
-          localStorage.setItem("auth_cargo", cargo);
-          localStorage.setItem("auth_id", String(id));
+          const id = Array.isArray(resData) ? resData[0].id : resData.id;
+          const account_type = Array.isArray(resData) ? resData[0].account_type : resData.account_type;
+          
+          if (inst) {
+            localStorage.setItem("auth_institute", inst);
+            localStorage.setItem("auth_user", nome);
+            localStorage.setItem("auth_cargo", cargo);
+            localStorage.setItem("auth_account_type", account_type || "colaborador");
+            localStorage.setItem("auth_id", String(id));
+          }
           if (resData.institutos_permitidos) {
             localStorage.setItem("auth_institutos_permitidos", JSON.stringify(resData.institutos_permitidos));
           }
 
           setIsSuccess(true);
-          setTimeout(() => navigate("/"), 800);
+          setTimeout(() => { window.location.href = "/"; }, 800);
           return;
         } else if (resData && (resData.status === "senha incorreta" || resData.status === "usuario nao encontrado" || resData.message)) {
           setErrorMsg(resData.message || resData.status || "Usuário ou senha incorretos.");
@@ -137,11 +141,12 @@ export default function Login() {
 
       localStorage.setItem("auth_institute", foundInstitute);
       localStorage.setItem("auth_user", foundUser.nome || foundUser.name || cleanUser);
-      localStorage.setItem("auth_cargo", foundUser.cargo || foundUser.account_type || "Colaborador");
+      localStorage.setItem("auth_cargo", foundUser.cargo || "Colaborador");
+      localStorage.setItem("auth_account_type", foundUser.account_type || "colaborador");
       localStorage.setItem("auth_id", String(foundUser.id));
 
       setIsSuccess(true);
-      setTimeout(() => navigate("/"), 800);
+      setTimeout(() => { window.location.href = "/"; }, 800);
     } catch (err) {
       console.error("Erro no login:", err);
       setErrorMsg("Erro ao conectar com o banco de dados.");
@@ -164,7 +169,7 @@ export default function Login() {
         
         <div className="relative z-10 flex flex-col items-center text-center">
           <img 
-            className="h-32 lg:h-40 w-auto object-contain mb-8 block drop-shadow-2xl transition-all duration-700" 
+            className="h-20 lg:h-24 w-auto object-contain mb-8 block drop-shadow-2xl transition-all duration-700" 
             style={{ transform: isSuccess ? 'scale(1.05)' : 'scale(1)', opacity: isSuccess ? 0.8 : 1 }}
             src="/_prod_simbolo.gif" 
             onError={(e) => { (e.target as any).src='/logo_integra_simbolo.gif'; }} 
@@ -186,37 +191,37 @@ export default function Login() {
       {/* 
         -------------------------------------------------------------
         PAINEL DIREITO (Formulário)
-        Celular: Fundo com as luzes (antigo) e card
-        PC: Fundo branco limpo, sem sombras exageradas, ocupando a altura toda
+        Celular: Fundo suave e um card centralizado bonito
+        PC: Fundo cinza suave com card flutuante
         ------------------------------------------------------------- 
       */}
-      <div className="relative w-full md:w-1/2 lg:w-5/12 min-h-screen flex items-center justify-center bg-slate-50/70 md:bg-white p-4 sm:p-6 md:p-12 lg:p-16 overflow-hidden">
+      <div className="relative w-full md:w-7/12 lg:w-8/12 min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 sm:p-8 md:p-12 lg:p-16 overflow-hidden">
         
-        {/* Luzes decorativas sutis de fundo (Apenas Mobile para manter a regra de não mexer no celular) */}
-        <div className="md:hidden absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-500/5 blur-[120px] pointer-events-none rounded-full transition-opacity duration-700" style={{ opacity: isSuccess ? 0 : 1 }} />
-        <div className="md:hidden absolute bottom-0 right-10 w-[400px] h-[300px] bg-emerald-500/5 blur-[100px] pointer-events-none rounded-full transition-opacity duration-700" style={{ opacity: isSuccess ? 0 : 1 }} />
+        {/* Luzes decorativas sutis de fundo (Apenas Mobile) */}
+        <div className="md:hidden absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-blue-100/50 to-transparent pointer-events-none" />
+        <div className="md:hidden absolute top-[-10%] left-[-20%] w-[80vw] h-[80vw] bg-blue-500/15 blur-[100px] pointer-events-none rounded-full transition-opacity duration-700" style={{ opacity: isSuccess ? 0 : 1 }} />
+        <div className="md:hidden absolute bottom-[-10%] right-[-20%] w-[70vw] h-[70vw] bg-indigo-500/15 blur-[100px] pointer-events-none rounded-full transition-opacity duration-700" style={{ opacity: isSuccess ? 0 : 1 }} />
 
         {/* Card Principal */}
-        <div className="w-full max-w-[450px] md:max-w-md bg-white rounded-3xl md:rounded-none border border-slate-200/80 md:border-none shadow-2xl shadow-slate-900/5 md:shadow-none p-7 sm:p-9 md:p-0 relative z-10 transition-all duration-500" style={{ transform: isSuccess ? 'translateY(-10px)' : 'translateY(0)' }}>
+        <div className="w-full max-w-[400px] md:max-w-[480px] bg-white rounded-[2rem] border border-slate-100 md:border-slate-200 shadow-2xl shadow-slate-200/60 md:shadow-xl p-8 sm:p-10 md:p-12 relative z-10 transition-all duration-500 flex flex-col justify-center" style={{ transform: isSuccess ? 'translateY(-10px)' : 'translateY(0)' }}>
           
-          {/* Cabeçalho da Marca (Visível apenas no mobile, pois no PC já está na esquerda) */}
-          <div className="md:hidden flex flex-col items-center justify-center text-center mb-7 transition-all duration-700" style={{ opacity: isSuccess ? 0.3 : 1 }}>
-            <img 
-              className="h-16 sm:h-20 w-auto object-contain mb-2 block transition-transform hover:scale-105" 
-              src="/_prod_simbolo.gif" 
-              onError={(e) => { (e.target as any).src='/logo_integra_simbolo.gif'; }} 
-              alt="INTEGRA Símbolo" 
-            />
-            <img 
-              className="h-6 sm:h-7 w-auto max-w-[180px] object-contain mb-3 block" 
-              src="/_prod_texto.png" 
-              onError={(e) => { (e.target as any).src='/logo_integra_texto.png'; }} 
-              alt="INTEGRA" 
-            />
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-100 border border-slate-200/60 text-slate-700 text-[11px] font-extrabold uppercase tracking-wider shadow-2xs">
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-              <span>Portal de Administração</span>
+          {/* Cabeçalho da Marca (Mobile) */}
+          <div className="md:hidden flex flex-col items-center justify-center text-center mb-8 transition-all duration-700" style={{ opacity: isSuccess ? 0.3 : 1 }}>
+            <div className="w-20 h-20 bg-white rounded-3xl shadow-xl shadow-slate-200/80 border border-slate-100 flex items-center justify-center mb-6 p-4 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50/50 opacity-50"></div>
+              <img 
+                className="w-full h-full object-contain relative z-10 drop-shadow-md transition-transform hover:scale-105" 
+                src="/_prod_simbolo.gif" 
+                onError={(e) => { (e.target as any).src='/logo_integra_simbolo.gif'; }} 
+                alt="INTEGRA Símbolo" 
+              />
             </div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2 leading-tight">
+              Olá de novo!
+            </h1>
+            <p className="text-[15px] text-slate-500 font-semibold px-2">
+              Acesse a plataforma de gestão
+            </p>
           </div>
 
           {/* Título PC */}
@@ -238,16 +243,16 @@ export default function Login() {
             
             <div className="transition-all duration-500" style={{ opacity: (isLoading || isSuccess) ? 0.4 : 1, pointerEvents: (isLoading || isSuccess) ? 'none' : 'auto', filter: isSuccess ? 'blur(2px)' : 'none' }}>
               <div className="space-y-2 mb-5">
-                <label className="block text-xs md:text-sm font-semibold text-slate-700">
+                <label className="block text-[13px] md:text-sm font-bold text-slate-700 md:text-slate-700 ml-1">
                   Usuário ou E-mail Institucional
                 </label>
                 <div className="relative flex items-center">
                   <User className="absolute left-4 text-slate-400 w-5 h-5" style={{ position: 'absolute', left: '16px', zIndex: 10, pointerEvents: 'none' }} />
                   <input 
                     type="text" 
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 md:bg-white text-slate-900 text-sm md:text-base font-medium placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-900/10 transition-all outline-none" 
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 md:bg-white text-slate-900 text-[15px] md:text-base font-semibold placeholder:text-slate-400 placeholder:font-medium focus:bg-white focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 transition-all outline-none" 
                     style={{ paddingLeft: '48px', paddingRight: '16px', height: '56px' }}
-                    placeholder="Digite seu usuário ou e-mail corporativo" 
+                    placeholder="Digite seu usuário ou e-mail" 
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required 
@@ -256,15 +261,15 @@ export default function Login() {
               </div>
 
               <div className="space-y-2">
-                <label className="block text-xs md:text-sm font-semibold text-slate-700">
+                <label className="block text-[13px] md:text-sm font-bold text-slate-700 md:text-slate-700 ml-1">
                   Senha de Acesso
                 </label>
                 <div className="relative flex items-center">
                   <Lock className="absolute left-4 text-slate-400 w-5 h-5" style={{ position: 'absolute', left: '16px', zIndex: 10, pointerEvents: 'none' }} />
                   <input 
                     type={showPassword ? "text" : "password"} 
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 md:bg-white text-slate-900 text-sm md:text-base font-medium placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-900/10 transition-all outline-none" 
-                    style={{ paddingLeft: '48px', paddingRight: '80px', height: '56px' }}
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 md:bg-white text-slate-900 text-[15px] md:text-base font-semibold placeholder:text-slate-400 placeholder:font-medium focus:bg-white focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 transition-all outline-none" 
+                    style={{ paddingLeft: '48px', paddingRight: '60px', height: '56px' }}
                     placeholder="••••••••" 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -273,24 +278,23 @@ export default function Login() {
                   <button 
                     type="button" 
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                    style={{ position: 'absolute', right: '12px', zIndex: 10 }}
+                    className="absolute right-2 px-3 py-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 text-[13px] font-bold flex items-center justify-center transition-colors cursor-pointer"
+                    style={{ position: 'absolute', right: '8px', zIndex: 10 }}
                     title={showPassword ? "Ocultar senha" : "Ver senha"}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    <span className="hidden sm:inline">{showPassword ? "Ocultar" : "Ver"}</span>
+                    {showPassword ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-2 pb-1 text-xs md:text-sm font-medium">
-                <label className="flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900 select-none">
+              <div className="flex items-center justify-between pt-3 pb-1 text-[13px] md:text-sm font-semibold ml-1">
+                <label className="flex items-center gap-2.5 cursor-pointer text-slate-500 hover:text-slate-900 select-none">
                   <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900/20" />
                   <span>Lembrar acesso</span>
                 </label>
                 <a 
                   href="#" 
-                  className="font-semibold text-slate-700 hover:text-slate-900 hover:underline transition-colors" 
+                  className="font-bold text-slate-700 hover:text-slate-900 hover:underline transition-colors" 
                   onClick={(e) => { e.preventDefault(); alert('Solicite a redefinição de senha ao administrador do seu instituto.'); }}
                 >
                   Esqueceu a senha?
@@ -301,7 +305,7 @@ export default function Login() {
             <button 
               type="submit" 
               disabled={isLoading || isSuccess}
-              className={`relative w-full h-14 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all duration-300 cursor-pointer mt-2 overflow-hidden ${
+              className={`relative w-full h-14 mt-6 rounded-2xl font-bold text-[15px] md:text-base flex items-center justify-center gap-2 transition-all duration-300 cursor-pointer overflow-hidden ${
                 isSuccess 
                   ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 scale-[1.01]" 
                   : "bg-slate-900 hover:bg-slate-800 text-white shadow-md shadow-slate-900/10 hover:shadow-lg hover:scale-[1.005] active:scale-[0.99]"

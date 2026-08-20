@@ -205,7 +205,8 @@ export default function GradeHoraria() {
   };
 
   // Validador de horário dentro dos limites do Espaço Físico
-  const isSlotValidInEspaco = (dia: DiasSemana, slot: SlotData): boolean => {
+  const isSlotValidInEspaco = (dia: DiasSemana, slot: SlotData, slotKey: string): boolean => {
+    if (slotKey === "P") return true; // Planejamento é livre de restrições do espaço
     if (!slot.inicio || !slot.fim) return true;
     const diaKey = DIA_KEY_MAP[dia];
     const limite = espacoHorarios?.[diaKey];
@@ -263,31 +264,31 @@ export default function GradeHoraria() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12 font-sans">
       {/* Header */}
-      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-4 flex-wrap">
+      <div className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between gap-4 flex-wrap transition-colors">
         <div>
-          <Link to="/admin/nucleos" className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[var(--theme-primary)] transition-colors mb-2">
+          <Link to="/admin/nucleos" className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-[var(--theme-primary)] transition-colors mb-2">
             <ArrowLeft size={14} /> Voltar aos Núcleos
           </Link>
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-white">
               Grade Horária
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
               OK
             </span>
             {turnosCalculados.map(t => (
               <span key={t} className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                t === "Manhã" ? "bg-amber-100 text-amber-800" :
-                t === "Tarde" ? "bg-orange-100 text-orange-800" :
-                "bg-indigo-100 text-indigo-800"
+                t === "Manhã" ? "bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60" :
+                t === "Tarde" ? "bg-orange-100 dark:bg-orange-950/70 text-orange-800 dark:text-orange-300 border border-orange-200 dark:border-orange-800/60" :
+                "bg-indigo-100 dark:bg-indigo-950/70 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60"
               }`}>
                 {t}
               </span>
             ))}
           </div>
-          <p className="text-slate-500 text-xs sm:text-sm mt-1">
-            Núcleo: <strong className="text-slate-800">{nucleoNome}</strong>
-            {espacoNome && <span className="ml-2 text-slate-600 font-semibold">• Espaço Físico: <strong>{espacoNome}</strong></span>}
+          <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">
+            Núcleo: <strong className="text-slate-800 dark:text-slate-200">{nucleoNome}</strong>
+            {espacoNome && <span className="ml-2 text-slate-600 dark:text-slate-300 font-semibold">• Espaço Físico: <strong>{espacoNome}</strong></span>}
           </p>
         </div>
 
@@ -303,7 +304,7 @@ export default function GradeHoraria() {
 
       {statusMsg && (
         <div className={`p-4 rounded-xl font-bold text-sm flex items-center gap-2 border ${
-          statusMsg.type === "success" ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-red-50 text-red-800 border-red-200"
+          statusMsg.type === "success" ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800" : "bg-red-50 dark:bg-red-950/60 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800"
         }`}>
           {statusMsg.type === "success" ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
           {statusMsg.text}
@@ -312,15 +313,16 @@ export default function GradeHoraria() {
 
       {/* Alerta de limitação pelos Horários do Espaço Físico */}
       {espacoHorarios ? (
-        <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl text-amber-900 text-xs sm:text-sm flex items-start gap-3">
-          <Building2 className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+        <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 p-4 rounded-xl text-amber-900 dark:text-amber-200 text-xs sm:text-sm flex items-start gap-3">
+          <Building2 className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <div>
-            <strong>Restrição do Espaço Físico ({espacoNome || "Local"}):</strong> A grade horária deste núcleo é estritamente limitada aos horários de funcionamento cadastrados no Espaço. Dias desativados no Espaço não podem ser selecionados.
+            <strong>Restrição do Espaço Físico ({espacoNome || "Local"}):</strong> A grade horária deste núcleo é limitada aos horários de funcionamento cadastrados no Espaço. <br/>
+            <span className="text-amber-700/80 dark:text-amber-300/80 font-semibold">* Exceção: O Planejamento (P) é livre e não possui restrição de horário.</span>
           </div>
         </div>
       ) : (
-        <div className="bg-indigo-50/80 border border-indigo-200/80 p-4 rounded-xl text-indigo-900 text-xs sm:text-sm flex items-start gap-3">
-          <Sparkles className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+        <div className="bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/60 p-4 rounded-xl text-indigo-900 dark:text-indigo-200 text-xs sm:text-sm flex items-start gap-3">
+          <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
           <div>
             <strong>Dica da Grade Horária:</strong> Selecione os dias de funcionamento. Cada dia possui 4 aulas de 2 horas (Turmas A, B, C, D) + 1 período de Planejamento (P).
           </div>
@@ -328,8 +330,8 @@ export default function GradeHoraria() {
       )}
 
       {/* Seletor dos Dias da Semana */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-3">
+      <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
           Selecione os Dias de Funcionamento do Núcleo:
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
@@ -344,10 +346,10 @@ export default function GradeHoraria() {
                 key={d}
                 className={`py-3 px-3 rounded-xl border transition-all flex items-start gap-3 cursor-pointer ${
                   !permitidoNoEspaco
-                    ? "bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed opacity-70"
+                    ? "bg-slate-50 dark:bg-slate-850 text-slate-400 dark:text-slate-600 border-slate-200 dark:border-slate-800 cursor-not-allowed opacity-70"
                     : ativo
-                    ? "bg-emerald-50/50 border-emerald-300 shadow-sm"
-                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                    ? "bg-emerald-50/50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700 shadow-sm"
+                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750"
                 }`}
               >
                 <input
@@ -358,12 +360,12 @@ export default function GradeHoraria() {
                   className="w-4 h-4 mt-0.5 text-emerald-600 rounded focus:ring-emerald-500 disabled:opacity-50 cursor-pointer"
                 />
                 <div className="flex flex-col">
-                  <span className={`text-sm font-bold ${!permitidoNoEspaco ? "text-slate-400" : ativo ? "text-emerald-900" : "text-slate-700"}`}>
+                  <span className={`text-sm font-bold ${!permitidoNoEspaco ? "text-slate-400 dark:text-slate-500" : ativo ? "text-emerald-900 dark:text-emerald-200" : "text-slate-700 dark:text-slate-200"}`}>
                     {DIAS_MAP[d]}
                   </span>
                   {/* Exibe o horário cadastrado do Espaço */}
                   {limiteEspaco && (
-                    <span className={`text-[10px] font-medium mt-0.5 ${!permitidoNoEspaco ? "text-red-400" : ativo ? "text-emerald-600" : "text-slate-400"}`}>
+                    <span className={`text-[10px] font-medium mt-0.5 ${!permitidoNoEspaco ? "text-red-400" : ativo ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 dark:text-slate-500"}`}>
                       {limiteEspaco.ativo ? `${limiteEspaco.abertura} às ${limiteEspaco.fechamento}` : "Fechado no Espaço"}
                     </span>
                   )}
@@ -376,16 +378,16 @@ export default function GradeHoraria() {
 
       {/* Tabela de Turmas por Dia */}
       {loading ? (
-        <div className="flex items-center justify-center py-20 gap-3 text-slate-500 bg-white rounded-2xl border border-slate-200">
+        <div className="flex items-center justify-center py-20 gap-3 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
           <Loader2 className="animate-spin w-5 h-5 text-[var(--theme-primary)]" />
           <span className="text-sm font-medium">Carregando dados da grade...</span>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <th className="text-left px-5 py-3">Bloco</th>
                   {(["1", "2", "3", "4", "5", "6"] as DiasSemana[]).map(d => (
                     <th key={d} className={`text-center px-3 py-3 ${!diasGrade[d]?.ativo ? "opacity-30" : ""}`}>
@@ -394,23 +396,23 @@ export default function GradeHoraria() {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {[
-                  { key: "A", name: "Turma A", desc: "Aula", badgeBg: "bg-blue-100 text-blue-800" },
-                  { key: "B", name: "Turma B", desc: "Aula", badgeBg: "bg-emerald-100 text-emerald-800" },
-                  { key: "C", name: "Turma C", desc: "Aula", badgeBg: "bg-amber-100 text-amber-800" },
-                  { key: "D", name: "Turma D", desc: "Aula", badgeBg: "bg-rose-100 text-rose-800" },
-                  { key: "P", name: "Planejamento", desc: "Sem Turma", badgeBg: "bg-purple-100 text-purple-800" },
+                  { key: "A", name: "Turma A", desc: "Aula", badgeBg: "bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300" },
+                  { key: "B", name: "Turma B", desc: "Aula", badgeBg: "bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300" },
+                  { key: "C", name: "Turma C", desc: "Aula", badgeBg: "bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300" },
+                  { key: "D", name: "Turma D", desc: "Aula", badgeBg: "bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300" },
+                  { key: "P", name: "Planejamento", desc: "Sem Turma", badgeBg: "bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300" },
                 ].map(slot => (
-                  <tr key={slot.key} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={slot.key} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <span className={`w-8 h-8 rounded-xl flex items-center justify-center font-extrabold text-xs shrink-0 ${slot.badgeBg}`}>
                           {slot.key}
                         </span>
                         <div>
-                          <div className="font-bold text-slate-800">{slot.name}</div>
-                          <div className="text-[11px] text-slate-400">{slot.desc}</div>
+                          <div className="font-bold text-slate-800 dark:text-white">{slot.name}</div>
+                          <div className="text-[11px] text-slate-400 dark:text-slate-500">{slot.desc}</div>
                         </div>
                       </div>
                     </td>
@@ -418,48 +420,48 @@ export default function GradeHoraria() {
                     {(["1", "2", "3", "4", "5", "6"] as DiasSemana[]).map(d => {
                       const diaAtivo = diasGrade[d]?.ativo;
                       const slotVal = diasGrade[d]?.slots[slot.key as "A" | "B" | "C" | "D" | "P"];
-                      const validoNoEspaco = diaAtivo && slotVal ? isSlotValidInEspaco(d, slotVal) : true;
+                      const validoNoEspaco = diaAtivo && slotVal ? isSlotValidInEspaco(d, slotVal, slot.key) : true;
 
                       return (
-                        <td key={d} className={`px-2 py-4 text-center ${!diaAtivo ? "bg-slate-50/50 opacity-40" : ""}`}>
+                        <td key={d} className={`px-2 py-4 text-center ${!diaAtivo ? "bg-slate-50/50 dark:bg-slate-850/50 opacity-40" : ""}`}>
                           {diaAtivo ? (
                             <div className="flex flex-col items-center gap-1.5">
-                              <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-200">
+                              <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
                                 <input
                                   type="time"
                                   min="06:00"
                                   max="22:00"
-                                  className={`w-20 px-1 py-1 rounded text-xs font-bold text-slate-800 text-center focus:outline-none focus:ring-2 bg-white ${
+                                  className={`w-20 px-1 py-1 rounded text-xs font-bold text-slate-800 dark:text-white text-center focus:outline-none focus:ring-2 bg-white dark:bg-slate-900 ${
                                     !validoNoEspaco
-                                      ? "border-amber-300 text-amber-900 focus:ring-amber-300"
-                                      : "border-slate-200 focus:ring-emerald-500"
+                                      ? "border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-300 focus:ring-amber-300"
+                                      : "border-slate-200 dark:border-slate-700 focus:ring-emerald-500"
                                   }`}
                                   value={slotVal?.inicio || ""}
                                   onChange={e => handleHoraChange(d, slot.key as "A" | "B" | "C" | "D" | "P", "inicio", e.target.value)}
                                 />
-                                <span className="text-[10px] text-slate-400 font-bold">às</span>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">às</span>
                                 <input
                                   type="time"
                                   min="06:00"
                                   max="22:00"
-                                  className={`w-20 px-1 py-1 rounded text-xs font-bold text-slate-800 text-center focus:outline-none focus:ring-2 bg-white ${
+                                  className={`w-20 px-1 py-1 rounded text-xs font-bold text-slate-800 dark:text-white text-center focus:outline-none focus:ring-2 bg-white dark:bg-slate-900 ${
                                     !validoNoEspaco
-                                      ? "border-amber-300 text-amber-900 focus:ring-amber-300"
-                                      : "border-slate-200 focus:ring-emerald-500"
+                                      ? "border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-300 focus:ring-amber-300"
+                                      : "border-slate-200 dark:border-slate-700 focus:ring-emerald-500"
                                   }`}
                                   value={slotVal?.fim || ""}
                                   onChange={e => handleHoraChange(d, slot.key as "A" | "B" | "C" | "D" | "P", "fim", e.target.value)}
                                 />
                               </div>
                               {!validoNoEspaco && (
-                                <span className="text-[9px] font-bold text-amber-700 flex items-center gap-0.5 mt-0.5 leading-tight max-w-[100px] text-center" title="Fora da janela de funcionamento do Espaço Físico">
+                                <span className="text-[9px] font-bold text-amber-700 dark:text-amber-400 flex items-center gap-0.5 mt-0.5 leading-tight max-w-[100px] text-center" title="Fora da janela de funcionamento do Espaço Físico">
                                   <AlertTriangle size={10} className="text-amber-500 shrink-0" />
                                   Fora do horário do espaço
                                 </span>
                               )}
                             </div>
                           ) : (
-                            <span className="text-xs text-slate-300 font-mono">—</span>
+                            <span className="text-xs text-slate-300 dark:text-slate-600 font-mono">—</span>
                           )}
                         </td>
                       );

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams, useNavigate } from "react-router";
 import * as z from "zod";
-import { ArrowLeft, Save, MapPin, Building2, Loader2, Award, User } from "lucide-react";
+import { ArrowLeft, Save, MapPin, Building2, Loader2, Award, User, AlertCircle } from "lucide-react";
 
 // Schemas de Validação (Zod)
 const cadastrarNucleoSchema = z.object({
@@ -10,7 +10,7 @@ const cadastrarNucleoSchema = z.object({
   nomeNucleo: z.string().optional(),
   espacoId: z.string().min(1, "Selecione o espaço físico"),
   projetoId: z.string().min(1, "Selecione o projeto de aula/evento"),
-  modalidadeId: z.string().optional(),
+  modalidadeId: z.string().min(1, "Selecione a modalidade"),
   cidadeId: z.string().optional(),
   uf: z.string().optional(),
   bairroId: z.string().optional(),
@@ -19,8 +19,8 @@ const cadastrarNucleoSchema = z.object({
   instrutor: z.string().optional(),
   
   // Vigência e Status
-  ativo: z.boolean().default(true),
-  aceitandoVagas: z.boolean().default(true),
+  ativo: z.boolean().default(false),
+  aceitandoVagas: z.boolean().default(false),
   dataInicio: z.string().optional(),
   dataFim: z.string().optional(),
 });
@@ -164,7 +164,8 @@ export default function CadastrarNucleo() {
   const { register, handleSubmit, watch, formState: { errors, isSubmitting }, setValue: setFormValue, reset } = useForm<CadastrarNucleoFormData>({
     resolver: customZodResolver(cadastrarNucleoSchema),
     defaultValues: {
-      ativo: true,
+      ativo: false,
+      aceitandoVagas: false,
       numeroVaga: "1",
       vagas: "100",
     },
@@ -225,15 +226,38 @@ export default function CadastrarNucleo() {
     }
   }, [selectedEspaco, setFormValue]);
 
+  const getProjVagas = (proj: any) => {
+    if (!proj) return [];
+    try {
+      const rawNew = proj.vagas_nucleo || proj.vagasNucleo;
+      let parsed = typeof rawNew === 'string' ? JSON.parse(rawNew) : (Array.isArray(rawNew) ? rawNew : []);
+      if (parsed.length > 0 && parsed[0].numero !== undefined) return parsed;
+      
+      const rawOld = proj.limites_modalidades || proj.limitesModalidades || proj.limites_modalidade;
+      let legacy = typeof rawOld === 'string' ? JSON.parse(rawOld) : (Array.isArray(rawOld) ? rawOld : []);
+      const converted: any[] = [];
+      let slot = 1;
+      legacy.forEach((item: any) => {
+        const lim = Number(item.limite) || 0;
+        for (let i = 0; i < lim; i++) converted.push({ numero: slot++, modalidadeId: String(item.id || ""), modalidadeNome: item.nome || "Modalidade Legada" });
+      });
+      return converted;
+    } catch(e) { return []; }
+  };
+
   // Auto-seleciona a menor vaga (slot) de núcleo livre no projeto
   useEffect(() => {
     if (editId) return;
-    let firstFree = 1;
-    while (vagasOcupadasNoProjeto[firstFree]) {
-      firstFree++;
+    const proj = projetos.find(p => p && String(p.id) === String(projetoIdWatch));
+    if (proj) {
+      const projVagas = getProjVagas(proj);
+      const firstFree = projVagas.find((v: any) => !vagasOcupadasNoProjeto[v.numero]);
+      if (firstFree) {
+        setFormValue("numeroVaga", String(firstFree.numero));
+        setFormValue("modalidadeId", String(firstFree.modalidadeId));
+      }
     }
-    setFormValue("numeroVaga", String(firstFree));
-  }, [projetoIdWatch, vagasOcupadasNoProjeto, editId, setFormValue]);
+  }, [projetoIdWatch, vagasOcupadasNoProjeto, editId, setFormValue, projetos]);
 
   useEffect(() => {
     if (editId) {
@@ -268,6 +292,7 @@ export default function CadastrarNucleo() {
                 dataInicio: nucleo.data_inicio || "",
                 dataFim: nucleo.data_fim || "",
                 ativo: nucleo.ativo !== false && nucleo.ativo !== 0 && nucleo.ativo !== "0",
+                aceitandoVagas: nucleo.aceitando_vagas === true || nucleo.aceitando_vagas === "true" || nucleo.aceitando_vagas === 1,
               });
             }
           }
@@ -308,6 +333,9 @@ export default function CadastrarNucleo() {
       if (data.numeroVaga) {
         formData.append("numero_vaga", data.numeroVaga);
       }
+      if (data.modalidadeId) {
+        formData.append("modalidade_id", data.modalidadeId);
+      }
 
       const response = await fetch(webhookUrl, {
         method: editId ? "PUT" : "POST",
@@ -339,20 +367,20 @@ export default function CadastrarNucleo() {
     <div className="space-y-6 max-w-5xl mx-auto pb-12 font-sans">
       
       {/* Banner de Topo */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
             {editId ? "Editar Núcleo Operacional" : "Cadastrar Novo Núcleo Operacional"}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Vincule um Espaço Físico Aprovado a uma Iniciativa para ativar um Núcleo.
+            Vincule um Espaço Físico Aprovado a uma Proposta para ativar um Núcleo.
           </p>
         </div>
 
         <button
           type="button"
           onClick={() => navigate("/admin/nucleos")}
-          className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 transition-colors self-start sm:self-auto"
+          className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors self-start sm:self-auto"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar para a lista
@@ -362,10 +390,10 @@ export default function CadastrarNucleo() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         
         {/* IDENTIFICAÇÃO E LOCALIZAÇÃO GERAL */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-          <div className="flex items-center gap-2 mb-2 border-b border-slate-100 pb-3">
-            <MapPin className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-base font-bold text-slate-800">Identificação e Localização do Núcleo</h2>
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+            <MapPin className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            <h2 className="text-base font-bold text-slate-800 dark:text-white">Alocação do Núcleo</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -417,47 +445,70 @@ export default function CadastrarNucleo() {
             </div>
           </div>
 
-          {/* SELETOR DE VAGA DO NÚCLEO (SLOT NO PROJETO) */}
-          <div className="pt-2">
-            <label className="block text-xs font-bold text-slate-800 mb-1 flex items-center gap-1.5">
-              <Award className="w-4 h-4 text-indigo-600" />
-              <span>Número da Vaga do Núcleo (Alocação no Projeto)</span>
-            </label>
-            <select
-              {...register("numeroVaga")}
-              className="w-full bg-indigo-50/50 border border-indigo-200 rounded-lg p-2.5 text-sm font-extrabold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              {(() => {
-                const proj = projetos.find(p => p && String(p.id) === String(projetoIdWatch));
-                let totalSlots = 20;
-                if (proj) {
-                  const limStr = proj.limites_modalidades || proj.limitesModalidades || proj.limites_modalidade;
-                  if (limStr && limStr !== '[]') {
-                    try {
-                      const limArr = typeof limStr === 'string' ? JSON.parse(limStr) : limStr;
-                      if (Array.isArray(limArr) && limArr.length > 0) {
-                        totalSlots = limArr.reduce((acc, curr) => acc + (Number(curr?.limite) || 0), 0);
-                      }
-                    } catch (e) { console.warn("Erro ao ler limites_modalidades:", e); }
+          <div className="pt-2 border-t border-slate-100">
+              <label className="block text-xs font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+                <Award className="w-4 h-4 text-indigo-600" />
+                <span>Selecione a Vaga da Proposta <span className="text-red-500">*</span></span>
+              </label>
+              <select
+                value={numeroVagaWatch || ""}
+                onChange={e => {
+                  const val = e.target.value;
+                  setFormValue("numeroVaga", val);
+                  if (val) {
+                    const proj = projetos.find(p => p && String(p.id) === String(projetoIdWatch));
+                    const projVagas = getProjVagas(proj);
+                    const selectedVaga = projVagas.find((v: any) => String(v.numero) === val);
+                    if (selectedVaga) {
+                      setFormValue("modalidadeId", String(selectedVaga.modalidadeId));
+                    }
                   }
-                }
-                const options = Array.from({ length: totalSlots > 0 ? totalSlots : 20 }, (_, i) => i + 1);
-                
-                return options.map(vaga => {
-                  const ocupadoPor = vagasOcupadasNoProjeto[vaga];
-                  const isCurrent = editId && String(numeroVagaWatch) === String(vaga);
+                }}
+                disabled={!projetoIdWatch}
+                className="w-full bg-indigo-50/50 border border-indigo-200 rounded-lg p-2.5 text-sm font-extrabold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+              >
+                {!projetoIdWatch ? (
+                  <option value="">Selecione primeiro o Projeto acima...</option>
+                ) : (
+                  <>
+                    <option value="">Selecione uma vaga...</option>
+                    {(() => {
+                      const proj = projetos.find(p => p && String(p.id) === String(projetoIdWatch));
+                      if (!proj) return null;
+                      const projVagas = getProjVagas(proj);
+                      
+                      return projVagas.map((v: any) => {
+                        const ocupadoPor = vagasOcupadasNoProjeto[v.numero];
+                        const isCurrent = editId && String(numeroVagaWatch) === String(v.numero);
+                        return (
+                          <option key={v.numero} value={v.numero} disabled={!!ocupadoPor}>
+                            Vaga Nº {v.numero} — {v.modalidadeNome} {ocupadoPor ? `(🔴 Ocupada por: ${ocupadoPor})` : (isCurrent ? "(🔵 Em Uso - Atual)" : "(🟢 Livre)")}
+                          </option>
+                        );
+                      });
+                    })()}
+                  </>
+                )}
+              </select>
+              {errors.numeroVaga && (
+                <span className="text-[11px] text-red-500 mt-1 block">{errors.numeroVaga.message}</span>
+              )}
+              {projetoIdWatch && (() => {
+                const proj = projetos.find(p => p && String(p.id) === String(projetoIdWatch));
+                const projVagas = getProjVagas(proj);
+                if (projVagas.length === 0) {
                   return (
-                    <option key={vaga} value={vaga} disabled={!!ocupadoPor}>
-                      Vaga Nº {vaga} {ocupadoPor ? `— 🔴 Ocupada (${ocupadoPor})` : (isCurrent ? "— 🔵 Em Uso (Atual)" : "— 🟢 Livre")}
-                    </option>
+                    <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                      <AlertCircle size={14} className="text-red-600 shrink-0 mt-0.5" />
+                      <span className="text-[10px] text-red-700 font-medium">
+                        Esta proposta não possui vagas configuradas. Configure as vagas na aba de Propostas.
+                      </span>
+                    </div>
                   );
-                });
+                }
+                return null;
               })()}
-            </select>
-            <span className="text-[11px] text-slate-400 mt-1 block">
-              Cada núcleo ocupa uma posição de Vaga única no projeto. Vagas já alocadas ficam bloqueadas para evitar duplicidade.
-            </span>
-          </div>
+            </div>
 
           {/* INSTRUTOR DO NÚCLEO */}
           <div className="pt-2 border-t border-slate-100 mt-2">
@@ -483,18 +534,13 @@ export default function CadastrarNucleo() {
                 <span>Informações Herdadas do Espaço Físico</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
-                <div className="bg-white p-3 rounded-lg border border-indigo-100 shadow-2xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-indigo-100 dark:border-slate-700 shadow-2xs">
                   <span className="text-slate-400 font-semibold block text-[10px] uppercase">Nome do Núcleo:</span>
                   <span className="font-extrabold text-indigo-700 text-sm">{selectedEspaco.nome}</span>
                 </div>
 
-                <div className="bg-white p-3 rounded-lg border border-indigo-100 shadow-2xs">
-                  <span className="text-slate-400 font-semibold block text-[10px] uppercase">Modalidade:</span>
-                  <span className="font-extrabold text-slate-800 text-sm">{getModalidadeNome(selectedEspaco)}</span>
-                </div>
-
-                <div className="bg-white p-3 rounded-lg border border-indigo-100 shadow-2xs">
+                <div className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-indigo-100 dark:border-slate-700 shadow-2xs">
                   <span className="text-slate-400 font-semibold block text-[10px] uppercase">Local / Bairro:</span>
                   <span className="font-extrabold text-slate-800 text-sm">{[selectedEspaco.bairro, selectedEspaco.cidade].filter(Boolean).join(" · ") || "—"}</span>
                 </div>
@@ -531,10 +577,16 @@ export default function CadastrarNucleo() {
           </div>
 
           <div className="pt-2">
-            <label className="flex items-center gap-2 p-3 border-1.5 border border-slate-200 rounded-lg bg-white cursor-pointer w-fit select-none hover:bg-slate-50 transition-colors">
-              <input type="checkbox" {...register("ativo")} className="w-4 h-4 cursor-pointer text-indigo-600 focus:ring-indigo-500 rounded border-slate-300" />
-              <span className="text-sm font-bold text-slate-800">Núcleo Ativo</span>
-            </label>
+            <div className="p-4 border border-amber-200 bg-amber-50 rounded-lg w-full flex items-start gap-3">
+              <input type="hidden" {...register("ativo")} />
+              <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shrink-0 mt-0.5">
+                <AlertCircle size={18} />
+              </div>
+              <div>
+                <span className="text-sm font-extrabold text-amber-900 block mb-0.5">Núcleo Iniciará Pausado</span>
+                <span className="text-xs text-amber-700 font-medium">Por padrão, todo novo núcleo começa desativado. Apenas o setor Pedagógico tem a permissão de iniciar (dar play) nas inscrições deste núcleo no painel de gestão.</span>
+              </div>
+            </div>
           </div>
         </div>
 

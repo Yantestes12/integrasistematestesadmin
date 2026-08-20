@@ -44,10 +44,8 @@ export default function Espacos() {
   // Modal de Aprovação de Espaço -> Criar Núcleo Automático
   const [approveModalOpen, setApproveModalOpen] = useState(false);
   const [espacoToApprove, setEspacoToApprove] = useState<EspacoItem | null>(null);
-  const [modalidadesOptions, setModalidadesOptions] = useState<{ id: string; nome: string; label: string; disabled: boolean }[]>([]);
-  const [selectedModalidadeId, setSelectedModalidadeId] = useState<string>("");
-  const [vagasOcupadasNoProjeto, setVagasOcupadasNoProjeto] = useState<Record<number, string>>({});
-  const [selectedNumeroVaga, setSelectedNumeroVaga] = useState<string>("1");
+  const [vagasOptions, setVagasOptions] = useState<any[]>([]);
+  const [selectedVagaIdx, setSelectedVagaIdx] = useState<string>("");
   const [isSubmittingApprove, setIsSubmittingApprove] = useState(false);
 
   // Sistema de Notificações Flutuantes (Toasts)
@@ -237,39 +235,42 @@ export default function Espacos() {
 
   const handleAprovarEspaco = async (espaco: EspacoItem) => {
     setEspacoToApprove(espaco);
-    setSelectedModalidadeId("");
+    setSelectedVagaIdx("");
     
     try {
       const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
-      const [resM, resN, resP] = await Promise.all([
-        fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${authInstitute.toUpperCase()}`),
+      const [resN, resP] = await Promise.all([
         fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${authInstitute.toUpperCase()}`),
         fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${authInstitute.toUpperCase()}`)
       ]);
 
-      const projLimitesMap: Record<number, number> = {};
-      let mustFilterByProject = false;
-      
+      let projVagas: any[] = [];
       if (resP.ok && espaco.projeto_id) {
-        mustFilterByProject = true;
         try {
           const pText = await resP.text();
           const pData = JSON.parse(pText);
           const pList = flattenResponse(pData);
           const proj = pList.find((p: any) => String(p.id) === String(espaco.projeto_id));
           if (proj) {
-            const limitStr = proj.limites_modalidades || proj.limites_modalidade;
-            const parsedLimits = typeof limitStr === 'string' ? JSON.parse(limitStr) : (Array.isArray(limitStr) ? limitStr : []);
-            parsedLimits.forEach((l: any) => {
-              if (l.id) projLimitesMap[Number(l.id)] = Number(l.limite) || 0;
-            });
+            const rawNew = proj.vagas_nucleo || proj.vagasNucleo;
+            let parsed = typeof rawNew === 'string' ? JSON.parse(rawNew) : (Array.isArray(rawNew) ? rawNew : []);
+            if (parsed.length > 0 && parsed[0].numero !== undefined) {
+              projVagas = parsed;
+            } else {
+              const rawOld = proj.limites_modalidades || proj.limitesModalidades || proj.limites_modalidade;
+              let legacy = typeof rawOld === 'string' ? JSON.parse(rawOld) : (Array.isArray(rawOld) ? rawOld : []);
+              let slot = 1;
+              legacy.forEach((item: any) => {
+                const lim = Number(item.limite) || 0;
+                for (let i = 0; i < lim; i++) projVagas.push({ numero: slot++, modalidadeId: String(item.id || ""), modalidadeNome: item.nome || "Modalidade Legada" });
+              });
+            }
           }
         } catch (err) {
           console.warn("Erro ao ler projetos:", err);
         }
       }
 
-      const mCount: Record<number, number> = {};
       const oMap: Record<number, string> = {};
       if (resN.ok) {
         try {
@@ -282,61 +283,41 @@ export default function Espacos() {
               if (!isNaN(v) && v > 0) {
                 oMap[v] = n.nome || `Núcleo #${n.id}`;
               }
-              if (n.modalidade_id) {
-                const mid = Number(n.modalidade_id);
-                mCount[mid] = (mCount[mid] || 0) + 1;
-              }
             }
           });
         } catch (err) {
           console.warn("Erro ao ler nucleos:", err);
         }
       }
-      setVagasOcupadasNoProjeto(oMap);
 
-      if (resM.ok) {
-        try {
-          const mText = await resM.text();
-          const mData = JSON.parse(mText);
-          let mList = flattenResponse(mData).map((m: any) => ({ id: String(m.id), nome: m.nome || "" })).filter((m: any) => m.nome);
-          
-          const options = mList.reduce((acc: any[], m: any) => {
-            const mid = Number(m.id);
-            if (mustFilterByProject && projLimitesMap[mid] === undefined) return acc;
-            
-            const limit = projLimitesMap[mid] || 0;
-            const used = mCount[mid] || 0;
-            const isFull = limit > 0 && used >= limit;
-            
-            let label = m.nome;
-            if (limit > 0) {
-              label += ` (${used}/${limit} Núcleos ${isFull ? '- ESGOTADA' : ''})`;
-            }
-            
-            acc.push({ id: m.id, nome: m.nome, label, disabled: isFull });
-            return acc;
-          }, []);
-          setModalidadesOptions(options);
-        } catch (err) {
-          console.warn("Erro ao ler modalidades:", err);
-        }
-      }
+      const options = projVagas.map((v: any, index: number) => {
+        const ocupadoPor = oMap[v.numero] || v.espacoVinculadoId;
+        return {
+          idx: String(index),
+          numero: v.numero,
+          modalidadeId: v.modalidadeId,
+          modalidadeNome: v.modalidadeNome,
+          label: `Vaga Nº ${v.numero} — ${v.modalidadeNome} ${ocupadoPor ? '(🔴 Ocupada)' : '(🟢 Livre)'}`,
+          disabled: !!ocupadoPor,
+        };
+      });
+      setVagasOptions(options);
 
       // Auto seleciona a primeira vaga livre
-      let free = 1;
-      while (oMap[free]) free++;
-      setSelectedNumeroVaga(String(free));
+      const firstFree = options.find((o: any) => !o.disabled);
+      if (firstFree) setSelectedVagaIdx(firstFree.idx);
 
       setApproveModalOpen(true);
     } catch (e) {
       console.error("Erro ao preparar aprovação:", e);
-      addToast("error", "Erro ao carregar dados", "Não foi possível carregar as modalidades.");
+      addToast("error", "Erro ao carregar dados", "Não foi possível carregar as vagas.");
     }
   };
 
   const handleConfirmAprovarEspaco = async () => {
-    if (!espacoToApprove || !selectedModalidadeId) {
-      addToast("warning", "Atenção", "Selecione uma modalidade para gerar o núcleo.");
+    const selectedVaga = vagasOptions.find((v: any) => v.idx === selectedVagaIdx);
+    if (!espacoToApprove || !selectedVaga) {
+      addToast("warning", "Atenção", "Selecione uma vaga para gerar o núcleo.");
       return;
     }
     setIsSubmittingApprove(true);
@@ -350,7 +331,7 @@ export default function Espacos() {
         body: JSON.stringify({
           id: espacoToApprove.id,
           status_aprovacao: "aprovado",
-          modalidade_id: Number(selectedModalidadeId),
+          modalidade_id: Number(selectedVaga.modalidadeId),
           instituto: authInstitute.toUpperCase()
         }),
       });
@@ -360,8 +341,8 @@ export default function Espacos() {
       formData.append("nomeNucleo", espacoToApprove.bairro || espacoToApprove.nome);
       formData.append("espacoId", String(espacoToApprove.id));
       if (espacoToApprove.projeto_id) formData.append("projetoId", String(espacoToApprove.projeto_id));
-      formData.append("modalidadeId", selectedModalidadeId);
-      formData.append("numeroVaga", selectedNumeroVaga);
+      formData.append("modalidadeId", String(selectedVaga.modalidadeId));
+      formData.append("numeroVaga", String(selectedVaga.numero));
       formData.append("bairroId", ""); // Não usamos mais bairro_id, manda vazio para anular
       
       // Opcionais (apenas se N8N aceitar, não faz mal mandar)
@@ -378,7 +359,7 @@ export default function Espacos() {
       });
 
       if (resE.ok && resN.ok) {
-        addToast("success", "ESPAÇO APROVADO E NÚCLEO CRIADO!", `O espaço "${espacoToApprove.nome}" foi aprovado e o Núcleo (Vaga Nº ${selectedNumeroVaga}) foi gerado automaticamente.`);
+        addToast("success", "ESPAÇO APROVADO E NÚCLEO CRIADO!", `O espaço "${espacoToApprove.nome}" foi aprovado e o Núcleo (Vaga Nº ${selectedVaga.numero}) foi gerado automaticamente.`);
         setApproveModalOpen(false);
         setEspacoToApprove(null);
         fetchEspacos();
@@ -731,16 +712,19 @@ export default function Espacos() {
         }
       `}</style>
 
-      {/* Header */}
-      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Top Banner / Breadcrumb */}
+      <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            {/* Módulo Operacional span removed as requested */}
+            <span className="bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 border border-blue-100 dark:border-blue-800">
+              <Building2 size={13} /> {authInstitute}
+            </span>
+            <span className="text-slate-400 dark:text-slate-500 text-xs">• Módulo Operacional</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
             Descrição do Espaço
           </h1>
-          <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
+          <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-0.5">
             Gerencie os locais cadastrados e acompanhe solicitações de novos espaços.
           </p>
         </div>
@@ -755,21 +739,21 @@ export default function Espacos() {
       </div>
 
       {/* Tabs & Busca */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 transition-colors">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
           
           {/* Navegação de Abas (Todos, Aprovados, Pendentes) */}
-          <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl">
+          <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl">
             <button
               onClick={() => setActiveTab("todos")}
               className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
-                activeTab === "todos" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
+                activeTab === "todos" ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
               }`}
             >
               <Building2 size={14} />
               <span>Todos</span>
               <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
-                activeTab === "todos" ? "bg-blue-100 text-blue-700" : "bg-slate-200 text-slate-600"
+                activeTab === "todos" ? "bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
               }`}>
                 {espacos.length}
               </span>
@@ -778,13 +762,13 @@ export default function Espacos() {
             <button
               onClick={() => setActiveTab("aprovados")}
               className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
-                activeTab === "aprovados" ? "bg-white text-emerald-800 shadow-xs" : "text-slate-500 hover:text-slate-800"
+                activeTab === "aprovados" ? "bg-white dark:bg-slate-700 text-emerald-800 dark:text-emerald-300 shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
               }`}
             >
               <CheckCircle2 size={14} className="text-emerald-500" />
               <span>Aprovados</span>
               <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
-                activeTab === "aprovados" ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600"
+                activeTab === "aprovados" ? "bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
               }`}>
                 {espacosAprovados.length}
               </span>
@@ -793,13 +777,13 @@ export default function Espacos() {
             <button
               onClick={() => setActiveTab("pendentes")}
               className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
-                activeTab === "pendentes" ? "bg-white text-purple-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
+                activeTab === "pendentes" ? "bg-white dark:bg-slate-700 text-purple-900 dark:text-purple-300 shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
               }`}
             >
               <Clock size={14} className={solicitacoesPendentes.length > 0 ? "text-purple-600 animate-pulse" : ""} />
               <span>Pendentes</span>
               {solicitacoesPendentes.length > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
                   {solicitacoesPendentes.length}
                 </span>
               )}
@@ -808,23 +792,23 @@ export default function Espacos() {
 
           {/* Campo de Busca */}
           <div className="relative w-full sm:w-72">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
             <input
               type="text"
               placeholder="Buscar por nome, bairro..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+              className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             />
           </div>
         </div>
 
         {/* Banners Informativos das Abas */}
         {activeTab === "pendentes" && (
-          <div className="bg-purple-50/80 border border-purple-200/80 rounded-xl p-3.5 flex items-start gap-3 text-xs text-purple-900">
+          <div className="bg-purple-50/80 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800/60 rounded-xl p-3.5 flex items-start gap-3 text-xs text-purple-900 dark:text-purple-300">
             <AlertCircle size={18} className="text-purple-600 shrink-0 mt-0.5" />
             <div>
-              <strong className="font-extrabold block text-purple-950">Solicitações de Espaços Pendentes de Aprovação</strong>
+              <strong className="font-extrabold block text-purple-950 dark:text-purple-200">Solicitações de Espaços Pendentes de Aprovação</strong>
               Cadastros novos enviados por cedentes/externos que aguardam aprovação do Administrador. Após aprovados, eles passam para a aba de Aprovados.
             </div>
           </div>
@@ -833,15 +817,15 @@ export default function Espacos() {
 
       {/* Lista de Espaços */}
       {loading ? (
-        <div className="bg-white p-12 rounded-2xl border border-slate-200 shadow-sm text-center space-y-3">
+        <div className="bg-white dark:bg-slate-900 p-12 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-center space-y-3">
           <Loader2 size={32} className="animate-spin text-blue-600 mx-auto" />
-          <p className="text-slate-500 text-xs font-semibold">Carregando espaços...</p>
+          <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">Carregando espaços...</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white p-12 rounded-2xl border border-slate-200 shadow-sm text-center space-y-3">
-          <Building2 size={40} className="text-slate-300 mx-auto" />
-          <h3 className="text-base font-bold text-slate-700">Nenhum espaço encontrado</h3>
-          <p className="text-slate-400 text-xs max-w-sm mx-auto">
+        <div className="bg-white dark:bg-slate-900 p-12 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-center space-y-3">
+          <Building2 size={40} className="text-slate-300 dark:text-slate-600 mx-auto" />
+          <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">Nenhum espaço encontrado</h3>
+          <p className="text-slate-400 dark:text-slate-500 text-xs max-w-sm mx-auto">
             {activeTab === "pendentes"
               ? "Não existem solicitações de espaço pendentes no momento."
               : "Nenhum espaço cadastrado corresponde aos critérios da busca."}
@@ -855,10 +839,10 @@ export default function Espacos() {
             return (
               <div
                 key={espaco.id}
-                className="bg-white rounded-2xl border-2 border-slate-200 shadow-sm hover:border-[var(--theme-primary)] hover:shadow-md transition-all overflow-hidden flex flex-col justify-between"
+                className="bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-200 dark:border-slate-800 shadow-sm hover:border-[var(--theme-primary)] hover:shadow-md transition-all overflow-hidden flex flex-col justify-between"
               >
                 {/* Imagem de Capa ou Placeholder */}
-                <div className="relative h-32 bg-slate-100 overflow-hidden">
+                <div className="relative h-32 bg-slate-100 dark:bg-slate-800 overflow-hidden">
                   {espaco.foto_url ? (
                     <img
                       src={espaco.foto_url}
@@ -866,7 +850,7 @@ export default function Espacos() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-100">
+                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800">
                       <Building2 size={36} />
                       <span className="text-xs font-semibold mt-1">Sem foto cadastrada</span>
                     </div>
@@ -883,7 +867,7 @@ export default function Espacos() {
                         <AlertTriangle size={12} /> ??? Info Pendente
                       </span>
                     ) : (
-                      <div className="bg-white/90 backdrop-blur-sm p-1 rounded-full shadow-sm" title="Aprovado e Completo">
+                      <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm p-1 rounded-full shadow-sm" title="Aprovado e Completo">
                         <CheckCircle2 size={20} className="text-emerald-500" />
                       </div>
                     )}
@@ -893,14 +877,14 @@ export default function Espacos() {
                 {/* Conteúdo Principal do Card */}
                 <div className="p-3 sm:p-4 space-y-3 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-lg sm:text-xl font-black text-slate-900 line-clamp-2 flex items-start gap-1.5 leading-tight">
-                      <MapPin size={20} className="text-slate-400 shrink-0 mt-0.5" />
+                    <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white line-clamp-2 flex items-start gap-1.5 leading-tight">
+                      <MapPin size={20} className="text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" />
                       <span>{[espaco.bairro, espaco.cidade].filter(Boolean).join(" • ") || espaco.nome}</span>
                     </h3>
 
                     {/* Indicador de "Em Uso" e Vínculo ao Núcleo */}
                     {espaco.em_uso && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-md mt-2">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-2.5 py-0.5 rounded-md mt-2">
                         <Layers size={12} className="text-blue-500 shrink-0" />
                         <span>Em uso • Vinculado ao Núcleo {espaco.nucleo_nome}</span>
                       </span>
@@ -908,28 +892,28 @@ export default function Espacos() {
                   </div>
 
                   {/* Detalhes do Responsável */}
-                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-1 text-xs">
+                  <div className="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-100 dark:border-slate-700/60 space-y-1 text-xs">
                     {espaco.resp_nome && espaco.resp_nome !== "temp" && espaco.resp_nome !== "x" && espaco.resp_nome !== "—" ? (
-                      <div className="flex items-center gap-1.5 text-slate-700 font-bold">
+                      <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-bold">
                         <User size={13} className="text-slate-400 shrink-0" />
                         <span className="truncate">Resp: {espaco.resp_nome}</span>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1.5 text-amber-700 font-extrabold bg-amber-50/90 p-1.5 rounded-lg border border-amber-200">
+                      <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-300 font-extrabold bg-amber-50/90 dark:bg-amber-950/60 p-1.5 rounded-lg border border-amber-200 dark:border-amber-800">
                         <AlertTriangle size={13} className="shrink-0 text-amber-600" />
                         <span>Resp: ??? (Ajeitar depois)</span>
                       </div>
                     )}
 
                     {espaco.resp_telefone && espaco.resp_telefone !== "00000000000" && (
-                      <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+                      <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 font-medium">
                         <Phone size={13} className="text-slate-400 shrink-0" />
                         <span>{espaco.resp_telefone}</span>
                       </div>
                     )}
 
                     {espaco.ponto_referencia && (
-                      <div className="text-[11px] text-slate-500 italic line-clamp-1 mt-1 pt-1 border-t border-slate-200/60">
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 italic line-clamp-1 mt-1 pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
                         Ref: {espaco.ponto_referencia}
                       </div>
                     )}
@@ -937,7 +921,7 @@ export default function Espacos() {
                 </div>
 
                 {/* Footer do Card com Ações Limpas e Botão Download Ficha */}
-                <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+                <div className="px-4 py-3 bg-slate-50 dark:bg-slate-850/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
                   {isPendente ? (
                     <>
                       <button
@@ -951,7 +935,7 @@ export default function Espacos() {
 
                       <Link
                         to={`/admin/cadastrar-espaco?edit=${espaco.id}`}
-                        className="p-2 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                        className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
                         title="Editar Espaço"
                       >
                         <Edit3 size={16} />
@@ -959,7 +943,7 @@ export default function Espacos() {
 
                       <button
                         onClick={() => openDeleteModal(espaco)}
-                        className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        className="p-2 rounded-xl text-slate-400 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-slate-800 transition-colors"
                         title="Rejeitar / Excluir"
                       >
                         <Trash2 size={16} />
@@ -969,7 +953,7 @@ export default function Espacos() {
                     <>
                       <div className="flex items-center gap-2">
                         <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
-                          espaco.ativo ? "text-emerald-700 bg-emerald-50" : "text-slate-400 bg-slate-100"
+                          espaco.ativo ? "text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/70" : "text-slate-400 dark:text-slate-400 bg-slate-100 dark:bg-slate-800"
                         }`}>
                           {espaco.ativo ? "Ativo" : "Inativo"}
                         </span>
@@ -980,7 +964,7 @@ export default function Espacos() {
                         {!espaco.em_uso && !isIncompleto(espaco) && (
                           <button
                             onClick={() => handleAprovarEspaco(espaco)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 transition-colors"
                             title="Aprovar e Virar Núcleo"
                           >
                             <Plus size={13} />
@@ -991,7 +975,7 @@ export default function Espacos() {
                         {/* Botão de Download / Imprimir Ficha Oficial */}
                         <button
                           onClick={() => handleOpenPrintFicha(espaco)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800 transition-colors"
                           title="Baixar Ficha Oficial em PDF / Imprimir"
                         >
                           <Download size={13} />
@@ -1000,7 +984,7 @@ export default function Espacos() {
 
                         <Link
                           to={`/admin/cadastrar-espaco?edit=${espaco.id}`}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                           title="Editar Espaço"
                         >
                           <Edit3 size={13} />
@@ -1012,8 +996,8 @@ export default function Espacos() {
                           disabled={togglingId === espaco.id}
                           className={`p-1.5 rounded-lg transition-colors ${
                             espaco.ativo
-                              ? "text-slate-400 hover:text-red-500 hover:bg-red-50"
-                              : "text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"
+                              ? "text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-slate-800"
+                              : "text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-800"
                           }`}
                           title={espaco.ativo ? "Desativar" : "Ativar"}
                         >
@@ -1022,8 +1006,8 @@ export default function Espacos() {
 
                         <button
                           onClick={() => openDeleteModal(espaco)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                          title="Excluir Espaço"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 transition-colors"
+                          title="Desvincular Espaço"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -1039,22 +1023,22 @@ export default function Espacos() {
 
       {/* Modal de Confirmação com Trava de Segurança de 25s & Animação Lógica */}
       {deleteModalOpen && selectedDeleteEspaco && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in duration-200">
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 animate-in fade-in zoom-in duration-200">
             
             {/* Header do Modal */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold">
+                <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center font-bold">
                   <AlertTriangle size={18} />
                 </div>
-                <h3 className="text-base font-extrabold text-slate-800">Desvincular Espaço</h3>
+                <h3 className="text-base font-extrabold text-slate-800 dark:text-white">Desvincular Espaço</h3>
               </div>
 
               <button
                 onClick={closeDeleteModal}
                 disabled={deletingId === selectedDeleteEspaco.id}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 <X size={18} />
               </button>
@@ -1073,19 +1057,19 @@ export default function Espacos() {
                 </div>
 
                 {/* Card de Planta Físicamente Dobrando em 3D */}
-                <div className={`w-full max-w-[300px] bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 shadow-sm relative pt-7 ${
+                <div className={`w-full max-w-[300px] bg-slate-50 dark:bg-slate-800/80 border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm relative pt-7 ${
                   isUnpinning ? 'anim-mapcard-fold' : ''
                 }`}>
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 border border-blue-200">
+                    <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 flex items-center justify-center shrink-0 border border-blue-200 dark:border-blue-800">
                       <Building2 size={24} />
                     </div>
                     <div className="overflow-hidden">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Localização Operacional</span>
-                      <h4 className="text-slate-900 font-extrabold text-sm truncate">
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">Localização Operacional</span>
+                      <h4 className="text-slate-900 dark:text-white font-extrabold text-sm truncate">
                         {selectedDeleteEspaco.nome}
                       </h4>
-                      <p className="text-xs text-slate-500 truncate mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
                         {[selectedDeleteEspaco.bairro, selectedDeleteEspaco.cidade].filter(Boolean).join(" • ") || 'Campos dos Goytacazes'}
                       </p>
                     </div>
@@ -1094,7 +1078,7 @@ export default function Espacos() {
 
                 {/* Caixa de Arquivo recebendo a Planta Dobrada */}
                 {isUnpinning && (
-                  <div className="absolute bottom-0 z-10 flex flex-col items-center text-slate-600 anim-archive-open">
+                  <div className="absolute bottom-0 z-10 flex flex-col items-center text-slate-600 dark:text-slate-400 anim-archive-open">
                     <div className="w-16 h-12 bg-slate-800 text-white rounded-t-xl flex items-center justify-center shadow-2xl border-2 border-slate-900">
                       <Archive size={26} className="text-blue-400 animate-pulse" />
                     </div>
@@ -1105,12 +1089,12 @@ export default function Espacos() {
 
               {/* Mensagem e Trava de Segurança de 25 Segundos */}
               {!isUnpinning && (
-                <div className="mt-3 w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-center space-y-1">
-                  <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-amber-700">
-                    <Clock size={14} className="text-amber-600" />
+                <div className="mt-3 w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-3 rounded-xl text-center space-y-1">
+                  <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-300">
+                    <Clock size={14} className="text-amber-600 dark:text-amber-400" />
                     <span>Trava de Segurança: {countdown > 0 ? `Aguarde ${countdown}s` : "Liberado para desvincular"}</span>
                   </div>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
                     {countdown > 0 ? "Aguarde a contagem regressiva para desvincular o espaço." : "Clique no botão para desvincular e remover do mapa."}
                   </p>
                 </div>
@@ -1118,12 +1102,12 @@ export default function Espacos() {
             </div>
 
             {/* Botões de Ação */}
-            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
                 onClick={closeDeleteModal}
                 disabled={deletingId === selectedDeleteEspaco.id}
-                className="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-xs text-slate-600 hover:bg-slate-50 transition-colors"
+                className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
               >
                 Cancelar
               </button>
@@ -1134,7 +1118,7 @@ export default function Espacos() {
                 disabled={countdown > 0 || deletingId === selectedDeleteEspaco.id}
                 className={`px-5 py-2.5 rounded-xl font-extrabold text-xs shadow-sm transition-all flex items-center gap-2 ${
                   countdown > 0 || deletingId === selectedDeleteEspaco.id
-                    ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
+                    ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed border border-slate-200 dark:border-slate-700"
                     : "bg-red-600 hover:bg-red-700 text-white cursor-pointer shadow-red-600/20 shadow-md animate-bounce"
                 }`}
               >
@@ -1323,85 +1307,61 @@ export default function Espacos() {
 
       {/* Modal de Aprovação de Espaço -> Gerar Núcleo */}
       {approveModalOpen && espacoToApprove && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 border border-slate-100">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
                   <CheckCircle2 size={20} />
                 </div>
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-800">Aprovar Espaço & Criar Núcleo</h3>
-                  <p className="text-xs text-slate-500">Configure a modalidade e a vaga do novo núcleo</p>
+                  <h3 className="text-base font-extrabold text-slate-800 dark:text-white">Aprovar Espaço & Criar Núcleo</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Configure a modalidade e a vaga do novo núcleo</p>
                 </div>
               </div>
-              <button onClick={() => setApproveModalOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+              <button onClick={() => setApproveModalOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
                 <X size={18} />
               </button>
             </div>
 
             <div className="space-y-4">
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80 text-xs space-y-1">
-                <div className="font-bold text-slate-800 text-sm">{espacoToApprove.nome}</div>
-                {espacoToApprove.bairro && <div className="text-slate-500">Local: {espacoToApprove.bairro} {espacoToApprove.cidade ? `• ${espacoToApprove.cidade}` : ""}</div>}
+              <div className="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700/60 text-xs space-y-1">
+                <div className="font-bold text-slate-800 dark:text-white text-sm">{espacoToApprove.nome}</div>
+                {espacoToApprove.bairro && <div className="text-slate-500 dark:text-slate-400">Local: {espacoToApprove.bairro} {espacoToApprove.cidade ? `• ${espacoToApprove.cidade}` : ""}</div>}
               </div>
 
-              {/* Seletor de Modalidade */}
+              {/* Seletor de Vaga */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Selecione a Modalidade para o Núcleo <span className="text-red-500">*</span>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Selecione a Vaga da Proposta <span className="text-red-500">*</span>
                 </label>
                 <select
-                  value={selectedModalidadeId}
-                  onChange={e => setSelectedModalidadeId(e.target.value)}
-                  disabled={modalidadesOptions.length === 0}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
+                  value={selectedVagaIdx}
+                  onChange={e => setSelectedVagaIdx(e.target.value)}
+                  disabled={vagasOptions.length === 0}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
                 >
-                  <option value="">Selecione uma modalidade...</option>
-                  {modalidadesOptions.map(m => (
-                    <option key={m.id} value={m.id} disabled={m.disabled}>{m.label || m.nome}</option>
+                  <option value="">Selecione uma vaga...</option>
+                  {vagasOptions.map(v => (
+                    <option key={v.idx} value={v.idx} disabled={v.disabled}>{v.label}</option>
                   ))}
                 </select>
                 
-                {modalidadesOptions.length === 0 && espacoToApprove.projeto_id && (
-                  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-                    <AlertTriangle size={14} className="text-red-600 shrink-0 mt-0.5" />
-                    <span className="text-[10px] md:text-xs text-red-700 font-medium">
-                      <strong>Atenção:</strong> A iniciativa vinculada a este espaço não possui modalidades com vagas disponíveis. Vá na aba "Iniciativas" e configure as modalidades permitidas.
+                {vagasOptions.length === 0 && espacoToApprove.projeto_id && (
+                  <div className="mt-2 p-2 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-2">
+                    <AlertTriangle size={14} className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                    <span className="text-[10px] md:text-xs text-red-700 dark:text-red-300 font-medium">
+                      <strong>Atenção:</strong> A proposta vinculada a este espaço não possui vagas configuradas. Vá na aba "Propostas", edite a proposta correspondente e adicione as vagas de núcleo necessárias.
                     </span>
                   </div>
                 )}
-              </div>
-
-              {/* Seletor de Vaga de Núcleo (Slot no Projeto) */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Número da Vaga do Núcleo (Slot no Projeto)
-                </label>
-                <select
-                  value={selectedNumeroVaga}
-                  onChange={e => setSelectedNumeroVaga(e.target.value)}
-                  className="w-full bg-emerald-50/60 border border-emerald-200 rounded-xl p-3 text-xs font-extrabold text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                  {Array.from({ length: 20 }, (_, i) => i + 1).map(vaga => {
-                    const ocupadoPor = vagasOcupadasNoProjeto[vaga];
-                    return (
-                      <option key={vaga} value={vaga} disabled={!!ocupadoPor}>
-                        Vaga Nº {vaga} {ocupadoPor ? `— 🔴 Ocupada (${ocupadoPor})` : "— 🟢 Livre"}
-                      </option>
-                    );
-                  })}
-                </select>
-                <span className="text-[10px] text-slate-400 mt-1 block">
-                  A menor vaga livre foi pré-selecionada automaticamente. Vagas já ocupadas estão bloqueadas.
-                </span>
               </div>
             </div>
 
             <div className="flex items-center gap-2 pt-2">
               <button
                 onClick={handleConfirmAprovarEspaco}
-                disabled={isSubmittingApprove || !selectedModalidadeId}
+                disabled={isSubmittingApprove || !selectedVagaIdx}
                 className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 px-4 rounded-xl text-xs shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isSubmittingApprove ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
@@ -1409,7 +1369,7 @@ export default function Espacos() {
               </button>
               <button
                 onClick={() => setApproveModalOpen(false)}
-                className="py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50"
+                className="py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 Cancelar
               </button>

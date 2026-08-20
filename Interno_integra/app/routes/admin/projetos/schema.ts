@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const projetoSchema = z.object({
   identificacao: z.object({
-    nomeProjeto: z.string().min(1, "O nome da iniciativa é obrigatório"),
+    nomeProjeto: z.string().min(1, "O nome da proposta é obrigatório"),
     numeroProposta: z.string().optional(),
     termoFomento: z.string().optional(),
     numeroProcessoAdm: z.string().optional(),
@@ -28,11 +28,12 @@ export const projetoSchema = z.object({
     idadeMinima: z.number().nullable().optional(),
     idadeMaxima: z.number().nullable().optional(),
   }),
-  limitesModalidade: z.array(
+  vagasNucleo: z.array(
     z.object({
-      id: z.union([z.string(), z.number()]),
-      nome: z.string(),
-      limite: z.number().min(0).default(0)
+      numero: z.number(),
+      modalidadeId: z.union([z.string(), z.number()]),
+      modalidadeNome: z.string(),
+      espacoVinculadoId: z.union([z.string(), z.number()]).nullable().default(null),
     })
   ).default([]),
   periodos: z.array(

@@ -428,7 +428,7 @@ export default function CadastrarEspaco() {
     const errs: typeof errors = {};
 
     if (step === 0) {
-      if (!form.projetoId) errs.projetoId = "Selecione uma iniciativa";
+      if (!form.projetoId) errs.projetoId = "Selecione uma proposta";
     }
 
     if (step === 1) {
@@ -447,8 +447,14 @@ export default function CadastrarEspaco() {
       }
 
       if (!form.respNome.trim()) errs.respNome = "Nome do responsável ou da empresa é obrigatório";
-      if (!form.respEmail.trim() || !form.respEmail.includes("@")) errs.respEmail = "E-mail inválido";
-      if (!form.respTelefone.trim()) errs.respTelefone = "Telefone é obrigatório";
+      
+      if (institute !== "IBRASE") {
+        if (!form.respEmail.trim() || !form.respEmail.includes("@")) errs.respEmail = "E-mail inválido (obrigatório)";
+        if (!form.respTelefone.trim()) errs.respTelefone = "Telefone é obrigatório";
+      } else {
+        // Na IBRASE, telefone/email não são obrigatórios. Só valida email se foi preenchido.
+        if (form.respEmail.trim() && !form.respEmail.includes("@")) errs.respEmail = "E-mail inválido";
+      }
     }
 
     if (step === 2) {
@@ -469,7 +475,11 @@ export default function CadastrarEspaco() {
 
     if (step === 3) {
       const diasSelecionados = DIAS.filter(d => form.horarios[d.key]?.ativo).length;
-      if (diasSelecionados < 2) errs.horarios = "Selecione pelo menos DOIS dias de funcionamento na semana";
+      if (institute !== "IBRASE") {
+        if (diasSelecionados !== 2) errs.horarios = "O Espaço Físico deve funcionar em exatos DOIS dias na semana";
+      } else {
+        if (diasSelecionados < 2) errs.horarios = "Selecione pelo menos DOIS dias de funcionamento na semana";
+      }
     }
 
     setErrors(errs);
@@ -582,7 +592,7 @@ export default function CadastrarEspaco() {
             <Field 
               label={
                 <span>
-                  Qual Projeto/Evento? <span className="text-slate-400 font-normal text-xs opacity-75 ml-1.5">(Iniciativa)</span>
+                  Qual Projeto/Evento? <span className="text-slate-400 font-normal text-xs opacity-75 ml-1.5">(Proposta)</span>
                 </span>
               } 
               error={errors.projetoId} 
@@ -645,7 +655,7 @@ export default function CadastrarEspaco() {
                     className={`px-4 py-2 rounded-lg text-sm font-bold border transition-colors ${
                       form.possuiCnpj === v
                         ? "bg-[var(--theme-primary)] text-white border-[var(--theme-primary)]"
-                        : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                        : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
                     }`}
                   >
                     {v === "S" ? "Sim" : "Não"}
@@ -698,7 +708,7 @@ export default function CadastrarEspaco() {
             </Field>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <Field label="E-mail" error={errors.respEmail} required>
+              <Field label="E-mail" error={errors.respEmail} required={institute !== "IBRASE"}>
                 <input
                   type="email"
                   placeholder="email@exemplo.com"
@@ -707,7 +717,7 @@ export default function CadastrarEspaco() {
                   onChange={e => set("respEmail", e.target.value)}
                 />
               </Field>
-              <Field label="Telefone / WhatsApp" error={errors.respTelefone} required>
+              <Field label="Telefone / WhatsApp" error={errors.respTelefone} required={institute !== "IBRASE"}>
                 <input
                   type="text"
                   placeholder="(00) 00000-0000"
@@ -917,7 +927,7 @@ export default function CadastrarEspaco() {
                   <p className="text-xs text-slate-500">Marque a opção ao lado se for anexar a foto posteriormente.</p>
                 </div>
               </div>
-              <label className="flex items-center gap-2 cursor-pointer bg-white px-3.5 py-2 rounded-lg border border-amber-300 shadow-sm hover:bg-amber-100 transition-colors shrink-0">
+              <label className="flex items-center gap-2 cursor-pointer bg-white dark:bg-slate-800 px-3.5 py-2 rounded-lg border border-amber-300 dark:border-amber-700 shadow-sm hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors shrink-0">
                 <input
                   type="checkbox"
                   className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"

@@ -65,34 +65,45 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
           }
         });
 
-        const item = flatList.find(i => String(i.id || i.id_projeto || i.id_iniciativa) === String(editModeId));
+        const item = flatList.find(i => String(i.id || i.id_projeto || i.id_proposta) === String(editModeId));
         if (item) {
           const rawInicio = item.vigencia_inicio || item.vigenciainicio || item.data_inicio_vigencia || item.data_inicio || item.dataInicioVigencia || item.vigencia?.dataInicio || item.vigencia?.inicio || "";
           const rawTermino = item.vigencia_fim || item.vigencia_termino || item.vigenciatermino || item.data_termino_vigencia || item.data_fim || item.dataTerminoVigencia || item.vigencia?.dataTermino || item.vigencia?.fim || "";
 
-          let mappedLimitesModalidade = null;
+          let mappedVagasNucleo = null;
           const candidates = [
+            item.vagas_nucleo,
+            item.vagasNucleo,
             item.limites_modalidades,
-            item.limitesModalidades,
-            item.limites_modalidade,
-            item.limitesModalidade
+            item.limitesModalidades
           ];
           for (const cand of candidates) {
             const parsed = parseModalidades(cand);
             if (parsed && parsed.length > 0) {
-              mappedLimitesModalidade = parsed;
+              mappedVagasNucleo = parsed;
               break;
             }
           }
-          if (!mappedLimitesModalidade) mappedLimitesModalidade = [];
-
-          if (!mappedLimitesModalidade) {
-            mappedLimitesModalidade = [];
-            if (item.modalidade_funcional) mappedLimitesModalidade.push({ id: "legacy_1", nome: "Funcional", limite: item.modalidade_funcional });
-            if (item.modalidade_futebol) mappedLimitesModalidade.push({ id: "legacy_2", nome: "Futebol", limite: item.modalidade_futebol });
-            if (item.modalidade_luta) mappedLimitesModalidade.push({ id: "legacy_3", nome: "Luta", limite: item.modalidade_luta });
-            if (item.modalidade_projeto_de_aula) mappedLimitesModalidade.push({ id: "legacy_4", nome: "Projeto de Aula", limite: item.modalidade_projeto_de_aula });
-            if (item.modalidade_eventos) mappedLimitesModalidade.push({ id: "legacy_5", nome: "Eventos", limite: item.modalidade_eventos });
+          if (!mappedVagasNucleo) {
+            mappedVagasNucleo = [];
+          } else {
+            // Check if it's a legacy format (has 'limite' instead of 'numero')
+            const isLegacy = mappedVagasNucleo.some((v: any) => v.limite !== undefined && v.numero === undefined);
+            if (isLegacy) {
+              const convertedVagas: any[] = [];
+              let currentSlot = 1;
+              mappedVagasNucleo.forEach((legacyItem: any) => {
+                const limite = Number(legacyItem.limite) || 0;
+                for (let i = 0; i < limite; i++) {
+                  convertedVagas.push({
+                    numero: currentSlot++,
+                    modalidadeId: String(legacyItem.id || legacyItem.modalidadeId || ""),
+                    modalidadeNome: legacyItem.nome || legacyItem.modalidadeNome || "Modalidade Legada",
+                  });
+                }
+              });
+              mappedVagasNucleo = convertedVagas;
+            }
           }
 
           let mappedPeriodos = [];
@@ -175,7 +186,7 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
               idadeMinima: (item.faixaEtaria?.idadeMinima || item.idade_min || item.idade_minima || item.idadeMinima) ? Number(item.faixaEtaria?.idadeMinima || item.idade_min || item.idade_minima || item.idadeMinima) : null,
               idadeMaxima: (item.faixaEtaria?.idadeMaxima || item.idade_max || item.idade_maxima || item.idadeMaxima) ? Number(item.faixaEtaria?.idadeMaxima || item.idade_max || item.idade_maxima || item.idadeMaxima) : null,
             },
-            limitesModalidade: mappedLimitesModalidade,
+            vagasNucleo: mappedVagasNucleo,
             periodos: mappedPeriodos,
             status: { ativo }
           };
@@ -220,8 +231,22 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
       idade_max: data.faixaEtaria.idadeMaxima,
       
       limites_cargos: data.limitesCargos,
-      limites_modalidade: data.limitesModalidade,
-      limites_modalidades: data.limitesModalidade,
+      vagas_nucleo: data.vagasNucleo,
+      
+      // Retrocompatibilidade: Converte vagasNucleo de volta para limites_modalidades
+      limites_modalidades: (() => {
+        const counts: Record<string, { nome: string, count: number }> = {};
+        data.vagasNucleo.forEach(v => {
+          if (!counts[v.modalidadeId]) counts[v.modalidadeId] = { nome: v.modalidadeNome, count: 0 };
+          counts[v.modalidadeId].count++;
+        });
+        return Object.entries(counts).map(([id, info]) => ({
+          id: id,
+          nome: info.nome,
+          limite: info.count
+        }));
+      })(),
+
       periodos_json: data.periodos,
       ativo: data.status.ativo ? 1 : 0,
 
@@ -230,7 +255,7 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
       vigencia: data.vigencia,
       limitesMembros: data.limites,
       faixaEtaria: data.faixaEtaria,
-      limitesModalidade: data.limitesModalidade,
+      vagasNucleo: data.vagasNucleo,
       periodos: data.periodos,
       status: data.status,
     };

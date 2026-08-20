@@ -84,7 +84,7 @@ export function LimitesSection() {
 
   return (
     <>
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-slate-100 pb-4">
           <div>
             <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
@@ -142,7 +142,7 @@ export function LimitesSection() {
       {/* MODAL DE GERENCIAMENTO */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden border border-slate-200">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden border border-slate-200 dark:border-slate-800">
             
             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -158,9 +158,9 @@ export function LimitesSection() {
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto flex-1 bg-white">
+            <div className="p-6 overflow-y-auto flex-1 bg-slate-50 dark:bg-slate-900/50">
               <p className="text-sm text-slate-600 font-medium mb-4">
-                Selecione os cargos que terão limites configurados para esta iniciativa:
+                Selecione os cargos que terão limites configurados para esta proposta:
               </p>
 
               {isLoadingCargos ? (
@@ -182,7 +182,7 @@ export function LimitesSection() {
                         className={`flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer ${
                           isSelected 
                             ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500" 
-                            : "border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50"
+                            : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-slate-50 dark:hover:bg-slate-700"
                         }`}
                         onClick={() => toggleSelection(cargo.nome)}
                       >
@@ -208,7 +208,7 @@ export function LimitesSection() {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold rounded-lg text-sm transition-colors shadow-sm"
+                className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold rounded-lg text-sm transition-colors shadow-sm"
               >
                 Cancelar
               </button>

@@ -6,10 +6,10 @@ export function VigenciaSection() {
   const { register } = useFormContext<ProjetoFormData>();
 
   return (
-    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
       <h2 className="text-base font-bold text-slate-800 border-b border-slate-100 pb-3 flex items-center gap-2">
         <Calendar className="w-5 h-5 text-blue-600" />
-        Vigência da Iniciativa
+        Vigência da Proposta
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

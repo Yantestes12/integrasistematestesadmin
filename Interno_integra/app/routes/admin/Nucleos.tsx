@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Plus, Search, Edit3, Power, Loader2, Layers, Building2, Calendar, Trash2 } from "lucide-react";
+import { Plus, Search, Edit3, Power, Loader2, Layers, Building2, Calendar, Trash2, Play, Pause } from "lucide-react";
 
 export interface NucleoItem {
   id: string | number;
@@ -45,12 +45,14 @@ export default function Nucleos() {
   const [nucleos, setNucleos] = useState<NucleoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentInstitute, setCurrentInstitute] = useState("IBRASE");
+  const [currentInstitute, setCurrentInstitute] = useState(() => typeof window !== 'undefined' ? localStorage.getItem('auth_institute') || 'IBRASE' : 'IBRASE');
+  const [userRole, setUserRole] = useState(() => typeof window !== 'undefined' ? (localStorage.getItem('auth_cargo') || 'colaborador').toLowerCase().trim() : 'colaborador');
+  const [userAccountType, setUserAccountType] = useState(() => typeof window !== 'undefined' ? (localStorage.getItem('auth_account_type') || 'colaborador').toLowerCase().trim() : 'colaborador');
   const [globalFilter, setGlobalFilter] = useState("all");
 
   useEffect(() => {
-    const savedInstitute = localStorage.getItem("auth_institute") || "IBRASE";
-    setCurrentInstitute(savedInstitute);
+    const inst = localStorage.getItem("auth_institute") || "IBRASE";
+    setCurrentInstitute(inst);
 
     const updateGlobalFilter = () => {
       setGlobalFilter(localStorage.getItem("global_projeto_filter") || "all");
@@ -60,11 +62,11 @@ export default function Nucleos() {
 
     async function loadAll() {
       await Promise.allSettled([
-        fetchProjetos(savedInstitute),
-        fetchModalidades(savedInstitute),
-        fetchEspacos(savedInstitute),
+        fetchProjetos(inst),
+        fetchModalidades(inst),
+        fetchEspacos(inst),
       ]);
-      fetchNucleos(savedInstitute);
+      fetchNucleos(inst);
     }
 
     loadAll();
@@ -174,12 +176,12 @@ export default function Nucleos() {
       let projetoNome = "";
       if (item.projetos?.nome) {
         projetoNome = item.projetos.nome;
-      } else if (item.projeto_nome || item.iniciativa) {
-        projetoNome = item.projeto_nome || item.iniciativa;
+      } else if (item.projeto_nome || item.proposta) {
+        projetoNome = item.projeto_nome || item.proposta;
       } else if (item.projeto_id && projetosCache[Number(item.projeto_id)]) {
         projetoNome = projetosCache[Number(item.projeto_id)];
       } else if (item.projeto_id) {
-        projetoNome = `Iniciativa ID ${item.projeto_id}`;
+        projetoNome = `Proposta ID ${item.projeto_id}`;
       } else {
         projetoNome = "—";
       }
@@ -231,11 +233,8 @@ export default function Nucleos() {
         numeroVaga = "—";
       }
 
-      // 5. RESPONSÁVEL E ENDEREÇO
-      let instrutor = item.instrutor || item.resp_nome || item.espacos?.resp_nome;
-      if (!instrutor && item.espaco_id && espacosCache[Number(item.espaco_id)]) {
-        instrutor = espacosCache[Number(item.espaco_id)].resp_nome;
-      }
+      // 5. INSTRUTOR E ENDEREÇO
+      let instrutor = item.instrutor;
       if (!instrutor || instrutor === "temp" || instrutor === "x" || instrutor === "—") {
         instrutor = "—";
       }
@@ -314,29 +313,7 @@ export default function Nucleos() {
     }
   };
 
-  const handleToggleAtivo = async (item: NucleoItem) => {
-    try {
-      const newAtivo = !item.ativo;
-      const formData = new FormData();
-      formData.append("id", String(item.id));
-      formData.append("ativo", String(newAtivo));
-      formData.append("instituto", currentInstitute.toUpperCase());
 
-      const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-put?instituto=${currentInstitute.toUpperCase()}`, {
-        method: "PUT",
-        body: formData,
-      });
-
-      if (res.ok) {
-        setNucleos(prev => prev.map(n => n.id === item.id ? { ...n, ativo: newAtivo } : n));
-      } else {
-        alert("Erro ao alterar status do núcleo.");
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Erro ao conectar com o servidor.");
-    }
-  };
 
   const handleDelete = async (id: string | number) => {
     if (!window.confirm("Deseja realmente excluir este núcleo?")) return;
@@ -377,47 +354,46 @@ export default function Nucleos() {
   });
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans">
+    <div className="space-y-6 pb-12 font-sans">
       
       {/* Top Banner / Breadcrumb */}
-      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors">
         <div>
-
-          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-white tracking-tight">
             Núcleos
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Gerencie os núcleos operacionais cadastrados para o instituto <strong className="text-slate-700">{currentInstitute}</strong>.
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+            Gerencie os núcleos operacionais cadastrados para o instituto <strong className="text-slate-700 dark:text-slate-200">{currentInstitute}</strong>.
           </p>
         </div>
 
-        <button
-          onClick={() => alert("🚧 Tela em construção: Em breve você poderá visualizar todo o histórico de núcleos e relatórios aqui.")}
-          className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-5 py-3 rounded-xl shadow-xs border border-slate-200 transition-all flex items-center gap-2 text-sm shrink-0"
+        <Link
+          to="/admin/historico-nucleos"
+          className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold px-5 py-3 rounded-xl shadow-xs border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2 text-sm shrink-0"
         >
-          <Calendar size={18} className="text-slate-500" />
+          <Calendar size={18} className="text-slate-500 dark:text-slate-400" />
           <span>Histórico de Núcleos</span>
-        </button>
+        </Link>
       </div>
 
       {/* Card da Tabela de Núcleos */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         
         {/* Barra de Filtros e Busca */}
-        <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50/50">
+        <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50/50 dark:bg-slate-850/50">
           <div className="relative w-full sm:w-80">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
             <input
               type="text"
               placeholder="Buscar por núcleo, bairro, projeto..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             />
           </div>
 
-          <div className="text-xs text-slate-500 font-medium">
-            Exibindo <strong className="text-slate-800">{filteredNucleos.length}</strong> núcleos
+          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            Exibindo <strong className="text-slate-800 dark:text-slate-200">{filteredNucleos.length}</strong> núcleos
           </div>
         </div>
 
@@ -429,20 +405,20 @@ export default function Nucleos() {
               <div className="w-3.5 h-3.5 rounded-full bg-[var(--theme-primary)] animate-bounce" style={{ animationDelay: '150ms' }} />
               <div className="w-3.5 h-3.5 rounded-full bg-[var(--theme-primary)] animate-bounce" style={{ animationDelay: '300ms' }} />
             </div>
-            <p className="text-slate-600 text-sm md:text-base font-bold animate-pulse">Carregando núcleos do instituto...</p>
+            <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base font-bold animate-pulse">Carregando núcleos do instituto...</p>
           </div>
         ) : filteredNucleos.length === 0 ? (
           <div className="py-16 text-center px-4">
-            <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-200 dark:border-slate-700">
               <Layers size={32} />
             </div>
-            <h3 className="text-lg md:text-xl font-bold text-slate-800">Nenhum núcleo encontrado</h3>
-            <p className="text-slate-500 text-sm md:text-base mt-1 max-w-md mx-auto">
+            <h3 className="text-lg md:text-xl font-bold text-slate-800 dark:text-white">Nenhum núcleo encontrado</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base mt-1 max-w-md mx-auto">
               Não existem registros de núcleos cadastrados para o instituto {currentInstitute} no momento.
             </p>
             <Link
               to="/admin/cadastrar-nucleo"
-              className="inline-flex items-center gap-2 mt-6 text-sm md:text-base font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-4 py-2.5 rounded-xl border border-blue-100 transition-colors"
+              className="inline-flex items-center gap-2 mt-6 text-sm md:text-base font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-4 py-2.5 rounded-xl border border-blue-100 dark:border-blue-800 transition-colors"
             >
               <Plus size={16} /> Cadastrar o primeiro núcleo
             </Link>
@@ -451,69 +427,69 @@ export default function Nucleos() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[900px]">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-xs sm:text-sm md:text-base font-black uppercase tracking-wider text-slate-700">
-                  <th className="py-4 px-4 md:px-6">Núcleo / Endereço</th>
-                  <th className="py-4 px-4 md:px-6">Iniciativa</th>
-                  <th className="py-4 px-4 md:px-6">Modalidade</th>
-                  <th className="py-4 px-4 md:px-6">Instrutor</th>
-                  <th className="py-4 px-4 md:px-6 text-center">Vaga (Slot)</th>
-                  <th className="py-4 px-4 md:px-6 text-center">Status Físico</th>
-                  <th className="py-4 px-4 md:px-6 w-28 text-center">Ações</th>
+                <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 text-xs sm:text-sm md:text-base font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  <th className="py-4 px-3 md:px-4">Núcleo / Endereço</th>
+                  <th className="py-4 px-3 md:px-4">Proposta</th>
+                  <th className="py-4 px-3 md:px-4">Modalidade</th>
+                  <th className="py-4 px-3 md:px-4">Instrutor</th>
+                  <th className="py-4 px-3 md:px-4 text-center">Vaga (Slot)</th>
+                  <th className="py-4 px-3 md:px-4 text-center">Status Físico</th>
+                  <th className="py-4 px-3 md:px-4 w-28 text-center">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-base md:text-lg">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm md:text-base">
                 {filteredNucleos.map((item) => {
                   return (
-                    <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
+                    <tr key={item.id} className="hover:bg-blue-50/30 dark:hover:bg-slate-800/50 transition-colors group">
                       
                       {/* Núcleo e Endereço */}
-                      <td className="py-4 md:py-5 px-4 md:px-6">
-                        <span className="font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors block text-base sm:text-lg md:text-xl">
+                      <td className="py-3 md:py-4 px-3 md:px-4">
+                        <span className="font-extrabold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors block text-sm sm:text-sm md:text-base">
                           {item.nome}
                         </span>
-                        <span className="text-xs md:text-sm text-slate-500 font-medium block mt-0.5">
+                        <span className="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-medium block mt-0.5">
                           📍 {item.endereco}
                         </span>
-                        <span className="text-[11px] text-slate-400 font-medium">ID {item.id}</span>
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">ID {item.id}</span>
                       </td>
 
-                      {/* Iniciativa (nome do projeto) */}
-                      <td className="py-4 md:py-5 px-4 md:px-6">
-                        <span className="font-bold text-slate-800 text-sm md:text-base">
+                      {/* Proposta (nome do projeto) */}
+                      <td className="py-3 md:py-4 px-3 md:px-4">
+                        <span className="font-bold text-slate-800 dark:text-slate-200 text-sm md:text-base">
                           {item.projeto_nome}
                         </span>
                       </td>
 
                       {/* Modalidade */}
-                      <td className="py-4 md:py-5 px-4 md:px-6">
-                        <span className="font-semibold text-slate-700 text-sm md:text-base">
+                      <td className="py-3 md:py-4 px-3 md:px-4">
+                        <span className="font-semibold text-slate-700 dark:text-slate-300 text-sm md:text-base">
                           {item.modalidade_nome}
                         </span>
                       </td>
 
                       {/* Instrutor */}
-                      <td className="py-4 md:py-5 px-4 md:px-6">
-                        <span className="font-semibold text-slate-700 text-sm md:text-base block">
+                      <td className="py-3 md:py-4 px-3 md:px-4">
+                        <span className="font-semibold text-slate-700 dark:text-slate-300 text-sm md:text-base block">
                           👤 {item.instrutor || "—"}
                         </span>
                       </td>
 
                       {/* Vaga do Núcleo (Exibe o número da vaga exato) */}
-                      <td className="py-4 md:py-5 px-4 md:px-6 text-center">
-                        <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs md:text-sm font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs">
+                      <td className="py-3 md:py-4 px-3 md:px-4 text-center">
+                        <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs md:text-sm font-extrabold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/60 shadow-2xs">
                           {item.numero_vaga !== "—" ? `Nº ${item.numero_vaga}` : "Sem Vaga"}
                         </span>
                       </td>
 
-
+                      {/* Status Captação (Removido) */}
 
                       {/* Status Físico (Ativo/Inativo) */}
-                      <td className="py-4 md:py-5 px-4 md:px-6 text-center">
+                      <td className="py-3 md:py-4 px-3 md:px-4 text-center">
                         <span
                           className={`inline-flex items-center px-3 md:px-4 py-1.5 rounded-full text-xs md:text-sm font-extrabold border ${
                             item.ativo
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200/80"
-                              : "bg-red-50 text-red-700 border-red-200/80"
+                              ? "bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60"
+                              : "bg-red-50 dark:bg-red-950/70 text-red-700 dark:text-red-300 border-red-200/80 dark:border-red-800/60"
                           }`}
                         >
                           {item.ativo ? "Ativo" : "Inativo"}
@@ -525,32 +501,22 @@ export default function Nucleos() {
                         <div className="flex items-center justify-center gap-1">
                           <Link
                             to={`/admin/grade-horaria?nucleoId=${item.id}`}
-                            className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                            className="p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-colors"
                             title="Ver Grade Horária do Núcleo"
                           >
                             <Calendar size={16} />
                           </Link>
                           <Link
                             to={`/admin/cadastrar-nucleo?edit=${item.id}`}
-                            className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                            className="p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors"
                             title="Editar Núcleo"
                           >
                             <Edit3 size={16} />
                           </Link>
-                          <button
-                            onClick={() => handleToggleAtivo(item)}
-                            className={`p-2 rounded-lg transition-colors ${
-                              item.ativo
-                                ? "text-slate-400 hover:text-red-600 hover:bg-red-50"
-                                : "text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"
-                            }`}
-                            title={item.ativo ? "Desativar Núcleo" : "Ativar Núcleo"}
-                          >
-                            <Power size={16} />
-                          </button>
+
                           <button
                             onClick={() => handleDelete(item.id)}
-                            className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            className="p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors"
                             title="Excluir Núcleo"
                           >
                             <Trash2 size={16} />
@@ -570,3 +536,4 @@ export default function Nucleos() {
     </div>
   );
 }
+
