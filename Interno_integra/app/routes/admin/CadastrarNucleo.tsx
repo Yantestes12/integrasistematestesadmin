@@ -450,6 +450,8 @@ export default function CadastrarNucleo() {
                 <Award className="w-4 h-4 text-indigo-600" />
                 <span>Selecione a Vaga da Proposta <span className="text-red-500">*</span></span>
               </label>
+              <input type="hidden" {...register("numeroVaga")} />
+              <input type="hidden" {...register("modalidadeId")} />
               <select
                 value={numeroVagaWatch || ""}
                 onChange={e => {
