@@ -643,21 +643,7 @@ export default function Espacos() {
     return !e.resp_nome || e.resp_nome === "—" || e.resp_nome === "temp" || e.resp_nome === "x" || !e.rua || e.rua === "temp" || e.rua === "xxxxxxx";
   };
 
-  const solicitacoesPendentes = espacos.filter(e => String(e.status_aprovacao || "").toLowerCase().trim() === "pendente");
-  const espacosAprovados = espacos.filter(e => String(e.status_aprovacao || "").toLowerCase().trim() !== "pendente");
-
-  const getCurrentList = () => {
-    switch (activeTab) {
-      case "aprovados": return espacosAprovados;
-      case "pendentes": return solicitacoesPendentes;
-      case "todos":
-      default: return espacos;
-    }
-  };
-
-  const currentList = getCurrentList();
-
-  const filtered = currentList.filter(e => {
+  const filteredEspacos = espacos.filter(e => {
     if (globalFilter !== "all" && String(e.projeto_id) !== globalFilter) return false;
     if (!searchTerm) return true;
     return (
@@ -667,6 +653,20 @@ export default function Espacos() {
       (e.projeto_nome || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
+
+  const solicitacoesPendentes = filteredEspacos.filter(e => String(e.status_aprovacao || "").toLowerCase().trim() === "pendente");
+  const espacosAprovados = filteredEspacos.filter(e => String(e.status_aprovacao || "").toLowerCase().trim() !== "pendente");
+
+  const getCurrentList = () => {
+    switch (activeTab) {
+      case "aprovados": return espacosAprovados;
+      case "pendentes": return solicitacoesPendentes;
+      case "todos":
+      default: return filteredEspacos;
+    }
+  };
+
+  const filtered = getCurrentList();
 
   const authInstitute = (localStorage.getItem("auth_institute") || "IBRASE").toUpperCase();
 
@@ -755,7 +755,7 @@ export default function Espacos() {
               <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
                 activeTab === "todos" ? "bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
               }`}>
-                {espacos.length}
+                {filteredEspacos.length}
               </span>
             </button>
 

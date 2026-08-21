@@ -10,6 +10,7 @@ import {
 export default function HistoricoMatricula() {
   const { id } = useParams();
   const [data, setData] = useState<any>(null);
+  const [historico, setHistorico] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [currentInstitute, setCurrentInstitute] = useState("IBRASE");
@@ -63,10 +64,11 @@ export default function HistoricoMatricula() {
       setLoading(true);
       try {
         const inst = savedInstitute.toUpperCase();
-        const [resM, resProj, resNuc] = await Promise.allSettled([
+        const [resM, resProj, resNuc, resHist] = await Promise.allSettled([
           fetch(`https://w.ibrase.com.br/webhook/matriculas-get?instituto=${inst}`),
           fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${inst}`),
-          fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst}`)
+          fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst}`),
+          fetch(`https://w.ibrase.com.br/webhook/historico-matriculas-get?instituto=${inst}`)
         ]);
 
         let pMap: Record<string, string> = {};
@@ -88,6 +90,36 @@ export default function HistoricoMatricula() {
           } else {
             setErrorMsg("Matrícula não encontrada.");
           }
+        }
+
+        if (resHist.status === 'fulfilled' && resHist.value.ok) {
+          try {
+            const histData = await resHist.value.json();
+            let arr = flattenArray(histData);
+            
+            // Filtra os logs apenas para esta matrícula
+            let historicoLogs = arr.filter((h: any) => String(h.matricula_id) === String(id));
+            
+            // Ordena: mais recente primeiro
+            historicoLogs.sort((a, b) => new Date(b.data_alteracao || b.created_at || 0).getTime() - new Date(a.data_alteracao || a.created_at || 0).getTime());
+            
+            // Traduz IDs para Nomes
+            historicoLogs = historicoLogs.map(h => {
+              let ant = h.valor_antigo;
+              let nov = h.valor_novo;
+              if (h.campo_alterado === 'Núcleo' || h.campo_alterado === 'nucleo_id') {
+                 ant = nMap[String(ant)] || ant;
+                 nov = nMap[String(nov)] || nov;
+              }
+              if (h.campo_alterado === 'Projeto' || h.campo_alterado === 'projeto_id') {
+                 ant = pMap[String(ant)] || ant;
+                 nov = pMap[String(nov)] || nov;
+              }
+              return { ...h, valor_antigo_txt: ant, valor_novo_txt: nov };
+            });
+
+            setHistorico(historicoLogs);
+          } catch(e) {}
         }
       } catch (err) {
         setErrorMsg("Erro de conexão ao buscar histórico.");
@@ -173,20 +205,59 @@ export default function HistoricoMatricula() {
         <Clock className="text-slate-800 dark:text-slate-200" size={20} />
         <h4 className="text-lg font-black text-slate-900 dark:text-white m-0">Histórico de Alterações</h4>
         <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-black px-2.5 py-1 rounded-md ml-2 border border-blue-200 dark:border-blue-800">
-          0 registros
+          {historico.length} {historico.length === 1 ? 'registro' : 'registros'}
         </span>
       </div>
 
-      {/* Estado: sem registros (Mock) */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl flex flex-col items-center justify-center py-16 px-6 text-center gap-4 shadow-sm mt-4">
-        <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-600 rounded-full flex items-center justify-center border border-slate-100 dark:border-slate-700">
-          <Clock size={32} />
+      {historico.length === 0 ? (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl flex flex-col items-center justify-center py-16 px-6 text-center gap-4 shadow-sm mt-4">
+          <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-600 rounded-full flex items-center justify-center border border-slate-100 dark:border-slate-700">
+            <Clock size={32} />
+          </div>
+          <div>
+            <p className="text-base font-bold text-slate-700 dark:text-slate-200">Nenhuma alteração registrada</p>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">Esta matrícula ainda não possui histórico de modificações no sistema.</p>
+          </div>
         </div>
-        <div>
-          <p className="text-base font-bold text-slate-700 dark:text-slate-200">Nenhuma alteração registrada</p>
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">Esta matrícula ainda não possui histórico de modificações no sistema.</p>
+      ) : (
+        <div className="mt-4 space-y-4">
+          {historico.map((log, idx) => {
+            const dataAlt = new Date(log.data_alteracao || log.created_at);
+            const dataStr = isNaN(dataAlt.getTime()) ? "Data desconhecida" : dataAlt.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+            
+            return (
+              <div key={log.id || idx} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-start gap-4 transition-all hover:border-blue-300 dark:hover:border-blue-700">
+                <div className="bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 p-3 rounded-full shrink-0">
+                  <Clock size={20} />
+                </div>
+                <div className="flex-1">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
+                    <h5 className="font-bold text-slate-800 dark:text-white m-0">Alteração de {log.campo_alterado}</h5>
+                    <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md">
+                      {dataStr}
+                    </span>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col md:flex-row items-center gap-4 text-sm mt-3">
+                    <div className="flex-1 w-full text-center md:text-left bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700 shadow-xs line-through opacity-70 decoration-red-400">
+                      <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">De (Antigo)</span>
+                      <span className="font-semibold text-slate-600 dark:text-slate-300 truncate block">
+                        {log.valor_antigo_txt || "—"}
+                      </span>
+                    </div>
+                    <div className="text-slate-300 dark:text-slate-600 font-black rotate-90 md:rotate-0">➔</div>
+                    <div className="flex-1 w-full text-center md:text-left bg-blue-50/50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800 shadow-xs">
+                      <span className="block text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-1">Para (Novo)</span>
+                      <span className="font-bold text-blue-700 dark:text-blue-300 truncate block">
+                        {log.valor_novo_txt || "—"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
-      </div>
+      )}
       
     </div>
   );

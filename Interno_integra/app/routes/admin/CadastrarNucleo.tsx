@@ -10,7 +10,7 @@ const cadastrarNucleoSchema = z.object({
   nomeNucleo: z.string().optional(),
   espacoId: z.string().min(1, "Selecione o espaço físico"),
   projetoId: z.string().min(1, "Selecione o projeto de aula/evento"),
-  modalidadeId: z.string().min(1, "Selecione a modalidade"),
+  modalidadeId: z.string().optional(),
   cidadeId: z.string().optional(),
   uf: z.string().optional(),
   bairroId: z.string().optional(),
