@@ -1747,6 +1747,13 @@
 
     // Gerador Oficial da Ficha de Matrícula (2 Páginas Exatas do matricula.html)
     function gerarFichaPDFOficial2Paginas(d, winTarget) {
+      const { instAtivo } = getDadosInstitutos();
+      const inst = instAtivo;
+      let logoSrc = 'logo_gasctpna.jpg';
+      if (inst === 'IBRASE') logoSrc = 'logo_ibrase.png';
+      else if (inst === 'AUNI') logoSrc = 'logo_auni.png';
+      else if (inst === 'IVEM') logoSrc = 'logo_ivem.png';
+
       const win = winTarget || window.open('', '_blank');
       if (!win) {
         alert('Por favor, permita pop-ups no seu navegador para visualizar a Ficha de Matrícula PDF.');
