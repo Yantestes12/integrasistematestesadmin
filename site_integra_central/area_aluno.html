@@ -1830,9 +1830,11 @@
 
       const instSlug = inst.toLowerCase();
       const projSlug = (proj || 'projeto').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || instSlug;
-      const urlAutenticador = 'https://plataformaintegra.com.br/autenticador/' + numMatricula + '/' + instSlug + '/' + projSlug;
+      // USAR QUERY PARAMS DIRETOS PARA EVITAR PROBLEMAS DE ROTEAMENTO/HTACCESS EM HOSPEDAGENS ESTÁTICAS
+      const urlAutenticador = 'https://plataformaintegra.com.br/autenticador.html?id=' + numMatricula + '&inst=' + instSlug + '&proj=' + projSlug;
       const qrApi = 'https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=' + encodeURIComponent(urlAutenticador);
-      const basePath = window.location.href.split('/').slice(0,-1).join('/') + '/';
+      // CORREÇÃO: As imagens sempre ficam na raiz do domínio, não na pasta virtual do instituto
+      const basePath = window.location.origin + '/';
 
       win.document.write('<!DOCTYPE html><html lang="pt-BR" translate="no" class="notranslate"><head><meta charset="UTF-8"><title>Ficha de Matrícula - ' + numMatricula + '</title>' +
           '<style>@page{size:A4;margin:8mm 10mm;}*{box-sizing:border-box;margin:0;padding:0;}' +
