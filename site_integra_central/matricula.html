@@ -36,43 +36,16 @@
     };
 
     // === VERIFICAÇÃO DE SEGURANÇA E ACESSO ===
+    // (Removido: a página de matrícula deve ser pública para permitir novas inscrições)
     (function(){
         try {
             var finalInst = getInst();
-            
             if (finalInst) {
-                // 1. Verifica se está logado
-                var isLogged = sessionStorage.getItem('usuario_id') || localStorage.getItem('usuario_id');
-                if (!isLogged) {
-                    var targetLogin = '/' + finalInst.toLowerCase() + '/login';
-                    window.location.replace(targetLogin);
-                    return;
-                }
-
-                // 2. Verifica se tem permissão para este instituto
-                var stInst = sessionStorage.getItem('instituto_ativo') || localStorage.getItem('instituto_ativo');
-                var permitidos = [];
-                if (stInst) permitidos.push(stInst.toUpperCase());
-                
-                var rawPerm = sessionStorage.getItem('institutos_permitidos') || localStorage.getItem('institutos_permitidos');
-                if (rawPerm) {
-                    try {
-                        var parsed = JSON.parse(rawPerm);
-                        if (Array.isArray(parsed)) {
-                            parsed.forEach(function(p) { permitidos.push(String(p).toUpperCase()); });
-                        }
-                    } catch(e) {}
-                }
-                
-                if (permitidos.length > 0 && permitidos.indexOf(finalInst) === -1) {
-                    // Sem permissão! Redireciona de volta para a área do aluno
-                    var targetArea = '/' + finalInst.toLowerCase() + '/area_aluno';
-                    window.location.replace(targetArea);
-                    return;
-                }
+                // Apenas define o instituto para uso nos scripts abaixo, sem bloquear acesso
+                console.log("Instituto detectado via URL:", finalInst);
             }
         } catch(e) {
-            console.error('Erro na verificação de segurança', e);
+            console.error('Erro na verificação de instituto', e);
         }
     })();
 
