@@ -3,6 +3,10 @@ RewriteBase /
 
 # Tenta abrir o arquivo com a extensão .html
 RewriteCond %{REQUEST_FILENAME} !-d
+# Roteamento amigável do autenticador de matrículas
+RewriteRule ^autenticador/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/?$ /autenticador.html?id=$1&inst=$2&proj=$3 [QSA,L]
+RewriteRule ^autenticador/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/?$ /autenticador.html?id=$1&inst=$2 [QSA,L]
+
 # Roteamento amigável de institutos (ex: /ibrase/login -> /login.html?instituto=ibrase)
 RewriteRule ^(gasctpna|ibrase|auni|ivem)/([a-zA-Z0-9_-]+)/?$ /$2.html?instituto=$1 [QSA,L]
 
