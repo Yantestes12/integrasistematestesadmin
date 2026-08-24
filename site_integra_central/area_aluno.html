@@ -416,13 +416,13 @@
         <div id="btn-switch-institutos" onclick="toggleDropdownInstitutos()" style="display:inline-flex;align-items:center;gap:12px;background:#ffffff;border:2px solid var(--outline-variant);border-radius:14px;padding:8px 16px;box-shadow:0 4px 14px rgba(0,26,65,0.05);cursor:pointer;transition:all 0.25s ease;">
           <img id="logo-instituto-ativo" src="logo_gasctpna.jpg" onerror="this.src='logo_integra.png';" style="height:32px;width:auto;object-fit:contain;border-radius:6px;">
           <div id="text-instituto-ativo" style="font-size:13.5px;font-weight:800;color:var(--on-surface);letter-spacing:0.03em;">GASCTPNA</div>
-          <span id="arrow-switch-instituto" class="material-symbols-outlined" style="display:none;font-size:22px;color:var(--on-surface-variant);transition:transform 0.2s ease;">expand_more</span>
+          <span id="arrow-switch-instituto" class="material-symbols-outlined notranslate" translate="no" style="display:none;font-size:22px;color:var(--on-surface-variant);transition:transform 0.2s ease;">expand_more</span>
         </div>
 
         <!-- Menu suspenso inteligente de troca (exclusivo para quem tem mais de um cadastro) -->
         <div id="dropdown-switch-institutos" style="display:none;position:absolute;top:100%;left:0;margin-top:8px;background:#ffffff;border:1px solid var(--outline-variant);border-radius:14px;padding:12px;box-shadow:0 12px 32px rgba(0,26,65,0.18);z-index:999;min-width:260px;">
           <div style="font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:0.05em;padding:4px 6px 8px;border-bottom:1px solid var(--surface-container-low);margin-bottom:8px;display:flex;align-items:center;gap:6px;">
-            <span class="material-symbols-outlined" style="font-size:16px;">swap_horiz</span>
+            <span class="material-symbols-outlined notranslate" translate="no" style="font-size:16px;">swap_horiz</span>
             <span>Alternar Instituto de Acesso</span>
           </div>
           <div id="lista-institutos-dropdown" style="display:flex;flex-direction:column;gap:6px;">
@@ -437,7 +437,7 @@
       <button class="card-action-primary" onclick="var host = window.location.hostname.toLowerCase(); var def = 'GASCTPNA'; var parts = window.location.pathname.toLowerCase().split('/').filter(Boolean); if (parts.length > 0 && ['gasctpna','ibrase','auni','ivem'].includes(parts[0])) { def = parts[0].toUpperCase(); } else if(host.includes('ibrase')) def='IBRASE'; else if(host.includes('ivem')) def='IVEM'; else if(host.includes('auni')) def='AUNI'; var inst = (sessionStorage.getItem('instituto_ativo')||localStorage.getItem('instituto_ativo')||def); window.location.href='/' + inst.toLowerCase() + '/matricula'">
         <div style="display:flex;align-items:center;gap:16px;">
           <div class="card-icon-box-white">
-            <span class="material-symbols-outlined" style="font-size:32px;font-variation-settings:'FILL' 1;">rocket_launch</span>
+            <span class="material-symbols-outlined notranslate" translate="no" style="font-size:32px;font-variation-settings:'FILL' 1;">rocket_launch</span>
           </div>
           <div>
             <h2 class="card-title-lg">Fazer Nova Matrícula</h2>
@@ -446,14 +446,14 @@
             </div>
           </div>
         </div>
-        <span class="material-symbols-outlined" style="font-size:24px;">arrow_forward</span>
+        <span class="material-symbols-outlined notranslate" translate="no" style="font-size:24px;">arrow_forward</span>
       </button>
     </section>
 
     <!-- Matrículas Cadastradas (Layout Minimalista Limpo) -->
     <section class="results-section" id="results-container">
       <div class="results-header">
-        <span class="material-symbols-outlined" style="color:var(--primary);">badge</span>
+        <span class="material-symbols-outlined notranslate" translate="no" style="color:var(--primary);">badge</span>
         <span>Suas Matrículas Cadastradas</span>
       </div>
       <div id="matriculas-list-body">
@@ -467,7 +467,7 @@
     <div class="al-modal" onclick="event.stopPropagation()">
       <div class="al-modal-header">
         <strong style="display:flex;align-items:center;gap:8px;font-size:17px;color:var(--primary);">
-          <span class="material-symbols-outlined">edit_note</span> Editar Informações da Matrícula
+          <span class="material-symbols-outlined notranslate" translate="no">edit_note</span> Editar Informações da Matrícula
         </strong>
         <button type="button" class="al-modal-close" onclick="closeEditModal()">×</button>
       </div>
@@ -1032,7 +1032,7 @@
         // Botão de Sair / Trocar de Usuário
         const logoutBtn = document.createElement('div');
         logoutBtn.style.cssText = `display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;margin-top:8px;border-radius:10px;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;font-size:12.5px;font-weight:700;cursor:pointer;transition:all 0.2s ease;`;
-        logoutBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size:18px;">logout</span> Sair / Trocar de Usuário`;
+        logoutBtn.innerHTML = `<span class="material-symbols-outlined notranslate" translate="no" style="font-size:18px;">logout</span> Sair / Trocar de Usuário`;
         logoutBtn.onclick = (e) => {
           e.stopPropagation();
           logout();
@@ -1325,10 +1325,10 @@
               </div>
               <div style="display:flex;gap:10px;flex-wrap:wrap;">
                 <button type="button" class="btn-action-sm btn-pdf" onclick="visualizarPDFViaWebhook(${matId})">
-                  <span class="material-symbols-outlined" style="font-size:18px;">visibility</span> Visualizar PDF
+                  <span class="material-symbols-outlined notranslate" translate="no" style="font-size:18px;">visibility</span> Visualizar PDF
                 </button>
                 <button type="button" class="btn-action-sm btn-details" onclick="abrirEditarViaWebhook(${matId})">
-                  <span class="material-symbols-outlined" style="font-size:18px;">edit</span> Editar Informações
+                  <span class="material-symbols-outlined notranslate" translate="no" style="font-size:18px;">edit</span> Editar Informações
                 </button>
               </div>
             </div>
