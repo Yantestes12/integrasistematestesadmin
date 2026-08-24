@@ -1387,7 +1387,7 @@
       const win = window.open('', '_blank');
       if (win) {
         try {
-          win.document.write('<!DOCTYPE html><html><head><title>Gerando PDF...</title></head><body style="font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:90vh;background:#f8fafc;"><div style="text-align:center;padding:20px;"><h2 style="color:#0f172a;margin-bottom:8px;">⏳ Gerando Ficha Oficial de Matrícula...</h2><p style="color:#64748b;font-size:14px;">Aguarde um instante enquanto buscamos as informações no sistema.</p></div></body></html>');
+          win.document.write('<!DOCTYPE html><html><head><title>Gerando PDF...</title></head><body style="font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:90vh;background:#f8fafc;"><div style="text-align:center;padding:20px;"><h2 style="color:#0f172a;margin-bottom:8px;">⏳ Gerando Ficha Oficial de Matrícula...</h2><p style="color:#64748b;font-size:14px;">Aguarde um instante enquanto buscamos as informações no sistema.</p></div><div class="no-print" style="text-align:center;padding:16px;margin-top:20px;border-top:1px dashed #cbd5e1;"><button onclick="window.print()" style="background:#059669;color:#fff;border:none;padding:12px 24px;border-radius:6px;font-weight:bold;font-size:11pt;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.1);">🖨️ BAIXAR OU IMPRIMIR PDF</button></div><script>setTimeout(function(){ window.print(); }, 800);</script></body></html>');
           win.document.close();
         } catch(e){}
       }
@@ -1842,7 +1842,7 @@
           '.sig-block{text-align:center;}.sig-line{border-top:1.5px solid #334155;margin-bottom:3px;}.sig-label{font-size:8.5pt;font-weight:800;color:#0f172a;text-transform:uppercase;}' +
           '.page-break{page-break-before:always;}@media print{.no-print{display:none!important;}}</style></head><body>' +
           
-          '<div class="no-print" style="text-align:right;padding:6px;margin-bottom:8px;"><button onclick="window.print()" style="background:#003fa3;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:bold;cursor:pointer;">🖨️ Imprimir / Salvar em PDF</button></div>' +
+          '' +
 
           '<div class="header"><div class="logo-box"><img src="logo_integra.png" alt="INTEGRA"><span class="logo-sep">×</span>' + (inst === 'AUNI' ? '<div style="background:#2e1065;padding:2px 6px;border-radius:4px;display:flex;"><img src="'+logoSrc+'" alt="'+inst+'"></div>' : '<img src="'+logoSrc+'" alt="'+inst+'">') + '</div>' +
           '<div class="header-titles"><div class="main-title">FICHA OFICIAL DE MATRÍCULA</div><div class="sub-title">' + subTitleHeader + '</div></div></div>' +
@@ -1940,7 +1940,7 @@
           '• <strong>Protocolo</strong>: ' + tokenProtocolo + '<br>' +
           '• <strong>Aceite do Coordenador</strong>: ' + horaAceiteCoordenador + '</div></div>' +
           '<div class="sig-line"></div><div class="sig-label" style="text-align:center;">Coordenador</div></div></div>' +
-          '</body></html>');
+          '<div class="no-print" style="text-align:center;padding:16px;margin-top:20px;border-top:1px dashed #cbd5e1;"><button onclick="window.print()" style="background:#059669;color:#fff;border:none;padding:12px 24px;border-radius:6px;font-weight:bold;font-size:11pt;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.1);">🖨️ BAIXAR OU IMPRIMIR PDF</button></div><script>setTimeout(function(){ window.print(); }, 800);</script></body></html>');
 
       win.document.close();
     }

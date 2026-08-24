@@ -1438,7 +1438,7 @@
         <div style="margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid var(--border);">
             <div style="font-size:13px;font-weight:800;color:var(--primary);margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em;">📍 Endereço</div>
             <div class="field-row" style="display:flex;gap:10px;margin-bottom:10px;">
-                <div class="field-group" style="flex:0 0 130px;">
+                <div class="field-group" style="flex: 1; max-width: 140px;" class="address-field">
                     <label style="margin-bottom:4px;">CEP <span class="req">*</span></label>
                     <input type="text" name="cep" id="cep" maxlength="9" placeholder="00000-000"
                            inputmode="numeric" onblur="buscarCEP(this.value);" required>
@@ -1449,7 +1449,7 @@
                 </div>
             </div>
             <div class="field-row" style="display:flex;gap:10px;margin-bottom:10px;">
-                <div class="field-group" style="flex:0 0 90px;">
+                <div class="field-group" style="flex: 1; max-width: 100px;" class="address-field">
                     <label style="margin-bottom:4px;">Número <span class="req">*</span></label>
                     <input type="text" name="numero" id="numero" required placeholder="Nº">
                 </div>
@@ -1467,7 +1467,7 @@
                     <label style="margin-bottom:4px;">Cidade <span class="req">*</span></label>
                     <input type="text" name="cidade" id="cidade" required placeholder="Preenchido via CEP">
                 </div>
-                <div class="field-group" style="flex:0 0 80px;">
+                <div class="field-group" style="flex: 1; max-width: 90px;" class="address-field">
                     <label style="margin-bottom:4px;">UF <span class="req">*</span></label>
                     <input type="text" name="uf" id="uf" maxlength="2" required placeholder="UF" style="text-transform:uppercase;">
                 </div>
