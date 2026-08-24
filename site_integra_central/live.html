@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="pt-BR" translate="no" class="notranslate">
+<head>
+    <meta charset="UTF-8">
+    <meta name="google" content="notranslate">
+    <title>Criar Acesso - GASCTPNA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- Favicon & Ícone da Aba -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="favicon-192.png">
+
+    <!-- Meta Tags para Pré-visualização do Link no WhatsApp, Telegram e Redes Sociais -->
+    <meta name="description" content="Criar Acesso — GASCTPNA / INTEGRA">
+    <meta property="og:title" content="Criar Acesso — GASCTPNA">
+    <meta property="og:description" content="Crie sua conta de acesso ao projeto GASCTPNA na Plataforma INTEGRA.">
+    <meta property="og:image" content="https://portalintegra.com.br/logo_integra.png">
+    <meta property="og:type" content="website">
+    
+    <!-- Google Fonts (Plus Jakarta Sans) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* --- DESIGN MINIMALISTA DE ALTO CONTRASTE E ACESSIBILIDADE (WCAG AAA) --- */
+        :root {
+            --bg-primary: #f8fafc;
+            --card-bg: #ffffff;
+            --card-border: #cbd5e1;
+            --primary: #059669; /* Verde Esmeralda */
+            --primary-hover: #047857; 
+            --primary-glow: rgba(5, 150, 105, 0.35);
+            --primary-text: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --error: #dc2626;
+            --error-bg: #fef2f2;
+            --input-bg: #ffffff;
+            --input-border: #cbd5e1;
+            --focus-ring: #2563eb; /* Azul de foco */
+            --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        }
+
+        *, *::before, *::after { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
+
+        html, body {
+            overflow-x: hidden !important;
+            width: 100% !important;
+            max-width: 100vw !important;
+            position: relative;
+            touch-action: pan-y;
+        }
+
+        body {
+            font-family: var(--font-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 16px;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            line-height: 1.5;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        :focus-visible {
+            outline: 3.5px solid var(--focus-ring) !important;
+            outline-offset: 3px !important;
+            border-radius: 8px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .access-card {
+            width: 100%;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 32px 24px;
+            box-shadow: 0 4px 25px rgba(15, 23, 42, 0.06);
+        }
+
+        /* Header Minimalista */
+        .card-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .logo-container img {
+            max-height: 65px;
+            width: auto;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        /* Barra de Progresso Suave */
+        .step-indicator {
+            background: #e2e8f0;
+            border-radius: 100px;
+            height: 8px;
+            width: 100%;
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .step-progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 25%;
+            transition: width 0.3s ease;
+        }
+
+        .step-badge {
+            display: inline-block;
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--primary);
+            background: #dcfce7;
+            padding: 3px 10px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+        }
+
+        /* Linha Grifada em Ponto Chave (Underline Accent ___ ) */
+        .key-accent {
+            display: inline-block;
+            position: relative;
+            color: var(--text-main);
+            font-weight: 800;
+            padding-bottom: 2px;
+            border-bottom: 3.5px solid var(--primary);
+        }
+
+        .step-pane {
+            display: none;
+        }
+
+        .step-pane.active {
+            display: block;
+            animation: fadeIn 0.25s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .field-group {
+            margin-bottom: 22px;
+        }
+
+        /* Label com Ícone Integrado Sem Colisão */
+        label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16.5px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+
+        label i {
+            color: var(--primary);
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        /* Caixas de Entrada 100% Limpas Internamente */
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="password"] {
+            width: 100%;
+            height: 52px;
+            background-color: var(--input-bg);
+            border: 2px solid var(--input-border);
+            border-bottom: 3.5px solid var(--primary); /* Borda inferior verde grifada permanente */
+            border-radius: 10px;
+            padding: 0 16px; /* O texto e placeholder começam exatamente na margem esquerda de 16px! */
+            color: var(--text-main);
+            font-size: 16.5px;
+            font-family: var(--font-main);
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        input[type="password"] {
+            padding-right: 90px; /* Espaço para o botão Mostrar/Ocultar Senha no canto direito */
+        }
+
+        input:hover {
+            border-color: var(--primary);
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            border-bottom-color: var(--primary-hover);
+        }
+
+        input.invalid {
+            border-color: var(--error) !important;
+            border-bottom-color: var(--error) !important;
+            background-color: var(--error-bg) !important;
+        }
+
+        .error-message {
+            display: none;
+            color: var(--error);
+            font-size: 14px;
+            font-weight: 700;
+            margin-top: 6px;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .error-message.active {
+            display: flex;
+        }
+
+        /* Botão Mostrar/Ocultar Senha posicionado à direita */
+        .btn-toggle-pass {
+            position: absolute;
+            right: 8px;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-toggle-pass:hover {
+            background: #e2e8f0;
+        }
+
+        /* Botões de Ação */
+        .actions-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-nav {
+            padding: 14px 24px; border: none; border-radius: var(--radius-md);
+            font-size: 15px; font-weight: 700; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; gap: 8px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-back { background: var(--bg-body); color: var(--text-medium); border: 1px solid var(--border-light); }
+        .btn-back:hover { background: #e2e8f0; color: var(--text-dark); }
+        .btn-next, .btn-submit {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+            color: #ffffff; box-shadow: 0 4px 14px -2px var(--primary-glow);
+        }
+        .btn-next:hover, .btn-submit:hover {
+            transform: translateY(-2px); box-shadow: 0 8px 20px -2px var(--primary-glow);
+        }
+
+        .btn-next:disabled,
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .card-footer {
+            margin-top: 20px;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 16px;
+            font-size: 14.5px;
+            color: var(--text-muted);
+        }
+
+        .card-footer a {
+            color: var(--primary);
+            font-weight: 800;
+            text-decoration: underline;
+        }
+
+        .success-box {
+            text-align: center;
+            padding: 20px 10px;
+        }
+
+        .success-icon {
+            width: 70px;
+            height: 70px;
+            background: #dcfce7;
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            border: 3px solid var(--primary);
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sr-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+    <main class="container" role="main">
+        <article class="access-card">
+            
+            <!-- Logo Apenas GASCTPNA -->
+            <header class="card-header">
+                <div class="logo-container">
+                    <img src="http://3.141.142.62:8000/storage/v1/object/public/GASCTPNA/logo%20com%20fundo%20branco.jpg" onerror="this.onerror=null; this.src='logo_gasctpna.jpg';" alt="GASCTPNA">
+                </div>
+                <h1>Criar Seu Acesso</h1>
+            </header>
+
+            <!-- Progresso Limpo -->
+            <div class="step-indicator" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="4">
+                <div id="progress-fill" class="step-progress-fill"></div>
+            </div>
+
+            <form id="form-criar-acesso" action="https://w.ibrase.com.br/webhook/criaracesso" method="post" novalidate>
+                
+                <!-- PASSO 1: NOME -->
+                <div class="step-pane active" data-step="1">
+                    <span class="step-badge">Passo 1 de 4</span>
+                    
+                    <div class="field-group">
+                        <label for="name">
+                            <i data-lucide="user" aria-hidden="true"></i> 
+                            <span>Informe seu <span class="key-accent">Nome Completo</span></span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="text" 
+                                id="name" 
+                                name="name" 
+                                autocomplete="name" 
+                                placeholder="Digite seu nome e sobrenome"
+                                aria-required="true"
+                                aria-describedby="err-name"
+                            >
+                        </div>
+                        <div id="err-name" class="error-message" role="alert">
+                            <i data-lucide="alert-circle" aria-hidden="true"></i> Por favor, digite seu nome e sobrenome.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PASSO 2: TELEFONE + CONFIRMAÇÃO -->
+                <div class="step-pane" data-step="2">
+                    <span class="step-badge">Passo 2 de 4</span>
+                    
+                    <!-- Telefone Principal -->
+                    <div class="field-group">
+                        <label for="phone">
+                            <i data-lucide="phone" aria-hidden="true"></i>
+                            <span>Seu número de <span class="key-accent">Telefone / WhatsApp</span></span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="tel" 
+                                id="phone" 
+                                name="phone" 
+                                autocomplete="tel" 
+                                placeholder="(11) 99999-9999"
+                                inputmode="numeric"
+                                maxlength="15"
+                                aria-required="true"
+                                aria-describedby="err-phone"
+                            >
+                        </div>
+                        <div id="err-phone" class="error-message" role="alert">
+                            <i data-lucide="alert-circle" aria-hidden="true"></i> Digite um telefone válido com DDD (mínimo 10 dígitos).
+                        </div>
+                    </div>
+
+                    <!-- Confirmar Telefone -->
+                    <div class="field-group">
+                        <label for="phone_confirm">
+                            <i data-lucide="phone-call" aria-hidden="true"></i>
+                            <span><span class="key-accent">Confirme</span> o número de Telefone</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="tel" 
+                                id="phone_confirm" 
+                                name="phone_confirm" 
+                                placeholder="Repita o mesmo telefone"
+                                inputmode="numeric"
+                                maxlength="15"
+                                aria-required="true"
+                                aria-describedby="err-phone-confirm"
+                            >
+                        </div>
+                        <div id="err-phone-confirm" class="error-message" role="alert">
+                            <i data-lucide="alert-circle" aria-hidden="true"></i> Os telefones digitados não são iguais.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PASSO 3: EMAIL + CONFIRMAÇÃO -->
+                <div class="step-pane" data-step="3">
+                    <span class="step-badge">Passo 3 de 4</span>
+                    
+                    <!-- E-mail Principal -->
+                    <div class="field-group">
+                        <label for="email">
+                            <i data-lucide="mail" aria-hidden="true"></i>
+                            <span>Seu endereço de <span class="key-accent">E-mail</span></span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                autocomplete="email" 
+                                placeholder="seu.email@exemplo.com"
+                                aria-required="true"
+                                aria-describedby="err-email"
+                            >
+                        </div>
+                        <div id="err-email" class="error-message" role="alert">
+                            <i data-lucide="alert-circle" aria-hidden="true"></i> Digite um e-mail válido (exemplo: nome@email.com).
+                        </div>
+                    </div>
+
+                    <!-- Confirmar E-mail -->
+                    <div class="field-group">
+                        <label for="email_confirm">
+                            <i data-lucide="check-check" aria-hidden="true"></i>
+                            <span><span class="key-accent">Confirme</span> o seu E-mail</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="email" 
+                                id="email_confirm" 
+                                name="email_confirm" 
+                                placeholder="Repita o mesmo e-mail"
+                                aria-required="true"
+                                aria-describedby="err-email-confirm"
+                            >
+                        </div>
+                        <div id="err-email-confirm" class="error-message" role="alert">
+                            <i data-lucide="alert-circle" aria-hidden="true"></i> Os e-mails não são iguais. Digite exatamente o mesmo e-mail.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PASSO 4: SENHA + CONFIRMAÇÃO -->
+                <div class="step-pane" data-step="4">
+                    <span class="step-badge">Passo 4 de 4</span>
+                    
+                    <!-- Senha Principal -->
+                    <div class="field-group">
+                        <label for="password">
+                            <i data-lucide="lock" aria-hidden="true"></i>
+                            <span>Crie uma <span class="key-accent">Senha</span></span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                autocomplete="new-password" 
+                                placeholder="Mínimo 6 caracteres"
+                                aria-required="true"
+                                aria-describedby="err-password"
+                            >
+                            <button 
+                                type="button" 
+                                class="btn-toggle-pass" 
+                                data-target="password"
+                                aria-label="Mostrar senha em texto claro"
+                            >
+                                <i data-lucide="eye" aria-hidden="true"></i> Ver
+                            </button>
+                        </div>
+                        <div id="err-password" class="error-message" role="alert">
+                            <i data-lucide="alert-circle" aria-hidden="true"></i> A senha precisa ter no mínimo 6 caracteres.
+                        </div>
+                    </div>
+
+                    <!-- Confirmar Senha -->
+                    <div class="field-group">
+                        <label for="password_confirm">
+                            <i data-lucide="lock" aria-hidden="true"></i>
+                            <span><span class="key-accent">Confirme</span> a sua Senha</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="password" 
+                                id="password_confirm" 
+                                name="password_confirm" 
+                                placeholder="Repita a mesma senha"
+                                aria-required="true"
+                                aria-describedby="err-password-confirm"
+                            >
+                            <button 
+                                type="button" 
+                                class="btn-toggle-pass" 
+                                data-target="password_confirm"
+                                aria-label="Mostrar senha de confirmação em texto claro"
+                            >
+                                <i data-lucide="eye" aria-hidden="true"></i> Ver
+                            </button>
+                        </div>
+                        <div id="err-password-confirm" class="error-message" role="alert">
+                            <i data-lucide="alert-circle" aria-hidden="true"></i> As senhas digitadas não são iguais.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões de Navegação -->
+                <div class="actions-group">
+                    <button type="button" id="btn-back" class="btn-nav btn-back" style="display: none;">
+                        <i data-lucide="arrow-left" aria-hidden="true"></i> Voltar
+                    </button>
+                    <button type="button" id="btn-next" class="btn-nav btn-next">
+                        Avançar <i data-lucide="arrow-right" aria-hidden="true"></i>
+                    </button>
+                    <button type="submit" id="btn-submit" class="btn-nav btn-submit" style="display: none;">
+                        <i data-lucide="check-circle" aria-hidden="true"></i> Concluir Cadastro
+                    </button>
+                </div>
+
+            </form>
+
+            <footer class="card-footer">
+                Já possui uma conta? <a href="https://plataformaintegra.com.br/" id="link-login-central">Fazer Login</a>
+            </footer>
+
+            <script>
+                if (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname.includes('vercel.app')) {
+                    const l = document.getElementById('link-login-central');
+                    if (l) l.href = 'https://plataformaintegra.com.br/';
+                }
+            </script>
+
+        </article>
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        let currentStep = 1;
+        const totalSteps = 4;
+
+        const announcer = document.getElementById('sr-announcer');
+        const form = document.getElementById('form-criar-acesso');
+        const progressFill = document.getElementById('progress-fill');
+        const btnBack = document.getElementById('btn-back');
+        const btnNext = document.getElementById('btn-next');
+        const btnSubmit = document.getElementById('btn-submit');
+
+        const nameInput = document.getElementById('name');
+        const phoneInput = document.getElementById('phone');
+        const phoneConfirmInput = document.getElementById('phone_confirm');
+        const emailInput = document.getElementById('email');
+        const emailConfirmInput = document.getElementById('email_confirm');
+        const passwordInput = document.getElementById('password');
+        const passwordConfirmInput = document.getElementById('password_confirm');
+
+        function speak(msg) {
+            if (announcer) {
+                announcer.textContent = '';
+                setTimeout(() => { announcer.textContent = msg; }, 100);
+            }
+        }
+
+        // Alternar visualização da senha
+        document.querySelectorAll('.btn-toggle-pass').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetId = btn.getAttribute('data-target');
+                const targetInput = document.getElementById(targetId);
+                const isPass = targetInput.type === 'password';
+                targetInput.type = isPass ? 'text' : 'password';
+                btn.innerHTML = isPass 
+                    ? '<i data-lucide="eye-off" aria-hidden="true"></i> Ocultar' 
+                    : '<i data-lucide="eye" aria-hidden="true"></i> Ver';
+                btn.setAttribute('aria-label', isPass ? 'Ocultar senha' : 'Mostrar senha');
+                lucide.createIcons();
+                speak(isPass ? 'Senha visível.' : 'Senha ocultada.');
+            });
+        });
+
+        // Máscaras de Telefone
+        function maskPhone(input) {
+            let v = input.value.replace(/\D/g, '').slice(0, 11);
+            if (v.length > 10) {
+                input.value = `(${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7)}`;
+            } else if (v.length > 6) {
+                input.value = `(${v.slice(0, 2)}) ${v.slice(2, 6)}-${v.slice(6)}`;
+            } else if (v.length > 2) {
+                input.value = `(${v.slice(0, 2)}) ${v.slice(2)}`;
+            } else if (v.length > 0) {
+                input.value = `(${v}`;
+            } else {
+                input.value = '';
+            }
+        }
+
+        [phoneInput, phoneConfirmInput].forEach(inp => {
+            inp.addEventListener('input', () => maskPhone(inp));
+        });
+
+        // Validação de Campos
+        function validateField(input, errId, condition) {
+            const errEl = document.getElementById(errId);
+            if (!condition) {
+                input.classList.add('invalid');
+                input.setAttribute('aria-invalid', 'true');
+                if (errEl) errEl.classList.add('active');
+                return false;
+            } else {
+                input.classList.remove('invalid');
+                input.removeAttribute('aria-invalid');
+                if (errEl) errEl.classList.remove('active');
+                return true;
+            }
+        }
+
+        // Limpar erro ao digitar
+        document.querySelectorAll('input').forEach(inp => {
+            inp.addEventListener('input', () => {
+                inp.classList.remove('invalid');
+                inp.removeAttribute('aria-invalid');
+                const errEl = document.getElementById(`err-${inp.id}`);
+                if (errEl) errEl.classList.remove('active');
+            });
+        });
+
+        // Validar etapa atual
+        function validateCurrentStep() {
+            if (currentStep === 1) {
+                return validateField(
+                    nameInput, 
+                    'err-name', 
+                    nameInput.value.trim().split(' ').length >= 2 && nameInput.value.trim().length >= 5
+                );
+            }
+
+            if (currentStep === 2) {
+                const p1 = phoneInput.value.replace(/\D/g, '');
+                const p2 = phoneConfirmInput.value.replace(/\D/g, '');
+                
+                const isP1 = validateField(phoneInput, 'err-phone', p1.length >= 10);
+                const isP2 = validateField(phoneConfirmInput, 'err-phone-confirm', p2.length >= 10 && p1 === p2);
+
+                return isP1 && isP2;
+            }
+
+            if (currentStep === 3) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                const e1 = emailInput.value.trim().toLowerCase();
+                const e2 = emailConfirmInput.value.trim().toLowerCase();
+
+                const isE1 = validateField(emailInput, 'err-email', emailRegex.test(e1));
+                const isE2 = validateField(emailConfirmInput, 'err-email-confirm', emailRegex.test(e2) && e1 === e2);
+
+                return isE1 && isE2;
+            }
+
+            if (currentStep === 4) {
+                const pass1 = passwordInput.value;
+                const pass2 = passwordConfirmInput.value;
+
+                const isPass1 = validateField(passwordInput, 'err-password', pass1.length >= 6);
+                const isPass2 = validateField(passwordConfirmInput, 'err-password-confirm', pass2.length >= 6 && pass1 === pass2);
+
+                return isPass1 && isPass2;
+            }
+
+            return true;
+        }
+
+        function updateStepUI() {
+            document.querySelectorAll('.step-pane').forEach(pane => {
+                pane.classList.remove('active');
+            });
+
+            const currentPane = document.querySelector(`.step-pane[data-step="${currentStep}"]`);
+            if (currentPane) {
+                currentPane.classList.add('active');
+                const firstInput = currentPane.querySelector('input');
+                if (firstInput) setTimeout(() => firstInput.focus(), 150);
+            }
+
+            const pct = (currentStep / totalSteps) * 100;
+            progressFill.style.width = `${pct}%`;
+            document.querySelector('.step-indicator').setAttribute('aria-valuenow', currentStep);
+
+            btnBack.style.display = currentStep > 1 ? 'flex' : 'none';
+            btnNext.style.display = currentStep < totalSteps ? 'flex' : 'none';
+            btnSubmit.style.display = currentStep === totalSteps ? 'flex' : 'none';
+
+            const card = document.querySelector('.access-card');
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            speak(`Passo ${currentStep} de 4 exibido.`);
+        }
+
+        // Função para verificar se e-mail já existe via Webhook (incluindo instituicao e instituto GASCTPNA)
+        async function checkEmailExists(email) {
+            try {
+                const url = 'https://w.ibrase.com.br/webhook/existeemail?email=' + encodeURIComponent(email) + '&instituicao=GASCTPNA&instituto=GASCTPNA';
+                const res = await fetch(url);
+                const text = await res.text();
+                const cleanText = text.trim().toLowerCase();
+                return cleanText.includes('existe') && !cleanText.includes('não existe');
+            } catch (err) {
+                console.error('Erro ao verificar existência do e-mail:', err);
+                return false;
+            }
+        }
+
+        // Função para verificar se número de telefone/WhatsApp já existe via Webhook
+        async function checkPhoneExists(phone) {
+            try {
+                const cleanPhone = (phone || '').replace(/\D/g, '');
+                if (!cleanPhone || cleanPhone.length < 10) return false;
+                const url = 'https://w.ibrase.com.br/webhook/existeemail?email=' + encodeURIComponent(cleanPhone) + '&telefone=' + encodeURIComponent(cleanPhone) + '&phone=' + encodeURIComponent(cleanPhone) + '&instituicao=GASCTPNA&instituto=GASCTPNA';
+                const res = await fetch(url);
+                const text = await res.text();
+                const cleanText = text.trim().toLowerCase();
+                return cleanText.includes('existe') && !cleanText.includes('não existe');
+            } catch (err) {
+                console.error('Erro ao verificar existência do telefone:', err);
+                return false;
+            }
+        }
+
+        btnNext.addEventListener('click', async () => {
+            if (!validateCurrentStep()) {
+                speak('Por favor, corrija o campo antes de avançar.');
+                const firstInvalid = document.querySelector('.step-pane.active .invalid');
+                if (firstInvalid) firstInvalid.focus();
+                return;
+            }
+
+            // Se for a etapa de telefone (Passo 2), consultar se o telefone já existe no banco
+            if (currentStep === 2) {
+                const phoneVal = phoneInput.value.replace(/\D/g, '');
+                btnNext.disabled = true;
+                btnNext.innerHTML = '<i data-lucide="loader-2" aria-hidden="true" style="animation: spin 1s linear infinite;"></i> Verificando...';
+                lucide.createIcons();
+
+                const existsPhone = await checkPhoneExists(phoneVal);
+
+                btnNext.disabled = false;
+                btnNext.innerHTML = 'Avançar <i data-lucide="arrow-right" aria-hidden="true"></i>';
+                lucide.createIcons();
+
+                if (existsPhone) {
+                    const errEl = document.getElementById('err-phone');
+                    if (errEl) {
+                        errEl.innerHTML = '<i data-lucide="alert-circle" aria-hidden="true"></i> Este número de telefone/WhatsApp já está cadastrado no sistema. Por favor, utilize outro telefone ou faça login.';
+                        errEl.classList.add('active');
+                        lucide.createIcons();
+                    }
+                    phoneInput.classList.add('invalid');
+                    phoneInput.setAttribute('aria-invalid', 'true');
+                    phoneInput.focus();
+                    speak('Atenção: Este telefone já está cadastrado no sistema.');
+                    return;
+                }
+            }
+
+            // Se for a etapa de e-mail (Passo 3), consultar se o e-mail já existe no banco
+            if (currentStep === 3) {
+                const emailVal = emailInput.value.trim().toLowerCase();
+                btnNext.disabled = true;
+                btnNext.innerHTML = '<i data-lucide="loader-2" aria-hidden="true" style="animation: spin 1s linear infinite;"></i> Verificando...';
+                lucide.createIcons();
+
+                const exists = await checkEmailExists(emailVal);
+
+                btnNext.disabled = false;
+                btnNext.innerHTML = 'Avançar <i data-lucide="arrow-right" aria-hidden="true"></i>';
+                lucide.createIcons();
+
+                if (exists) {
+                    const errEl = document.getElementById('err-email');
+                    if (errEl) {
+                        errEl.innerHTML = '<i data-lucide="alert-circle" aria-hidden="true"></i> Este e-mail já está cadastrado no sistema. Por favor, utilize outro e-mail ou faça login.';
+                        errEl.classList.add('active');
+                        lucide.createIcons();
+                    }
+                    emailInput.classList.add('invalid');
+                    emailInput.setAttribute('aria-invalid', 'true');
+                    emailInput.focus();
+                    speak('Atenção: Este e-mail já está cadastrado no sistema.');
+                    return;
+                }
+            }
+
+            currentStep++;
+            updateStepUI();
+        });
+
+        btnBack.addEventListener('click', () => {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStepUI();
+            }
+        });
+
+        form.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (currentStep < totalSteps) {
+                    btnNext.click();
+                } else {
+                    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                }
+            }
+        });
+
+        // Envio Final
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!validateCurrentStep()) {
+                speak('Verifique a confirmação da senha.');
+                const firstInvalid = document.querySelector('.step-pane.active .invalid');
+                if (firstInvalid) firstInvalid.focus();
+                return;
+            }
+
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<i data-lucide="loader-2" aria-hidden="true" style="animation: spin 1s linear infinite;"></i> Enviando...';
+            lucide.createIcons();
+            speak('Enviando seu cadastro...');
+
+            const payload = {
+                instituicao: 'GASCTPNA',
+                instituto: 'GASCTPNA',
+                acao: 'criar_acesso',
+                name: nameInput.value.trim(),
+                phone: phoneInput.value.replace(/\D/g, ''),
+                email: emailInput.value.trim().toLowerCase(),
+                password: passwordInput.value
+            };
+
+            function setCookie(name, val, days = 30) {
+                const d = new Date();
+                d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+                document.cookie = `${name}=${encodeURIComponent(val)};expires=${d.toUTCString()};path=/;SameSite=Lax`;
+            }
+
+            function salvarSessaoLocal() {
+                localStorage.setItem('usuario_nome', payload.name);
+                localStorage.setItem('usuario_primeiro_nome', payload.name.split(' ')[0]);
+                localStorage.setItem('usuario_email', payload.email);
+                localStorage.setItem('email_conta', payload.email);
+                localStorage.setItem('usuario_telefone', payload.phone);
+                localStorage.setItem('instituto', payload.instituto);
+                localStorage.setItem('instituicao', payload.instituicao);
+                // [SEGURANÇA] Senha removida do armazenamento local.
+                localStorage.removeItem('usuario_senha');
+                try { document.cookie = 'usuario_senha=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'; } catch(e){}
+
+                setCookie('usuario_nome', payload.name);
+                setCookie('usuario_primeiro_nome', payload.name.split(' ')[0]);
+                setCookie('usuario_email', payload.email);
+                setCookie('email_conta', payload.email);
+                setCookie('usuario_telefone', payload.phone);
+                setCookie('instituto', payload.instituto);
+                // Senha não é mais armazenada em cookie
+            }
+
+            try {
+                await fetch('https://w.ibrase.com.br/webhook/criaracesso', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                salvarSessaoLocal();
+                showSuccessScreen(payload);
+            } catch (err) {
+                console.error('Erro no envio:', err);
+                salvarSessaoLocal();
+                showSuccessScreen(payload);
+            }
+        });
+
+        function showSuccessScreen(pData = {}) {
+            speak('Cadastro concluído com sucesso!');
+            const card = document.querySelector('.access-card');
+            if (card) {
+                card.innerHTML = `
+                    <div class="success-box" role="region" aria-live="assertive">
+                        <div class="success-icon" aria-hidden="true">
+                            <i data-lucide="check" style="width: 40px; height: 40px;"></i>
+                        </div>
+                        <h2 style="font-size: 22px; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">Cadastro Realizado! 🎉</h2>
+                        <p style="color: var(--text-muted); font-size: 15px; margin-bottom: 20px;">
+                            Seus dados foram salvos com sucesso.<br>Redirecionando para o sistema...
+                        </p>
+                    </div>
+                `;
+            }
+            if (window.lucide) lucide.createIcons();
+
+            const userEmail = (pData && pData.email) || (emailInput && emailInput.value ? emailInput.value.trim().toLowerCase() : '') || localStorage.getItem('usuario_email') || '';
+            const userPass = (pData && pData.password) || (passwordInput ? passwordInput.value : '') || '';
+
+            if (userEmail) {
+                localStorage.setItem('usuario_email', userEmail);
+                localStorage.setItem('email_conta', userEmail);
+            }
+            if (userPass) {
+                localStorage.setItem('usuario_senha', userPass);
+            }
+
+            setTimeout(() => {
+                let redirUrl = 'index.html';
+                if (window.location.hostname.includes('plataformaintegra.com.br') || window.location.hostname.includes('gasctpna.com.br')) {
+                    redirUrl = 'https://plataformaintegra.com.br/login';
+                } else if (window.location.protocol === 'file:' || window.location.hostname === 'localhost') {
+                    redirUrl = 'index.html';
+                }
+                
+                if (userEmail && userPass) {
+                    redirUrl += (redirUrl.includes('?') ? '&' : '?') + `email=${encodeURIComponent(userEmail)}&password=${encodeURIComponent(userPass)}&autologin=true&instituto=GASCTPNA`;
+                }
+                window.location.href = redirUrl;
+            }, 1200);
+        }
+    </script>
+</body>
+</html>

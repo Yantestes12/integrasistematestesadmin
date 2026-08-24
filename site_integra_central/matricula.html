@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" translate="no" class="notranslate">
 <head>
     <meta charset="UTF-8">
+    <base href="/">
+    <meta name="google" content="notranslate">
     <title>Matrícula de Aluno — INTEGRA</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <!-- Favicon & Ícone da Aba -->
@@ -18,6 +20,62 @@
     <meta property="og:url" content="https://portalintegra.com.br/matricula">
     <meta property="og:type" content="website">
     <script>
+    // ═══════ CONFIGURAÇÃO CENTRALIZADA DE APIS ═══════
+    var getInst = function() { 
+        if (window.integraInstitutoFinal) return window.integraInstitutoFinal;
+        try {
+            var parts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+            if (parts.length > 0 && ['gasctpna','ibrase','auni','ivem'].includes(parts[0])) {
+                return parts[0].toUpperCase();
+            }
+            var urlParams = new URLSearchParams(window.location.search);
+            var urlInst = urlParams.get('instituto') || urlParams.get('instituicao') || urlParams.get('inst');
+            if (urlInst && urlInst.trim()) return urlInst.trim().toUpperCase();
+        } catch(e) { return null; }
+        return null;
+    };
+
+    // === VERIFICAÇÃO DE SEGURANÇA E ACESSO ===
+    (function(){
+        try {
+            var finalInst = getInst();
+            
+            if (finalInst) {
+                // 1. Verifica se está logado
+                var isLogged = sessionStorage.getItem('usuario_id') || localStorage.getItem('usuario_id');
+                if (!isLogged) {
+                    var targetLogin = '/' + finalInst.toLowerCase() + '/login';
+                    window.location.replace(targetLogin);
+                    return;
+                }
+
+                // 2. Verifica se tem permissão para este instituto
+                var stInst = sessionStorage.getItem('instituto_ativo') || localStorage.getItem('instituto_ativo');
+                var permitidos = [];
+                if (stInst) permitidos.push(stInst.toUpperCase());
+                
+                var rawPerm = sessionStorage.getItem('institutos_permitidos') || localStorage.getItem('institutos_permitidos');
+                if (rawPerm) {
+                    try {
+                        var parsed = JSON.parse(rawPerm);
+                        if (Array.isArray(parsed)) {
+                            parsed.forEach(function(p) { permitidos.push(String(p).toUpperCase()); });
+                        }
+                    } catch(e) {}
+                }
+                
+                if (permitidos.length > 0 && permitidos.indexOf(finalInst) === -1) {
+                    // Sem permissão! Redireciona de volta para a área do aluno
+                    var targetArea = '/' + finalInst.toLowerCase() + '/area_aluno';
+                    window.location.replace(targetArea);
+                    return;
+                }
+            }
+        } catch(e) {
+            console.error('Erro na verificação de segurança', e);
+        }
+    })();
+
     window.carregarCidadesIBGENaturalidade = function(uf) {
         var selectCid = document.getElementById('naturalidade_cidade');
         var inputNat = document.getElementById('naturalidade');
@@ -3121,12 +3179,16 @@ window.dadosRecentesCPF = null;
             var nucleosAtivos = (nucleos || []).filter(function(n) { 
                 return (!pIdCurrent || parseInt(n.projeto_id) === pIdCurrent) && isAtivo(n.ativo); 
             });
+            var espacosMap = {};
+            if(espacos) { espacos.forEach(function(e) { espacosMap[e.id] = e; }); }
             var espacosIds = {};
             nucleosAtivos.forEach(function(n) { if(n.espaco_id) espacosIds[n.espaco_id] = true; });
             
             var nomesCidades = [];
             nucleosAtivos.forEach(function(n) {
-                var cName = (n.cidade && String(n.cidade).trim()) ? String(n.cidade).trim() : "Campos dos Goytacazes";
+                var esp = espacosMap[n.espaco_id];
+                var cidEspaco = (esp && esp.cidade && String(esp.cidade).trim()) ? String(esp.cidade).trim() : null;
+                var cName = (n.cidade && String(n.cidade).trim()) ? String(n.cidade).trim() : (cidEspaco ? cidEspaco : "Campos dos Goytacazes");
                 if(nomesCidades.indexOf(cName) === -1) {
                     nomesCidades.push(cName);
                 }
@@ -3159,11 +3221,12 @@ window.dadosRecentesCPF = null;
         }
 
         var promises = [];
+        if(!_cacheEspacos) promises.push(fetch(API.buscarEspacos, getGetOptions()).then(function(r){return r.json();}).then(function(raw){ _cacheEspacos = _parseN8N(raw, 'espacos'); }));
         if(!_cacheNucleos) promises.push(fetch(API.buscarNucleos, getGetOptions()).then(function(r){return r.json();}).then(function(raw){ _cacheNucleos = _parseN8N(raw, 'nucleos'); }));
-        else promises.push(Promise.resolve());
+        if(promises.length === 0) promises.push(Promise.resolve());
 
         Promise.all(promises).then(function(){
-            preencherCidades(null, _cacheNucleos);
+            preencherCidades(_cacheEspacos, _cacheNucleos);
         }).catch(function(){
             var cs2 = document.getElementById('cidade_id');
             if(cs2) cs2.innerHTML='<option value="">Erro ao carregar cidades.</option>';
@@ -3205,14 +3268,18 @@ window.dadosRecentesCPF = null;
                 var nucleosAtivos = (nucleos || []).filter(function(n) { 
                     return (!pIdNum || parseInt(n.projeto_id) === pIdNum) && isAtivo(n.ativo); 
                 });
+                var espacosMap = {};
+                if(espacos) { espacos.forEach(function(e) { espacosMap[e.id] = e; }); }
                 var espacosUnicos = {};
                 var filtrados = [];
                 nucleosAtivos.forEach(function(n) {
-                    var nCid = (n.cidade && String(n.cidade).trim()) ? String(n.cidade).trim() : "Campos dos Goytacazes";
+                    var esp = espacosMap[n.espaco_id];
+                    var cidEspaco = (esp && esp.cidade && String(esp.cidade).trim()) ? String(esp.cidade).trim() : null;
+                    var nCid = (n.cidade && String(n.cidade).trim()) ? String(n.cidade).trim() : (cidEspaco ? cidEspaco : "Campos dos Goytacazes");
                     var matchCidade = (String(nCid).trim().toLowerCase() === String(cNome).trim().toLowerCase());
                     if (matchCidade && n.espaco_id && !espacosUnicos[n.espaco_id]) {
                         espacosUnicos[n.espaco_id] = true;
-                        var nomeExibicao = n.bairro || n.nome || ('Polo ' + n.espaco_id);
+                        var nomeExibicao = n.nome || n.bairro || (esp && esp.nome) || (esp && esp.bairro) || ('Polo ' + n.espaco_id);
                         filtrados.push({ id: n.espaco_id, nome: nomeExibicao });
                     }
                 });
@@ -3247,15 +3314,16 @@ window.dadosRecentesCPF = null;
             esconder(['bloco-modalidade','bloco-nucleo']);
             if(!cNome || !pId) return;
             function preencherBairros(espacos, nucleos) {
-                window.preencherBairrosGlobal(null, nucleos);
+                window.preencherBairrosGlobal(espacos, nucleos);
             }
 
             var promises = [];
+            if(!_cacheEspacos) promises.push(fetch(API.buscarEspacos, getGetOptions()).then(function(r){return r.json();}).then(function(raw){ _cacheEspacos = _parseN8N(raw, 'espacos'); }));
             if(!_cacheNucleos) promises.push(fetch(API.buscarNucleos, getGetOptions()).then(function(r){return r.json();}).then(function(raw){ _cacheNucleos = _parseN8N(raw, 'nucleos'); }));
-            else promises.push(Promise.resolve());
+            if(promises.length === 0) promises.push(Promise.resolve());
 
             Promise.all(promises).then(function(){
-                preencherBairros(null, _cacheNucleos);
+                preencherBairros(_cacheEspacos, _cacheNucleos);
             }).catch(function(){ var bs2=getBs(); if(bs2) bs2.innerHTML='<option value="">Erro ao carregar.</option>'; });
         });
 
@@ -4284,22 +4352,39 @@ window.dadosRecentesCPF = null;
 
                 var loginCard = document.querySelector('.login-card');
                 if(loginCard) {
+                    var targetUrl = window.location.origin + '/area_aluno.html';
                     var successDiv = document.createElement('div');
                     successDiv.innerHTML = '<div style="text-align:center;padding:40px 20px;max-width:540px;margin:0 auto;">' +
                         '<div style="font-size:56px;margin-bottom:16px;">🎉</div>' +
                         '<h2 style="color:var(--primary,#10b981);font-size:24px;font-weight:800;margin-bottom:10px;">Matrícula Concluída com Sucesso!</h2>' +
-                        '<p style="color:#64748b;font-size:14px;line-height:1.6;margin-bottom:24px;">Sua solicitação de matrícula foi registrada sob o Número de Matrícula <strong>' + numMatricula + '</strong>.</p>' +
+                        '<p style="color:#64748b;font-size:14px;line-height:1.6;margin-bottom:24px;">Sua solicitação de matrícula foi registrada sob o Número de Matrícula <strong>' + numMatricula + '</strong>. Você será redirecionado automaticamente para a Plataforma INTEGRA.</p>' +
                         '<div style="display:flex;flex-direction:column;gap:12px;max-width:360px;margin:0 auto;">' +
                         '<button type="button" onclick="gerarComprovantePDF()" style="background:#10b981;color:#fff;border:none;padding:14px 20px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 14px rgba(16,185,129,0.35);">📄 Baixar Comprovante em PDF</button>' +
-                        '<a href="area_aluno.html" style="background:#2563eb;color:#fff;border:none;padding:14px 20px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 14px rgba(37,99,235,0.35);">🏠 Voltar para a Área do Aluno</a>' +
+                        '<a href="' + targetUrl + '" id="btn-fallback-redirect" style="display:none;background:#2563eb;color:#fff;border:none;padding:14px 20px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;text-align:center;text-decoration:none;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 14px rgba(37,99,235,0.35);">🚀 Acessar Plataforma</a>' +
                         '</div></div>';
                     loginCard.appendChild(successDiv);
                 }
 
+                var cleanCpf = cpfAluno.replace(/\D/g, '');
+                if (cleanCpf) {
+                    localStorage.setItem('instituto_ativo', getInst());
+                }
+
                 // Dispara a visualização/impressão automática do comprovante em PDF
+                // setTimeout(function(){
+                //     gerarComprovantePDF();
+                // }, 800);
+
+                // Força o redirecionamento automático
                 setTimeout(function(){
-                    gerarComprovantePDF();
-                }, 800);
+                    window.location.replace(targetUrl);
+                }, 1500);
+
+                // Mostra botão de fallback caso o navegador bloqueie o redirecionamento
+                setTimeout(function(){
+                    var btnFb = document.getElementById('btn-fallback-redirect');
+                    if(btnFb) btnFb.style.display = 'flex';
+                }, 4000);
             })
             .catch(function(err) {
                 console.error('Erro no envio da matrícula:', err);

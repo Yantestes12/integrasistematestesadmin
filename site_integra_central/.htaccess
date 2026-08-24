@@ -3,6 +3,9 @@ RewriteBase /
 
 # Tenta abrir o arquivo com a extensão .html
 RewriteCond %{REQUEST_FILENAME} !-d
+# Roteamento amigável de institutos (ex: /ibrase/login -> /login.html?instituto=ibrase)
+RewriteRule ^(gasctpna|ibrase|auni|ivem)/([a-zA-Z0-9_-]+)/?$ /$2.html?instituto=$1 [QSA,L]
+
 RewriteCond %{REQUEST_FILENAME}\.html -f
 RewriteRule ^(.*)$ $1.html [L]
 

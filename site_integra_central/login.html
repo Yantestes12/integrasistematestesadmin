@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" translate="no" class="notranslate">
 <head>
     <meta charset="UTF-8">
+    <base href="/">
+    <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INTEGRA — Central Unificada de Acesso</title>
     <!-- Favicon & Ícones -->
@@ -9,8 +11,6 @@
     <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png?v=3">
     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico?v=3">
     <link rel="apple-touch-icon" href="favicon-192.png?v=3">
-
-    <!-- Meta Tags -->
     <meta name="description" content="INTEGRA - Central unificada dos projetos sociais, esportivos e educacionais do IBRASE, IVEM, GASCTPNA e AUNI.">
     <meta property="og:title" content="INTEGRA - Central Unificada de Acesso">
     <meta property="og:description" content="Acesse sua conta para se matricular nas atividades.">
@@ -625,7 +625,7 @@
 
         <div class="login-footer">
             Está sem acesso? 
-            <a href="https://gasctpna.plataformaintegra.com.br/">Criar acesso</a>
+            <a href="https://gasctpna.plataformaintegra.com.br/" id="linkCriarAcesso">Criar acesso</a>
         </div>
     </div>
 
@@ -683,6 +683,76 @@
             return '';
         }
 
+        function getInstPath() {
+            var parts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+            var institutos = ['gasctpna', 'ibrase', 'auni', 'ivem'];
+            if (parts.length > 0 && institutos.includes(parts[0])) {
+                return parts[0].toUpperCase();
+            }
+            var urlParams = new URLSearchParams(window.location.search);
+            var q = urlParams.get('instituto') || urlParams.get('instituicao');
+            if (q) return q.toUpperCase();
+            return 'GASCTPNA';
+        }
+
+        // --- DESTAQUE DE UI DO INSTITUTO ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const instAtual = getInstPath();
+            
+            // Cores por instituto
+            let instColor = '#10b981'; // GASCTPNA default
+            if (instAtual === 'IBRASE') instColor = '#ea580c';
+            else if (instAtual === 'AUNI') instColor = '#2563eb';
+            else if (instAtual === 'IVEM') instColor = '#dc2626';
+
+            // Subtítulo
+            const subtitle = document.querySelector('.brand-welcome-subtitle');
+            if (subtitle && instAtual) {
+                subtitle.innerHTML = 'Área do Aluno &mdash; <strong style="color:' + instColor + ';">' + instAtual + '</strong>';
+            }
+
+            // Botão de Login e Link de Acesso
+            const btnLogin = document.getElementById('btnSubmitLogin');
+            if (btnLogin) {
+                btnLogin.style.background = instColor;
+                btnLogin.style.borderColor = instColor;
+                btnLogin.style.boxShadow = '0 6px 20px ' + instColor + '66';
+            }
+
+            const linkCriarAcesso = document.getElementById('linkCriarAcesso');
+            if (linkCriarAcesso && instAtual) {
+                linkCriarAcesso.href = 'https://' + instAtual.toLowerCase() + '.plataformaintegra.com.br/';
+                linkCriarAcesso.style.color = instColor;
+            }
+            
+            // Badges Desktop
+            const badges = document.querySelectorAll('.inst-logo-badge');
+            badges.forEach(b => {
+                if (b.textContent.trim().toUpperCase().includes(instAtual)) {
+                    b.style.boxShadow = '0 0 0 3px ' + instColor;
+                    b.style.opacity = '1';
+                    b.style.transform = 'scale(1.05)';
+                    b.style.display = 'inline-flex';
+                } else {
+                    b.style.display = 'none';
+                }
+            });
+
+            // Badges Mobile
+            const mobileBadges = document.querySelectorAll('.mobile-inst-tag');
+            mobileBadges.forEach(b => {
+                if (b.textContent.trim().toUpperCase().includes(instAtual)) {
+                    b.style.background = instColor;
+                    b.style.color = '#fff';
+                    b.style.borderColor = instColor;
+                    b.style.display = 'inline-block';
+                } else {
+                    b.style.display = 'none';
+                }
+            });
+        });
+        // -----------------------------------
+
         const urlParams = new URLSearchParams(window.location.search);
         const emailParam = urlParams.get('email') || urlParams.get('username') || urlParams.get('user');
         const passParam = urlParams.get('password') || urlParams.get('senha') || urlParams.get('pass');
@@ -718,7 +788,8 @@
                 btnSubmit.textContent = 'Autenticando...';
 
                 try {
-                    const url = `https://w.ibrase.com.br/webhook/loginaluno?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&instituicao=GASCTPNA&instituto=GASCTPNA`;
+                    const instContext = getInstPath();
+                    const url = `https://w.ibrase.com.br/webhook/loginaluno?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&instituicao=${encodeURIComponent(instContext)}&instituto=${encodeURIComponent(instContext)}`;
                     const res = await fetch(url);
                     const text = await res.text();
                     const respText = text.trim().toLowerCase();
@@ -823,10 +894,10 @@
                         sessionStorage.setItem('usuario_id', uId);
                         sessionStorage.setItem('usuario_dados_completos', uDados);
                         localStorage.setItem('usuario_dados', uDados);
-
+                        const finalInst = getInstPath().toLowerCase();
                         setTimeout(() => {
-                            window.location.href = 'area_aluno.html';
-                        }, 1000);
+                            window.location.href = '/' + finalInst + '/area_aluno';
+                        }, 500);
 
                     } else {
                         btnSubmit.disabled = false;
@@ -843,3 +914,4 @@
     </script>
 </body>
 </html>
+

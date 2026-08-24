@@ -29,6 +29,7 @@ const ALLOWED_ORIGINS = [
     'https://www.gasctpna.com.br',
     'http://localhost:3000',
     'http://localhost:5000',
+    'http://192.168.1.2:3000'
 ];
 
 // ── URL do Webhook (NUNCA exposta ao navegador) ─────────────────────────
@@ -195,13 +196,27 @@ app.post('/matricula_proxy.php', rateLimiter, async function(req, res) {
 });
 
 // ── Servir Arquivos Estáticos (HTML, CSS, JS, Imagens) ──────────────────
-// Rewrite: /matricula → /matricula.html (equivalente ao .htaccess)
+// Rewrite para URLs amigáveis: /instituto/pagina ou /pagina
 app.use(function(req, res, next) {
     if (req.method === 'GET' && !req.path.includes('.') && req.path !== '/') {
-        var htmlPath = path.join(__dirname, req.path + '.html');
         var fs = require('fs');
-        if (fs.existsSync(htmlPath)) {
-            return res.sendFile(htmlPath);
+        
+        // Verifica padrão /instituto/pagina
+        var parts = req.path.split('/').filter(Boolean);
+        var institutos = ['gasctpna', 'ibrase', 'auni', 'ivem'];
+        
+        if (parts.length === 2 && institutos.includes(parts[0].toLowerCase())) {
+            var htmlPath = path.join(__dirname, parts[1] + '.html');
+            if (fs.existsSync(htmlPath)) {
+                req.query.instituto = parts[0]; // Retrocompatibilidade pro backend se precisar
+                return res.sendFile(htmlPath);
+            }
+        }
+
+        // Padrão antigo (direto na raiz) ex: /matricula
+        var htmlPath2 = path.join(__dirname, req.path + '.html');
+        if (fs.existsSync(htmlPath2)) {
+            return res.sendFile(htmlPath2);
         }
     }
     next();
