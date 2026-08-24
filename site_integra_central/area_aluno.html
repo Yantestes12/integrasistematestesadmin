@@ -1387,7 +1387,7 @@
       const win = window.open('', '_blank');
       if (win) {
         try {
-          win.document.write('<!DOCTYPE html><html><head><title>Gerando PDF...</title></head><body style="font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:90vh;background:#f8fafc;"><div style="text-align:center;padding:20px;"><h2 style="color:#0f172a;margin-bottom:8px;">⏳ Gerando Ficha Oficial de Matrícula...</h2><p style="color:#64748b;font-size:14px;">Aguarde um instante enquanto buscamos as informações no sistema.</p></div><div class="no-print" style="text-align:center;padding:16px;margin-top:20px;border-top:1px dashed #cbd5e1;"><button onclick="window.print()" style="background:#059669;color:#fff;border:none;padding:12px 24px;border-radius:6px;font-weight:bold;font-size:11pt;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.1);">🖨️ BAIXAR OU IMPRIMIR PDF</button></div><script>setTimeout(function(){ window.print(); }, 800);</script></body></html>');
+          win.document.write('<!DOCTYPE html><html><head><title>Gerando PDF...</title></head><body style="font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:90vh;background:#f8fafc;"><div style="text-align:center;padding:20px;"><h2 style="color:#0f172a;margin-bottom:8px;">⏳ Gerando Ficha Oficial de Matrícula...</h2><p style="color:#64748b;font-size:14px;">Aguarde um instante enquanto buscamos as informações no sistema.</p></div><div class="no-print" style="text-align:center;padding:16px;margin-top:20px;border-top:1px dashed #cbd5e1;"><button onclick="window.print()" style="background:#059669;color:#fff;border:none;padding:12px 24px;border-radius:6px;font-weight:bold;font-size:11pt;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.1);">🖨️ BAIXAR OU IMPRIMIR PDF</button></div><script>setTimeout(function(){ window.print(); }, 800);<\/script></body></html>');
           win.document.close();
         } catch(e){}
       }
@@ -1940,7 +1940,7 @@
           '• <strong>Protocolo</strong>: ' + tokenProtocolo + '<br>' +
           '• <strong>Aceite do Coordenador</strong>: ' + horaAceiteCoordenador + '</div></div>' +
           '<div class="sig-line"></div><div class="sig-label" style="text-align:center;">Coordenador</div></div></div>' +
-          '<div class="no-print" style="text-align:center;padding:16px;margin-top:20px;border-top:1px dashed #cbd5e1;"><button onclick="window.print()" style="background:#059669;color:#fff;border:none;padding:12px 24px;border-radius:6px;font-weight:bold;font-size:11pt;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.1);">🖨️ BAIXAR OU IMPRIMIR PDF</button></div><script>setTimeout(function(){ window.print(); }, 800);</script></body></html>');
+          '<div class="no-print" style="text-align:center;padding:16px;margin-top:20px;border-top:1px dashed #cbd5e1;"><button onclick="window.print()" style="background:#059669;color:#fff;border:none;padding:12px 24px;border-radius:6px;font-weight:bold;font-size:11pt;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.1);">🖨️ BAIXAR OU IMPRIMIR PDF</button></div><script>setTimeout(function(){ window.print(); }, 800);<\/script></body></html>');
 
       win.document.close();
     }
