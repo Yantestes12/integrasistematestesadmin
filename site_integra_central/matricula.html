@@ -4263,7 +4263,7 @@ window.dadosRecentesCPF = null;
 
                     var instSlug = instName.toLowerCase();
                     var projSlug = (proj || 'projeto').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || instSlug;
-                    var urlAutenticador = 'https://plataformaintegra.com.br/autenticador/' + numMatricula + '/' + instSlug + '/' + projSlug;
+                    var urlAutenticador = 'https://plataformaintegra.com.br/autenticador.html?id=' + numMatricula + '&inst=' + instSlug + '&proj=' + projSlug;
                     var qrApi = 'https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=' + encodeURIComponent(urlAutenticador);
 
                     var win = window.open('', '_blank');
