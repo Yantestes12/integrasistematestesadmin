@@ -15,7 +15,7 @@ const snippet = `
             if (q) def = q.toUpperCase();
         }
         var prefix = def + '_';
-        var keysToPrefix = ['usuario_logado', 'usuario_email', 'usuario_senha', 'email_conta', 'usuario_nome', 'usuario_primeiro_nome', 'usuario_telefone', 'telefone_conta', 'usuario_cpf', 'usuario_id', 'usuario_dados', 'usuario_dados_completos', 'institutos_permitidos', 'instituto_ativo', 'instituto', 'instituicao'];
+        var keysToPrefix = ['usuario_logado', 'usuario_email', 'usuario_senha', 'email_conta', 'usuario_nome', 'usuario_primeiro_nome', 'usuario_telefone', 'telefone_conta', 'usuario_cpf', 'usuario_id', 'usuario_dados', 'usuario_dados_completos', 'instituto', 'instituicao'];
         
         var origSet = Storage.prototype.setItem;
         var origGet = Storage.prototype.getItem;

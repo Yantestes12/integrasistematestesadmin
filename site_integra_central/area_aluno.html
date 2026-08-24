@@ -17,7 +17,7 @@
             if (q) def = q.toUpperCase();
         }
         var prefix = def + '_';
-        var keysToPrefix = ['usuario_logado', 'usuario_email', 'usuario_senha', 'email_conta', 'usuario_nome', 'usuario_primeiro_nome', 'usuario_telefone', 'telefone_conta', 'usuario_cpf', 'usuario_id', 'usuario_dados', 'usuario_dados_completos', 'institutos_permitidos', 'instituto_ativo', 'instituto', 'instituicao'];
+        var keysToPrefix = ['usuario_logado', 'usuario_email', 'usuario_senha', 'email_conta', 'usuario_nome', 'usuario_primeiro_nome', 'usuario_telefone', 'telefone_conta', 'usuario_cpf', 'usuario_id', 'usuario_dados', 'usuario_dados_completos', 'instituto', 'instituicao'];
         
         var origSet = Storage.prototype.setItem;
         var origGet = Storage.prototype.getItem;
@@ -471,7 +471,7 @@
 
     <!-- Action Card Fazer Matrícula -->
     <section>
-      <button class="card-action-primary" onclick="var host = window.location.hostname.toLowerCase(); var def = 'GASCTPNA'; var parts = window.location.pathname.toLowerCase().split('/').filter(Boolean); if (parts.length > 0 && ['gasctpna','ibrase','auni','ivem'].includes(parts[0])) { def = parts[0].toUpperCase(); } else if(host.includes('ibrase')) def='IBRASE'; else if(host.includes('ivem')) def='IVEM'; else if(host.includes('auni')) def='AUNI'; window.location.href='/' + def.toLowerCase() + '/matricula'">
+      <button class="card-action-primary" onclick="var host = window.location.hostname.toLowerCase(); var def = 'GASCTPNA'; var parts = window.location.pathname.toLowerCase().split('/').filter(Boolean); if (parts.length > 0 && ['gasctpna','ibrase','auni','ivem'].includes(parts[0])) { def = parts[0].toUpperCase(); } else if(host.includes('ibrase')) def='IBRASE'; else if(host.includes('ivem')) def='IVEM'; else if(host.includes('auni')) def='AUNI'; var inst = (sessionStorage.getItem('instituto_ativo')||localStorage.getItem('instituto_ativo')||def); window.location.href='/' + inst.toLowerCase() + '/matricula'">
         <div style="display:flex;align-items:center;gap:16px;">
           <div class="card-icon-box-white">
             <span class="material-symbols-outlined notranslate" translate="no" style="font-size:32px;font-variation-settings:'FILL' 1;">rocket_launch</span>
