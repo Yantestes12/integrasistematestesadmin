@@ -1832,8 +1832,9 @@
       const projSlug = (proj || 'projeto').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || instSlug;
       const urlAutenticador = 'https://plataformaintegra.com.br/autenticador/' + numMatricula + '/' + instSlug + '/' + projSlug;
       const qrApi = 'https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=' + encodeURIComponent(urlAutenticador);
+      const basePath = window.location.href.split('/').slice(0,-1).join('/') + '/';
 
-      win.document.write('<!DOCTYPE html><html lang="pt-BR" translate="no" class="notranslate"><head><meta charset="UTF-8"><base href="' + window.location.origin + '/"><title>Ficha de Matrícula - ' + numMatricula + '</title>' +
+      win.document.write('<!DOCTYPE html><html lang="pt-BR" translate="no" class="notranslate"><head><meta charset="UTF-8"><title>Ficha de Matrícula - ' + numMatricula + '</title>' +
           '<style>@page{size:A4;margin:8mm 10mm;}*{box-sizing:border-box;margin:0;padding:0;}' +
           'body{font-family:sans-serif;font-size:9pt;color:#0f172a;line-height:1.3;background:#fff;padding:8px;}' +
           '.header{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #10b981;padding-bottom:6px;margin-bottom:8px;}' +
@@ -1851,7 +1852,7 @@
           
           '' +
 
-          '<div class="header"><div class="logo-box"><img src="logo_integra.png" alt="INTEGRA"><span class="logo-sep">×</span>' + (inst === 'AUNI' ? '<div style="background:#2e1065;padding:2px 6px;border-radius:4px;display:flex;"><img src="'+logoSrc+'" alt="'+inst+'"></div>' : '<img src="'+logoSrc+'" alt="'+inst+'">') + '</div>' +
+          '<div class="header"><div class="logo-box"><img src="' + basePath + 'logo_integra.png" alt="INTEGRA"><span class="logo-sep">×</span>' + (inst === 'AUNI' ? '<div style="background:#2e1065;padding:2px 6px;border-radius:4px;display:flex;"><img src="' + basePath + logoSrc + '" alt="'+inst+'"></div>' : '<img src="' + basePath + logoSrc + '" alt="'+inst+'">') + '</div>' +
           '<div class="header-titles"><div class="main-title">FICHA OFICIAL DE MATRÍCULA</div><div class="sub-title">' + subTitleHeader + '</div></div></div>' +
           
           '<div class="section-box" style="background:#e0f2fe;border-color:#bae6fd;"><div class="grid-3">' +
@@ -1909,7 +1910,7 @@
           
           '<div class="page-break"></div>' +
           
-          '<div class="header"><div class="logo-box"><img src="logo_integra.png" alt="INTEGRA"><span class="logo-sep">×</span>' + (inst === 'AUNI' ? '<div style="background:#2e1065;padding:2px 6px;border-radius:4px;display:flex;"><img src="'+logoSrc+'" alt="'+inst+'"></div>' : '<img src="'+logoSrc+'" alt="'+inst+'">') + '</div>' +
+          '<div class="header"><div class="logo-box"><img src="' + basePath + 'logo_integra.png" alt="INTEGRA"><span class="logo-sep">×</span>' + (inst === 'AUNI' ? '<div style="background:#2e1065;padding:2px 6px;border-radius:4px;display:flex;"><img src="' + basePath + logoSrc + '" alt="'+inst+'"></div>' : '<img src="' + basePath + logoSrc + '" alt="'+inst+'">') + '</div>' +
           '<div class="header-titles"><div class="main-title">DECLARAÇÃO DE RESPONSABILIDADE</div><div class="sub-title">' + subTitleHeader + '</div></div></div>' +
           
           '<div class="section-box"><div class="section-title">DECLARAÇÃO DE RESPONSABILIDADE</div>' +
