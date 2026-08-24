@@ -940,7 +940,12 @@
       else if (host.includes('ibrase')) defaultSiteInst = 'IBRASE';
       else if (host.includes('gasctpna')) defaultSiteInst = 'GASCTPNA';
 
-      let instAtivo = sessionStorage.getItem('instituto_ativo') || localStorage.getItem('instituto_ativo') || defaultSiteInst;
+      let instAtivo = defaultSiteInst;
+      if (!(parts.length > 0 && ['gasctpna','ibrase','auni','ivem'].includes(parts[0]))) {
+          instAtivo = sessionStorage.getItem('instituto_ativo') || localStorage.getItem('instituto_ativo') || defaultSiteInst;
+      }
+      sessionStorage.setItem('instituto_ativo', instAtivo);
+      localStorage.setItem('instituto_ativo', instAtivo);
       let permitidos = [instAtivo];
       try {
         const rawPerm = getStoredVal('institutos_permitidos');
