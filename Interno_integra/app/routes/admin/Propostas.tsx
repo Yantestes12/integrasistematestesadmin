@@ -100,7 +100,14 @@ export default function Propostas() {
       const numero_proposta = item.numero_proposta || item.numeroProposta || item.identificacao?.numeroProposta || "";
       const numero_processo_adm = item.numero_processo_adm || item.numeroProcessoAdm || item.identificacao?.numeroProcessoAdm || "";
       const numero_transferegov = item.numero_transferegov || item.numeroTransfereGov || item.identificacao?.numeroTransfereGov || "";
-      const faixa_etaria = item.faixa_etaria || (item.faixaEtaria ? `${item.faixaEtaria.idadeMinima || ''} - ${item.faixaEtaria.idadeMaxima || ''}` : "") || "7 - 65";
+      
+      const idMin = item.faixaEtaria?.idadeMinima ?? item.idade_min ?? item.idade_minima ?? item.idadeMinima;
+      const idMax = item.faixaEtaria?.idadeMaxima ?? item.idade_max ?? item.idade_maxima ?? item.idadeMaxima;
+      let faixa_etaria = item.faixa_etaria;
+      if (!faixa_etaria && (idMin !== undefined || idMax !== undefined)) {
+        faixa_etaria = `${idMin ?? ''} - ${idMax ?? ''}`;
+      }
+      faixa_etaria = faixa_etaria || "7 - 65";
 
       const isAtivo = item.ativo !== false && item.status !== false && item.status !== "inativo";
       const aplicabilidade = item.aplicabilidade || item.identificacao?.aplicabilidade || "";
