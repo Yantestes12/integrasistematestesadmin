@@ -135,6 +135,8 @@ export const Topbar = () => {
             <div className={`flex items-center justify-center p-0.5 rounded transition-colors ${
               institute.toUpperCase() === 'AUNI' 
                 ? 'bg-slate-900 border border-slate-700 shadow-sm' 
+                : institute.toUpperCase() === 'IVEM'
+                ? 'bg-white border border-slate-200 shadow-sm'
                 : 'bg-transparent'
             }`}>
               <img 
@@ -176,7 +178,7 @@ export const Topbar = () => {
                 >
                   {/* Container da logo no dropdown com fundo escuro exclusivo para AUNI */}
                   <div className={`p-1 rounded-md flex items-center justify-center ${
-                    inst.toUpperCase() === 'AUNI' ? 'bg-slate-900 border border-slate-700' : 'bg-transparent'
+                    inst.toUpperCase() === 'AUNI' ? 'bg-slate-900 border border-slate-700' : inst.toUpperCase() === 'IVEM' ? 'bg-white border border-slate-200' : 'bg-transparent'
                   }`}>
                     <img 
                       src={`/logo_${inst.toLowerCase()}.png`} 
