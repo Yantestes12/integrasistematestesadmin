@@ -198,7 +198,8 @@ export default function Inscricoes() {
     let pausados = 0;
     let totalValidos = 0;
     nucleosList.forEach((n) => {
-      const isArquivado = !n.numero_vaga || n.numero_vaga === "—" || n.numero_vaga === "";
+      const numVaga = n.numero_vaga || n.vaga_numero;
+      const isArquivado = !numVaga || numVaga === "—" || numVaga === "";
       if (isArquivado) return; // Ignora os arquivados
       
       totalValidos++;
@@ -211,7 +212,8 @@ export default function Inscricoes() {
 
   const filteredManagementNucleos = useMemo(() => {
     return nucleosList.filter((n) => {
-      const isArquivado = !n.numero_vaga || n.numero_vaga === "—" || n.numero_vaga === "";
+      const numVaga = n.numero_vaga || n.vaga_numero;
+      const isArquivado = !numVaga || numVaga === "—" || numVaga === "";
       if (isArquivado) return false;
 
       const id = n.id || n.id_nucleo || n.nucleo_id;
@@ -258,8 +260,11 @@ export default function Inscricoes() {
       let isArquivado = false;
       let isOrfao = !nIdKey || nIdKey === "sem" || nIdKey === "0";
       
+      const nucleoObj = nucleosList.find(n => String(n.id || n.id_nucleo || n.nucleo_id) === nIdKey);
+
       if (nucleoObj) {
-        isArquivado = !nucleoObj.numero_vaga || nucleoObj.numero_vaga === "—" || nucleoObj.numero_vaga === "";
+        const numVaga = nucleoObj.numero_vaga || nucleoObj.vaga_numero;
+        isArquivado = !numVaga || numVaga === "—" || numVaga === "";
       } else if (!isOrfao) {
         // Tem ID mas não achou o núcleo na lista atual (foi apagado duro no banco)
         isOrfao = true;

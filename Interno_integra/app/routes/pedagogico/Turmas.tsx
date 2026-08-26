@@ -235,7 +235,8 @@ export default function Turmas() {
         const nData = await resN.value.json();
         for (const n of flattenArray(nData)) {
           const id = String(n.id || n.id_nucleo || n.nucleo_id || "");
-          const isArquivado = !n.numero_vaga || n.numero_vaga === "—" || n.numero_vaga === "";
+          const numVaga = n.numero_vaga || n.vaga_numero;
+          const isArquivado = !numVaga || numVaga === "—" || numVaga === "";
           const foto = n.foto || n.imagem_capa || n.imagem || n.url_foto || n.url || "";
           if (id) nMap[id] = { 
             id, 
