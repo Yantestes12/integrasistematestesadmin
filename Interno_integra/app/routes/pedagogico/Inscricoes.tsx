@@ -198,8 +198,8 @@ export default function Inscricoes() {
     let pausados = 0;
     let totalValidos = 0;
     nucleosList.forEach((n) => {
-      const numVaga = n.numero_vaga || n.vaga_numero;
-      const isArquivado = !numVaga || numVaga === "—" || numVaga === "";
+      const numVaga = String(n.numero_vaga || n.vaga_numero).trim();
+      const isArquivado = !numVaga || numVaga === "—" || numVaga === "" || numVaga === "null" || numVaga === "undefined";
       if (isArquivado) return; // Ignora os arquivados
       
       totalValidos++;
@@ -212,8 +212,8 @@ export default function Inscricoes() {
 
   const filteredManagementNucleos = useMemo(() => {
     return nucleosList.filter((n) => {
-      const numVaga = n.numero_vaga || n.vaga_numero;
-      const isArquivado = !numVaga || numVaga === "—" || numVaga === "";
+      const numVaga = String(n.numero_vaga || n.vaga_numero).trim();
+      const isArquivado = !numVaga || numVaga === "—" || numVaga === "" || numVaga === "null" || numVaga === "undefined";
       if (isArquivado) return false;
 
       const id = n.id || n.id_nucleo || n.nucleo_id;

@@ -147,44 +147,53 @@ export default function Relatorios() {
 
       const nList: NucleoInfo[] = [];
       if (resN.status === "fulfilled" && resN.value.ok) {
-        const nData = await resN.value.json();
-        for (const n of flattenArray(nData)) {
-          const id = String(n.id || n.id_nucleo || n.nucleo_id || "");
-          if (id) {
-            nList.push({
-              id,
-              nome: n.nome || n.nucleo_nome || `Núcleo ${id}`,
-              bairro: n.bairro || "",
-              cidade: n.cidade || n.cidade_nome || "",
-              projeto_id: n.projeto_id || "",
-              modalidade_id: n.modalidade_id || n.espacos?.modalidade_id || "",
-              espaco_id: n.espaco_id || n.espacos?.id || ""
-            });
+        try {
+          const textN = await resN.value.text();
+          if (textN) {
+            const nData = JSON.parse(textN);
+            for (const n of flattenArray(nData)) {
+              const id = String(n.id || n.id_nucleo || n.nucleo_id || "");
+              if (id) {
+                nList.push({
+                  id,
+                  nome: n.nome || n.nucleo_nome || `Núcleo ${id}`,
+                  bairro: n.bairro || "",
+                  cidade: n.cidade || n.cidade_nome || "",
+                  projeto_id: n.projeto_id || "",
+                  modalidade_id: n.modalidade_id || n.espacos?.modalidade_id || "",
+                  espaco_id: n.espaco_id || n.espacos?.id || ""
+                });
+              }
+            }
           }
-        }
+        } catch(e) {}
       }
       setNucleosList(nList);
 
       if (resM.status === "fulfilled" && resM.value.ok) {
-        const text = await resM.value.text();
-        const data = JSON.parse(text);
-        if (data && !data.error && data.message !== "Workflow was started") {
-          const rawList = flattenArray(data);
-          const parsed: MatriculaItem[] = rawList.map((item: any, idx: number) => {
-            return {
-              id: item.id || idx + 1,
-              aluno_nome: item.aluno_nome || item.nome || `Aluno #${item.id || idx + 1}`,
-              aluno_cpf: item.aluno_cpf || item.cpf || "",
-              nucleo_id: item.nucleo_id || item.id_nucleo || item.espaco_id || "",
-              turma: item.turma || "—",
-              sexo: item.sexo || "Não informado",
-              idade: item.idade || "",
-              telefone_conta: item.telefone_conta || item.whatsapp || "",
-              status: item.status || "Aprovada",
-            };
-          });
-          setMatriculas(parsed);
-        }
+        try {
+          const text = await resM.value.text();
+          if (text) {
+            const data = JSON.parse(text);
+            if (data && !data.error && data.message !== "Workflow was started") {
+              const rawList = flattenArray(data);
+              const parsed: MatriculaItem[] = rawList.map((item: any, idx: number) => {
+                return {
+                  id: item.id || idx + 1,
+                  aluno_nome: item.aluno_nome || item.nome || `Aluno #${item.id || idx + 1}`,
+                  aluno_cpf: item.aluno_cpf || item.cpf || "",
+                  nucleo_id: item.nucleo_id || item.id_nucleo || item.espaco_id || "",
+                  turma: item.turma || "—",
+                  sexo: item.sexo || "Não informado",
+                  idade: item.idade || "",
+                  telefone_conta: item.telefone_conta || item.whatsapp || "",
+                  status: item.status || "Aprovada",
+                };
+              });
+              setMatriculas(parsed);
+            }
+          }
+        } catch (e) {}
       }
     } catch (e) {
       console.warn("Erro ao buscar dados de relatórios:", e);
