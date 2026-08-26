@@ -26,7 +26,6 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
   // Mantém os submenus fechados por padrão, abrindo somente via clique do usuário
   const [openPaths, setOpenPaths] = useState<string[]>([]);
   const [userRole, setUserRole] = useState("colaborador");
-  const [hasEventoPropostas, setHasEventoPropostas] = useState(false);
 
   // Recupera o cargo do usuário para o RBAC e o estado recolhido do menu no PC
   useEffect(() => {
@@ -47,36 +46,6 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
 
     window.addEventListener("toggleSidebarPC", handleTogglePC);
     return () => window.removeEventListener("toggleSidebarPC", handleTogglePC);
-  }, []);
-
-  // Verifica se o instituto possui propostas com aplicabilidade="eventos"
-  useEffect(() => {
-    const checkEventoPropostas = async () => {
-      try {
-        const inst = (localStorage.getItem("auth_institute") || "IBRASE").toUpperCase();
-        const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${inst}`);
-        if (!res.ok) return;
-        const text = await res.text();
-        if (!text || !text.trim()) return;
-        const data = JSON.parse(text);
-        let list: any[] = Array.isArray(data) ? data : data.data || data.items || (Array.isArray(data.json) ? data.json : data.json ? [data.json] : [data]);
-        let flat: any[] = [];
-        list.forEach((entry: any) => {
-          if (entry?.json) Array.isArray(entry.json) ? flat.push(...entry.json) : flat.push(entry.json);
-          else if (Array.isArray(entry)) flat.push(...entry);
-          else flat.push(entry);
-        });
-        const hasEvento = flat.some((p: any) => {
-          const ap = (p.aplicabilidade || "").toLowerCase();
-          return ap === "eventos" || ap.includes("evento");
-        });
-        setHasEventoPropostas(hasEvento);
-      } catch (e) {
-        // Silencioso — se falhar, simplesmente não mostra o menu
-        setHasEventoPropostas(false);
-      }
-    };
-    checkEventoPropostas();
   }, []);
 
   const togglePath = (itemPath: any, e: any, item: any) => {
@@ -119,7 +88,16 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
         { name: 'Propostas', path: "/admin/propostas" },
         { name: 'Espaços', path: "/admin/espacos" },
         { name: 'Núcleos', path: "/admin/nucleos" },
-        ...(hasEventoPropostas ? [{ name: 'Locais de Evento', path: "/admin/locais-evento" }] : []),
+      ]
+    },
+    {
+      name: 'Eventos',
+      icon: <Megaphone className="w-5 h-5" />,
+      roles: ['master', 'admin'],
+      path: "/?view=eventos", 
+      children: [
+        { name: 'Locais de Evento', path: "/admin/locais-evento" },
+        { name: 'Ocorrências (Núcleos)', path: "/admin/ocorrencias-evento" }
       ]
     },
     {
