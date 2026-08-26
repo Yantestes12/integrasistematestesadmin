@@ -182,7 +182,7 @@ export default function Matriculas() {
               cidade: item.cidade || item.cidade_nome || "—",
               nucleo_nome: resolvedNucleoName,
               nucleo_id: item.nucleo_id || "",
-              turma: item.turma || "—",
+              turma: item.turma || "Sem Turma",
               telefone_conta: item.telefone_conta || item.whatsapp || "—",
               created_at: item.created_at || "",
             };

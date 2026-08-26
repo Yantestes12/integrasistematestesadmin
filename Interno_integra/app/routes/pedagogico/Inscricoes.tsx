@@ -196,16 +196,24 @@ export default function Inscricoes() {
   const nucleoStats = useMemo(() => {
     let abertos = 0;
     let pausados = 0;
+    let totalValidos = 0;
     nucleosList.forEach((n) => {
+      const isArquivado = !n.numero_vaga || n.numero_vaga === "—" || n.numero_vaga === "";
+      if (isArquivado) return; // Ignora os arquivados
+      
+      totalValidos++;
       const isAtivo = n.ativo !== false && n.ativo !== 0 && n.ativo !== "0" && n.ativo !== "false";
       if (isAtivo) abertos++;
       else pausados++;
     });
-    return { total: nucleosList.length, abertos, pausados };
+    return { total: totalValidos, abertos, pausados };
   }, [nucleosList]);
 
   const filteredManagementNucleos = useMemo(() => {
     return nucleosList.filter((n) => {
+      const isArquivado = !n.numero_vaga || n.numero_vaga === "—" || n.numero_vaga === "";
+      if (isArquivado) return false;
+
       const id = n.id || n.id_nucleo || n.nucleo_id;
       const nome = n.nome || n.nome_nucleo || n.nucleo_nome || n.identificacao?.nomeNucleo || `Núcleo ${id}`;
       const isAtivo = n.ativo !== false && n.ativo !== 0 && n.ativo !== "0" && n.ativo !== "false";
@@ -246,14 +254,41 @@ export default function Inscricoes() {
       const nId = m.nucleo_id;
       const nIdKey = String(nId || '');
       
-      // Busca o nome do núcleo no nucleosList (se existir lá) ou da matrícula
-      const nucleoObj = nucleosList.find(n => String(n.id || n.id_nucleo || n.nucleo_id) === nIdKey);
-      const nNome = nucleoObj?.nome || nucleoObj?.nome_nucleo || m.nucleo_nome || (nId ? `Núcleo ${nId}` : 'Sem Núcleo Definido');
+      // Identificação se é arquivado ou órfão
+      let isArquivado = false;
+      let isOrfao = !nIdKey || nIdKey === "sem" || nIdKey === "0";
       
-      // Busca a proposta da mesma forma
+      if (nucleoObj) {
+        isArquivado = !nucleoObj.numero_vaga || nucleoObj.numero_vaga === "—" || nucleoObj.numero_vaga === "";
+      } else if (!isOrfao) {
+        // Tem ID mas não achou o núcleo na lista atual (foi apagado duro no banco)
+        isOrfao = true;
+      }
+
+      // Filtros Globais
+      if (globalNucleo !== "all" && nIdKey !== globalNucleo) return;
+      
       const pId = nucleoObj?.projeto_id || m.projeto_id;
-      const nProj = projetosCache[Number(pId)] || nucleoObj?.projetos?.nome || m.projeto_nome || 'Não Informada';
-      const projLimit = projetosLimitCache[Number(pId)] || 100;
+      if (globalProjeto !== "all" && String(pId) !== globalProjeto) return;
+
+      if (globalCidade !== "all" && nucleoObj?.cidade?.toLowerCase() !== globalCidade.toLowerCase()) return;
+
+      let nNome = "";
+      let nProj = "";
+      let projLimit = 0;
+
+      if (isOrfao) {
+        nNome = "⚠️ Alunos Sem Núcleo (Órfãos)";
+        nProj = "Diversas Propostas / Indefinida";
+      } else if (isArquivado) {
+        const antigoNome = nucleoObj?.nome || nucleoObj?.nome_nucleo || m.nucleo_nome || `Núcleo ${nId}`;
+        nNome = `🛑 [Desativado] ${antigoNome}`;
+        nProj = "Aguardando realocação";
+      } else {
+        nNome = nucleoObj?.nome || nucleoObj?.nome_nucleo || m.nucleo_nome || `Núcleo ${nId}`;
+        nProj = projetosCache[Number(pId)] || nucleoObj?.projetos?.nome || m.projeto_nome || 'Não Informada';
+        projLimit = projetosLimitCache[Number(pId)] || 100;
+      }
 
       if (!nucleosMap[nNome]) {
         nucleosMap[nNome] = { nome: nNome, projeto: nProj, limite: projLimit, total: 0, masc: 0, fem: 0, idadesValidas: 0, somaIdades: 0 };
@@ -286,8 +321,13 @@ export default function Inscricoes() {
           percentFem: n.total > 0 ? Math.round((n.fem / n.total) * 100) : 0,
         };
       })
-      .sort((a, b) => b.total - a.total);
-  }, [matriculasList, nucleosList, projetosCache, projetosLimitCache]);
+      .sort((a, b) => {
+        // Colocar os de alerta sempre no final
+        if (a.nome.includes("⚠️") || a.nome.includes("🛑")) return 1;
+        if (b.nome.includes("⚠️") || b.nome.includes("🛑")) return -1;
+        return b.total - a.total;
+      });
+  }, [matriculasList, nucleosList, projetosCache, projetosLimitCache, globalNucleo, globalProjeto, globalCidade]);
 
   if (loading) {
     return (

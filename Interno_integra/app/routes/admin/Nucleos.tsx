@@ -49,6 +49,7 @@ export default function Nucleos() {
   const [userRole, setUserRole] = useState(() => typeof window !== 'undefined' ? (localStorage.getItem('auth_cargo') || 'colaborador').toLowerCase().trim() : 'colaborador');
   const [userAccountType, setUserAccountType] = useState(() => typeof window !== 'undefined' ? (localStorage.getItem('auth_account_type') || 'colaborador').toLowerCase().trim() : 'colaborador');
   const [globalFilter, setGlobalFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<'ativos' | 'desativados'>('ativos');
 
   useEffect(() => {
     const inst = localStorage.getItem("auth_institute") || "IBRASE";
@@ -315,26 +316,26 @@ export default function Nucleos() {
 
 
 
-  const handleDelete = async (id: string | number) => {
-    if (!window.confirm("Deseja realmente excluir este núcleo?")) return;
+  const handleDesativar = async (id: string | number) => {
+    if (!window.confirm("Deseja realmente desvincular e arquivar este núcleo? Ele perderá a vaga e os alunos ficarão na vaga aguardando um novo núcleo.")) return;
     
     try {
-      let res = await fetch("https://w.ibrase.com.br/webhook/nucleos-delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, instituto: currentInstitute.toUpperCase() }),
+      const authInstitute = currentInstitute.toUpperCase();
+      const formData = new FormData();
+      formData.append("id", String(id));
+      formData.append("ativo", "false");
+      formData.append("aceitando_vagas", "false");
+      formData.append("numero_vaga", "");
+      
+      const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-put?instituto=${authInstitute}`, {
+        method: "PUT",
+        body: formData,
       });
-
-      if (!res.ok) {
-        res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-delete?id=${id}&instituto=${currentInstitute.toUpperCase()}`, {
-          method: "DELETE",
-        });
-      }
 
       if (res.ok) {
         fetchNucleos(currentInstitute);
       } else {
-        alert("Erro ao excluir núcleo via N8N.");
+        alert("Erro ao desativar núcleo via N8N.");
       }
     } catch (e) {
       console.error(e);
@@ -343,6 +344,10 @@ export default function Nucleos() {
   };
 
   const filteredNucleos = nucleos.filter((item) => {
+    const isArquivado = !item.numero_vaga || item.numero_vaga === "—" || item.numero_vaga === "";
+    if (viewMode === 'ativos' && isArquivado) return false;
+    if (viewMode === 'desativados' && !isArquivado) return false;
+    
     if (globalFilter !== "all" && String(item.projeto_id) !== globalFilter) return false;
     if (!searchTerm) return true;
     return (
@@ -367,13 +372,27 @@ export default function Nucleos() {
           </p>
         </div>
 
-        <Link
-          to="/admin/historico-nucleos"
-          className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold px-5 py-3 rounded-xl shadow-xs border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2 text-sm shrink-0"
-        >
-          <Calendar size={18} className="text-slate-500 dark:text-slate-400" />
-          <span>Histórico de Núcleos</span>
-        </Link>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setViewMode(viewMode === 'ativos' ? 'desativados' : 'ativos')}
+            className={`font-bold px-5 py-3 rounded-xl shadow-xs border transition-all flex items-center gap-2 text-sm shrink-0 ${
+              viewMode === 'desativados' 
+                ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800' 
+                : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700'
+            }`}
+          >
+            <Power size={18} className={viewMode === 'desativados' ? "text-red-500" : "text-slate-500 dark:text-slate-400"} />
+            <span>{viewMode === 'ativos' ? 'Ver Núcleos Desvinculados' : 'Ver Núcleos Ativos/Pausados'}</span>
+          </button>
+          
+          <Link
+            to="/admin/historico-nucleos"
+            className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold px-5 py-3 rounded-xl shadow-xs border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2 text-sm shrink-0"
+          >
+            <Calendar size={18} className="text-slate-500 dark:text-slate-400" />
+            <span className="hidden sm:inline">Histórico</span>
+          </Link>
+        </div>
       </div>
 
       {/* Card da Tabela de Núcleos */}
@@ -514,13 +533,15 @@ export default function Nucleos() {
                             <Edit3 size={16} />
                           </Link>
 
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors"
-                            title="Excluir Núcleo"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          {viewMode === 'ativos' && (
+                            <button
+                              onClick={() => handleDesativar(item.id)}
+                              className="p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors"
+                              title="Desvincular e Arquivar Núcleo"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                         </div>
                       </td>
 

@@ -29,6 +29,7 @@ interface NucleoInfo {
   foto?: string;
   cidade?: string;
   projeto_id?: string | number;
+  isArquivado?: boolean;
 }
 
 /* ─── Configuração de cores por turma ─── */
@@ -234,6 +235,7 @@ export default function Turmas() {
         const nData = await resN.value.json();
         for (const n of flattenArray(nData)) {
           const id = String(n.id || n.id_nucleo || n.nucleo_id || "");
+          const isArquivado = !n.numero_vaga || n.numero_vaga === "—" || n.numero_vaga === "";
           const foto = n.foto || n.imagem_capa || n.imagem || n.url_foto || n.url || "";
           if (id) nMap[id] = { 
             id, 
@@ -241,7 +243,8 @@ export default function Turmas() {
             bairro: n.bairro || "", 
             foto,
             cidade: n.cidade || n.cidade_nome || "",
-            projeto_id: n.projeto_id || ""
+            projeto_id: n.projeto_id || "",
+            isArquivado
           };
         }
       }
@@ -260,7 +263,7 @@ export default function Turmas() {
               aluno_cpf: item.aluno_cpf || item.cpf || "",
               nucleo_nome: item.nucleo_nome || nMap[nId]?.nome || (nId ? `Núcleo ${nId}` : "Sem Núcleo"),
               nucleo_id: item.nucleo_id || "",
-              turma: item.turma || "—",
+              turma: item.turma || "Sem Turma",
               telefone_conta: item.telefone_conta || item.whatsapp || "",
             };
           });
@@ -279,7 +282,7 @@ export default function Turmas() {
     const seen = new Set<string>();
     for (const m of matriculas) {
       const t = (m.turma || "").trim();
-      if (t && t !== "—") seen.add(t);
+      if (t && t !== "Sem Turma") seen.add(t);
     }
     return Array.from(seen).sort();
   }, [matriculas]);
@@ -297,7 +300,7 @@ export default function Turmas() {
       }
 
       // Filtro por turma
-      if (activeTurma !== "all" && (m.turma || "—") !== activeTurma) return false;
+      if (activeTurma !== "all" && (m.turma || "Sem Turma") !== activeTurma) return false;
       
       // Filtro por busca
       if (searchTerm) {
@@ -478,9 +481,21 @@ export default function Turmas() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-base font-extrabold text-slate-800 dark:text-white tracking-tight truncate">
-                      {group.info.nome}
-                    </h2>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-base font-extrabold text-slate-800 dark:text-white tracking-tight truncate">
+                        {group.info.nome}
+                      </h2>
+                      {group.info.isArquivado && (
+                        <span className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border border-red-200 dark:border-red-800/50">
+                          Desativado
+                        </span>
+                      )}
+                      {String(group.info.id) === "sem" && (
+                        <span className="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border border-orange-200 dark:border-orange-800/50">
+                          Órfãos
+                        </span>
+                      )}
+                    </div>
                     {group.info.bairro && (
                       <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{group.info.bairro}</p>
                     )}
@@ -710,6 +725,7 @@ export default function Turmas() {
                   >
                     <option value="">Selecione um núcleo...</option>
                     {Object.values(nucleosMap)
+                      .filter((n) => !n.isArquivado)
                       .sort((a, b) => a.nome.localeCompare(b.nome))
                       .map((n) => (
                         <option key={String(n.id)} value={String(n.id)}>

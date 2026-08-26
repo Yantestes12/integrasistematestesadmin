@@ -180,7 +180,8 @@ export default function CadastrarNucleo() {
     if (!projetoIdWatch) return {};
     const map: Record<number, string> = {};
     nucleosExistentes.forEach((n: any) => {
-      if (String(n.projeto_id) === String(projetoIdWatch) && String(n.id) !== editId) {
+      const isAtivo = n.ativo !== false && n.ativo !== 0 && n.ativo !== "0";
+      if (isAtivo && String(n.projeto_id) === String(projetoIdWatch) && String(n.id) !== editId) {
         const vagaNumStr = n.numero_vaga ?? n.vaga_numero ?? n.vaga_alocada;
         if (vagaNumStr !== undefined && vagaNumStr !== null && vagaNumStr !== "") {
           const vagaNum = Number(vagaNumStr);
