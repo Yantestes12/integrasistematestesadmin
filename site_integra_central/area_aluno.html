@@ -423,6 +423,7 @@
   </style>
 </head>
 <body>
+<style>#global-startup-loader{position:fixed;top:0;left:0;width:100vw;height:100vh;background:#ffffff;z-index:9999999;display:flex;justify-content:center;align-items:center;transition:opacity 0.4s ease;}.gs-spinner{width:48px;height:48px;border:5px solid #f1f5f9;border-top-color:#94a3b8;border-radius:50%;animation:gs-spin 1s linear infinite;}@keyframes gs-spin{to{transform:rotate(360deg);}}</style><div id="global-startup-loader"><div class="gs-spinner"></div></div><script>document.addEventListener("DOMContentLoaded", function(){ setTimeout(function(){var l=document.getElementById("global-startup-loader");if(l){l.style.opacity="0";setTimeout(function(){l.remove();},400);}}, 150); });</script>
 
   <!-- Top Navbar Header -->
   <header class="header-bar">
@@ -451,7 +452,7 @@
 
       <div id="badge-instituto-container" style="margin-top:14px;position:relative;display:inline-block;">
         <div id="btn-switch-institutos" onclick="toggleDropdownInstitutos()" style="display:inline-flex;align-items:center;gap:12px;background:#ffffff;border:2px solid var(--outline-variant);border-radius:14px;padding:8px 16px;box-shadow:0 4px 14px rgba(0,26,65,0.05);cursor:pointer;transition:all 0.25s ease;">
-          <img id="logo-instituto-ativo" src="logo_gasctpna.jpg" onerror="this.src='logo_integra.png';" style="height:32px;width:auto;object-fit:contain;border-radius:6px;">
+          <img id="logo-instituto-ativo" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" onerror="this.src='logo_integra.png';" style="height:32px;width:auto;object-fit:contain;border-radius:6px;">
           <div id="text-instituto-ativo" style="font-size:13.5px;font-weight:800;color:var(--on-surface);letter-spacing:0.03em;">GASCTPNA</div>
           <span id="arrow-switch-instituto" class="material-symbols-outlined notranslate" translate="no" style="display:none;font-size:22px;color:var(--on-surface-variant);transition:transform 0.2s ease;">expand_more</span>
         </div>
@@ -1156,6 +1157,12 @@
       const uCpf = getStoredVal('usuario_cpf') || sessionStorage.getItem('usuario_cpf') || localStorage.getItem('usuario_cpf');
       const uId = getStoredVal('usuario_id') || sessionStorage.getItem('usuario_id') || localStorage.getItem('usuario_id');
 
+      if (!uEmail && !uCpf && !uId) {
+        // Sessão expirou (sessionStorage foi limpo pelo navegador e não marcou 'Lembrar acesso')
+        logout();
+        return;
+      }
+
       function extrairTodasMatriculas(data) {
         let result = [];
         if (!data) return result;
@@ -1834,12 +1841,12 @@
       const urlAutenticador = 'https://plataformaintegra.com.br/autenticador.html?id=' + numMatricula + '&inst=' + instSlug + '&proj=' + projSlug;
       const qrApi = 'https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=' + encodeURIComponent(urlAutenticador);
       // CORREÇÃO: As imagens sempre ficam na raiz do domínio, não na pasta virtual do instituto
-      const basePath = window.location.origin + '/';
+      const basePath = 'https://plataformaintegra.com.br/';
 
-      win.document.write('<!DOCTYPE html><html lang="pt-BR" translate="no" class="notranslate"><head><meta charset="UTF-8"><base href="https://plataformaintegra.com.br/"><title>Ficha de Matrícula - ' + numMatricula + '</title>' +
+      win.document.write('<!DOCTYPE html><html lang="pt-BR" translate="no" class="notranslate"><head><meta charset="UTF-8"><title>Ficha de Matrícula - ' + numMatricula + '</title>' +
           '<style>@page{size:A4;margin:8mm 10mm;}*{box-sizing:border-box;margin:0;padding:0;}' +
           'body{font-family:sans-serif;font-size:9pt;color:#0f172a;line-height:1.3;background:#fff;padding:8px;}' +
-          '.header{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #10b981;padding-bottom:6px;margin-bottom:8px;}' +
+          '.header{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--primary);padding-bottom:6px;margin-bottom:8px;}' +
           '.logo-box{display:flex;align-items:center;gap:8px;}.logo-box img{max-height:36px;border-radius:4px;}.logo-sep{font-size:16px;color:#94a3b8;font-weight:bold;}' +
           '.header-titles{text-align:right;}.main-title{font-size:12.5pt;font-weight:800;color:#065f46;margin:0;}.sub-title{font-size:8.5pt;color:#64748b;font-weight:600;}' +
           '.section-box{border:1px solid #cbd5e1;border-radius:6px;margin-bottom:6px;padding:6px 8px;background:#f8fafc;}' +
@@ -1928,10 +1935,10 @@
           '</div></div>' +
           
           '<div class="signatures-row" style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
-          '<div class="sig-block" style="text-align:left;"><div style="border:1.5px solid #16a34a;background:#f0fdf4;border-radius:6px;padding:6px 8px;margin-bottom:6px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">' +
-          '<div style="font-size:7.5pt;font-weight:800;color:#15803d;border-bottom:1px solid #bbf7d0;padding-bottom:2px;margin-bottom:3px;text-transform:uppercase;display:flex;align-items:center;gap:4px;">' +
+          '<div class="sig-block" style="text-align:left;"><div style="border:1.5px solid var(--primary);background:var(--primary-glow);border-radius:6px;padding:6px 8px;margin-bottom:6px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">' +
+          '<div style="font-size:7.5pt;font-weight:800;color:var(--primary-hover);border-bottom:1px solid var(--primary-glow);padding-bottom:2px;margin-bottom:3px;text-transform:uppercase;display:flex;align-items:center;gap:4px;">' +
           '<span>✓</span> Responsável: — Status: Validada</div>' +
-          '<div style="font-size:6.8pt;font-family:monospace;color:#14532d;line-height:1.3;">' +
+          '<div style="font-size:6.8pt;font-family:monospace;color:var(--primary-hover);line-height:1.3;">' +
           '• <strong>LGPD ACEITO (v3)</strong>: ' + horaAceiteAluno + '<br>' +
           '• <strong>Veracidade ACEITO (v3)</strong>: ' + horaAceiteAluno + '<br>' +
           '• <strong>Origem do cadastro</strong>: ' + (getF(d, ['origem_cadastro']) || 'Portal do Aluno') + '<br>' +
@@ -1950,7 +1957,7 @@
           '• <strong>Protocolo</strong>: ' + tokenProtocolo + '<br>' +
           '• <strong>Aceite do Coordenador</strong>: ' + horaAceiteCoordenador + '</div></div>' +
           '<div class="sig-line"></div><div class="sig-label" style="text-align:center;">Coordenador</div></div></div>' +
-          '<div class="no-print" style="text-align:center;padding:16px;margin-top:20px;border-top:1px dashed #cbd5e1;"><button onclick="window.print()" style="background:#059669;color:#fff;border:none;padding:12px 24px;border-radius:6px;font-weight:bold;font-size:11pt;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.1);">🖨️ BAIXAR OU IMPRIMIR PDF</button></div><script>setTimeout(function(){ window.print(); }, 800);<\/script></body></html>');
+          '<div class="no-print" style="text-align:center;padding:16px;margin-top:20px;border-top:1px dashed #cbd5e1;"><button onclick="window.print()" style="background:#059669;color:#fff;border:none;padding:12px 24px;border-radius:6px;font-weight:bold;font-size:11pt;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.1);">🖨️ BAIXAR OU IMPRIMIR PDF</button></div><script>let checkCount=0;function checkPrint(){checkCount++;let imgs=Array.from(document.images);let allDone=imgs.length>0&&imgs.every(i=>i.complete&&i.naturalWidth>0);if(allDone||checkCount>25){setTimeout(()=>window.print(),500);}else{setTimeout(checkPrint,200);}}checkPrint();<\/script></body></html>');
 
       win.document.close();
     }

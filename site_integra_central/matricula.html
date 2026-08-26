@@ -1,6 +1,30 @@
 <!DOCTYPE html>
 <html lang="pt-BR" translate="no" class="notranslate">
 <head>
+<script>
+function applyThemeColors() {
+    var inst = (sessionStorage.getItem('instituto_ativo') || localStorage.getItem('instituto_ativo') || '').toUpperCase();
+    var root = document.documentElement;
+    if (inst === 'IBRASE') {
+        root.style.setProperty('--primary', '#f97316');
+        root.style.setProperty('--primary-hover', '#ea580c');
+        root.style.setProperty('--primary-glow', 'rgba(249, 115, 22, 0.25)');
+    } else if (inst === 'AUNI') {
+        root.style.setProperty('--primary', '#3b82f6');
+        root.style.setProperty('--primary-hover', '#2563eb');
+        root.style.setProperty('--primary-glow', 'rgba(59, 130, 246, 0.25)');
+    } else if (inst === 'IVEM') {
+        root.style.setProperty('--primary', '#ef4444');
+        root.style.setProperty('--primary-hover', '#dc2626');
+        root.style.setProperty('--primary-glow', 'rgba(239, 68, 68, 0.25)');
+    } else {
+        root.style.setProperty('--primary', '#10b981');
+        root.style.setProperty('--primary-hover', '#059669');
+        root.style.setProperty('--primary-glow', 'rgba(16, 185, 129, 0.25)');
+    }
+}
+applyThemeColors();
+</script>
     <meta charset="UTF-8">
 
   <!-- ISOLAMENTO DE ARMAZENAMENTO POR INSTITUTO (INJECTED) -->
@@ -80,7 +104,9 @@
         try {
             var finalInst = getInst();
             if (finalInst) {
-                var isLogged = sessionStorage.getItem('usuario_id') || localStorage.getItem('usuario_id');
+                var uEm = sessionStorage.getItem('usuario_email') || localStorage.getItem('usuario_email') || sessionStorage.getItem('email_conta') || localStorage.getItem('email_conta');
+                var uCpf = sessionStorage.getItem('usuario_cpf') || localStorage.getItem('usuario_cpf');
+                var isLogged = uEm || uCpf;
                 if (!isLogged) {
                     var targetLogin = '/' + finalInst.toLowerCase() + '/login';
                     window.location.replace(targetLogin);
@@ -156,7 +182,7 @@
             --text-main: #1e293b;
             --text-muted: #64748b;
             --error: #ef4444;
-            --success: #10b981;
+            --success: var(--primary);
             --input-bg: #ffffff;
             --input-border: #cbd5e1;
             --section-bg: #f8fafb;
@@ -202,7 +228,7 @@
             pointer-events: none;
         }
         .blob-1 {
-            background: radial-gradient(circle, #10b981 0%, transparent 70%);
+            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
             top: -150px;
             left: -150px;
         }
@@ -261,7 +287,7 @@
         .section-tarja {
             display: inline-block;
             background: #ecfdf5;
-            color: #059669;
+            color: var(--primary-hover);
             font-size: 10px;
             font-weight: 800;
             text-transform: uppercase;
@@ -290,7 +316,7 @@
             margin-bottom: 4px;
             text-align: center;
             letter-spacing: -0.02em;
-            background: linear-gradient(120deg, #059669 0%, #10b981 50%, #0d9488 100%);
+            background: linear-gradient(120deg, var(--primary-hover) 0%, var(--primary) 50%, var(--primary-hover) 100%);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -546,7 +572,7 @@
         }
         .btn-next, .btn-submit {
             flex: 2;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%) !important;
             border: none !important;
             color: #ffffff !important;
             border-radius: 10px;
@@ -666,7 +692,7 @@
             color: #1e293b !important;
         }
         .modalidade-card.active .projeto-name, .nucleo-card.active div {
-            color: #059669 !important;
+            color: var(--primary-hover) !important;
         }
 
         .wizard-greeting-wrap {
@@ -685,7 +711,7 @@
         }
             font-size: 20px;
             font-weight: 800;
-            color: #059669;
+            color: var(--primary-hover);
             margin-bottom: 4px;
         }
         .wizard-greeting-subtitle {
@@ -752,7 +778,7 @@
         }
         #msg-cpf-status.ok {
             background: #ecfdf5;
-            color: #059669;
+            color: var(--primary-hover);
             border: 1px solid #a7f3d0;
         }
         #msg-cpf-status.erro {
@@ -812,7 +838,7 @@
         .pergunta-opcoes label:has(input:checked) {
             border-color: var(--primary);
             background: #ecfdf5;
-            color: #059669;
+            color: var(--primary-hover);
         }
         .pergunta-opcoes input[type="radio"] {
             accent-color: var(--primary);
@@ -1054,6 +1080,7 @@
 <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="notranslate" translate="no">
+<style>#global-startup-loader{position:fixed;top:0;left:0;width:100vw;height:100vh;background:#ffffff;z-index:9999999;display:flex;justify-content:center;align-items:center;transition:opacity 0.4s ease;}.gs-spinner{width:48px;height:48px;border:5px solid #f1f5f9;border-top-color:#94a3b8;border-radius:50%;animation:gs-spin 1s linear infinite;}@keyframes gs-spin{to{transform:rotate(360deg);}}</style><div id="global-startup-loader"><div class="gs-spinner"></div></div><script>document.addEventListener("DOMContentLoaded", function(){ setTimeout(function(){var l=document.getElementById("global-startup-loader");if(l){l.style.opacity="0";setTimeout(function(){l.remove();},400);}}, 150); });</script>
     <div id="toast-container" style="position:fixed;top:16px;right:16px;z-index:99998;"></div>
     <div id="mensagem-geral"></div>
 
@@ -1078,7 +1105,7 @@
         <div class="logo-partnership">
             <img src="logo_integra_simbolo.gif" onerror="this.onerror=null; this.src='logo_integra.png';" alt="INTEGRA" style="max-height: 55px; width: auto; border-radius:8px;">
             <span class="logo-separator">×</span>
-            <img id="logo-header-instituto" src="logo_gasctpna.jpg" onerror="this.onerror=null; this.src='logo_integra.png';" alt="INSTITUTO" style="max-height: 55px; width: auto; border-radius:8px;">
+            <img id="logo-header-instituto" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" onerror="this.onerror=null; this.src='logo_integra.png';" alt="INSTITUTO" style="max-height: 55px; width: auto; border-radius:8px;">
         </div>
         <div class="login-title">Matrícula Online</div>
         <div class="login-sub">Ficha de matrícula simplificada</div>
@@ -2536,7 +2563,7 @@ window.dadosRecentesCPF = null;
                         if (nome || nasc) {
                             buscando = false;
                             var txtEl = document.getElementById('cpf-loading-text');
-                            if (txtEl) txtEl.innerHTML = '<span style="color:#16a34a;font-weight:800;">✅ CPF localizado!</span>';
+                            if (txtEl) txtEl.innerHTML = '<span style="color:var(--primary);font-weight:800;">✅ CPF localizado!</span>';
                             opts.onSucesso(nome, nasc, data.message || data.mensagem);
                             setTimeout(function() {
                                 mostrarLoadingCPF(false);
@@ -2701,11 +2728,11 @@ window.dadosRecentesCPF = null;
                 if (!promptWrap) {
                     promptWrap = document.createElement('div');
                     promptWrap.id = 'cpf-autopreencher-prompt';
-                    promptWrap.style.cssText = 'background:#f0fdf4;border:1.5px solid #86efac;padding:16px;border-radius:12px;margin-top:14px;margin-bottom:14px;text-align:left;box-shadow:0 2px 8px rgba(16,185,129,0.08);';
+                    promptWrap.style.cssText = 'background:var(--primary-glow);border:1.5px solid #86efac;padding:16px;border-radius:12px;margin-top:14px;margin-bottom:14px;text-align:left;box-shadow:0 2px 8px rgba(16,185,129,0.08);';
                     promptWrap.innerHTML = '<div style="font-size:14px;font-weight:800;color:#166534;margin-bottom:6px;">📋 Cadastro Encontrado!</div>'
                         + '<div style="font-size:13px;color:#15803d;margin-bottom:12px;line-height:1.4;">Identificamos dados cadastrados para este CPF. Deseja utilizar esses dados para preencher o formulário automaticamente?</div>'
                         + '<div style="display:flex;gap:10px;flex-wrap:wrap;">'
-                        + '<button type="button" id="btn-sim-preencher" style="background:#16a34a;color:#fff;border:none;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Sim, preencher meus dados</button>'
+                        + '<button type="button" id="btn-sim-preencher" style="background:var(--primary);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Sim, preencher meus dados</button>'
                         + '<button type="button" id="btn-nao-preencher" style="background:#e2e8f0;color:#475569;border:none;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Não, preencher do zero</button>'
                         + '</div>';
                     var parentNode = document.getElementById('cpf-dados-wrap') || document.getElementById('wizard-greeting-block');
@@ -3099,13 +3126,29 @@ window.dadosRecentesCPF = null;
         }
         container.innerHTML='<div style="color:var(--text-muted);font-size:13px;padding:20px 0;">Carregando projetos do Supabase…</div>';
         
-        fetch(API.buscarProjetos, getReqOptions())
-            .then(function(r){ return r.json(); })
-            .then(function(data){
+                var pProjetos = fetch(API.buscarProjetos, getReqOptions()).then(function(r){ return r.json(); });
+        var pNucleos = window._cacheNucleos ? Promise.resolve(window._cacheNucleos) : fetch(API.buscarNucleos, getGetOptions()).then(function(r){ return r.json(); });
+
+        Promise.all([pProjetos, pNucleos])
+            .then(function(results){
+                var data = results[0];
+                var rawNucleos = results[1];
+
+                if (!window._cacheNucleos) {
+                    window._cacheNucleos = _parseN8N(rawNucleos, 'nucleos');
+                }
+
                 if (Array.isArray(data)) {
                     data = data[0] || {};
                 }
                 var projetos = data.projetos || [];
+                if (window._cacheNucleos && window._cacheNucleos.length > 0) {
+                    projetos = projetos.filter(function(p) {
+                        return window._cacheNucleos.some(function(n) {
+                            return parseInt(n.projeto_id) === parseInt(p.id) && (n.ativo === true || n.ativo === 1 || String(n.ativo).toLowerCase() === 'true');
+                        });
+                    });
+                }
                 if(!projetos.length){
                     container.innerHTML='<div style="color:var(--error);font-size:13.5px;font-weight:700;">Nenhum projeto cadastrado no Supabase no momento.</div>';
                     return;
@@ -3554,7 +3597,7 @@ window.dadosRecentesCPF = null;
                             var disponiveis = n.vagasRestantes !== null ? n.vagasRestantes : n.vagas;
                             vagasInfo.textContent = 'Vagas disponíveis: ' + disponiveis + ' de ' + n.vagas;
                             vagasInfo.style.fontSize = '11.5px';
-                            vagasInfo.style.color = '#059669';
+                            vagasInfo.style.color = 'var(--primary-hover)';
                             vagasInfo.style.fontWeight = '700';
                             vagasInfo.style.marginTop = '4px';
                             textWrap.appendChild(vagasInfo);
@@ -3562,7 +3605,7 @@ window.dadosRecentesCPF = null;
                             var ilimitadoInfo = document.createElement('div');
                             ilimitadoInfo.textContent = 'Vagas abertas';
                             ilimitadoInfo.style.fontSize = '11.5px';
-                            ilimitadoInfo.style.color = '#059669';
+                            ilimitadoInfo.style.color = 'var(--primary-hover)';
                             ilimitadoInfo.style.fontWeight = '700';
                             ilimitadoInfo.style.marginTop = '4px';
                             textWrap.appendChild(ilimitadoInfo);
@@ -4271,7 +4314,7 @@ window.dadosRecentesCPF = null;
                         mostrarMensagem('erro', 'Bloqueador de pop-ups ativado. Permita pop-ups para visualizar a Ficha.');
                         return;
                     }
-                    win.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><base href="https://plataformaintegra.com.br/"><title>Ficha de Matrícula - ' + numMatricula + '</title>' +
+                    win.document.write('<!DOCTYPE html><html lang="pt-BR"><head><script>function applyThemeColors(){var inst=(sessionStorage.getItem("instituto_ativo")||localStorage.getItem("instituto_ativo")||"").toUpperCase();var root=document.documentElement;if(inst==="IBRASE"){root.style.setProperty("--primary","#f97316");root.style.setProperty("--primary-hover","#ea580c");root.style.setProperty("--primary-glow","rgba(249, 115, 22, 0.25)");}else if(inst==="AUNI"){root.style.setProperty("--primary","#3b82f6");root.style.setProperty("--primary-hover","#2563eb");root.style.setProperty("--primary-glow","rgba(59, 130, 246, 0.25)");}else if(inst==="IVEM"){root.style.setProperty("--primary","#ef4444");root.style.setProperty("--primary-hover","#dc2626");root.style.setProperty("--primary-glow","rgba(239, 68, 68, 0.25)");}else{root.style.setProperty("--primary","#16a34a");root.style.setProperty("--primary-hover","#15803d");root.style.setProperty("--primary-glow","rgba(22, 163, 74, 0.25)");}}applyThemeColors();<\/script><meta charset="UTF-8"><title>Ficha de Matrícula - ' + numMatricula + '</title>' +
                         '<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#0f172a;background:#fff;padding:12px;font-size:9pt;line-height:1.2;}' +
                         '.header{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #0284c7;padding-bottom:6px;margin-bottom:8px;}' +
                         '.logo-box{display:flex;align-items:center;gap:6px;}.logo-box img{height:30px;width:auto;object-fit:contain;}.logo-sep{font-weight:700;color:#94a3b8;font-size:11pt;}' +
@@ -4361,7 +4404,7 @@ window.dadosRecentesCPF = null;
                         '<div class="signatures-row" style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
                         
                         '<div class="sig-block" style="text-align:left;">' +
-                        '<div style="border:1.5px solid #16a34a;background:#f0fdf4;border-radius:6px;padding:6px 8px;margin-bottom:6px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">' +
+                        '<div style="border:1.5px solid var(--primary);background:var(--primary-glow);border-radius:6px;padding:6px 8px;margin-bottom:6px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">' +
                         '<div style="font-size:7.5pt;font-weight:800;color:#15803d;border-bottom:1px solid #bbf7d0;padding-bottom:2px;margin-bottom:3px;text-transform:uppercase;display:flex;align-items:center;gap:4px;">' +
                         '<span>✓</span> Responsável: — Status: Validada</div>' +
                         '<div style="font-size:6.8pt;font-family:monospace;color:#14532d;line-height:1.3;">' +
@@ -4385,8 +4428,8 @@ window.dadosRecentesCPF = null;
                         '• <strong>Aceite do Coordenador</strong>: ' + timestampCoordenador + '</div></div>' +
                         '<div class="sig-line"></div><div class="sig-label" style="text-align:center;">Coordenador</div></div></div>' +
                         
-                        '<div class="no-print" style="text-align:center;margin-top:15px;"><button onclick="window.print()" style="background:#10b981;color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;">🖨️ Salvar em PDF / Imprimir Ficha</button></div>' +
-                        '</body></html>');
+                        '<div class="no-print" style="text-align:center;margin-top:15px;"><button onclick="window.print()" style="background:var(--primary);color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;">🖨️ Salvar em PDF / Imprimir Ficha</button></div>' +
+                        '<script>let checkCount=0;function checkPrint(){checkCount++;let imgs=Array.from(document.images);let allDone=imgs.length>0&&imgs.every(i=>i.complete&&i.naturalWidth>0);if(allDone||checkCount>25){setTimeout(()=>window.print(),500);}else{setTimeout(checkPrint,200);}}checkPrint();<\/script></body></html>');
                     win.document.close();
                 };
 
@@ -4396,10 +4439,10 @@ window.dadosRecentesCPF = null;
                     var successDiv = document.createElement('div');
                     successDiv.innerHTML = '<div style="text-align:center;padding:40px 20px;max-width:540px;margin:0 auto;">' +
                         '<div style="font-size:56px;margin-bottom:16px;">🎉</div>' +
-                        '<h2 style="color:var(--primary,#10b981);font-size:24px;font-weight:800;margin-bottom:10px;">Matrícula Concluída com Sucesso!</h2>' +
+                        '<h2 style="color:var(--primary,var(--primary));font-size:24px;font-weight:800;margin-bottom:10px;">Matrícula Concluída com Sucesso!</h2>' +
                         '<p style="color:#64748b;font-size:14px;line-height:1.6;margin-bottom:24px;">Sua solicitação de matrícula foi registrada sob o Número de Matrícula <strong>' + numMatricula + '</strong>. Você será redirecionado automaticamente para a Plataforma INTEGRA.</p>' +
                         '<div style="display:flex;flex-direction:column;gap:12px;max-width:360px;margin:0 auto;">' +
-                        '<button type="button" onclick="gerarComprovantePDF()" style="background:#10b981;color:#fff;border:none;padding:14px 20px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 14px rgba(16,185,129,0.35);">📄 Baixar Comprovante em PDF</button>' +
+                        '<button type="button" onclick="gerarComprovantePDF()" style="background:var(--primary);color:#fff;border:none;padding:14px 20px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 14px rgba(16,185,129,0.35);">📄 Baixar Comprovante em PDF</button>' +
                         '<a href="' + targetUrl + '" id="btn-fallback-redirect" style="display:none;background:#2563eb;color:#fff;border:none;padding:14px 20px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;text-align:center;text-decoration:none;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 14px rgba(37,99,235,0.35);">🚀 Acessar Plataforma</a>' +
                         '</div></div>';
                     loginCard.appendChild(successDiv);

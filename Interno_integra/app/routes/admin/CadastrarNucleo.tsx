@@ -180,10 +180,10 @@ export default function CadastrarNucleo() {
     if (!projetoIdWatch) return {};
     const map: Record<number, string> = {};
     nucleosExistentes.forEach((n: any) => {
-      const isAtivo = n.ativo !== false && n.ativo !== 0 && n.ativo !== "0";
+      const isAtivo = n.ativo === true || n.ativo === "true" || n.ativo === 1 || n.ativo === "1";
       if (isAtivo && String(n.projeto_id) === String(projetoIdWatch) && String(n.id) !== editId) {
         const vagaNumStr = n.numero_vaga ?? n.vaga_numero ?? n.vaga_alocada;
-        if (vagaNumStr !== undefined && vagaNumStr !== null && vagaNumStr !== "") {
+        if (vagaNumStr !== undefined && vagaNumStr !== null && vagaNumStr !== "" && vagaNumStr !== "null" && vagaNumStr !== "—") {
           const vagaNum = Number(vagaNumStr);
           if (!isNaN(vagaNum) && vagaNum > 0) {
             map[vagaNum] = n.nome || n.nome_nucleo || `Núcleo ID ${n.id}`;

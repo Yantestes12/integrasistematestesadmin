@@ -568,6 +568,7 @@
     </style>
 </head>
 <body>
+<style>#global-startup-loader{position:fixed;top:0;left:0;width:100vw;height:100vh;background:#ffffff;z-index:9999999;display:flex;justify-content:center;align-items:center;transition:opacity 0.4s ease;}.gs-spinner{width:48px;height:48px;border:5px solid #f1f5f9;border-top-color:#94a3b8;border-radius:50%;animation:gs-spin 1s linear infinite;}@keyframes gs-spin{to{transform:rotate(360deg);}}</style><div id="global-startup-loader"><div class="gs-spinner"></div></div><script>document.addEventListener("DOMContentLoaded", function(){ setTimeout(function(){var l=document.getElementById("global-startup-loader");if(l){l.style.opacity="0";setTimeout(function(){l.remove();},400);}}, 150); });</script>
 
     <!-- ==========================================================================
          LADO ESQUERDO: FOTO REAL & MENSAGEM INSTITUCIONAL DA PLATAFORMA
@@ -798,7 +799,7 @@
         const passParam = urlParams.get('password') || urlParams.get('senha') || urlParams.get('pass');
 
         const savedEmail = emailParam || localStorage.getItem('usuario_email') || getCookie('usuario_email');
-        const savedSenha = passParam || localStorage.getItem('usuario_senha') || getCookie('usuario_senha');
+        const savedSenha = passParam || getCookie('usuario_senha');
 
         if (savedEmail && usernameInput) usernameInput.value = savedEmail;
         if (savedSenha && passwordInput) passwordInput.value = savedSenha;
@@ -917,7 +918,7 @@
                         const isRemember = document.getElementById('rememberMe').checked;
                         if (isRemember) {
                             localStorage.setItem('usuario_email', username);
-                            localStorage.setItem('usuario_senha', password);
+                            // Segurança: senha não é salva
                         } else {
                             localStorage.removeItem('usuario_email');
                             localStorage.removeItem('usuario_senha');

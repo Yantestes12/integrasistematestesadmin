@@ -325,7 +325,7 @@ export default function Nucleos() {
       formData.append("id", String(id));
       formData.append("ativo", "false");
       formData.append("aceitando_vagas", "false");
-      formData.append("numero_vaga", "");
+      formData.append("numero_vaga", "null"); // 'null' explícito para o N8N não ignorar
       
       const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-put?instituto=${authInstitute}`, {
         method: "PUT",
@@ -344,7 +344,7 @@ export default function Nucleos() {
   };
 
   const filteredNucleos = nucleos.filter((item) => {
-    const isArquivado = !item.numero_vaga || item.numero_vaga === "—" || item.numero_vaga === "";
+    const isArquivado = !item.numero_vaga || item.numero_vaga === "—" || item.numero_vaga === "" || item.numero_vaga === "null";
     if (viewMode === 'ativos' && isArquivado) return false;
     if (viewMode === 'desativados' && !isArquivado) return false;
     
