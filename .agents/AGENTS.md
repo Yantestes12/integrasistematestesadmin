@@ -81,3 +81,25 @@
 - **NUNCA alterar a página de login** (`login.html` do portal do aluno ou `Login.tsx` do admin) a menos que o usuário peça EXPLICITAMENTE e EXCLUSIVAMENTE para alterar o login.
 - **NUNCA fazer push de diretórios inteiros para repositórios secundários** (como `areadeloginintegra`). Cada repositório tem sua própria estrutura (ex: `matricula.html` em vez de `matricula_aluno.html`).
 - **Modificações Pontuais**: Se for solicitado alterar apenas a matrícula ou o PDF, edite APENAS o arquivo correspondente e JAMAIS toque em arquivos de login, autenticação ou navegação.
+
+## Módulo de Eventos — Estado Atual
+- **Arquivos frontend COMPLETOS**: `LocaisEvento.tsx`, `CadastrarLocalEvento.tsx`, `OcorrenciasEvento.tsx`
+- **Rotas registradas** em `routes.ts`: `admin/locais-evento`, `admin/cadastrar-local-evento`, `admin/ocorrencias-evento`
+- **Sidebar condicional**: "Locais de Evento" só aparece se instituto tiver proposta com `aplicabilidade="eventos"` (fetch em `projetos-get`)
+- **Upload via N8N**: foto → bucket `eventos-fotos`, documentos → bucket `eventos-documentos`. Endpoint: `upload-storage` (recebe `{bucket, fileName, mimeType, base64}`, retorna `{url}`)
+- **Pendente (configuração manual)**:
+  1. Rodar SQL `criar_tabelas_eventos.sql` no Supabase (cria 8 tabelas: 4x locais_evento + 4x ocorrencias_evento)
+  2. Criar buckets no Supabase Storage: `eventos-fotos` e `eventos-documentos` (ambos públicos)
+  3. Criar 8 endpoints N8N: `locais-evento-get/post/put/delete` + `ocorrencias-evento-get/post/delete` + `upload-storage`
+  4. Ver guia completo em `n8n_eventos_guide.md` (no artifact do brain)
+
+## Último Commit
+- Hash: `330d97d` (sincronizado em `main` E `master`)
+- Conteúdo: Módulo de eventos — upload N8N Storage, sidebar condicional, locais/ocorrências completos.
+
+## 🔴 REGRA CRÍTICA: Atitude Esperada (Qualidades do Claude)
+- **Proatividade e Completude**: Nunca entregue tarefas pela metade. Se algo precisa ser criado (como 8 arquivos de configuração), crie TODOS os 8 sem pedir para o usuário fazer o trabalho manual.
+- **Transparência Visual**: Sempre que gerar arquivos de configuração, scripts, ou respostas longas que o usuário precisa copiar, exiba-os na interface (como Artefatos visíveis no painel lateral) para fácil acesso, não apenas como arquivos soltos invisíveis no diretório.
+- **Zero Achismos**: Sempre que o contexto não for suficiente, pare e FAÇA PERGUNTAS EXPLÍCITAS para alinhar as expectativas antes de sair executando código errado.
+- **Raciocínio Metódico**: Resolva um problema de cada vez com total profundidade. Não pule etapas nem entregue soluções rasas. Assuma a responsabilidade de investigar até o fim.
+

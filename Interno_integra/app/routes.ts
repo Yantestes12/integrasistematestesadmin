@@ -19,6 +19,10 @@ export default [
     route("admin/historico-nucleos", "routes/admin/HistoricoNucleos.tsx"),
     route("admin/cadastrar-nucleo", "routes/admin/CadastrarNucleo.tsx"),
     route("admin/grade-horaria", "routes/admin/GradeHoraria.tsx"),
+    // Admin / Eventos
+    route("admin/locais-evento", "routes/admin/LocaisEvento.tsx"),
+    route("admin/cadastrar-local-evento", "routes/admin/CadastrarLocalEvento.tsx"),
+    route("admin/ocorrencias-evento", "routes/admin/OcorrenciasEvento.tsx"),
     
     // Pedagógico / Inscrições
     route("pedagogico/inscricoes", "routes/pedagogico/Inscricoes.tsx"),
