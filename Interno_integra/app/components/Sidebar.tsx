@@ -85,17 +85,11 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
       roles: ['master', 'admin'],
       path: "/?view=geral", // Rota do dashboard do setor
       children: [
+        { name: 'Projetos', isHeader: true },
         { name: 'Propostas', path: "/admin/propostas" },
         { name: 'Espaços', path: "/admin/espacos" },
         { name: 'Núcleos', path: "/admin/nucleos" },
-      ]
-    },
-    {
-      name: 'Eventos',
-      icon: <Megaphone className="w-5 h-5" />,
-      roles: ['master', 'admin'],
-      path: "/?view=eventos", 
-      children: [
+        { name: 'Eventos', isHeader: true },
         { name: 'Locais de Evento', path: "/admin/locais-evento" },
         { name: 'Ocorrências (Núcleos)', path: "/admin/ocorrencias-evento" }
       ]
@@ -130,7 +124,18 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
       // Estilos dinâmicos baseados na profundidade da árvore (level)
       const paddingLeft = level === 0 ? 'px-5' : level === 1 ? 'pl-8 pr-5' : level === 2 ? 'pl-12 pr-5' : 'pl-14 pr-5';
 
+      if (item.isHeader) {
+        return (
+          <div key={index} className={`w-full pt-4 pb-1 mt-1 ${paddingLeft}`}>
+            <div className="text-[10px] font-bold text-white/50 tracking-widest uppercase border-b border-white/10 pb-1.5 select-none pointer-events-none">
+              {item.name}
+            </div>
+          </div>
+        );
+      }
+
       const isActiveParent = item.path && location.pathname === '/' && location.search.includes(item.path.split('?')[1]);
+
 
       const levelBg =
         level === 0
