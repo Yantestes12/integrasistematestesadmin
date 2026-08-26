@@ -162,7 +162,14 @@ export default function Matriculas() {
 
       if (resM.status === 'fulfilled' && resM.value.ok) {
         const text = await resM.value.text();
-        const data = JSON.parse(text);
+        let data: any = [];
+        if (text && text.trim() !== "") {
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            console.warn("Erro ao fazer parse das matriculas", e);
+          }
+        }
         if (data && !data.error && data.message !== "Workflow was started") {
           const rawList = flattenArray(data);
           const parsed = new Array(rawList.length);
