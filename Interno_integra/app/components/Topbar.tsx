@@ -4,7 +4,12 @@ import { useNavigate } from 'react-router';
 
 export const Topbar = () => {
   const navigate = useNavigate();
-  const [institute, setInstitute] = useState("IBRASE");
+  const [institute, setInstitute] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("auth_institute") || "IBRASE";
+    }
+    return "IBRASE";
+  });
   const [allowedInstitutes, setAllowedInstitutes] = useState<string[]>([]);
   const [userName, setUserName] = useState("Admin");
   const [userRole, setUserRole] = useState("Colaborador");

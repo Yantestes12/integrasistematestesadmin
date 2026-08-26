@@ -68,7 +68,12 @@ export const MainLayout = () => {
   const navigation = useNavigation();
   const [isMounted, setIsMounted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [institute, setInstitute] = useState("IBRASE");
+  const [institute, setInstitute] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("auth_institute") || "IBRASE";
+    }
+    return "IBRASE";
+  });
 
   useEffect(() => {
     setIsMounted(true);
