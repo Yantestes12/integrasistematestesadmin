@@ -38,7 +38,7 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
     setIsPcCollapsed(savedPcCollapsed);
 
     const checkEventos = async () => {
-      const authInstitute = localStorage.getItem("auth_instituto_id") || localStorage.getItem("auth_institutos_permitidos")?.split(',')[0];
+      const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
       if (!authInstitute) return;
       try {
         const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${authInstitute}`);
