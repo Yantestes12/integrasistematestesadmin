@@ -45,7 +45,7 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
         if (res.ok) {
           const data = await res.json();
           const projetos = Array.isArray(data) ? data : (data.data || []);
-          const temEventos = projetos.some((p: any) => p.aplicabilidade === "eventos");
+          const temEventos = projetos.some((p: any) => p.aplicabilidade === "evento" || p.aplicabilidade === "eventos");
           setHasEventos(temEventos);
         }
       } catch (err) {
