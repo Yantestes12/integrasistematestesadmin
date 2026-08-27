@@ -323,7 +323,7 @@ export default function CadastrarLocalEvento() {
         foto_url: fotoUrl,
         documentos: form.documentos,
         ativo: true,
-        status_aprovacao: "pendente",
+        status_aprovacao: "aprovado",
         created_by: localStorage.getItem("auth_user") || "sistema",
         ...(editId ? { id: editId, updated_by: localStorage.getItem("auth_user") || "sistema" } : {}),
       };
