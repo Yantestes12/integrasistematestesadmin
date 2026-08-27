@@ -337,7 +337,18 @@ export default function CadastrarLocalEvento() {
 
       if (res.ok) {
         setIsSuccess(true);
-        setTimeout(() => navigate("/admin/locais-evento"), 2000);
+        const responseData = await res.json();
+        const result = Array.isArray(responseData) ? responseData[0] : responseData;
+        const insertedId = result?.id || result?.data?.id || (Array.isArray(result) && result[0]?.id);
+
+        setTimeout(() => {
+          if (!editId && insertedId) {
+            // Se for novo cadastro, manda direto pras datas (ocorrências)
+            navigate(`/admin/ocorrencias-evento?localId=${insertedId}`);
+          } else {
+            navigate("/admin/locais-evento");
+          }
+        }, 2000);
       } else {
         alert("Erro ao salvar local de evento. Verifique os dados e tente novamente.");
       }
