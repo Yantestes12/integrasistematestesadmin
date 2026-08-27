@@ -242,7 +242,7 @@ export default function LocaisEvento() {
                       <div className="flex items-center gap-3">
                         {local.foto_url ? (
                           <img
-                            src={local.foto_url}
+                            src={local.foto_url.startsWith("http://") ? `/api/proxy-image?url=${encodeURIComponent(local.foto_url)}` : local.foto_url}
                             alt={local.nome}
                             className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0"
                             onError={(e) => { (e.target as any).style.display = 'none'; }}
@@ -359,7 +359,7 @@ export default function LocaisEvento() {
               ) : selectedDocs.map((doc, i) => (
                 <a
                   key={i}
-                  href={doc.url}
+                  href={doc.url?.startsWith("http://") ? `/api/proxy-image?url=${encodeURIComponent(doc.url)}` : doc.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"

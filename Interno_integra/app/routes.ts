@@ -3,6 +3,7 @@ import { type RouteConfig, index, route, layout } from "@react-router/dev/routes
 export default [
   // Rota de Login (Pública/Autônoma)
   route("login", "routes/Login.tsx"),
+  route("api/proxy-image", "routes/api.proxy-image.ts"),
 
   // Rotas Privadas / Administrativas
   layout("layouts/MainLayout.tsx", [
