@@ -448,7 +448,7 @@ export default function Nucleos() {
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 text-xs sm:text-sm md:text-base font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   <th className="py-4 px-3 md:px-4">Núcleo / Endereço</th>
-                  <th className="py-4 px-3 md:px-4">Proposta</th>
+                  <th className="py-4 px-3 md:px-4">Projeto</th>
                   <th className="py-4 px-3 md:px-4">Modalidade</th>
                   <th className="py-4 px-3 md:px-4">Instrutor</th>
                   <th className="py-4 px-3 md:px-4 text-center">Vaga (Slot)</th>
@@ -472,7 +472,7 @@ export default function Nucleos() {
                         <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">ID {item.id}</span>
                       </td>
 
-                      {/* Proposta (nome do projeto) */}
+                      {/* Projeto */}
                       <td className="py-3 md:py-4 px-3 md:px-4">
                         <span className="font-bold text-slate-800 dark:text-slate-200 text-sm md:text-base">
                           {item.projeto_nome}

@@ -264,8 +264,7 @@ export default function CadastrarLocalEvento() {
     const errs: typeof errors = {};
 
     if (step === 0) {
-      if (!form.projetoId) errs.projetoId = "Selecione o evento/proposta";
-      if (!form.nomeLocal.trim()) errs.nomeLocal = "Nome do local é obrigatório";
+      if (!form.projetoId) errs.projetoId = "Selecione o evento";
     }
 
     if (step === 1) {
@@ -406,7 +405,7 @@ export default function CadastrarLocalEvento() {
               )}
             </Field>
 
-            <Field label="Nome do Local" error={errors.nomeLocal} required>
+            <Field label="Nome do Local (Opcional)" error={errors.nomeLocal}>
               <input
                 type="text"
                 value={form.nomeLocal}
@@ -510,7 +509,7 @@ export default function CadastrarLocalEvento() {
               {form.fotoUrl || form.fotoFile ? (
                 <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 group">
                   <img
-                    src={form.fotoFile ? URL.createObjectURL(form.fotoFile) : form.fotoUrl}
+                    src={form.fotoFile ? URL.createObjectURL(form.fotoFile) : (form.fotoUrl.startsWith("http://") ? `/api/proxy-image?url=${encodeURIComponent(form.fotoUrl)}` : form.fotoUrl)}
                     alt="Foto do local"
                     className="w-full h-48 object-cover"
                   />
@@ -553,7 +552,7 @@ export default function CadastrarLocalEvento() {
                       
                       <div className="flex-1 min-w-0">
                         {doc.url && !doc.isUploading ? (
-                          <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-purple-600 dark:text-purple-400 hover:underline truncate block">
+                          <a href={doc.url.startsWith("http://") ? `/api/proxy-image?url=${encodeURIComponent(doc.url)}` : doc.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-purple-600 dark:text-purple-400 hover:underline truncate block">
                             {doc.nome || `Documento ${i + 1}`}
                           </a>
                         ) : (
