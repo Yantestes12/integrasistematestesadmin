@@ -550,12 +550,22 @@ export default function CadastrarLocalEvento() {
                       ) : (
                         <FileText size={16} className="text-blue-500 shrink-0" />
                       )}
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300 flex-1 truncate">
-                        {doc.nome || `Documento ${i + 1}`}
-                        {doc.isUploading && <span className="text-xs text-blue-400 ml-2">Enviando...</span>}
-                      </span>
+                      
+                      <div className="flex-1 min-w-0">
+                        {doc.url && !doc.isUploading ? (
+                          <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-purple-600 dark:text-purple-400 hover:underline truncate block">
+                            {doc.nome || `Documento ${i + 1}`}
+                          </a>
+                        ) : (
+                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate block">
+                            {doc.nome || `Documento ${i + 1}`}
+                            {doc.isUploading && <span className="text-xs text-blue-400 ml-2">Enviando...</span>}
+                          </span>
+                        )}
+                      </div>
+
                       {!doc.isUploading && (
-                        <button onClick={() => handleRemoveDoc(i)} className="text-slate-400 hover:text-red-500 transition-colors">
+                        <button type="button" onClick={() => handleRemoveDoc(i)} className="text-slate-400 hover:text-red-500 transition-colors p-1" title="Remover documento">
                           <X size={16} />
                         </button>
                       )}
