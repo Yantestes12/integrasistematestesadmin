@@ -85,8 +85,8 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
       roles: ['master', 'admin'],
       path: "/?view=geral", // Rota do dashboard do setor
       children: [
-        { name: 'Projetos', isHeader: true },
         { name: 'Propostas', path: "/admin/propostas" },
+        { name: 'Projetos', isHeader: true },
         { name: 'Espaços', path: "/admin/espacos" },
         { name: 'Núcleos', path: "/admin/nucleos" },
         { name: 'Eventos', isHeader: true },
