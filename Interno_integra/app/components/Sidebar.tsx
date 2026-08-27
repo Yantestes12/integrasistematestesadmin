@@ -53,7 +53,14 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
       if (prev.includes(itemPath)) {
         return prev.filter((path) => !path.startsWith(itemPath));
       } else {
-        return [...prev, itemPath];
+        // Lógica de Acordeão: ao abrir um menu, fechar os irmãos
+        const parentPath = itemPath.includes('>') ? itemPath.split('>').slice(0, -1).join('>') : '';
+        const filteredPaths = prev.filter((path) => {
+          // Mantém se não for do mesmo nível hierárquico
+          const pathParent = path.includes('>') ? path.split('>').slice(0, -1).join('>') : '';
+          return pathParent !== parentPath;
+        });
+        return [...filteredPaths, itemPath];
       }
     });
 
@@ -86,12 +93,20 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
       path: "/?view=geral", // Rota do dashboard do setor
       children: [
         { name: 'Propostas', path: "/admin/propostas" },
-        { name: 'Projetos', isHeader: true },
-        { name: 'Espaços', path: "/admin/espacos" },
-        { name: 'Núcleos', path: "/admin/nucleos" },
-        { name: 'Eventos', isHeader: true },
-        { name: 'Locais de Evento', path: "/admin/locais-evento" },
-        { name: 'Ocorrências (Núcleos)', path: "/admin/ocorrencias-evento" }
+        { 
+          name: 'Projetos', 
+          children: [
+            { name: 'Espaços', path: "/admin/espacos" },
+            { name: 'Núcleos', path: "/admin/nucleos" }
+          ]
+        },
+        { 
+          name: 'Eventos', 
+          children: [
+            { name: 'Locais de Evento', path: "/admin/locais-evento" },
+            { name: 'Ocorrências (Núcleos)', path: "/admin/ocorrencias-evento" }
+          ]
+        }
       ]
     },
     {
