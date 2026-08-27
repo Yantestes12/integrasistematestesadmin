@@ -26,6 +26,7 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
   // Mantém os submenus fechados por padrão, abrindo somente via clique do usuário
   const [openPaths, setOpenPaths] = useState<string[]>([]);
   const [userRole, setUserRole] = useState("colaborador");
+  const [hasEventos, setHasEventos] = useState(false);
 
   // Recupera o cargo do usuário para o RBAC e o estado recolhido do menu no PC
   useEffect(() => {
@@ -35,6 +36,23 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
 
     const savedPcCollapsed = localStorage.getItem("sidebar_collapsed_pc") === "true";
     setIsPcCollapsed(savedPcCollapsed);
+
+    const checkEventos = async () => {
+      const authInstitute = localStorage.getItem("auth_instituto_id") || localStorage.getItem("auth_institutos_permitidos")?.split(',')[0];
+      if (!authInstitute) return;
+      try {
+        const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${authInstitute}`);
+        if (res.ok) {
+          const data = await res.json();
+          const projetos = Array.isArray(data) ? data : (data.data || []);
+          const temEventos = projetos.some((p: any) => p.aplicabilidade === "eventos");
+          setHasEventos(temEventos);
+        }
+      } catch (err) {
+        console.error("Erro ao verificar eventos", err);
+      }
+    };
+    checkEventos();
 
     const handleTogglePC = () => {
       setIsPcCollapsed((prev) => {
@@ -100,13 +118,13 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
             { name: 'Núcleos', path: "/admin/nucleos" }
           ]
         },
-        { 
+        ...(hasEventos ? [{
           name: 'Eventos', 
           children: [
             { name: 'Locais de Evento', path: "/admin/locais-evento" },
             { name: 'Ocorrências (Núcleos)', path: "/admin/ocorrencias-evento" }
           ]
-        }
+        }] : [])
       ]
     },
     {
