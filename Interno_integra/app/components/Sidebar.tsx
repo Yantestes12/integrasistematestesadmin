@@ -121,8 +121,7 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
         ...(hasEventos ? [{
           name: 'Eventos', 
           children: [
-            { name: 'Locais de Evento', path: "/admin/locais-evento" },
-            { name: 'Ocorrências (Núcleos)', path: "/admin/ocorrencias-evento" }
+            { name: 'Local (Núcleo)', path: "/admin/locais-evento" }
           ]
         }] : [])
       ]
