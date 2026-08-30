@@ -621,31 +621,49 @@ export default function Dashboard() {
       
       // SWR Cache Hydration: Renderiza instantaneamente do cache da sessão (0ms)
       try {
+        let hasCache = false;
+        
         const cached = sessionStorage.getItem(`cache_matriculas_${inst}`);
         if (cached) {
           const parsedCached = JSON.parse(cached);
           if (Array.isArray(parsedCached) && parsedCached.length > 0) {
             setMatriculas(parsedCached);
+            hasCache = true;
           }
         }
         
         const cachedProj = sessionStorage.getItem(`cache_projetos_count_${inst}`);
-        if (cachedProj) setPropostasCount(Number(cachedProj));
+        if (cachedProj) { setPropostasCount(Number(cachedProj)); hasCache = true; }
 
         const cachedEspacos = sessionStorage.getItem(`cache_espacos_count_${inst}`);
-        if (cachedEspacos) setEspacosCount(Number(cachedEspacos));
+        if (cachedEspacos) { setEspacosCount(Number(cachedEspacos)); hasCache = true; }
 
         const cachedNucleos = sessionStorage.getItem(`cache_nucleos_count_${inst}`);
-        if (cachedNucleos) setNucleosCount(Number(cachedNucleos));
+        if (cachedNucleos) { setNucleosCount(Number(cachedNucleos)); hasCache = true; }
+
+        const cachedNucleosList = sessionStorage.getItem(`cache_nucleos_list_${inst}`);
+        if (cachedNucleosList) {
+          setNucleosList(JSON.parse(cachedNucleosList));
+        }
+
+        if (hasCache) {
+          setLoading(false); // Mostra o Dashboard instantaneamente! A requisição continuará em background.
+        }
       } catch (e) {}
 
+      // AbortController para evitar carregamento infinito
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 segundos timeout
+
       try {
+        const fetchOpts = { cache: "no-store" as RequestCache, signal: controller.signal };
         const [resN, resP, resE, resM] = await Promise.allSettled([
-          fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst}`, { cache: "no-store" }),
-          fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${inst}`, { cache: "no-store" }),
-          fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${inst}`, { cache: "no-store" }),
-          fetch(`https://w.ibrase.com.br/webhook/matriculas-get?instituto=${inst}`, { cache: "no-store" }),
+          fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst}`, fetchOpts),
+          fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${inst}`, fetchOpts),
+          fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${inst}`, fetchOpts),
+          fetch(`https://w.ibrase.com.br/webhook/matriculas-get?instituto=${inst}`, fetchOpts),
         ]);
+        clearTimeout(timeoutId);
 
         // Carregar modalidades em background (não bloqueia a renderização dos núcleos)
         fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${inst}`, { cache: "no-store" })
@@ -690,7 +708,10 @@ export default function Dashboard() {
 
             setNucleosList(loadedNucleos);
             setNucleosCount(loadedNucleos.length);
-            try { sessionStorage.setItem(`cache_nucleos_count_${inst}`, loadedNucleos.length.toString()); } catch (e) {}
+            try { 
+              sessionStorage.setItem(`cache_nucleos_count_${inst}`, loadedNucleos.length.toString()); 
+              sessionStorage.setItem(`cache_nucleos_list_${inst}`, JSON.stringify(loadedNucleos));
+            } catch (e) {}
           } catch (e) {}
         }
 
@@ -842,6 +863,18 @@ export default function Dashboard() {
     let f4 = { total: 0, masc: 0, fem: 0 }; // 18+
 
     const nucleosMap: Record<string, any> = {};
+
+    // 1. Inicializa todos os núcleos ativos (mesmo que tenham 0 matrículas)
+    nucleosList.forEach(n => {
+      const isAtivo = n.ativo !== false && n.ativo !== 0 && n.ativo !== "0" && n.ativo !== "false";
+      if (isAtivo) {
+        const nome = n.nome || n.nome_nucleo || `Núcleo ${n.id || ''}`;
+        if (nome) {
+          const projetoNome = n.projetos?.nome || n.projeto_nome || (n.projeto_id && projetosCache[Number(n.projeto_id)]) || 'Não Informada';
+          nucleosMap[nome] = { nome: nome, projeto: projetoNome, total: 0, masc: 0, fem: 0, aprovadas: 0, idadesValidas: 0, somaIdades: 0 };
+        }
+      }
+    });
 
     const camisasMap: Record<string, number> = {};
     const bermudasMap: Record<string, number> = {};
