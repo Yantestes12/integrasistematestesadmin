@@ -61,6 +61,15 @@ export default function CadastrarNucleo() {
 
   useEffect(() => {
     const savedInst = localStorage.getItem("auth_institute") || "IBRASE";
+    
+    // SWR Cache para carregamento instantâneo
+    try {
+      const cE = sessionStorage.getItem(`cache_espacos_list_${savedInst.toUpperCase()}`);
+      if (cE) setEspacos(JSON.parse(cE));
+      const cP = sessionStorage.getItem(`cache_projetos_list_${savedInst.toUpperCase()}`);
+      if (cP) setProjetos(JSON.parse(cP));
+    } catch(e) {}
+    
     fetchEspacos(savedInst);
     fetchProjetos(savedInst);
     fetchModalidades(savedInst);
@@ -94,8 +103,8 @@ export default function CadastrarNucleo() {
             const nData = JSON.parse(nText);
             const flatN = flattenResponse(nData);
             flatN.forEach((n: any) => { 
-              if (n && n.espaco_id && String(n.id) !== editId) {
-                nMap[String(n.espaco_id)] = n.nome || n.nome_nucleo || `Núcleo ${n.id}`; 
+              if (n && n.espaco_id && String(n.id || n.id_nucleo) !== editId) {
+                nMap[String(n.espaco_id)] = n.nome || n.nome_nucleo || `Núcleo ${n.id || n.id_nucleo}`; 
               } 
             });
           }
@@ -325,7 +334,7 @@ export default function CadastrarNucleo() {
       if (editId) formData.append("id", editId);
 
       Object.entries(data).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
+        if (value !== undefined && value !== null && value !== "") {
           formData.append(key, String(value));
         }
       });

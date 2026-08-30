@@ -361,6 +361,10 @@ export default function Nucleos() {
   };
 
   const filteredNucleos = nucleos.filter((item) => {
+    const isArquivado = !item.numero_vaga || item.numero_vaga === "—" || item.numero_vaga === "" || item.numero_vaga === "null";
+    if (viewMode === 'ativos' && isArquivado) return false;
+    if (viewMode === 'desativados' && !isArquivado) return false;
+    
     if (globalFilter !== "all" && String(item.projeto_id) !== globalFilter) return false;
     if (!searchTerm) return true;
     return (
@@ -386,13 +390,17 @@ export default function Nucleos() {
         </div>
 
         <div className="flex gap-2">
-          <Link
-            to="/admin/cadastrar-nucleo"
-            className="bg-[var(--theme-primary)] hover:brightness-110 text-white font-bold px-5 py-3 rounded-xl shadow-xs shadow-blue-500/30 transition-all flex items-center gap-2 text-sm shrink-0"
+          <button
+            onClick={() => setViewMode(viewMode === 'ativos' ? 'desativados' : 'ativos')}
+            className={`font-bold px-5 py-3 rounded-xl shadow-xs border transition-all flex items-center gap-2 text-sm shrink-0 ${
+              viewMode === 'desativados' 
+                ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800' 
+                : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700'
+            }`}
           >
-            <Plus size={18} />
-            <span>Novo Núcleo</span>
-          </Link>
+            <Power size={18} className={viewMode === 'desativados' ? "text-red-500" : "text-slate-500 dark:text-slate-400"} />
+            <span>{viewMode === 'ativos' ? 'Ver Núcleos Desvinculados' : 'Ver Núcleos Ativos/Pausados'}</span>
+          </button>
           
           <Link
             to="/admin/historico-nucleos"
