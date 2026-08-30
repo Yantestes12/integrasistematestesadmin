@@ -533,7 +533,7 @@ export default function CadastrarEspaco() {
         foto_url: fotoUrl,
         termo_url: termoUrl,
         ativo: true,
-        status_aprovacao: form.status_aprovacao,
+        status_aprovacao: form.status_aprovacao || "aprovado",
         docs_pendentes: Boolean(form.docsPendentes),
         created_by: localStorage.getItem("auth_user") || "sistema",
         ...(editId ? { id: editId, updated_by: localStorage.getItem("auth_user") || "sistema" } : {}),
