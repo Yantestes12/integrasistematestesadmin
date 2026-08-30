@@ -657,40 +657,13 @@ export default function Dashboard() {
 
       try {
         const fetchOpts = { cache: "no-store" as RequestCache, signal: controller.signal };
-        const [resN, resP, resE, resM] = await Promise.allSettled([
-          fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst}`, fetchOpts),
-          fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${inst}`, fetchOpts),
-          fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${inst}`, fetchOpts),
-          fetch(`https://w.ibrase.com.br/webhook/matriculas-get?instituto=${inst}`, fetchOpts),
-        ]);
-        clearTimeout(timeoutId);
-
-        // Carregar modalidades em background (não bloqueia a renderização dos núcleos)
-        fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${inst}`, { cache: "no-store" })
-          .then(res => res.json())
-          .then(data => {
+        
+        const pNucleos = fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst}`, fetchOpts)
+          .then(async res => {
+            if (!res.ok) return;
+            const data = JSON.parse(await res.text());
             let list = Array.isArray(data) ? data : (data.data || data.items || (data.json ? [data.json] : [data]));
-            let flatList: any[] = [];
-            list.forEach((entry: any) => {
-              if (entry && entry.json) {
-                if (Array.isArray(entry.json)) flatList.push(...entry.json);
-                else flatList.push(entry.json);
-              } else if (Array.isArray(entry)) flatList.push(...entry);
-              else flatList.push(entry);
-            });
-            const modCache: Record<number, string> = {};
-            flatList.forEach((m: any) => {
-              if (m.id && m.nome) modCache[Number(m.id)] = m.nome;
-            });
-            setModalidadesCache(modCache);
-          })
-          .catch(e => console.warn("Erro ao carregar modalidades", e));
-
-        let loadedNucleos: any[] = [];
-        if (resN.status === 'fulfilled' && resN.value.ok) {
-          try {
-            const data = JSON.parse(await resN.value.text());
-            let list = Array.isArray(data) ? data : (data.data || data.items || (data.json ? [data.json] : [data]));
+            let loadedNucleos: any[] = [];
             for (let i = 0; i < list.length; i++) {
               const entry = list[i];
               if (entry && entry.json) {
@@ -705,19 +678,18 @@ export default function Dashboard() {
                 loadedNucleos.push(entry);
               }
             }
-
             setNucleosList(loadedNucleos);
             setNucleosCount(loadedNucleos.length);
             try { 
               sessionStorage.setItem(`cache_nucleos_count_${inst}`, loadedNucleos.length.toString()); 
               sessionStorage.setItem(`cache_nucleos_list_${inst}`, JSON.stringify(loadedNucleos));
             } catch (e) {}
-          } catch (e) {}
-        }
+          }).catch(() => {});
 
-        if (resP.status === 'fulfilled' && resP.value.ok) {
-          try {
-            const data = JSON.parse(await resP.value.text());
+        const pProjetos = fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${inst}`, fetchOpts)
+          .then(async res => {
+            if (!res.ok) return;
+            const data = JSON.parse(await res.text());
             let list = Array.isArray(data) ? data : (data.data || data.items || (data.json ? [data.json] : [data]));
             let flatList: any[] = [];
             list.forEach((entry: any) => {
@@ -736,40 +708,57 @@ export default function Dashboard() {
             setProjetosCache(pCache);
             setPropostasCount(flatList.length);
             try { sessionStorage.setItem(`cache_projetos_count_${inst}`, flatList.length.toString()); } catch (e) {}
-          } catch (e) {}
-        }
+          }).catch(() => {});
 
-        if (resE.status === 'fulfilled' && resE.value.ok) {
-          try {
-            const data = JSON.parse(await resE.value.text());
+        const pEspacos = fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${inst}`, fetchOpts)
+          .then(async res => {
+            if (!res.ok) return;
+            const data = JSON.parse(await res.text());
             const list = Array.isArray(data) ? data : data.data || [];
             setEspacosCount(list.length);
             try { sessionStorage.setItem(`cache_espacos_count_${inst}`, list.length.toString()); } catch (e) {}
-          } catch (e) {}
-        }
+          }).catch(() => {});
 
-
-
-        let loadedMatriculas: MatriculaItem[] = [];
-        if (resM.status === 'fulfilled' && resM.value.ok) {
-          try {
-            const text = await resM.value.text();
-            const data = JSON.parse(text);
+        const pMatriculas = fetch(`https://w.ibrase.com.br/webhook/matriculas-get?instituto=${inst}`, fetchOpts)
+          .then(async res => {
+            if (!res.ok) return;
+            const data = JSON.parse(await res.text());
             if (data && !data.error && data.message !== "Workflow was started") {
               let list = Array.isArray(data) ? data : (data.data || data.items || (data.json ? [data.json] : [data]));
+              let loadedMatriculas: MatriculaItem[] = [];
               for (let i = 0; i < list.length; i++) {
                 const item = list[i];
                 const row = item.json || item;
                 if (row) loadedMatriculas.push(row);
               }
-              
               setMatriculas(loadedMatriculas);
-              try {
-                sessionStorage.setItem(`cache_matriculas_${inst}`, JSON.stringify(loadedMatriculas));
-              } catch (e) {}
+              try { sessionStorage.setItem(`cache_matriculas_${inst}`, JSON.stringify(loadedMatriculas)); } catch (e) {}
             }
-          } catch (e) {}
-        }
+          }).catch(() => {});
+
+        // Carregar modalidades em background independente
+        fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${inst}`, { cache: "no-store" })
+          .then(res => res.json())
+          .then(data => {
+            let list = Array.isArray(data) ? data : (data.data || data.items || (data.json ? [data.json] : [data]));
+            let flatList: any[] = [];
+            list.forEach((entry: any) => {
+              if (entry && entry.json) {
+                if (Array.isArray(entry.json)) flatList.push(...entry.json);
+                else flatList.push(entry.json);
+              } else if (Array.isArray(entry)) flatList.push(...entry);
+              else flatList.push(entry);
+            });
+            const modCache: Record<number, string> = {};
+            flatList.forEach((m: any) => {
+              if (m.id && m.nome) modCache[Number(m.id)] = m.nome;
+            });
+            setModalidadesCache(modCache);
+          }).catch(() => {});
+
+        await Promise.allSettled([pNucleos, pProjetos, pEspacos, pMatriculas]);
+        clearTimeout(timeoutId);
+        
       } catch (err) {
         console.warn("Erro ao ler dados do Dashboard:", err);
       } finally {
