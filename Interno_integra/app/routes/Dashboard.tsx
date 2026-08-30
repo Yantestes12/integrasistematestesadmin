@@ -32,7 +32,8 @@ import {
   SlidersHorizontal,
   Filter,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -625,9 +626,17 @@ export default function Dashboard() {
           const parsedCached = JSON.parse(cached);
           if (Array.isArray(parsedCached) && parsedCached.length > 0) {
             setMatriculas(parsedCached);
-            setLoading(false);
           }
         }
+        
+        const cachedProj = sessionStorage.getItem(`cache_projetos_count_${inst}`);
+        if (cachedProj) setPropostasCount(Number(cachedProj));
+
+        const cachedEspacos = sessionStorage.getItem(`cache_espacos_count_${inst}`);
+        if (cachedEspacos) setEspacosCount(Number(cachedEspacos));
+
+        const cachedNucleos = sessionStorage.getItem(`cache_nucleos_count_${inst}`);
+        if (cachedNucleos) setNucleosCount(Number(cachedNucleos));
       } catch (e) {}
 
       try {
@@ -681,6 +690,7 @@ export default function Dashboard() {
 
             setNucleosList(loadedNucleos);
             setNucleosCount(loadedNucleos.length);
+            try { sessionStorage.setItem(`cache_nucleos_count_${inst}`, loadedNucleos.length.toString()); } catch (e) {}
           } catch (e) {}
         }
 
@@ -704,6 +714,7 @@ export default function Dashboard() {
             });
             setProjetosCache(pCache);
             setPropostasCount(flatList.length);
+            try { sessionStorage.setItem(`cache_projetos_count_${inst}`, flatList.length.toString()); } catch (e) {}
           } catch (e) {}
         }
 
@@ -712,6 +723,7 @@ export default function Dashboard() {
             const data = JSON.parse(await resE.value.text());
             const list = Array.isArray(data) ? data : data.data || [];
             setEspacosCount(list.length);
+            try { sessionStorage.setItem(`cache_espacos_count_${inst}`, list.length.toString()); } catch (e) {}
           } catch (e) {}
         }
 
@@ -1752,8 +1764,8 @@ export default function Dashboard() {
                     <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[var(--theme-primary)] flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-900/50 group-hover:scale-105 transition-transform">
                       <GraduationCap className="w-6 h-6" />
                     </div>
-                    <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700/60 px-3 py-1 rounded-full uppercase tracking-wider">
-                      {propostasCount} Ativas
+                    <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700/60 px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
+                      {loading && propostasCount === 0 ? <Loader2 className="w-3 h-3 animate-spin inline-block" /> : propostasCount} Ativas
                     </span>
                   </div>
 
@@ -1786,8 +1798,8 @@ export default function Dashboard() {
                     <div className="w-12 h-12 rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0 border border-violet-100 dark:border-violet-900/50 group-hover:scale-105 transition-transform">
                       <Home className="w-6 h-6" />
                     </div>
-                    <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700/60 px-3 py-1 rounded-full uppercase tracking-wider">
-                      {espacosCount} Locais
+                    <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700/60 px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
+                      {loading && espacosCount === 0 ? <Loader2 className="w-3 h-3 animate-spin inline-block" /> : espacosCount} Locais
                     </span>
                   </div>
 
@@ -1820,8 +1832,8 @@ export default function Dashboard() {
                     <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-900/50 group-hover:scale-105 transition-transform">
                       <Building2 className="w-6 h-6" />
                     </div>
-                    <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700/60 px-3 py-1 rounded-full uppercase tracking-wider">
-                      {nucleosCount} Ativos
+                    <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700/60 px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
+                      {loading && nucleosCount === 0 ? <Loader2 className="w-3 h-3 animate-spin inline-block" /> : nucleosCount} Ativos
                     </span>
                   </div>
 
