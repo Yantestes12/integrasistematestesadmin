@@ -160,29 +160,46 @@ export default function Propostas() {
   };
 
   const fetchPropostas = async (instituteName: string) => {
-    setLoading(true);
+    let hasCache = false;
+    try {
+      const cachedList = sessionStorage.getItem(`cache_projetos_list_${instituteName.toUpperCase()}`);
+      if (cachedList) {
+        const parsed = JSON.parse(cachedList);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setPropostas(parsed);
+          hasCache = true;
+        }
+      }
+    } catch (e) {}
+
+    if (!hasCache) setLoading(true);
+
     try {
       const n8nEndpoint = `https://w.ibrase.com.br/webhook/projetos-get?instituto=${instituteName.toUpperCase()}`;
-      const res = await fetch(n8nEndpoint, { method: 'GET' });
+      const res = await fetch(n8nEndpoint, { method: 'GET', cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         
         if (data.message === "Workflow was started" || (Array.isArray(data) && data.length > 0 && data[0].message === "Workflow was started")) {
-          alert("O Webhook do N8N não retornou os dados. Mude a opção 'Respond' para 'Using Respond to Webhook Node' no n8n.");
+          if (!hasCache) {
+            alert("O Webhook do N8N não retornou os dados. Mude a opção 'Respond' para 'Using Respond to Webhook Node' no n8n.");
+          }
           setLoading(false);
           return;
         }
         
         const parsed = parsePropostasList(data);
         if (parsed.length > 0) {
-          setPropostas(parsed.sort((a, b) => Number(b.id) - Number(a.id)));
+          const sorted = parsed.sort((a, b) => Number(b.id) - Number(a.id));
+          setPropostas(sorted);
+          try { sessionStorage.setItem(`cache_projetos_list_${instituteName.toUpperCase()}`, JSON.stringify(sorted)); } catch(e) {}
           setLoading(false);
           return;
         }
       }
-    } catch (e) {
-      console.warn("Erro no Webhook N8N de Propostas:", e);
-    } finally {
+      setLoading(false);
+    } catch (error) {
+      console.warn("Erro ao buscar propostas:", error);
       setLoading(false);
     }
   };

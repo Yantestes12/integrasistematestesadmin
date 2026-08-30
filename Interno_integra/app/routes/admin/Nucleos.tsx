@@ -55,6 +55,19 @@ export default function Nucleos() {
     const inst = localStorage.getItem("auth_institute") || "IBRASE";
     setCurrentInstitute(inst);
 
+    let hasCache = false;
+    try {
+      const cached = sessionStorage.getItem(`cache_nucleos_parsed_${inst.toUpperCase()}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setNucleos(parsed);
+          setLoading(false);
+          hasCache = true;
+        }
+      }
+    } catch(e) {}
+
     const updateGlobalFilter = () => {
       setGlobalFilter(localStorage.getItem("global_projeto_filter") || "all");
     };
@@ -62,12 +75,14 @@ export default function Nucleos() {
     window.addEventListener("globalFilterChanged", updateGlobalFilter);
 
     async function loadAll() {
-      await Promise.allSettled([
+      // Carrega dependências sem bloquear a UI se já temos cache
+      Promise.allSettled([
         fetchProjetos(inst),
         fetchModalidades(inst),
         fetchEspacos(inst),
-      ]);
-      fetchNucleos(inst);
+      ]).then(() => {
+        fetchNucleos(inst, hasCache);
+      });
     }
 
     loadAll();
@@ -271,8 +286,8 @@ export default function Nucleos() {
     });
   };
 
-  const fetchNucleos = async (instituteName: string) => {
-    setLoading(true);
+  const fetchNucleos = async (instituteName: string, hasCache = false) => {
+    if (!hasCache) setLoading(true);
 
     let fetchedData = null;
     try {
@@ -294,19 +309,21 @@ export default function Nucleos() {
     }
 
     try {
-      if (fetchedData) {
-        if (fetchedData.message === "Workflow was started" || (Array.isArray(fetchedData) && fetchedData.length > 0 && fetchedData[0].message === "Workflow was started") || fetchedData.error) {
-          console.warn("O Webhook do N8N não retornou os dados corretamente.");
-          setNucleos([]);
-        } else {
-          const parsed = parseNucleosList(fetchedData);
-          setNucleos(parsed.sort((a, b) => {
-            const aVaga = a.numero_vaga === "—" ? 99999 : Number(a.numero_vaga);
-            const bVaga = b.numero_vaga === "—" ? 99999 : Number(b.numero_vaga);
-            return aVaga - bVaga;
-          }));
+        if (fetchedData) {
+          if (fetchedData.message === "Workflow was started" || (Array.isArray(fetchedData) && fetchedData.length > 0 && fetchedData[0].message === "Workflow was started") || fetchedData.error) {
+            if (!hasCache) console.warn("O Webhook do N8N não retornou os dados corretamente.");
+            if (!hasCache) setNucleos([]);
+          } else {
+            const parsed = parseNucleosList(fetchedData);
+            const sorted = parsed.sort((a, b) => {
+              const aVaga = a.numero_vaga === "—" ? 99999 : Number(a.numero_vaga);
+              const bVaga = b.numero_vaga === "—" ? 99999 : Number(b.numero_vaga);
+              return aVaga - bVaga;
+            });
+            setNucleos(sorted);
+            try { sessionStorage.setItem(`cache_nucleos_parsed_${instituteName.toUpperCase()}`, JSON.stringify(sorted)); } catch(e) {}
+          }
         }
-      }
     } catch (e) {
       console.warn("Erro ao processar dados de Núcleos:", e);
     } finally {

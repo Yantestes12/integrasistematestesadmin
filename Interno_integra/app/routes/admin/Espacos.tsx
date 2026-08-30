@@ -126,10 +126,22 @@ export default function Espacos() {
   };
 
   const fetchEspacos = async () => {
-    setLoading(true);
+    let hasCache = false;
+    const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
     try {
-      const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
-      
+      const cachedList = sessionStorage.getItem(`cache_espacos_list_${authInstitute.toUpperCase()}`);
+      if (cachedList) {
+        const parsed = JSON.parse(cachedList);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setEspacos(parsed);
+          hasCache = true;
+        }
+      }
+    } catch(e) {}
+    
+    if (!hasCache) setLoading(true);
+
+    try {
       let rawList: any[] = [];
       let nMap: Record<number, string> = {};
 
@@ -199,6 +211,7 @@ export default function Espacos() {
       });
 
       setEspacos(list);
+      try { sessionStorage.setItem(`cache_espacos_list_${authInstitute.toUpperCase()}`, JSON.stringify(list)); } catch(e) {}
     } catch (e) {
       console.error("Erro ao buscar espaços:", e);
       addToast("error", "Erro de Conexão", "Não foi possível carregar os espaços do servidor.");
