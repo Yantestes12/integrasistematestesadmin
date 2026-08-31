@@ -332,25 +332,34 @@ export default function CadastrarNucleo() {
         ? `https://w.ibrase.com.br/webhook/nucleos-put?instituto=${authInstitute}`
         : `https://w.ibrase.com.br/webhook/nucleos-post?instituto=${authInstitute}`;
 
-      const formData = new FormData();
-      if (editId) formData.append("id", editId);
+      const payload: Record<string, any> = {};
+      if (editId) payload.id = Number(editId);
 
       Object.entries(data).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== "") {
-          formData.append(key, String(value));
+          if (typeof value === "boolean") {
+            payload[key] = value;
+          } else if (key === "numeroVaga" || key === "espacoId" || key === "projetoId" || key === "modalidadeId" || key === "vagas") {
+            payload[key] = Number(value);
+          } else {
+            payload[key] = value;
+          }
         }
       });
 
       if (data.numeroVaga) {
-        formData.append("numero_vaga", data.numeroVaga);
+        payload.numero_vaga = Number(data.numeroVaga);
       }
       if (data.modalidadeId) {
-        formData.append("modalidade_id", data.modalidadeId);
+        payload.modalidade_id = Number(data.modalidadeId);
       }
 
       const response = await fetch(webhookUrl, {
         method: editId ? "PUT" : "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
