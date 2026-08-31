@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
+import type { Resolver } from "react-hook-form";
 import { useSearchParams, useNavigate } from "react-router";
 import * as z from "zod";
 import { ArrowLeft, Save, MapPin, Building2, Loader2, Award, User, AlertCircle } from "lucide-react";
@@ -26,8 +27,6 @@ const cadastrarNucleoSchema = z.object({
 });
 
 type CadastrarNucleoFormData = z.infer<typeof cadastrarNucleoSchema>;
-
-import type { Resolver } from "react-hook-form";
 
 // Resolver customizado
 const customZodResolver = (schema: z.ZodSchema): Resolver<any> => async (values: any) => {
