@@ -59,6 +59,20 @@ export default function CadastrarNucleo() {
   const [modalidades, setModalidades] = useState<any[]>([]);
   const [nucleosExistentes, setNucleosExistentes] = useState<any[]>([]);
 
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting }, setValue: setFormValue, reset } = useForm<CadastrarNucleoFormData>({
+    resolver: customZodResolver(cadastrarNucleoSchema),
+    defaultValues: {
+      ativo: false,
+      aceitandoVagas: false,
+      numeroVaga: "1",
+      vagas: "100",
+    },
+  });
+
+  const projetoIdWatch = watch("projetoId");
+  const espacoIdWatch = watch("espacoId");
+  const numeroVagaWatch = watch("numeroVaga");
+
   useEffect(() => {
     const savedInst = localStorage.getItem("auth_institute") || "IBRASE";
     
@@ -220,19 +234,6 @@ export default function CadastrarNucleo() {
     } catch (e) { console.warn("Erro nucleos:", e); }
   };
 
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting }, setValue: setFormValue, reset } = useForm<CadastrarNucleoFormData>({
-    resolver: customZodResolver(cadastrarNucleoSchema),
-    defaultValues: {
-      ativo: false,
-      aceitandoVagas: false,
-      numeroVaga: "1",
-      vagas: "100",
-    },
-  });
-
-  const projetoIdWatch = watch("projetoId");
-  const espacoIdWatch = watch("espacoId");
-  const numeroVagaWatch = watch("numeroVaga");
 
   // Vagas ocupadas do projeto selecionado
   const vagasOcupadasNoProjeto = useMemo(() => {
