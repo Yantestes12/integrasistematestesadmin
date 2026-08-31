@@ -15,7 +15,7 @@ const cadastrarNucleoSchema = z.object({
   cidadeId: z.string().optional(),
   uf: z.string().optional(),
   bairroId: z.string().optional(),
-  numeroVaga: z.string().optional(),
+  numeroVaga: z.string().min(1, "Obrigatório selecionar uma vaga"),
   vagas: z.string().optional(),
   instrutor: z.string().optional(),
   
