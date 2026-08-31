@@ -334,25 +334,16 @@ export default function CadastrarNucleo() {
       const payload: Record<string, any> = {};
       if (editId) payload.id = Number(editId);
 
-      // Campos que NÃO devem ir no PUT (o Supabase node do N8N envia TODOS os campos do body)
-      const skipFields = ["numeroVaga", "numero_vaga", "bairroId", "bairro_id"];
 
-      Object.entries(data).forEach(([key, value]) => {
-        if (skipFields.includes(key)) return;
-        if (value !== undefined && value !== null && value !== "") {
-          if (typeof value === "boolean") {
-            payload[key] = value;
-          } else if (key === "espacoId" || key === "projetoId" || key === "modalidadeId" || key === "vagas") {
-            payload[key] = Number(value);
-          } else {
-            payload[key] = value;
-          }
-        }
-      });
 
-      if (data.modalidadeId) {
-        payload.modalidade_id = Number(data.modalidadeId);
-      }
+      if (data.nomeNucleo) payload.nome = data.nomeNucleo;
+      if (data.espacoId) payload.espaco_id = Number(data.espacoId);
+      if (data.projetoId) payload.projeto_id = Number(data.projetoId);
+      if (data.modalidadeId) payload.modalidade_id = Number(data.modalidadeId);
+      if (data.vagas) payload.vagas = Number(data.vagas);
+      if (data.instrutor) payload.instrutor = data.instrutor;
+      
+      payload.ativo = (data.ativo === true || data.ativo === 'true') ? 1 : 0;
 
       const response = await fetch(webhookUrl, {
         method: editId ? "PUT" : "POST",
