@@ -335,11 +335,15 @@ export default function CadastrarNucleo() {
       const payload: Record<string, any> = {};
       if (editId) payload.id = Number(editId);
 
+      // Campos que NÃO devem ir no PUT (o Supabase node do N8N envia TODOS os campos do body)
+      const skipFields = ["numeroVaga", "numero_vaga", "bairroId", "bairro_id"];
+
       Object.entries(data).forEach(([key, value]) => {
+        if (skipFields.includes(key)) return;
         if (value !== undefined && value !== null && value !== "") {
           if (typeof value === "boolean") {
             payload[key] = value;
-          } else if (key === "numeroVaga" || key === "espacoId" || key === "projetoId" || key === "modalidadeId" || key === "vagas") {
+          } else if (key === "espacoId" || key === "projetoId" || key === "modalidadeId" || key === "vagas") {
             payload[key] = Number(value);
           } else {
             payload[key] = value;
@@ -347,9 +351,6 @@ export default function CadastrarNucleo() {
         }
       });
 
-      if (data.numeroVaga) {
-        payload.numero_vaga = Number(data.numeroVaga);
-      }
       if (data.modalidadeId) {
         payload.modalidade_id = Number(data.modalidadeId);
       }
