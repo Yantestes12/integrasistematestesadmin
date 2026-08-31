@@ -336,24 +336,20 @@ export default function CadastrarNucleo() {
       if (editId) payload.id = Number(editId);
 
       // Campos que NÃO devem ir no PUT (o Supabase node do N8N envia TODOS os campos do body)
-      const skipFields = ["numeroVaga", "numero_vaga", "bairroId", "bairro_id"];
+      const skipFields = ["numeroVaga", "numero_vaga", "bairroId", "bairro_id", "modalidadeId", "modalidade_id"];
 
       Object.entries(data).forEach(([key, value]) => {
         if (skipFields.includes(key)) return;
         if (value !== undefined && value !== null && value !== "") {
           if (typeof value === "boolean") {
             payload[key] = value;
-          } else if (key === "espacoId" || key === "projetoId" || key === "modalidadeId" || key === "vagas") {
+          } else if (key === "espacoId" || key === "projetoId" || key === "vagas") {
             payload[key] = Number(value);
           } else {
             payload[key] = value;
           }
         }
       });
-
-      if (data.modalidadeId) {
-        payload.modalidade_id = Number(data.modalidadeId);
-      }
 
       const response = await fetch(webhookUrl, {
         method: editId ? "PUT" : "POST",
