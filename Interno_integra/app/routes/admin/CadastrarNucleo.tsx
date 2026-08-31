@@ -342,8 +342,9 @@ export default function CadastrarNucleo() {
       if (data.modalidadeId) payload.modalidade_id = Number(data.modalidadeId);
       if (data.vagas) payload.vagas = Number(data.vagas);
       if (data.instrutor) payload.instrutor = data.instrutor;
+      if (data.numeroVaga) payload.numero_vaga = Number(data.numeroVaga);
       
-      payload.ativo = (data.ativo === true || data.ativo === 'true') ? 1 : 0;
+      payload.ativo = (data.ativo === true || data.ativo === 'true');
 
       const response = await fetch(webhookUrl, {
         method: editId ? "PUT" : "POST",
