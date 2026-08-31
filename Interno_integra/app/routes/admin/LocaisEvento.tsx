@@ -223,119 +223,90 @@ export default function LocaisEvento() {
             </Link>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-                  <th className="text-left px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold text-xs uppercase tracking-wider">Local</th>
-                  <th className="text-left px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold text-xs uppercase tracking-wider hidden sm:table-cell">Endereço</th>
-                  <th className="text-left px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold text-xs uppercase tracking-wider hidden md:table-cell">Evento</th>
-                  <th className="text-left px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold text-xs uppercase tracking-wider">Status</th>
-                  <th className="text-left px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold text-xs uppercase tracking-wider">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {filtered.map((local) => (
-                  <tr key={local.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors">
-                    {/* Local */}
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-3">
-                        {local.foto_url ? (
-                          <img
-                            src={local.foto_url.startsWith("http://") ? `/api/proxy-image?url=${encodeURIComponent(local.foto_url)}` : local.foto_url}
-                            alt={local.nome}
-                            className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0"
-                            onError={(e) => { (e.target as any).style.display = 'none'; }}
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center shrink-0 border border-purple-100 dark:border-purple-800">
-                            <Calendar size={18} className="text-purple-400" />
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-semibold text-slate-800 dark:text-white text-sm">{local.nome}</p>
-                          <p className="text-xs text-slate-400 sm:hidden">{local.bairro}{local.cidade ? `, ${local.cidade}` : ""}</p>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Endereço */}
-                    <td className="px-4 py-4 hidden sm:table-cell">
-                      <div className="flex items-start gap-1.5 text-slate-600 dark:text-slate-400">
-                        <MapPin size={13} className="mt-0.5 shrink-0 text-slate-400" />
-                        <div>
-                          <p className="text-sm">{local.rua}{local.numero ? `, ${local.numero}` : ""}</p>
-                          <p className="text-xs text-slate-400">{local.bairro}{local.cidade ? `, ${local.cidade}` : ""}{local.uf ? ` - ${local.uf}` : ""}</p>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Projeto */}
-                    <td className="px-4 py-4 hidden md:table-cell">
-                      <span className="text-sm text-slate-600 dark:text-slate-400">
-                        {local.projeto_id ? (projetosMap[local.projeto_id] || `Projeto #${local.projeto_id}`) : "—"}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 sm:p-6 bg-slate-50/30 dark:bg-slate-900/30">
+            {filtered.map((local) => (
+              <div key={local.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full group">
+                
+                {/* Cabeçalho do Card (Imagem) */}
+                <div className="h-40 sm:h-48 w-full bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
+                  {local.foto_url ? (
+                    <img
+                      src={local.foto_url.startsWith("http://") ? `/api/proxy-image?url=${encodeURIComponent(local.foto_url)}` : local.foto_url}
+                      alt={local.nome}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => { (e.target as any).style.display = 'none'; }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                      <Calendar size={32} className="mb-2 opacity-30" />
+                      <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Sem Imagem</span>
+                    </div>
+                  )}
+                  
+                  {/* Status Badge */}
+                  <div className="absolute top-3 right-3">
+                    {local.status_aprovacao === "aprovado" ? (
+                      <span className="bg-emerald-500/90 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-sm flex items-center gap-1">
+                        <CheckCircle2 size={12} /> Aprovado
                       </span>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-4 py-4">
-                      {local.status_aprovacao === "aprovado" ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800">
-                          <CheckCircle2 size={12} /> Aprovado
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border border-amber-100 dark:border-amber-800">
-                          <Clock size={12} /> Pendente
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Ações */}
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {/* Documentos */}
-                        {local.documentos && local.documentos.length > 0 && (
-                          <button
-                            onClick={() => openDocsModal(local)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 border border-blue-100 dark:border-blue-800 rounded-lg hover:bg-blue-100 transition-colors"
-                            title="Ver documentos"
-                          >
-                            <FileText size={12} /> {local.documentos.length} doc{local.documentos.length > 1 ? "s" : ""}
-                          </button>
-                        )}
-
-                        {/* Ver datas */}
-                        <Link
-                          to={`/admin/ocorrencias-evento?localId=${local.id}&nome=${encodeURIComponent(local.nome)}`}
-                          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400 border border-purple-100 dark:border-purple-800 rounded-lg hover:bg-purple-100 transition-colors"
-                          title="Ver datas/ocorrências"
-                        >
-                          <Eye size={12} /> Datas
-                        </Link>
-
-                        {/* Editar */}
-                        <Link
-                          to={`/admin/cadastrar-local-evento?edit=${local.id}`}
-                          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-200 transition-colors"
-                          title="Editar"
-                        >
-                          <Edit3 size={12} /> Editar
-                        </Link>
-
-                        {/* Excluir */}
-                        <button
-                          onClick={() => openDeleteModal(local)}
-                          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 border border-red-100 dark:border-red-800 rounded-lg hover:bg-red-100 transition-colors"
-                          title="Excluir"
-                        >
-                          <Trash2 size={12} />
-                        </button>
+                    ) : (
+                      <span className="bg-amber-500/90 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-sm flex items-center gap-1">
+                        <Clock size={12} /> Pendente
+                      </span>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Corpo do Card */}
+                <div className="p-5 flex-1 flex flex-col">
+                  <h3 className="text-lg md:text-xl font-bold text-slate-800 dark:text-white mb-2 line-clamp-1">{local.nome}</h3>
+                  
+                  <div className="text-sm text-slate-500 dark:text-slate-400 flex items-start gap-1.5 mb-4 line-clamp-2 min-h-[40px]">
+                    <MapPin size={16} className="mt-0.5 shrink-0 text-slate-400" />
+                    <span>
+                      {local.rua}{local.numero ? `, ${local.numero}` : ""}
+                      {(local.rua || local.numero) && <br/>}
+                      {local.bairro}{local.cidade ? `, ${local.cidade}` : ""}
+                    </span>
+                  </div>
+                  
+                  {/* Projeto */}
+                  <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700 mb-5">
+                    <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Iniciativa / Projeto</span>
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      {local.projeto_id ? (projetosMap[local.projeto_id] || `Projeto #${local.projeto_id}`) : "—"}
+                    </span>
+                  </div>
+                  
+                  {/* Ações (Rodapé do Card) */}
+                  <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-4 gap-2">
+                    {local.documentos && local.documentos.length > 0 ? (
+                      <button onClick={() => openDocsModal(local)} className="col-span-1 flex items-center justify-center gap-1.5 p-2 text-xs font-bold bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-lg hover:bg-blue-100 transition-colors" title="Ver Documentos">
+                        <FileText size={16} />
+                        <span className="md:hidden lg:inline">{local.documentos.length}</span>
+                      </button>
+                    ) : (
+                      <div className="col-span-1 flex items-center justify-center gap-1.5 p-2 text-xs font-bold bg-slate-50 text-slate-400 dark:bg-slate-800 dark:text-slate-500 rounded-lg cursor-not-allowed">
+                        <FileText size={16} />
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    )}
+                    
+                    <Link to={`/admin/ocorrencias-evento?localId=${local.id}&nome=${encodeURIComponent(local.nome)}`} className="col-span-1 flex items-center justify-center gap-1.5 p-2 text-xs font-bold bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 rounded-lg hover:bg-purple-100 transition-colors" title="Datas do Evento">
+                      <Calendar size={16} />
+                    </Link>
+                    
+                    <Link to={`/admin/cadastrar-local-evento?edit=${local.id}`} className="col-span-1 flex items-center justify-center p-2 text-slate-600 bg-slate-100 dark:bg-slate-800 dark:text-slate-300 rounded-lg hover:bg-slate-200 transition-colors" title="Editar">
+                      <Edit3 size={16} />
+                    </Link>
+                    
+                    <button onClick={() => openDeleteModal(local)} className="col-span-1 flex items-center justify-center p-2 text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400 rounded-lg hover:bg-red-100 transition-colors" title="Excluir">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+                
+              </div>
+            ))}
           </div>
         )}
       </div>
