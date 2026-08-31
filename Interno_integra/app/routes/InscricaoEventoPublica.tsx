@@ -634,8 +634,8 @@ export default function InscricaoEventoPublica() {
 
       {/* HEADER */}
       <header className="fixed top-0 w-full z-50 bg-black/50 backdrop-blur-xl border-b border-white/5 shadow-[0_0_20px_rgba(211,47,46,0.15)] flex flex-col items-center justify-center py-3 px-6 min-h-[4.5rem]">
-        <img src={getLogo(instituto||'')} alt={instituto} className="h-16 md:h-24 w-auto object-contain mb-3" onError={e => { (e.target as any).style.display='none'; }} />
-        <h1 className="text-xl md:text-3xl font-bold text-white tracking-tight text-center leading-tight">
+        <img src={getLogo(instituto||'')} alt={instituto} className="h-8 md:h-10 w-auto object-contain mb-1" onError={e => { (e.target as any).style.display='none'; }} />
+        <h1 className="text-base md:text-xl font-bold text-white tracking-tight text-center leading-tight">
           Faça sua matrícula em um dos eventos abaixo
         </h1>
       </header>
