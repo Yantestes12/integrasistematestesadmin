@@ -3,7 +3,6 @@
 export default [
   // Rota de Login (Pública/Autônoma)
   route("login", "routes/Login.tsx"),
-  route(":instituto/eventos", "routes/InscricaoEventoPublica.tsx"),
   route(":instituto/lgpd", "routes/LgpdPublica.tsx"),
   route("api/proxy-image", "routes/api.proxy-image.ts"),
 
