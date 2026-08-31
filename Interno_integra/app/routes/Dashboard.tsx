@@ -853,15 +853,17 @@ export default function Dashboard() {
 
     const nucleosMap: Record<string, any> = {};
 
-    // 1. Inicializa todos os núcleos ativos (mesmo que tenham 0 matrículas)
+    // 1. Inicializa todos os núcleos (ativos e inativos) para aparecerem no Dashboard
     nucleosList.forEach(n => {
-      const isAtivo = n.ativo !== false && n.ativo !== 0 && n.ativo !== "0" && n.ativo !== "false";
-      if (isAtivo) {
-        const nome = n.nome || n.nome_nucleo || `Núcleo ${n.id || ''}`;
-        if (nome) {
-          const projetoNome = n.projetos?.nome || n.projeto_nome || (n.projeto_id && projetosCache[Number(n.projeto_id)]) || 'Não Informada';
-          nucleosMap[nome] = { nome: nome, projeto: projetoNome, total: 0, masc: 0, fem: 0, aprovadas: 0, idadesValidas: 0, somaIdades: 0 };
-        }
+      const nome = n.nome || n.nome_nucleo || `Núcleo ${n.id || ''}`;
+      if (nome) {
+        const projetoNome = n.projetos?.nome || n.projeto_nome || (n.projeto_id && projetosCache[Number(n.projeto_id)]) || 'Não Informada';
+        nucleosMap[nome] = { 
+          nome: nome, 
+          projeto: projetoNome, 
+          total: 0, masc: 0, fem: 0, aprovadas: 0, idadesValidas: 0, somaIdades: 0,
+          ativo: n.ativo !== false && n.ativo !== 0 && n.ativo !== "0" && n.ativo !== "false"
+        };
       }
     });
 
