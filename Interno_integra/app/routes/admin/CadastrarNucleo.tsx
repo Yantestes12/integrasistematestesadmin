@@ -70,11 +70,61 @@ export default function CadastrarNucleo() {
       if (cP) setProjetos(JSON.parse(cP));
     } catch(e) {}
     
-    fetchEspacos(savedInst);
-    fetchProjetos(savedInst);
-    fetchModalidades(savedInst);
-    fetchNucleos(savedInst);
-  }, []);
+    const loadAllData = async () => {
+      // Dispara e aguarda todas as promessas de fetch base para carregar os dropdowns
+      await Promise.allSettled([
+        fetchEspacos(savedInst),
+        fetchProjetos(savedInst),
+        fetchModalidades(savedInst),
+        fetchNucleos(savedInst)
+      ]);
+
+      if (editId) {
+        try {
+          const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${savedInst.toUpperCase()}`, { cache: "no-store" });
+          if (res.ok) {
+            const text = await res.text();
+            if (text) {
+              const data = JSON.parse(text);
+              if (data.message !== "Workflow was started" && !data.error) {
+                const flatList = flattenResponse(data);
+                const nucleo = flatList.find((n: any) => n && String(n.id || n.id_nucleo) === editId);
+                
+                if (nucleo) {
+                  reset({
+                    nomeNucleo: nucleo.nome || nucleo.nome_nucleo || "",
+                    espacoId: String(nucleo.espaco_id || ""),
+                    projetoId: String(nucleo.projeto_id || ""),
+                    modalidadeId: String(nucleo.modalidade_id || ""),
+                    cidadeId: String(nucleo.cidade_id || ""),
+                    uf: nucleo.uf || "",
+                    bairroId: String(nucleo.bairro_id || ""),
+                    numeroVaga: (nucleo.numero_vaga ?? nucleo.vaga_numero ?? nucleo.vaga_alocada ?? "") !== "" 
+                                  ? String(nucleo.numero_vaga ?? nucleo.vaga_numero ?? nucleo.vaga_alocada) 
+                                  : "1",
+                    vagas: String(nucleo.vagas || "100"),
+                    instrutor: nucleo.instrutor || nucleo.resp_nome || "",
+                    ativo: nucleo.ativo === true || nucleo.ativo === "true" || nucleo.ativo === 1 || nucleo.ativo === "1",
+                    aceitandoVagas: nucleo.aceitando_vagas === true || nucleo.aceitando_vagas === "true",
+                    dataInicio: nucleo.data_inicio || "",
+                    dataFim: nucleo.data_fim || "",
+                  });
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("Erro ao buscar núcleo editado:", e);
+        }
+      }
+      
+      // Só libera a interface depois que absolutamente tudo estiver carregado e o reset() aplicado
+      setIsLoadingData(false);
+    };
+
+    loadAllData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId, reset]);
 
   const flattenResponse = (data: any): any[] => {
     if (!data) return [];
@@ -255,7 +305,6 @@ export default function CadastrarNucleo() {
     } catch(e) { return []; }
   };
 
-  // Auto-seleciona a menor vaga (slot) de núcleo livre no projeto
   useEffect(() => {
     if (editId) return;
     const proj = projetos.find(p => p && String(p.id) === String(projetoIdWatch));
@@ -269,58 +318,10 @@ export default function CadastrarNucleo() {
     }
   }, [projetoIdWatch, vagasOcupadasNoProjeto, editId, setFormValue, projetos]);
 
-  useEffect(() => {
-    if (editId) {
-      const fetchNucleo = async () => {
-        try {
-          const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
-          const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${authInstitute}`, { cache: "no-store" });
-          if (res.ok) {
-            const text = await res.text();
-            if (!text) return;
-            const data = JSON.parse(text);
-            if (data.message === "Workflow was started" || data.error) return;
-
-            const flatList = flattenResponse(data);
-
-            const nucleo = flatList.find(n => n && String(n.id || n.id_nucleo) === editId);
-
-            if (nucleo) {
-              reset({
-                nomeNucleo: nucleo.nome || nucleo.nome_nucleo || "",
-                espacoId: String(nucleo.espaco_id || ""),
-                projetoId: String(nucleo.projeto_id || ""),
-                modalidadeId: String(nucleo.modalidade_id || ""),
-                cidadeId: String(nucleo.cidade_id || ""),
-                uf: nucleo.uf || "",
-                bairroId: String(nucleo.bairro_id || ""),
-                numeroVaga: (nucleo.numero_vaga ?? nucleo.vaga_numero ?? nucleo.vaga_alocada ?? "") !== "" 
-                              ? String(nucleo.numero_vaga ?? nucleo.vaga_numero ?? nucleo.vaga_alocada) 
-                              : "1",
-                vagas: String(nucleo.vagas || "100"),
-                instrutor: nucleo.instrutor || nucleo.resp_nome || "",
-                dataInicio: nucleo.data_inicio || "",
-                dataFim: nucleo.data_fim || "",
-                ativo: nucleo.ativo !== false && nucleo.ativo !== 0 && nucleo.ativo !== "0",
-                aceitandoVagas: nucleo.aceitando_vagas === true || nucleo.aceitando_vagas === "true" || nucleo.aceitando_vagas === 1,
-              });
-            }
-          }
-        } catch (e) {
-          console.error("Erro ao carregar dados do núcleo", e);
-        } finally {
-          setIsLoadingData(false);
-        }
-      };
-      fetchNucleo();
-    }
-  }, [editId, reset]);
-
   const onSubmit = async (data: any) => {
     try {
       const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
       
-      // Validação de Vaga de Núcleo Ocupada
       if (data.numeroVaga && vagasOcupadasNoProjeto[Number(data.numeroVaga)]) {
         alert(`A Vaga de Núcleo Nº ${data.numeroVaga} já está ocupada por "${vagasOcupadasNoProjeto[Number(data.numeroVaga)]}". Escolha uma vaga livre.`);
         return;
@@ -339,7 +340,6 @@ export default function CadastrarNucleo() {
         }
       });
 
-      // Passa os campos específicos explícitos para o N8N
       if (data.numeroVaga) {
         formData.append("numero_vaga", data.numeroVaga);
       }
@@ -364,19 +364,9 @@ export default function CadastrarNucleo() {
     }
   };
 
-  if (isLoadingData) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-        <p className="text-slate-500 font-medium">Carregando dados do núcleo...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12 font-sans">
+    <div className="space-y-6 max-w-5xl mx-auto pb-12 font-sans relative">
       
-      {/* Banner de Topo */}
       <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
@@ -397,9 +387,17 @@ export default function CadastrarNucleo() {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {isLoadingData && (
+        <div className="absolute inset-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl min-h-[500px]">
+          <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Carregando dados do núcleo...</h2>
+          <p className="text-slate-500 dark:text-slate-400 mt-2">Isso pode levar alguns segundos.</p>
+        </div>
+      )}
+
+      {!isLoadingData && (
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 pb-12 opacity-100 transition-opacity duration-300">
         
-        {/* IDENTIFICAÇÃO E LOCALIZAÇÃO GERAL */}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
           <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100 dark:border-slate-800">
             <MapPin className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
@@ -621,6 +619,7 @@ export default function CadastrarNucleo() {
           </button>
         </div>
       </form>
+      )}
     </div>
   );
 }
