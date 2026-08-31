@@ -401,7 +401,9 @@ export default function InscricaoEventoPublica() {
 
   // Tela de sucesso — Ficha de Inscrição
   if (actionData?.success || existingTicket) {
-    const resultObj = actionData?.result || existingTicket;
+    let resultObj = actionData?.result || existingTicket;
+    if (resultObj && Array.isArray(resultObj.value)) { resultObj = resultObj.value[0]; }
+    else if (Array.isArray(resultObj)) { resultObj = resultObj[0]; }
     const protocolo = resultObj?.protocolo || resultObj?.id || Math.random().toString(36).slice(2,10).toUpperCase();
     const dataHoje = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
     return (
@@ -442,8 +444,8 @@ export default function InscricaoEventoPublica() {
 
               {/* Dados principais */}
               <div className="p-5 grid grid-cols-1 gap-4">
-                <FichaRow label="Nome" value={resultObj?.nome || form.nome || '—'} />
-                <FichaRow label="CPF" value={resultObj?.cpf || form.cpf || '—'} mono />
+                <FichaRow label="Nome" value={resultObj?.aluno_nome || resultObj?.nome || form.nome || '—'} />
+                <FichaRow label="CPF" value={resultObj?.aluno_cpf || resultObj?.cpf || form.cpf || '—'} mono />
                 {(resultObj?.data_nascimento || form.data_nascimento) && <FichaRow label="Data de Nascimento" value={new Date((resultObj?.data_nascimento || form.data_nascimento)+'T12:00:00').toLocaleDateString('pt-BR')} />}
                 {(resultObj?.whatsapp || form.whatsapp) && <FichaRow label="WhatsApp" value={resultObj?.whatsapp || form.whatsapp} />}
                 {(resultObj?.email || form.email) && <FichaRow label="E-mail" value={resultObj?.email || form.email} />}
