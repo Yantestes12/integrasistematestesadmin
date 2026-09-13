@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Plus, Search, Edit3, Loader2, Layers, Building2, Trash2, AlertTriangle, Clock, X, FileText } from "lucide-react";
+import { Plus, Search, Edit3, Loader2, Layers, Building2, Trash2, AlertTriangle, Clock, X, FileText, ChevronDown, ChevronUp, ClipboardCheck } from "lucide-react";
 
 export interface PropostaItem {
   id: string | number;
@@ -16,7 +16,114 @@ export interface PropostaItem {
   aplicabilidade?: string;
   vagas_por_nucleo?: string | number;
   total_nucleos?: number;
+  // Campos para análise de pendências
+  vigencia_inicio?: string;
+  periodos_count?: number;
+  limites_cargos_count?: number;
 }
+
+// ─── Painel de Pendências ──────────────────────────────────────────────────
+const CAMPOS_PENDENCIA: { key: keyof PropostaItem | 'periodos' | 'limites_cargos'; label: string }[] = [
+  { key: 'numero_proposta',    label: 'Número de Proposta' },
+  { key: 'termo_fomento',      label: 'Termo de Fomento' },
+  { key: 'numero_processo_adm',label: 'Número do Processo Administrativo' },
+  { key: 'numero_transferegov',label: 'Número do Transfere.gov' },
+  { key: 'aplicabilidade',     label: 'Aplicabilidade' },
+  { key: 'vigencia_inicio',    label: 'Data de Início da Vigência' },
+  { key: 'periodos',           label: 'Nenhum Período configurado' },
+  { key: 'limites_cargos',     label: 'Limites de Membros da Equipe não configurados' },
+];
+
+function isCampoVazio(item: PropostaItem, key: string): boolean {
+  if (key === 'periodos') return !item.periodos_count || item.periodos_count === 0;
+  if (key === 'limites_cargos') return !item.limites_cargos_count || item.limites_cargos_count === 0;
+  const val = (item as any)[key];
+  return !val || String(val).trim() === '' || val === '0' || val === 0;
+}
+
+function PendenciasPanel({ propostas, currentInstitute }: { propostas: PropostaItem[]; currentInstitute: string }) {
+  const [open, setOpen] = useState(true);
+
+  const propostasComPendencia = propostas.map(p => ({
+    proposta: p,
+    campos: CAMPOS_PENDENCIA.filter(c => isCampoVazio(p, c.key)).map(c => c.label),
+  })).filter(x => x.campos.length > 0);
+
+  if (propostasComPendencia.length === 0) {
+    return (
+      <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl px-5 py-4 flex items-center gap-3">
+        <ClipboardCheck size={20} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+        <span className="text-sm font-bold text-emerald-800 dark:text-emerald-300">Todas as propostas estão com as informações completas. Nenhuma pendência encontrada.</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-300 dark:border-amber-700/70 rounded-2xl overflow-hidden shadow-sm">
+      {/* Header */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-amber-100/60 dark:hover:bg-amber-900/30 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-amber-200 dark:bg-amber-800/60 flex items-center justify-center shrink-0">
+            <AlertTriangle size={16} className="text-amber-700 dark:text-amber-300" />
+          </div>
+          <div>
+            <span className="text-sm font-extrabold text-amber-900 dark:text-amber-200">
+              {propostasComPendencia.length} {propostasComPendencia.length === 1 ? 'proposta com pendência' : 'propostas com pendências'}
+            </span>
+            <p className="text-xs text-amber-700 dark:text-amber-400 font-medium mt-0.5">
+              Campos obrigatórios faltando — clique para {open ? 'ocultar' : 'ver'} detalhes
+            </p>
+          </div>
+        </div>
+        {open ? (
+          <ChevronUp size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />
+        ) : (
+          <ChevronDown size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />
+        )}
+      </button>
+
+      {/* Body */}
+      {open && (
+        <div className="border-t border-amber-200 dark:border-amber-700/50 divide-y divide-amber-200/70 dark:divide-amber-800/40">
+          {propostasComPendencia.map(({ proposta, campos }) => (
+            <div key={proposta.id} className="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-extrabold text-amber-800 dark:text-amber-200 bg-amber-200/70 dark:bg-amber-800/50 px-2 py-0.5 rounded-md">
+                    ID #{proposta.id}
+                  </span>
+                  <span className="text-sm font-bold text-slate-800 dark:text-white truncate">{proposta.nome}</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {campos.map(campo => (
+                    <span
+                      key={campo}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/50"
+                    >
+                      <X size={10} className="shrink-0" />
+                      {campo}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <Link
+                to={`/admin/cadastrar-projeto?edit=${proposta.id}`}
+                className="shrink-0 inline-flex items-center gap-1.5 text-xs font-extrabold px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors"
+              >
+                <Edit3 size={13} />
+                Preencher
+              </Link>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+// ───────────────────────────────────────────────────────────────────────────
 
 export default function Propostas() {
   const [propostas, setPropostas] = useState<PropostaItem[]>([]);
@@ -24,6 +131,8 @@ export default function Propostas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentInstitute, setCurrentInstitute] = useState("IBRASE");
   const [globalFilter, setGlobalFilter] = useState("all");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [pendenciasOpen, setPendenciasOpen] = useState(true);
 
   // Estado do Modal de Confirmação com Contagem de 25 Segundos e Animação FÍSICA de Papel Rasgando por clip-path
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -36,6 +145,10 @@ export default function Propostas() {
     const savedInstitute = localStorage.getItem("auth_institute") || "IBRASE";
     setCurrentInstitute(savedInstitute);
     fetchPropostas(savedInstitute);
+    // Verifica se é admin
+    const cargo = (localStorage.getItem('auth_cargo') || '').toLowerCase();
+    const accountType = (localStorage.getItem('auth_account_type') || '').toLowerCase();
+    setIsAdmin(accountType === 'admin' || cargo.includes('admin') || cargo.includes('coord') || cargo.includes('geral') || cargo.includes('diretor'));
 
     const updateGlobalFilter = () => {
       setGlobalFilter(localStorage.getItem("global_projeto_filter") || "all");
@@ -141,6 +254,38 @@ export default function Propostas() {
         }
       }
 
+      // ── Campos de Pendência ──────────────────────────────────
+      // Vigência início
+      const vigencia_inicio = item.vigencia_inicio || item.vigenciainicio || item.data_inicio_vigencia
+        || item.data_inicio || item.dataInicioVigencia || item.vigencia?.dataInicio || item.vigencia?.inicio || "";
+
+      // Períodos configurados
+      let periodos_count = 0;
+      if (Array.isArray(item.periodos) && item.periodos.length > 0) {
+        periodos_count = item.periodos.length;
+      } else if (item.periodos_json) {
+        try {
+          const pp = typeof item.periodos_json === 'string' ? JSON.parse(item.periodos_json) : item.periodos_json;
+          if (Array.isArray(pp)) periodos_count = pp.length;
+        } catch (e) {}
+      }
+
+      // Limites de cargos configurados
+      let limites_cargos_count = 0;
+      if (Array.isArray(item.limites_cargos)) {
+        limites_cargos_count = item.limites_cargos.length;
+      } else if (typeof item.limites_cargos === 'string') {
+        try {
+          const lc = JSON.parse(item.limites_cargos);
+          if (Array.isArray(lc)) limites_cargos_count = lc.length;
+        } catch (e) {}
+      }
+      // Fallback: colunas antigas
+      if (limites_cargos_count === 0 && (item.qtd_instrutor || item.limite_auxiliares || item.qtd_coord_geral)) {
+        limites_cargos_count = 1;
+      }
+      // ─────────────────────────────────────────────────────────
+
       return {
         id,
         nome,
@@ -155,6 +300,9 @@ export default function Propostas() {
         aplicabilidade,
         vagas_por_nucleo: vagasPN,
         total_nucleos: totalNucleos,
+        vigencia_inicio,
+        periodos_count,
+        limites_cargos_count,
       };
     });
   };
@@ -162,11 +310,12 @@ export default function Propostas() {
   const fetchPropostas = async (instituteName: string) => {
     let hasCache = false;
     try {
-      const cachedList = sessionStorage.getItem(`cache_projetos_list_${instituteName.toUpperCase()}`);
+      const cachedList = sessionStorage.getItem(`cache_projetos_parsed_${instituteName.toUpperCase()}`);
       if (cachedList) {
         const parsed = JSON.parse(cachedList);
         if (Array.isArray(parsed) && parsed.length > 0) {
           setPropostas(parsed);
+          setLoading(false);
           hasCache = true;
         }
       }
@@ -175,11 +324,18 @@ export default function Propostas() {
     if (!hasCache) setLoading(true);
 
     try {
-      const n8nEndpoint = `https://w.ibrase.com.br/webhook/projetos-get?instituto=${instituteName.toUpperCase()}`;
-      const res = await fetch(n8nEndpoint, { method: 'GET', cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        
+      let data = null;
+      const raw = sessionStorage.getItem(`cache_raw_projetos_${instituteName.toUpperCase()}`);
+      if (raw) {
+        data = JSON.parse(raw);
+      } else {
+        const n8nEndpoint = `https://w.ibrase.com.br/webhook/projetos-get?instituto=${instituteName.toUpperCase()}`;
+        const res = await fetch(n8nEndpoint, { method: 'GET', cache: "no-store" });
+        if (res.ok) {
+          data = await res.json();
+        }
+      }
+      if (data) {
         if (data.message === "Workflow was started" || (Array.isArray(data) && data.length > 0 && data[0].message === "Workflow was started")) {
           if (!hasCache) {
             alert("O Webhook do N8N não retornou os dados. Mude a opção 'Respond' para 'Using Respond to Webhook Node' no n8n.");
@@ -192,7 +348,7 @@ export default function Propostas() {
         if (parsed.length > 0) {
           const sorted = parsed.sort((a, b) => Number(b.id) - Number(a.id));
           setPropostas(sorted);
-          try { sessionStorage.setItem(`cache_projetos_list_${instituteName.toUpperCase()}`, JSON.stringify(sorted)); } catch(e) {}
+          try { sessionStorage.setItem(`cache_projetos_parsed_${instituteName.toUpperCase()}`, JSON.stringify(sorted)); } catch(e) {}
           setLoading(false);
           return;
         }
@@ -316,6 +472,11 @@ export default function Propostas() {
         .anim-physical-right { animation: physicalTearRight 1.1s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
         .anim-trash-lid-open { animation: trashLidPhysical 1.1s ease-in-out forwards; transform-origin: left bottom; }
       `}</style>
+
+      {/* ── Painel de Pendências (apenas admin) ── */}
+      {isAdmin && !loading && propostas.length > 0 && (
+        <PendenciasPanel propostas={propostas} currentInstitute={currentInstitute} />
+      )}
 
       {/* Top Banner / Breadcrumb */}
       <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors">

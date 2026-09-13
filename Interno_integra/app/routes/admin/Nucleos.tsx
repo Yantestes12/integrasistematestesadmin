@@ -41,6 +41,10 @@ let projetosCache: Record<number, string> = {};
 let modalidadesCache: Record<number, string> = {};
 let espacosCache: Record<number, any> = {};
 
+// Versão do cache — incrementar sempre que o schema de colunas do Supabase mudar.
+// Isso força limpeza do sessionStorage stale quando a versão não bater.
+const NUCLEOS_CACHE_VERSION = 3;
+
 export default function Nucleos() {
   const [nucleos, setNucleos] = useState<NucleoItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,6 +58,13 @@ export default function Nucleos() {
   useEffect(() => {
     const inst = localStorage.getItem("auth_institute") || "IBRASE";
     setCurrentInstitute(inst);
+
+    // ─ Cache versioning: limpa cache stale se a versão não bater ─
+    const storedVersion = Number(sessionStorage.getItem(`cache_nucleos_version_${inst.toUpperCase()}`) || 0);
+    if (storedVersion < NUCLEOS_CACHE_VERSION) {
+      sessionStorage.removeItem(`cache_nucleos_parsed_${inst.toUpperCase()}`);
+      sessionStorage.removeItem(`cache_raw_nucleos_${inst.toUpperCase()}`);
+    }
 
     let hasCache = false;
     try {
@@ -85,7 +96,13 @@ export default function Nucleos() {
       });
     }
 
-    loadAll();
+    if (!hasCache) {
+      loadAll();
+    } else {
+      // Mesmo com cache, atualizamos em background
+      loadAll();
+    }
+    
     return () => window.removeEventListener("globalFilterChanged", updateGlobalFilter);
   }, []);
 
@@ -93,19 +110,23 @@ export default function Nucleos() {
 
   const fetchProjetos = async (instituteName: string) => {
     try {
-      const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
-      if (res.ok) {
-        try {
+      const raw = sessionStorage.getItem(`cache_raw_projetos_${instituteName.toUpperCase()}`);
+      let list = [];
+      if (raw) {
+        list = JSON.parse(raw);
+      } else {
+        const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
+        if (res.ok) {
           const text = await res.text();
           const data = JSON.parse(text);
-          const list = flattenResponse(data);
-          list.forEach((p: any) => {
-            if (p.id && p.nome) {
-              projetosCache[Number(p.id)] = p.nome;
-            }
-          });
-        } catch (e) {}
+          list = flattenResponse(data);
+        }
       }
+      list.forEach((p: any) => {
+        if (p.id && p.nome) {
+          projetosCache[Number(p.id)] = p.nome;
+        }
+      });
     } catch (e) {
       console.warn("Erro ao buscar projetos para mapear nomes:", e);
     }
@@ -113,19 +134,23 @@ export default function Nucleos() {
 
   const fetchModalidades = async (instituteName: string) => {
     try {
-      const res = await fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
-      if (res.ok) {
-        try {
+      const raw = sessionStorage.getItem(`cache_raw_modalidades_${instituteName.toUpperCase()}`);
+      let list = [];
+      if (raw) {
+        list = JSON.parse(raw);
+      } else {
+        const res = await fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
+        if (res.ok) {
           const text = await res.text();
           const data = JSON.parse(text);
-          const list = flattenResponse(data);
-          list.forEach((m: any) => {
-            if (m.id && m.nome) {
-              modalidadesCache[Number(m.id)] = m.nome;
-            }
-          });
-        } catch (e) {}
+          list = flattenResponse(data);
+        }
       }
+      list.forEach((m: any) => {
+        if (m.id && m.nome) {
+          modalidadesCache[Number(m.id)] = m.nome;
+        }
+      });
     } catch (e) {
       console.warn("Erro ao buscar modalidades para mapear nomes:", e);
     }
@@ -133,19 +158,23 @@ export default function Nucleos() {
 
   const fetchEspacos = async (instituteName: string) => {
     try {
-      const res = await fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
-      if (res.ok) {
-        try {
+      const raw = sessionStorage.getItem(`cache_raw_espacos_${instituteName.toUpperCase()}`);
+      let list = [];
+      if (raw) {
+        list = JSON.parse(raw);
+      } else {
+        const res = await fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
+        if (res.ok) {
           const text = await res.text();
           const data = JSON.parse(text);
-          const list = flattenResponse(data);
-          list.forEach((e: any) => {
-            if (e.id) {
-              espacosCache[Number(e.id)] = e;
-            }
-          });
-        } catch (e) {}
+          list = flattenResponse(data);
+        }
       }
+      list.forEach((e: any) => {
+        if (e.id) {
+          espacosCache[Number(e.id)] = e;
+        }
+      });
     } catch (e) {
       console.warn("Erro ao buscar espaços para mapear bairros:", e);
     }
@@ -238,16 +267,13 @@ export default function Nucleos() {
       }
 
       // 4. VAGA DO NÚCLEO (Número da Vaga Alocada no Projeto)
-      let numeroVaga = item.numero_vaga;
-      if (numeroVaga === undefined || numeroVaga === null || numeroVaga === "") {
-        numeroVaga = item.vaga_numero;
+      let numeroVaga: string | number = item.numero_vaga ?? item.vaga_numero ?? item.n_vaga ?? item.vaga_numero_alocado ?? item.vaga_alocada ?? item.slot_vaga ?? item.vaga_slot ?? "";
+      // Normaliza: null, undefined, string 'null', string vazia → ''
+      if (numeroVaga === null || numeroVaga === undefined || String(numeroVaga).trim() === '' || String(numeroVaga) === 'null') {
+        numeroVaga = "";
       }
-      if (numeroVaga === undefined || numeroVaga === null || numeroVaga === "") {
-        numeroVaga = item.vaga_alocada;
-      }
-      if (numeroVaga === undefined || numeroVaga === null || numeroVaga === "") {
-        numeroVaga = "—";
-      }
+      const semVaga = !numeroVaga || numeroVaga === "";
+      if (semVaga) numeroVaga = "—";
 
       // 5. INSTRUTOR E ENDEREÇO
       let instrutor = item.instrutor;
@@ -270,7 +296,7 @@ export default function Nucleos() {
         nome,
         projeto_id: item.projeto_id,
         projeto_nome: projetoNome,
-        modalidade_id: item.modalidade_id,
+        modalidade_id: item.modalidade_id || targetModId,
         modalidade_nome: modalidadeNome,
         bairro: bairroNome,
         bairro_id: item.bairro_id,
@@ -291,16 +317,21 @@ export default function Nucleos() {
 
     let fetchedData = null;
     try {
-      const n8nEndpoint = `https://w.ibrase.com.br/webhook/nucleos-get?instituto=${instituteName.toUpperCase()}`;
-      
-      const res = await fetch(n8nEndpoint, { method: 'GET', cache: 'no-store' });
-      if (res.ok) {
-        const text = await res.text();
-        if (text) {
-          try {
-            fetchedData = JSON.parse(text);
-          } catch (e) {
-            console.warn("N8N returned non-JSON:", text);
+      const raw = sessionStorage.getItem(`cache_raw_nucleos_${instituteName.toUpperCase()}`);
+      if (raw) {
+        fetchedData = JSON.parse(raw);
+      } else {
+        const n8nEndpoint = `https://w.ibrase.com.br/webhook/nucleos-get?instituto=${instituteName.toUpperCase()}`;
+        
+        const res = await fetch(n8nEndpoint, { method: 'GET', cache: 'no-store' });
+        if (res.ok) {
+          const text = await res.text();
+          if (text) {
+            try {
+              fetchedData = JSON.parse(text);
+            } catch (e) {
+              console.warn("N8N returned non-JSON:", text);
+            }
           }
         }
       }
@@ -321,7 +352,10 @@ export default function Nucleos() {
               return aVaga - bVaga;
             });
             setNucleos(sorted);
-            try { sessionStorage.setItem(`cache_nucleos_parsed_${instituteName.toUpperCase()}`, JSON.stringify(sorted)); } catch(e) {}
+            try {
+              sessionStorage.setItem(`cache_nucleos_parsed_${instituteName.toUpperCase()}`, JSON.stringify(sorted));
+              sessionStorage.setItem(`cache_nucleos_version_${instituteName.toUpperCase()}`, String(NUCLEOS_CACHE_VERSION));
+            } catch(e) {}
           }
         }
     } catch (e) {
@@ -482,9 +516,15 @@ export default function Nucleos() {
 
                       {/* Modalidade */}
                       <td className="py-3 md:py-4 px-3 md:px-4">
-                        <span className="font-semibold text-slate-700 dark:text-slate-300 text-sm md:text-base">
-                          {item.modalidade_nome}
-                        </span>
+                        {item.modalidade_nome && item.modalidade_nome !== "—" ? (
+                          <span className="font-semibold text-slate-700 dark:text-slate-300 text-sm md:text-base">
+                            {item.modalidade_nome}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700/60">
+                            ⚠ Sem modalidade
+                          </span>
+                        )}
                       </td>
 
                       {/* Instrutor */}
@@ -494,11 +534,17 @@ export default function Nucleos() {
                         </span>
                       </td>
 
-                      {/* Vaga do Núcleo (Exibe o número da vaga exato) */}
+                      {/* Vaga do Núcleo */}
                       <td className="py-3 md:py-4 px-3 md:px-4 text-center">
-                        <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs md:text-sm font-extrabold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/60 shadow-2xs">
-                          {item.numero_vaga !== "—" ? `Nº ${item.numero_vaga}` : "Sem Vaga"}
-                        </span>
+                        {item.numero_vaga !== "—" ? (
+                          <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs md:text-sm font-extrabold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/60 shadow-2xs">
+                            Nº {item.numero_vaga}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700/60">
+                            ⚠ Sem vaga
+                          </span>
+                        )}
                       </td>
 
                       {/* Status Captação (Removido) */}
