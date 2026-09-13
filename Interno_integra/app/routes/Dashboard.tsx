@@ -33,7 +33,9 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
-  Loader2
+  Loader2,
+  Heart,
+  Target
 } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -527,6 +529,7 @@ export default function Dashboard() {
   const [espacosCount, setEspacosCount] = useState(0);
   const [modalidadesCache, setModalidadesCache] = useState<Record<number, string>>({});
   const [projetosCache, setProjetosCache] = useState<Record<number, string>>({});
+  const [propostasPendenciasCount, setPropostasPendenciasCount] = useState(0);
 
   // Estados e filtros refinados para Gestão de Núcleos no Pedagógico
   const [nucleoFilterStatus, setNucleoFilterStatus] = useState<"todos" | "abertos" | "pausados">("todos");
@@ -707,7 +710,53 @@ export default function Dashboard() {
             });
             setProjetosCache(pCache);
             setPropostasCount(flatList.length);
-            try { sessionStorage.setItem(`cache_projetos_count_${inst}`, flatList.length.toString()); } catch (e) {}
+
+            // Calcula pendências de propostas para o Foco de Hoje
+            let pendencias = 0;
+            flatList.forEach((item: any) => {
+              const isAtivo = item.ativo !== false && item.status !== false && item.status !== "inativo";
+              if (!isAtivo) return; // Só considera ativas
+
+              const missing = [
+                item.numero_proposta || item.numeroProposta || item.identificacao?.numeroProposta,
+                item.termo_fomento || item.termoFomento || item.identificacao?.termoFomento,
+                item.numero_processo_adm || item.numeroProcessoAdm || item.identificacao?.numeroProcessoAdm,
+                item.numero_transferegov || item.numeroTransfereGov || item.identificacao?.numeroTransfereGov,
+                item.aplicabilidade || item.identificacao?.aplicabilidade,
+                item.vigencia_inicio || item.vigenciainicio || item.data_inicio_vigencia || item.data_inicio || item.dataInicioVigencia || item.vigencia?.dataInicio || item.vigencia?.inicio,
+              ].some(val => !val || String(val).trim() === '' || val === '0' || val === 0);
+
+              let periodos_count = 0;
+              if (Array.isArray(item.periodos) && item.periodos.length > 0) periodos_count = item.periodos.length;
+              else if (item.periodos_json) {
+                try {
+                  const pp = typeof item.periodos_json === 'string' ? JSON.parse(item.periodos_json) : item.periodos_json;
+                  if (Array.isArray(pp)) periodos_count = pp.length;
+                } catch(e) {}
+              }
+
+              let limites_cargos_count = 0;
+              if (Array.isArray(item.limites_cargos)) limites_cargos_count = item.limites_cargos.length;
+              else if (typeof item.limites_cargos === 'string') {
+                try {
+                  const lc = JSON.parse(item.limites_cargos);
+                  if (Array.isArray(lc)) limites_cargos_count = lc.length;
+                } catch(e) {}
+              }
+              if (limites_cargos_count === 0 && (item.qtd_instrutor || item.limite_auxiliares || item.qtd_coord_geral)) {
+                limites_cargos_count = 1;
+              }
+
+              if (missing || periodos_count === 0 || limites_cargos_count === 0) {
+                pendencias++;
+              }
+            });
+            setPropostasPendenciasCount(pendencias);
+
+            try { 
+              sessionStorage.setItem(`cache_projetos_count_${inst}`, flatList.length.toString()); 
+              sessionStorage.setItem(`cache_projetos_list_${inst}`, JSON.stringify(flatList));
+            } catch (e) {}
           }).catch(() => {});
 
         const pEspacos = fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${inst}`, fetchOpts)
@@ -754,6 +803,7 @@ export default function Dashboard() {
               if (m.id && m.nome) modCache[Number(m.id)] = m.nome;
             });
             setModalidadesCache(modCache);
+            try { sessionStorage.setItem(`cache_modalidades_list_${inst}`, JSON.stringify(flatList)); } catch (e) {}
           }).catch(() => {});
 
         await Promise.allSettled([pNucleos, pProjetos, pEspacos, pMatriculas]);
@@ -1356,6 +1406,85 @@ export default function Dashboard() {
     <div className="space-y-6 max-w-7xl mx-auto pt-2 pb-12 font-sans transition-colors duration-200">
       
       {/* ========================================================================= */}
+      {/* WIDGETS DE GAMIFICAÇÃO E PROPÓSITO (UX)                                   */}
+      {/* ========================================================================= */}
+      {activeView !== "pedagogico" && (
+        <MotionSection className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Senso de Propósito - Só exibe se já tiver carregado dados reais maiores que zero */}
+          {!loading && metrics.total > 0 && (
+          <div className="md:col-span-1 bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-900/20 border border-rose-200 dark:border-rose-800 p-5 rounded-2xl shadow-sm flex items-start gap-4 hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+            <div className="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-rose-500 shrink-0">
+              <Heart className="w-6 h-6 animate-pulse" />
+            </div>
+            <div>
+              <h3 className="text-[10px] sm:text-xs font-black text-rose-900 dark:text-rose-100 uppercase tracking-widest mb-1.5 opacity-80">Nosso Impacto</h3>
+              <p className="text-xs text-rose-800 dark:text-rose-200 font-medium leading-relaxed">
+                O seu trabalho já ajudou a organizar a vida de <strong className="text-xl font-black mx-1">{metrics.total}</strong> alunos matriculados. Você faz a diferença! 💖
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Foco de Hoje (Inbox Zero) - Apenas Administrativo (não aparece na tab Pedagógica) */}
+        {!isPurePedagogico && activeView !== "pedagogico" && (
+          <div className={`${(!loading && metrics.total > 0) ? 'md:col-span-2' : 'md:col-span-3'} bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex flex-col justify-center relative overflow-hidden group hover:shadow-md transition-all duration-300`}>
+            <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 rounded-bl-full -z-10 group-hover:scale-110 transition-transform duration-700"></div>
+            
+            {/* Se houver pendências em propostas ou núcleos pausados */}
+            {(nucleoStats.pausados > 0 || propostasPendenciasCount > 0) ? (
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl shrink-0 border border-amber-200/50 dark:border-amber-800/50 group-hover:rotate-3 transition-transform">
+                  <Target className="w-6 h-6" />
+                </div>
+                <div className="flex-1 w-full">
+                  <h3 className="text-[10px] sm:text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest mb-2 flex items-center justify-between">
+                    Foco de Hoje
+                    <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full font-bold">
+                      {(nucleoStats.pausados > 0 ? 1 : 0) + (propostasPendenciasCount > 0 ? 1 : 0)} Pendência{((nucleoStats.pausados > 0 ? 1 : 0) + (propostasPendenciasCount > 0 ? 1 : 0)) > 1 ? 's' : ''}
+                    </span>
+                  </h3>
+                  <div className="space-y-2">
+                    {/* Pendência de Propostas */}
+                    {propostasPendenciasCount > 0 && (
+                      <Link to="/admin/propostas" className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-100 hover:border-slate-300 dark:hover:bg-slate-800 dark:hover:border-slate-600 transition-colors cursor-pointer group/link">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></div>
+                          <span>Existem <strong>{propostasPendenciasCount} {propostasPendenciasCount === 1 ? 'proposta' : 'propostas'}</strong> com informações ou configuração pendente.</span>
+                        </div>
+                        <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover/link:text-blue-500 group-hover/link:translate-x-1 transition-all" />
+                      </Link>
+                    )}
+
+                    {/* Pendência de Núcleos */}
+                    {nucleoStats.pausados > 0 && (
+                      <Link to="/admin/nucleos" className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-100 hover:border-slate-300 dark:hover:bg-slate-800 dark:hover:border-slate-600 transition-colors cursor-pointer group/link">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></div>
+                          <span>Existem <strong>{nucleoStats.pausados} {nucleoStats.pausados === 1 ? 'núcleo' : 'núcleos'}</strong> inativos ou precisando de revisão na gestão.</span>
+                        </div>
+                        <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover/link:text-blue-500 group-hover/link:translate-x-1 transition-all" />
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-5 text-left h-full">
+                <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-black text-slate-800 dark:text-emerald-100 tracking-tight">Tudo limpo por hoje!</h3>
+                  <p className="text-xs text-slate-500 dark:text-emerald-200/70 font-medium mt-0.5">Nenhuma pendência crítica de núcleos ("Inbox Zero"). Você está voando! 🚀</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </MotionSection>
+      )}
+
+      {/* ========================================================================= */}
       {/* VISÃO PEDAGÓGICA                                                          */}
       {/* ========================================================================= */}
       {activeView === "pedagogico" ? (
@@ -1415,7 +1544,11 @@ export default function Dashboard() {
                   </div>
                   <div className="flex items-baseline gap-2">
                     <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-                      {metrics.total.toLocaleString("pt-BR")}
+                      {loading && metrics.total === 0 ? (
+                        <div className="h-8 sm:h-10 w-24 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse inline-block translate-y-1"></div>
+                      ) : (
+                        metrics.total.toLocaleString("pt-BR")
+                      )}
                     </span>
                     <span className="text-xs font-bold text-slate-400 dark:text-slate-500">alunos</span>
                   </div>
@@ -1440,7 +1573,11 @@ export default function Dashboard() {
                   </div>
                   <div className="flex items-baseline gap-2">
                     <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-                      {metrics.nucleosStats.length}
+                      {loading && metrics.nucleosStats.length === 0 ? (
+                        <div className="h-8 sm:h-10 w-16 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse inline-block translate-y-1"></div>
+                      ) : (
+                        metrics.nucleosStats.length
+                      )}
                     </span>
                     <span className="text-xs font-bold text-slate-400 dark:text-slate-500">polos</span>
                   </div>
@@ -1465,7 +1602,11 @@ export default function Dashboard() {
                   </div>
                   <div className="flex items-baseline gap-2">
                     <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-                      {metrics.mediaIdade}
+                      {loading && metrics.mediaIdade === 0 ? (
+                        <div className="h-8 sm:h-10 w-16 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse inline-block translate-y-1"></div>
+                      ) : (
+                        metrics.mediaIdade
+                      )}
                     </span>
                     <span className="text-xs font-bold text-slate-400 dark:text-slate-500">anos</span>
                   </div>
@@ -1494,10 +1635,18 @@ export default function Dashboard() {
                       <div>
                         <div className="flex items-baseline gap-2">
                           <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white truncate max-w-[140px]" title={topFaixa?.label}>
-                            {topFaixa ? topFaixa.label.split('(')[0].trim() : '—'}
+                            {loading && (!topFaixa || topFaixa.total === 0) ? (
+                              <div className="h-7 sm:h-8 w-20 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse inline-block translate-y-0.5"></div>
+                            ) : (
+                              topFaixa ? topFaixa.label.split('(')[0].trim() : '—'
+                            )}
                           </span>
                           <span className="text-[11px] font-black text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-200/80 dark:border-amber-800/60">
-                            {topFaixa ? `${topFaixa.percent}%` : '0%'}
+                            {loading && (!topFaixa || topFaixa.total === 0) ? (
+                              <div className="h-4 w-8 bg-amber-200/50 dark:bg-amber-800/50 rounded-full animate-pulse inline-block"></div>
+                            ) : (
+                              topFaixa ? `${topFaixa.percent}%` : '0%'
+                            )}
                           </span>
                         </div>
                       </div>
@@ -1531,7 +1680,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <span className="text-xs font-black text-slate-700 dark:text-slate-300 bg-slate-100/80 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200/60 dark:border-slate-700">
-                      {metrics.total.toLocaleString("pt-BR")} alunos
+                      {loading && metrics.total === 0 ? "..." : metrics.total.toLocaleString("pt-BR")} alunos
                     </span>
                   </div>
 
