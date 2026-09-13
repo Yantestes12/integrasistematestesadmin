@@ -34,10 +34,24 @@ export default function CadastrarProjeto() {
   const [searchParams] = useSearchParams();
   
   let editModeId = searchParams.get("edit");
+  let focusPendenciasStr = searchParams.get("focus_pendencias");
   if (!editModeId && typeof window !== "undefined") {
     const urlParams = new URLSearchParams(window.location.search);
     editModeId = urlParams.get("edit");
+    focusPendenciasStr = urlParams.get("focus_pendencias");
   }
+  
+  const focusList = focusPendenciasStr ? focusPendenciasStr.split(',') : [];
+
+  const mapLabelToSection = (label: string) => {
+    if (['Nº Proposta', 'Termo de Fomento', 'Processo Adm', 'Transfere.gov', 'Aplicabilidade'].includes(label)) return 'identificacao';
+    if (label === 'Início da Vigência') return 'vigencia';
+    if (label === 'Períodos') return 'periodos';
+    if (label === 'Equipe') return 'equipe';
+    return '';
+  };
+
+  const sectionsToHighlight = Array.from(new Set(focusList.map(mapLabelToSection).filter(Boolean)));
 
   const methods = useForm<ProjetoFormData>({
     resolver: zodResolver(projetoSchema) as any,
@@ -109,11 +123,24 @@ export default function CadastrarProjeto() {
         </div>
 
         <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
-          <IdentificacaoSection />
-          <VigenciaSection />
-          <PeriodosSection />
+          <div id="section-identificacao" className={`transition-all duration-500 ${sectionsToHighlight.includes('identificacao') ? 'ring-4 ring-red-500 rounded-xl shadow-lg shadow-red-500/20' : ''}`}>
+            <IdentificacaoSection />
+          </div>
+          
+          <div id="section-vigencia" className={`transition-all duration-500 ${sectionsToHighlight.includes('vigencia') ? 'ring-4 ring-red-500 rounded-xl shadow-lg shadow-red-500/20' : ''}`}>
+            <VigenciaSection />
+          </div>
+          
+          <div id="section-periodos" className={`transition-all duration-500 ${sectionsToHighlight.includes('periodos') ? 'ring-4 ring-red-500 rounded-xl shadow-lg shadow-red-500/20' : ''}`}>
+            <PeriodosSection />
+          </div>
+          
           <ModalidadesSection />
-          <LimitesSection />
+          
+          <div id="section-equipe" className={`transition-all duration-500 ${sectionsToHighlight.includes('equipe') ? 'ring-4 ring-red-500 rounded-xl shadow-lg shadow-red-500/20' : ''}`}>
+            <LimitesSection />
+          </div>
+          
           <FaixaEtariaSection />
 
           {/* Status Section */}
@@ -166,6 +193,39 @@ export default function CadastrarProjeto() {
           </div>
         </form>
       </div>
+
+      {/* Barra Fixa de Pendências (Guia Rápido) */}
+      {focusList.length > 0 && (
+        <div className="fixed bottom-6 right-6 max-w-sm bg-white dark:bg-slate-900 border-2 border-red-500 rounded-2xl shadow-2xl p-4 z-50 animate-in slide-in-from-bottom-5">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">Pendências Detectadas</h3>
+          </div>
+          <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+            Clique nos botões abaixo para rolar até as seções que precisam ser corrigidas:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {sectionsToHighlight.map(sec => (
+              <button
+                key={sec}
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById(`section-${sec}`);
+                  if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Adiciona um piscar extra
+                    el.classList.add('bg-red-50');
+                    setTimeout(() => el.classList.remove('bg-red-50'), 1000);
+                  }
+                }}
+                className="text-xs font-bold px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/40 dark:hover:bg-red-900/60 dark:text-red-300 rounded-lg transition-colors capitalize"
+              >
+                {sec === 'identificacao' ? 'Identificação' : sec === 'vigencia' ? 'Vigência' : sec === 'periodos' ? 'Períodos' : 'Equipe'}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </FormProvider>
   );
 }

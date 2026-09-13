@@ -1432,7 +1432,7 @@ export default function Dashboard() {
         <MotionSection className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Senso de Propósito - Só exibe se já tiver carregado dados reais maiores que zero */}
           {!loading && metrics.total > 0 && (
-          <div className="md:col-span-1 bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-900/20 border border-rose-200 dark:border-rose-800 p-5 rounded-2xl shadow-sm flex items-start gap-4 hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+          <div className="md:col-span-1 self-start bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-900/20 border border-rose-200 dark:border-rose-800 p-5 rounded-2xl shadow-sm flex items-start gap-4 hover:-translate-y-1 hover:shadow-md transition-all duration-300">
             <div className="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-rose-500 shrink-0">
               <Heart className="w-6 h-6 animate-pulse" />
             </div>
@@ -1447,7 +1447,7 @@ export default function Dashboard() {
 
         {/* Foco de Hoje (Inbox Zero) - Apenas Administrativo (não aparece na tab Pedagógica) */}
         {!isPurePedagogico && activeView !== "pedagogico" && (
-          <div className={`${(!loading && metrics.total > 0) ? 'md:col-span-2' : 'md:col-span-3'} bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex flex-col justify-center relative overflow-hidden group hover:shadow-md transition-all duration-300`}>
+          <div className={`${(!loading && metrics.total > 0) ? 'md:col-span-2' : 'md:col-span-3'} self-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex flex-col justify-center relative overflow-hidden group hover:shadow-md transition-all duration-300`}>
             <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 rounded-bl-full -z-10 group-hover:scale-110 transition-transform duration-700"></div>
             
             {/* Se houver pendências em propostas ou núcleos pausados */}
@@ -1479,7 +1479,7 @@ export default function Dashboard() {
                 </div>
 
                 {pendenciasExpanded && (
-                  <div className="space-y-3 pl-1 mt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="space-y-3 pl-1 mt-2 animate-in fade-in slide-in-from-top-2 duration-300 max-h-[250px] overflow-y-auto pr-2">
                     {/* Pendência de Propostas (Destrinchado) */}
                     {propostasComPendencia.map(prop => (
                       <div key={prop.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 p-3.5 rounded-xl">
@@ -1498,7 +1498,7 @@ export default function Dashboard() {
                           </div>
                         </div>
                         <Link 
-                          to={`/admin/cadastrar-projeto?edit=${prop.id}`}
+                          to={`/admin/cadastrar-projeto?edit=${prop.id}&focus_pendencias=${encodeURIComponent(prop.campos.join(','))}`}
                           className="shrink-0 flex items-center gap-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 px-4 py-2 rounded-lg shadow-sm transition-colors"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
