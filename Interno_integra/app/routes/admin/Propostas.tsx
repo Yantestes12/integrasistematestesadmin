@@ -241,6 +241,19 @@ export default function Propostas() {
           totalNucleos = parsedMod.reduce((acc, curr) => acc + (Number(curr.limite) || 0), 0);
         }
       }
+      if (totalNucleos === 0) {
+        // Fallback for legacy fields or new `vagasNucleo` array
+        const vagasNucleoRaw = item.vagas_nucleo || item.vagasNucleo || [];
+        let parsedVagas = vagasNucleoRaw;
+        if (typeof parsedVagas === 'string') {
+          try { parsedVagas = JSON.parse(parsedVagas); } catch(e){}
+        }
+        if (Array.isArray(parsedVagas) && parsedVagas.length > 0) {
+          totalNucleos = parsedVagas.length;
+        } else {
+          totalNucleos = Number(item.limite_nucleos || item.qtd_nucleos || item.quantidade_nucleos || 0);
+        }
+      }
 
       // ── Campos de Pendência ──────────────────────────────────
       // Vigência início
@@ -599,11 +612,11 @@ export default function Propostas() {
                       </td>
 
                       <td className="py-3 md:py-4 px-3 md:px-4 text-center font-extrabold text-blue-700 dark:text-blue-400 text-sm md:text-base">
-                        {item.total_nucleos ? `${item.total_nucleos} núcleos` : "—"}
+                        {item.total_nucleos !== undefined && item.total_nucleos !== null && item.total_nucleos !== "" ? `${item.total_nucleos} núcleos` : "—"}
                       </td>
 
                       <td className="py-3 md:py-4 px-3 md:px-4 text-center font-extrabold text-indigo-700 dark:text-indigo-400 text-sm md:text-base">
-                        {item.vagas_por_nucleo ? `${item.vagas_por_nucleo} alunos` : "—"}
+                        {item.vagas_por_nucleo !== undefined && item.vagas_por_nucleo !== null && item.vagas_por_nucleo !== "" ? `${item.vagas_por_nucleo} alunos` : "—"}
                       </td>
 
                       <td className="py-3 md:py-4 px-3 md:px-4 text-center">
