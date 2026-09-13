@@ -84,8 +84,20 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
               break;
             }
           }
-          if (!mappedVagasNucleo) {
+          if (!mappedVagasNucleo || mappedVagasNucleo.length === 0) {
             mappedVagasNucleo = [];
+            
+            // Fallback para campos legados: auto-gera vagas vazias para forçar o preenchimento
+            const totalLegacy = Number(item.limite_nucleos || item.qtd_nucleos || item.quantidade_nucleos || 0);
+            if (totalLegacy > 0) {
+              for (let i = 0; i < totalLegacy; i++) {
+                mappedVagasNucleo.push({
+                  numero: i + 1,
+                  modalidadeId: "",
+                  modalidadeNome: "",
+                });
+              }
+            }
           } else {
             // Check if it's a legacy format (has 'limite' instead of 'numero')
             const isLegacy = mappedVagasNucleo.some((v: any) => v.limite !== undefined && v.numero === undefined);
