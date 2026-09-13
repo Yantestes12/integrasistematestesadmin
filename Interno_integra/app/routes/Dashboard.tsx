@@ -35,7 +35,9 @@ import {
   ChevronRight,
   Loader2,
   Heart,
-  Target
+  Target,
+  AlertTriangle,
+  Edit3
 } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 import { useEffect, useState, useMemo, useRef } from "react";
