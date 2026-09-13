@@ -42,8 +42,6 @@ function isCampoVazio(item: PropostaItem, key: string): boolean {
 }
 
 function PendenciasPanel({ propostas, currentInstitute }: { propostas: PropostaItem[]; currentInstitute: string }) {
-  const [open, setOpen] = useState(true);
-
   const propostasComPendencia = propostas.map(p => ({
     proposta: p,
     campos: CAMPOS_PENDENCIA.filter(c => isCampoVazio(p, c.key)).map(c => c.label),
@@ -60,11 +58,8 @@ function PendenciasPanel({ propostas, currentInstitute }: { propostas: PropostaI
 
   return (
     <div className="bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-300 dark:border-amber-700/70 rounded-2xl overflow-hidden shadow-sm">
-      {/* Header */}
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-amber-100/60 dark:hover:bg-amber-900/30 transition-colors"
-      >
+      {/* Header Fixo */}
+      <div className="w-full flex items-center justify-between px-5 py-4 text-left">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-amber-200 dark:bg-amber-800/60 flex items-center justify-center shrink-0">
             <AlertTriangle size={16} className="text-amber-700 dark:text-amber-300" />
@@ -74,20 +69,14 @@ function PendenciasPanel({ propostas, currentInstitute }: { propostas: PropostaI
               {propostasComPendencia.length} {propostasComPendencia.length === 1 ? 'proposta com pendência' : 'propostas com pendências'}
             </span>
             <p className="text-xs text-amber-700 dark:text-amber-400 font-medium mt-0.5">
-              Campos obrigatórios faltando — clique para {open ? 'ocultar' : 'ver'} detalhes
+              Campos obrigatórios faltando — complete o preenchimento para garantir o funcionamento.
             </p>
           </div>
         </div>
-        {open ? (
-          <ChevronUp size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />
-        ) : (
-          <ChevronDown size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />
-        )}
-      </button>
+      </div>
 
-      {/* Body */}
-      {open && (
-        <div className="border-t border-amber-200 dark:border-amber-700/50 divide-y divide-amber-200/70 dark:divide-amber-800/40">
+      {/* Body Fixo */}
+      <div className="border-t border-amber-200 dark:border-amber-700/50 divide-y divide-amber-200/70 dark:divide-amber-800/40">
           {propostasComPendencia.map(({ proposta, campos }) => (
             <div key={proposta.id} className="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex-1 min-w-0">
@@ -119,7 +108,6 @@ function PendenciasPanel({ propostas, currentInstitute }: { propostas: PropostaI
             </div>
           ))}
         </div>
-      )}
     </div>
   );
 }

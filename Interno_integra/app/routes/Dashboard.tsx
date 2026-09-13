@@ -529,7 +529,7 @@ export default function Dashboard() {
   const [espacosCount, setEspacosCount] = useState(0);
   const [modalidadesCache, setModalidadesCache] = useState<Record<number, string>>({});
   const [projetosCache, setProjetosCache] = useState<Record<number, string>>({});
-  const [propostasPendenciasCount, setPropostasPendenciasCount] = useState(0);
+  const [propostasComPendencia, setPropostasComPendencia] = useState<{ id: string | number, nome: string, campos: string[] }[]>([]);
 
   // Estados e filtros refinados para Gestão de Núcleos no Pedagógico
   const [nucleoFilterStatus, setNucleoFilterStatus] = useState<"todos" | "abertos" | "pausados">("todos");
@@ -711,20 +711,30 @@ export default function Dashboard() {
             setProjetosCache(pCache);
             setPropostasCount(flatList.length);
 
-            // Calcula pendências de propostas para o Foco de Hoje
-            let pendencias = 0;
+            // Calcula pendências detalhadas de propostas para o Foco de Hoje
+            const propostasPendentesLocal: { id: string | number, nome: string, campos: string[] }[] = [];
+            
+            const checks = [
+              { key: 'numeroProposta', label: 'Nº Proposta', getValue: (i: any) => i.numero_proposta || i.numeroProposta || i.identificacao?.numeroProposta },
+              { key: 'termoFomento', label: 'Termo de Fomento', getValue: (i: any) => i.termo_fomento || i.termoFomento || i.identificacao?.termoFomento },
+              { key: 'processoAdm', label: 'Processo Adm', getValue: (i: any) => i.numero_processo_adm || i.numeroProcessoAdm || i.identificacao?.numeroProcessoAdm },
+              { key: 'transfereGov', label: 'Transfere.gov', getValue: (i: any) => i.numero_transferegov || i.numeroTransfereGov || i.identificacao?.numeroTransfereGov },
+              { key: 'aplicabilidade', label: 'Aplicabilidade', getValue: (i: any) => i.aplicabilidade || i.identificacao?.aplicabilidade },
+              { key: 'vigencia', label: 'Início da Vigência', getValue: (i: any) => i.vigencia_inicio || i.vigenciainicio || i.data_inicio_vigencia || i.data_inicio || i.dataInicioVigencia || i.vigencia?.dataInicio || i.vigencia?.inicio }
+            ];
+
             flatList.forEach((item: any) => {
               const isAtivo = item.ativo !== false && item.status !== false && item.status !== "inativo";
-              if (!isAtivo) return; // Só considera ativas
+              if (!isAtivo) return;
 
-              const missing = [
-                item.numero_proposta || item.numeroProposta || item.identificacao?.numeroProposta,
-                item.termo_fomento || item.termoFomento || item.identificacao?.termoFomento,
-                item.numero_processo_adm || item.numeroProcessoAdm || item.identificacao?.numeroProcessoAdm,
-                item.numero_transferegov || item.numeroTransfereGov || item.identificacao?.numeroTransfereGov,
-                item.aplicabilidade || item.identificacao?.aplicabilidade,
-                item.vigencia_inicio || item.vigenciainicio || item.data_inicio_vigencia || item.data_inicio || item.dataInicioVigencia || item.vigencia?.dataInicio || item.vigencia?.inicio,
-              ].some(val => !val || String(val).trim() === '' || val === '0' || val === 0);
+              let camposFaltando: string[] = [];
+              
+              checks.forEach(check => {
+                const val = check.getValue(item);
+                if (!val || String(val).trim() === '' || val === '0' || val === 0) {
+                  camposFaltando.push(check.label);
+                }
+              });
 
               let periodos_count = 0;
               if (Array.isArray(item.periodos) && item.periodos.length > 0) periodos_count = item.periodos.length;
@@ -734,6 +744,7 @@ export default function Dashboard() {
                   if (Array.isArray(pp)) periodos_count = pp.length;
                 } catch(e) {}
               }
+              if (periodos_count === 0) camposFaltando.push('Períodos');
 
               let limites_cargos_count = 0;
               if (Array.isArray(item.limites_cargos)) limites_cargos_count = item.limites_cargos.length;
@@ -744,14 +755,19 @@ export default function Dashboard() {
                 } catch(e) {}
               }
               if (limites_cargos_count === 0 && (item.qtd_instrutor || item.limite_auxiliares || item.qtd_coord_geral)) {
-                limites_cargos_count = 1;
+                limites_cargos_count = 1; // tem info legacy
               }
+              if (limites_cargos_count === 0) camposFaltando.push('Equipe');
 
-              if (missing || periodos_count === 0 || limites_cargos_count === 0) {
-                pendencias++;
+              if (camposFaltando.length > 0) {
+                propostasPendentesLocal.push({
+                  id: item.id || item.id_projeto || item.id_proposta,
+                  nome: item.nome || item.titulo || item.projeto_nome || `Proposta #${item.id}`,
+                  campos: camposFaltando
+                });
               }
             });
-            setPropostasPendenciasCount(pendencias);
+            setPropostasComPendencia(propostasPendentesLocal);
 
             try { 
               sessionStorage.setItem(`cache_projetos_count_${inst}`, flatList.length.toString()); 
@@ -1431,41 +1447,67 @@ export default function Dashboard() {
             <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 rounded-bl-full -z-10 group-hover:scale-110 transition-transform duration-700"></div>
             
             {/* Se houver pendências em propostas ou núcleos pausados */}
-            {(nucleoStats.pausados > 0 || propostasPendenciasCount > 0) ? (
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl shrink-0 border border-amber-200/50 dark:border-amber-800/50 group-hover:rotate-3 transition-transform">
-                  <Target className="w-6 h-6" />
-                </div>
-                <div className="flex-1 w-full">
-                  <h3 className="text-[10px] sm:text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest mb-2 flex items-center justify-between">
+            {(nucleoStats.pausados > 0 || propostasComPendencia.length > 0) ? (
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl shrink-0 border border-amber-200/50 dark:border-amber-800/50">
+                    <Target className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2">
                     Foco de Hoje
-                    <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full font-bold">
-                      {(nucleoStats.pausados > 0 ? 1 : 0) + (propostasPendenciasCount > 0 ? 1 : 0)} Pendência{((nucleoStats.pausados > 0 ? 1 : 0) + (propostasPendenciasCount > 0 ? 1 : 0)) > 1 ? 's' : ''}
+                    <span className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 px-2 py-0.5 rounded-full font-bold">
+                      {(nucleoStats.pausados > 0 ? 1 : 0) + propostasComPendencia.length} Pendência{((nucleoStats.pausados > 0 ? 1 : 0) + propostasComPendencia.length) > 1 ? 's' : ''}
                     </span>
                   </h3>
-                  <div className="space-y-2">
-                    {/* Pendência de Propostas */}
-                    {propostasPendenciasCount > 0 && (
-                      <Link to="/admin/propostas" className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-100 hover:border-slate-300 dark:hover:bg-slate-800 dark:hover:border-slate-600 transition-colors cursor-pointer group/link">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></div>
-                          <span>Existem <strong>{propostasPendenciasCount} {propostasPendenciasCount === 1 ? 'proposta' : 'propostas'}</strong> com informações ou configuração pendente.</span>
+                </div>
+                
+                <div className="space-y-3 pl-1">
+                  {/* Pendência de Propostas (Destrinchado) */}
+                  {propostasComPendencia.map(prop => (
+                    <div key={prop.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 p-3.5 rounded-xl">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+                          <span className="text-sm font-extrabold text-slate-800 dark:text-slate-200 truncate">{prop.nome}</span>
                         </div>
-                        <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover/link:text-blue-500 group-hover/link:translate-x-1 transition-all" />
+                        <div className="flex flex-wrap gap-1.5">
+                          {prop.campos.map(c => (
+                            <span key={c} className="text-[10px] font-bold bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/60 px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                              <X className="w-3 h-3" />
+                              {c}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <Link 
+                        to={`/admin/cadastrar-projeto?edit=${prop.id}`}
+                        className="shrink-0 flex items-center gap-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 px-4 py-2 rounded-lg shadow-sm transition-colors"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        Preencher Agora
                       </Link>
-                    )}
+                    </div>
+                  ))}
 
-                    {/* Pendência de Núcleos */}
-                    {nucleoStats.pausados > 0 && (
-                      <Link to="/admin/nucleos" className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-100 hover:border-slate-300 dark:hover:bg-slate-800 dark:hover:border-slate-600 transition-colors cursor-pointer group/link">
+                  {/* Pendência de Núcleos */}
+                  {nucleoStats.pausados > 0 && (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 p-3.5 rounded-xl">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></div>
-                          <span>Existem <strong>{nucleoStats.pausados} {nucleoStats.pausados === 1 ? 'núcleo' : 'núcleos'}</strong> inativos ou precisando de revisão na gestão.</span>
+                          <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                          <span className="text-sm font-extrabold text-slate-800 dark:text-slate-200">Revisão de Núcleos</span>
                         </div>
-                        <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover/link:text-blue-500 group-hover/link:translate-x-1 transition-all" />
+                        <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-1">Existem <strong>{nucleoStats.pausados} {nucleoStats.pausados === 1 ? 'núcleo inativo' : 'núcleos inativos'}</strong> precisando de revisão na gestão.</p>
+                      </div>
+                      <Link 
+                        to="/admin/nucleos"
+                        className="shrink-0 flex items-center gap-1.5 text-xs font-bold text-amber-900 bg-amber-300 hover:bg-amber-400 dark:bg-amber-600 dark:text-white dark:hover:bg-amber-500 px-4 py-2 rounded-lg shadow-sm transition-colors"
+                      >
+                        <ArrowRight className="w-3.5 h-3.5" />
+                        Ver Núcleos
                       </Link>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
