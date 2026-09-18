@@ -696,7 +696,7 @@ export default function Dashboard() {
           .then(async res => {
             if (!res.ok) return;
             const data = JSON.parse(await res.text());
-            let list = Array.isArray(data) ? data : (data.data || data.items || (data.json ? [data.json] : [data]));
+            let list = Array.isArray(data) ? data : (data.data || data.items || data.value || (data.json ? [data.json] : [data]));
             let loadedNucleos: any[] = [];
             for (let i = 0; i < list.length; i++) {
               const entry = list[i];
@@ -724,7 +724,7 @@ export default function Dashboard() {
           .then(async res => {
             if (!res.ok) return;
             const data = JSON.parse(await res.text());
-            let list = Array.isArray(data) ? data : (data.data || data.items || (data.json ? [data.json] : [data]));
+            let list = Array.isArray(data) ? data : (data.data || data.items || data.value || (data.json ? [data.json] : [data]));
             let flatList: any[] = [];
             list.forEach((entry: any) => {
               if (entry && entry.json) {
@@ -820,7 +820,7 @@ export default function Dashboard() {
             if (!res.ok) return;
             const data = JSON.parse(await res.text());
             if (data && !data.error && data.message !== "Workflow was started") {
-              let list = Array.isArray(data) ? data : (data.data || data.items || (data.json ? [data.json] : [data]));
+              let list = Array.isArray(data) ? data : (data.data || data.items || data.value || (data.json ? [data.json] : [data]));
               let flatList: any[] = [];
               list.forEach((entry: any) => {
                 if (entry && entry.json) {
@@ -841,7 +841,7 @@ export default function Dashboard() {
         fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${inst}`, { cache: "no-store" })
           .then(res => res.json())
           .then(data => {
-            let list = Array.isArray(data) ? data : (data.data || data.items || (data.json ? [data.json] : [data]));
+            let list = Array.isArray(data) ? data : (data.data || data.items || data.value || (data.json ? [data.json] : [data]));
             let flatList: any[] = [];
             list.forEach((entry: any) => {
               if (entry && entry.json) {

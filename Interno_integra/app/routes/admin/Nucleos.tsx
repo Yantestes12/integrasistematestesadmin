@@ -43,7 +43,7 @@ let espacosCache: Record<number, any> = {};
 
 // Versão do cache — incrementar sempre que o schema de colunas do Supabase mudar.
 // Isso força limpeza do sessionStorage stale quando a versão não bater.
-const NUCLEOS_CACHE_VERSION = 3;
+const NUCLEOS_CACHE_VERSION = 4;
 
 export default function Nucleos() {
   const [nucleos, setNucleos] = useState<NucleoItem[]>([]);
@@ -99,7 +99,7 @@ export default function Nucleos() {
       const raw = sessionStorage.getItem(`cache_projetos_list_${IN}`) || sessionStorage.getItem(`cache_raw_projetos_${IN}`);
       let list = [];
       if (raw) {
-        list = JSON.parse(raw);
+        list = flattenResponse(JSON.parse(raw));
       } else {
         const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
         if (res.ok) {
@@ -123,7 +123,7 @@ export default function Nucleos() {
       const raw = sessionStorage.getItem(`cache_raw_modalidades_${instituteName.toUpperCase()}`);
       let list = [];
       if (raw) {
-        list = JSON.parse(raw);
+        list = flattenResponse(JSON.parse(raw));
       } else {
         const res = await fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
         if (res.ok) {
@@ -147,7 +147,7 @@ export default function Nucleos() {
       const raw = sessionStorage.getItem(`cache_raw_espacos_${instituteName.toUpperCase()}`);
       let list = [];
       if (raw) {
-        list = JSON.parse(raw);
+        list = flattenResponse(JSON.parse(raw));
       } else {
         const res = await fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
         if (res.ok) {
