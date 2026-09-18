@@ -99,8 +99,13 @@ export default function Nucleos() {
       const raw = sessionStorage.getItem(`cache_projetos_list_${IN}`) || sessionStorage.getItem(`cache_raw_projetos_${IN}`);
       let list = [];
       if (raw) {
-        list = flattenResponse(JSON.parse(raw));
-      } else {
+        try {
+          list = flattenResponse(JSON.parse(raw));
+        } catch(e) {
+          raw = null;
+        }
+      }
+      if (!raw) {
         const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
         if (res.ok) {
           const text = await res.text();
@@ -123,8 +128,13 @@ export default function Nucleos() {
       const raw = sessionStorage.getItem(`cache_raw_modalidades_${instituteName.toUpperCase()}`);
       let list = [];
       if (raw) {
-        list = flattenResponse(JSON.parse(raw));
-      } else {
+        try {
+          list = flattenResponse(JSON.parse(raw));
+        } catch(e) {
+          raw = null;
+        }
+      }
+      if (!raw) {
         const res = await fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
         if (res.ok) {
           const text = await res.text();
@@ -147,8 +157,13 @@ export default function Nucleos() {
       const raw = sessionStorage.getItem(`cache_raw_espacos_${instituteName.toUpperCase()}`);
       let list = [];
       if (raw) {
-        list = flattenResponse(JSON.parse(raw));
-      } else {
+        try {
+          list = flattenResponse(JSON.parse(raw));
+        } catch(e) {
+          raw = null;
+        }
+      }
+      if (!raw) {
         const res = await fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
         if (res.ok) {
           const text = await res.text();
@@ -299,7 +314,7 @@ export default function Nucleos() {
   const fetchRawNucleosData = async (instituteName: string) => {
     try {
       const raw = sessionStorage.getItem(`cache_raw_nucleos_${instituteName.toUpperCase()}`);
-      if (raw) return JSON.parse(raw);
+      if (raw) { try { return JSON.parse(raw); } catch (e) { sessionStorage.removeItem(`cache_raw_nucleos_${instituteName.toUpperCase()}`); } }
 
       const n8nEndpoint = `https://w.ibrase.com.br/webhook/nucleos-get?instituto=${instituteName.toUpperCase()}`;
       const res = await fetch(n8nEndpoint, { method: 'GET', cache: 'no-store' });
@@ -308,7 +323,7 @@ export default function Nucleos() {
         if (text) {
           try {
             const data = JSON.parse(text);
-            sessionStorage.setItem(`cache_raw_nucleos_${instituteName.toUpperCase()}`, text);
+            try { sessionStorage.setItem(`cache_raw_nucleos_${instituteName.toUpperCase()}`, text); } catch(e) { console.warn("Cache cheio", e); sessionStorage.clear(); try { sessionStorage.setItem(`cache_raw_nucleos_${instituteName.toUpperCase()}`, text); } catch(e2) {} }
             return data;
           } catch (e) {
             console.warn("N8N returned non-JSON:", text);
@@ -336,8 +351,8 @@ export default function Nucleos() {
           });
           setNucleos(sorted);
           try {
-            sessionStorage.setItem(`cache_nucleos_parsed_${instituteName.toUpperCase()}`, JSON.stringify(sorted));
-            sessionStorage.setItem(`cache_nucleos_version_${instituteName.toUpperCase()}`, String(NUCLEOS_CACHE_VERSION));
+            try { sessionStorage.setItem(`cache_nucleos_parsed_${instituteName.toUpperCase()}`, JSON.stringify(sorted)); } catch(e) { console.warn("Cache cheio", e); sessionStorage.clear(); try { sessionStorage.setItem(`cache_nucleos_parsed_${instituteName.toUpperCase()}`, JSON.stringify(sorted)); } catch(e2) {} }
+            try { sessionStorage.setItem(`cache_nucleos_version_${instituteName.toUpperCase()}`, String(NUCLEOS_CACHE_VERSION)); } catch(e) { console.warn("Cache cheio", e); sessionStorage.clear(); try { sessionStorage.setItem(`cache_nucleos_version_${instituteName.toUpperCase()}`, String(NUCLEOS_CACHE_VERSION)); } catch(e2) {} }
           } catch(e) {}
         }
       }
