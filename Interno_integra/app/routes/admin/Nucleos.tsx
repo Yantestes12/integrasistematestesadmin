@@ -43,7 +43,7 @@ let espacosCache: Record<number, any> = {};
 
 // Versão do cache — incrementar sempre que o schema de colunas do Supabase mudar.
 // Isso força limpeza do sessionStorage stale quando a versão não bater.
-const NUCLEOS_CACHE_VERSION = 4;
+const NUCLEOS_CACHE_VERSION = 5;
 
 export default function Nucleos() {
   const [nucleos, setNucleos] = useState<NucleoItem[]>([]);
