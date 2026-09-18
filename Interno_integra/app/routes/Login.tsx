@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, Lock, User, Eye, EyeOff, AlertCircle, ShieldCheck, Loader2, Check } from 'lucide-react';
+import { ArrowRight, Lock, User, Eye, EyeOff, AlertCircle, ShieldCheck, Loader2, Check, Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { supabase } from '../supabaseClient';
 import '../styles/login.css';
@@ -14,6 +14,7 @@ export default function Login() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,13 +69,14 @@ export default function Login() {
             localStorage.setItem("auth_cargo", cargo);
             localStorage.setItem("auth_account_type", account_type || "colaborador");
             localStorage.setItem("auth_id", String(id));
+            localStorage.setItem("auth_login_timestamp", Date.now().toString());
           }
           if (resData.institutos_permitidos) {
             localStorage.setItem("auth_institutos_permitidos", JSON.stringify(resData.institutos_permitidos));
           }
 
           setIsSuccess(true);
-          setTimeout(() => { window.location.href = "/"; }, 800);
+          setTimeout(() => { window.location.href = "/"; }, 500);
           return;
         } else if (resData && (resData.status === "senha incorreta" || resData.status === "usuario nao encontrado" || resData.message)) {
           setErrorMsg(resData.message || resData.status || "Usuário ou senha incorretos.");
@@ -144,9 +146,10 @@ export default function Login() {
       localStorage.setItem("auth_cargo", foundUser.cargo || "Colaborador");
       localStorage.setItem("auth_account_type", foundUser.account_type || "colaborador");
       localStorage.setItem("auth_id", String(foundUser.id));
+      localStorage.setItem("auth_login_timestamp", Date.now().toString());
 
       setIsSuccess(true);
-      setTimeout(() => { window.location.href = "/"; }, 800);
+      setTimeout(() => { window.location.href = "/"; }, 500);
     } catch (err) {
       console.error("Erro no login:", err);
       setErrorMsg("Erro ao conectar com o banco de dados.");
@@ -238,7 +241,6 @@ export default function Login() {
             </div>
           )}
 
-          {/* Formulário */}
           <form onSubmit={handleLogin} className="space-y-5 md:space-y-6">
             
             <div className="transition-all duration-500" style={{ opacity: (isLoading || isSuccess) ? 0.4 : 1, pointerEvents: (isLoading || isSuccess) ? 'none' : 'auto', filter: isSuccess ? 'blur(2px)' : 'none' }}>
@@ -317,17 +319,19 @@ export default function Login() {
                   <span>Conectado!</span>
                 </div>
               ) : isLoading ? (
-                <div className="flex items-center gap-2 animate-in fade-in duration-300">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Autenticando...</span>
+                <div className="flex items-center gap-2 animate-pulse">
+                  <span className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                  <span>Acessando...</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <span>Acessar Painel</span>
-                  <ArrowRight className="w-5 h-5" />
+                  <span>Entrar no Painel</span>
+                  <ArrowRight className="w-4 h-4 opacity-80" />
                 </div>
               )}
             </button>
+
+
           </form>
           
           {/* Rodapé dos Institutos Suportados Removido */}

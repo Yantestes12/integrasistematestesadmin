@@ -107,9 +107,53 @@ const flattenArray = (rawData: any): any[] => {
 
 /* ════════════════════════════════════════════════════════ */
 export default function Turmas() {
-  const [matriculas, setMatriculas] = useState<MatriculaItem[]>([]);
-  const [nucleosMap, setNucleosMap] = useState<Record<string, NucleoInfo>>({});
-  const [loading, setLoading] = useState(true);
+  const [matriculas, setMatriculas] = useState<MatriculaItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      const inst = localStorage.getItem("auth_institute") || "IBRASE";
+      const mCache = sessionStorage.getItem(`cache_matriculas_${inst.toUpperCase()}`);
+      if (mCache) {
+        try { return JSON.parse(mCache); } catch(e){}
+      }
+    }
+    return [];
+  });
+  const [nucleosMap, setNucleosMap] = useState<Record<string, NucleoInfo>>(() => {
+    if (typeof window !== 'undefined') {
+      const inst = localStorage.getItem("auth_institute") || "IBRASE";
+      const nCache = sessionStorage.getItem(`cache_nucleos_list_${inst.toUpperCase()}`);
+      if (nCache) {
+        try {
+          const arr = JSON.parse(nCache);
+          const nMap: Record<string, NucleoInfo> = {};
+          arr.forEach((n: any) => {
+            const id = String(n.id || n.id_nucleo || n.nucleo_id || "");
+            const numVaga = n.numero_vaga || n.vaga_numero;
+            const isArquivado = !numVaga || numVaga === "—" || numVaga === "";
+            if (id) {
+              nMap[id] = {
+                id,
+                nome: n.nome || n.nucleo_nome || `Núcleo ${id}`,
+                bairro: n.bairro || "",
+                foto: n.foto || n.imagem_capa || n.imagem || n.url_foto || n.url || "",
+                cidade: n.cidade || n.cidade_nome || "",
+                projeto_id: n.projeto_id || "",
+                isArquivado
+              };
+            }
+          });
+          return nMap;
+        } catch(e){}
+      }
+    }
+    return {};
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const inst = localStorage.getItem("auth_institute") || "IBRASE";
+      return !sessionStorage.getItem(`cache_matriculas_${inst.toUpperCase()}`);
+    }
+    return true;
+  });
   const [currentInstitute, setCurrentInstitute] = useState("IBRASE");
 
   // Filtros Locais

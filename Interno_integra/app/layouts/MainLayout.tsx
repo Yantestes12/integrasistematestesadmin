@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Sidebar } from "~/components/Sidebar";
 import { Topbar } from "~/components/Topbar";
 import { GlobalFilterBar } from "~/components/GlobalFilterBar";
+import { Loader2, Building2 } from "lucide-react";
 
 const themes = {
   IBRASE: {
@@ -68,12 +69,109 @@ export const MainLayout = () => {
   const navigation = useNavigation();
   const [isMounted, setIsMounted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isGlobalLoading, setIsGlobalLoading] = useState(() => {
+    if (typeof window !== "undefined") {
+      const inst = localStorage.getItem("auth_institute") || "IBRASE";
+      return !sessionStorage.getItem(`cache_raw_nucleos_${inst.toUpperCase()}`);
+    }
+    return true;
+  });
   const [institute, setInstitute] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("auth_institute") || "IBRASE";
     }
     return "IBRASE";
   });
+
+  const flattenResponse = (data: any): any[] => {
+    if (!data) return [];
+    let list: any[] = Array.isArray(data) ? data : data.data || data.items || (data.json ? (Array.isArray(data.json) ? data.json : [data.json]) : [data]);
+    if (!Array.isArray(list)) list = [list];
+    let flat: any[] = [];
+    list.forEach((entry: any) => {
+      if (!entry) return;
+      if (entry?.json) Array.isArray(entry.json) ? flat.push(...entry.json) : flat.push(entry.json);
+      else flat.push(entry);
+    });
+    return flat.filter(item => item !== null && item !== undefined);
+  };
+
+  const preFetchByRole = async (inst: string, cargo: string, accountType: string) => {
+    const role = `${cargo} ${accountType}`.toLowerCase();
+    const base = 'https://w.ibrase.com.br/webhook';
+    const IN = inst.toUpperCase();
+
+    const fetchAndCache = async (url: string, rawKey: string, parsedKeys?: string[]) => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const data = await res.json();
+        const flat = flattenResponse(data);
+        // Salva a chave raw (usada internamente)
+        sessionStorage.setItem(rawKey, JSON.stringify(flat));
+        // Salva também nas chaves parsedKeys que as páginas realmente leem
+        if (parsedKeys) {
+          parsedKeys.forEach(key => {
+            try { sessionStorage.setItem(key, JSON.stringify(flat)); } catch(e) {}
+          });
+        }
+      } catch (e) {
+        console.warn(`Prefetch falhou: ${url}`, e);
+      }
+    };
+
+    const tasks: Promise<void>[] = [];
+
+    // Núcleos → usado por Nucleos.tsx (cache_nucleos_parsed_*), Turmas.tsx (cache_nucleos_list_*), Dashboard (cache_nucleos_list_*)
+    tasks.push(fetchAndCache(
+      `${base}/nucleos-get?instituto=${IN}`,
+      `cache_raw_nucleos_${IN}`,
+      [`cache_nucleos_parsed_${IN}`, `cache_nucleos_list_${IN}`]
+    ));
+
+    // Espaços → usado por Espacos.tsx (cache_espacos_parsed_*)
+    tasks.push(fetchAndCache(
+      `${base}/espacos-get?instituto=${IN}`,
+      `cache_raw_espacos_${IN}`,
+      [`cache_espacos_parsed_${IN}`]
+    ));
+
+    // Modalidades
+    tasks.push(fetchAndCache(
+      `${base}/modalidades-get?instituto=${IN}`,
+      `cache_raw_modalidades_${IN}`,
+      [`cache_modalidades_list_${IN}`]
+    ));
+
+    if (role.includes('master') || role.includes('admin') || role.includes('pedagogico') || role.includes('instrutor')) {
+      // Projetos → usado por Dashboard, Nucleos.tsx, Espacos.tsx
+      // ATENÇÃO: cache_raw_projetos_* NÃO entra aqui — Propostas.tsx usa essa chave com o formato original do N8N
+      tasks.push(fetchAndCache(
+        `${base}/projetos-get?instituto=${IN}`,
+        `cache_projetos_list_${IN}`,
+        [`cache_projetos_list_${IN}`]
+      ));
+    }
+
+    if (role.includes('master') || role.includes('pedagogico')) {
+      // Matrículas → usado por Matriculas.tsx e Turmas.tsx (cache_matriculas_*)
+      tasks.push(fetchAndCache(
+        `${base}/matriculas-get?instituto=${IN}`,
+        `cache_raw_matriculas_${IN}`,
+        [`cache_matriculas_${IN}`]
+      ));
+    }
+
+    if (role.includes('master') || role.includes('admin')) {
+      tasks.push(fetchAndCache(
+        `${base}/cargos-get?instituto=${IN}`,
+        `cache_raw_cargos_${IN}`
+      ));
+    }
+
+    await Promise.allSettled(tasks);
+  };
+
 
   useEffect(() => {
     setIsMounted(true);
@@ -82,8 +180,48 @@ export const MainLayout = () => {
     if (!inst) {
       navigate("/login");
     } else {
+      // 24h Session Timeout Check
+      const loginTime = localStorage.getItem("auth_login_timestamp");
+      if (loginTime) {
+        const elapsed = Date.now() - parseInt(loginTime, 10);
+        if (elapsed > 24 * 60 * 60 * 1000) {
+          localStorage.removeItem("auth_institute");
+          localStorage.removeItem("auth_user");
+          localStorage.removeItem("auth_cargo");
+          localStorage.removeItem("auth_account_type");
+          localStorage.removeItem("auth_id");
+          localStorage.removeItem("auth_institutos_permitidos");
+          localStorage.removeItem("auth_login_timestamp");
+          navigate("/login");
+          return;
+        }
+      }
+
       setInstitute(inst);
       setIsAuthenticated(true);
+
+      const cargo = localStorage.getItem("auth_cargo") || "colaborador";
+      const accountType = localStorage.getItem("auth_account_type") || "colaborador";
+      const IN = inst.toUpperCase();
+      
+      // Checa se o cache básico já existe (qualquer das chaves populadas pelo prefetch)
+      const hasBasicCache = !!(
+        sessionStorage.getItem(`cache_raw_nucleos_${IN}`) ||
+        sessionStorage.getItem(`cache_nucleos_parsed_${IN}`)
+      );
+      
+      if (hasBasicCache) {
+        setIsGlobalLoading(false); // Libera instantaneamente (cache já existe)
+        preFetchByRole(inst, cargo, accountType); // Atualiza em background silenciosamente
+      } else {
+        // Aguarda os dados chegarem de verdade antes de exibir a tela.
+        // Timeout de segurança de 8s para não travar caso o servidor esteja offline.
+        const maxWait = setTimeout(() => setIsGlobalLoading(false), 8000);
+        preFetchByRole(inst, cargo, accountType).finally(() => {
+          clearTimeout(maxWait);
+          setIsGlobalLoading(false);
+        });
+      }
     }
 
     // Garantir que a classe .dark permaneça ativa apenas se o usuário explicitamente ativou o dark mode. Começa no modo claro por padrão.
@@ -99,24 +237,50 @@ export const MainLayout = () => {
 
   if (!isMounted || !isAuthenticated) return null; // Avoid flashing the dashboard before redirect or theme resolve
 
+  if (isGlobalLoading) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 font-sans transition-colors duration-300">
+        <div className="flex flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in duration-500">
+          <div className="relative w-24 h-24 mb-6">
+            <div className="absolute inset-0 border-4 border-slate-200 dark:border-slate-800 rounded-full shadow-inner"></div>
+            <div className="absolute inset-0 border-4 border-blue-600 rounded-full animate-spin shadow-[0_0_15px_rgba(37,99,235,0.4)]" style={{ borderRightColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: 'transparent' }}></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Building2 className="w-10 h-10 text-blue-600 animate-pulse" />
+            </div>
+          </div>
+          <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight mb-2">Preparando ambiente...</h3>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+            Carregando dados essenciais do seu setor para uma navegação instantânea.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const themeVars = themes[institute as keyof typeof themes] || themes.IBRASE;
   const isNavigating = navigation.state === "loading";
 
   return (
     // 1. Container principal ocupando a altura da tela (sem scroll duplo)
     <div 
-      className="h-screen overflow-hidden bg-[#f4f6fa] dark:bg-slate-950 font-sans flex flex-col text-slate-800 dark:text-slate-100 relative transition-colors duration-300"
+      className="h-screen overflow-hidden bg-[#f4f6fa] dark:bg-slate-950 font-sans flex flex-col text-slate-800 dark:text-slate-100 relative transition-colors duration-300 print:h-auto print:overflow-visible print:bg-white"
       style={themeVars as React.CSSProperties}
     >
-      <Topbar />
+      <div className="print:hidden">
+        <Topbar />
+      </div>
 
-      <div className="flex flex-1 w-full relative min-h-0">
-        <Sidebar />
+      <div className="flex flex-1 w-full relative min-h-0 print:block">
+        <div className="print:hidden">
+          <Sidebar />
+        </div>
 
         {/* 2. O scroll DEVE ser nesta div <main>, sem divs com h-full por dentro */}
-        <main className="flex-1 overflow-y-auto h-[calc(100vh-52px)] w-full relative flex flex-col">
+        <main className="flex-1 overflow-y-auto h-[calc(100vh-52px)] w-full relative flex flex-col print:overflow-visible print:h-auto print:block">
           
-          <GlobalFilterBar />
+          <div className="print:hidden">
+            <GlobalFilterBar />
+          </div>
           
           {/* Indicador de Bolinhas Carregando durante a navegação entre páginas */}
           {isNavigating && (
@@ -131,7 +295,7 @@ export const MainLayout = () => {
           )}
 
           {/* Conteúdo das rotas com o padding */}
-          <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+          <div className="p-4 sm:p-6 lg:p-8 space-y-6 print:p-0 print:m-0 print:space-y-0">
             <Outlet />
           </div>
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Filter, X, Building, MapPin, Layers } from 'lucide-react';
+import { Filter, X, Building, MapPin, Layers, Calendar } from 'lucide-react';
 
 export const GlobalFilterBar = () => {
   const [projetos, setProjetos] = useState<any[]>([]);
@@ -9,6 +9,8 @@ export const GlobalFilterBar = () => {
   const [selectedProjeto, setSelectedProjeto] = useState<string>("all");
   const [selectedCidade, setSelectedCidade] = useState<string>("all");
   const [selectedNucleo, setSelectedNucleo] = useState<string>("all");
+
+  const [selectedTrimestre, setSelectedTrimestre] = useState<string>("all");
 
   const flattenResponse = (rawData: any): any[] => {
     let list: any[] = [];
@@ -97,14 +99,49 @@ export const GlobalFilterBar = () => {
     const savedP = localStorage.getItem("global_projeto_filter") || "all";
     const savedC = localStorage.getItem("global_cidade_filter") || "all";
     const savedN = localStorage.getItem("global_nucleo_filter") || "all";
+    const savedT = localStorage.getItem("global_trimestre_filter") || "all";
     setSelectedProjeto(savedP);
     setSelectedCidade(savedC);
     setSelectedNucleo(savedN);
+    setSelectedTrimestre(savedT);
   }, []);
 
   const handleProjetoChange = (val: string) => {
     setSelectedProjeto(val);
     localStorage.setItem("global_projeto_filter", val);
+    
+    // Limpa o trimestre ao trocar de projeto (já que os trimestres são por projeto)
+    setSelectedTrimestre("all");
+    localStorage.setItem("global_trimestre_filter", "all");
+    localStorage.removeItem("global_trimestre_inicio");
+    localStorage.removeItem("global_trimestre_fim");
+    
+    window.dispatchEvent(new Event("globalFilterChanged"));
+  };
+
+  const handleTrimestreChange = (val: string) => {
+    setSelectedTrimestre(val);
+    localStorage.setItem("global_trimestre_filter", val);
+    
+    let inicio = "";
+    let fim = "";
+    if (val !== "all") {
+      const proj = projetos.find(p => String(p.id) === String(selectedProjeto));
+      if (proj && proj.periodos_json) {
+        let pJson = proj.periodos_json;
+        if (typeof pJson === 'string') { try { pJson = JSON.parse(pJson); } catch (e) { pJson = []; } }
+        if (Array.isArray(pJson)) {
+          const t = pJson.find((item: any) => String(item.id || item.rotulo) === val);
+          if (t) {
+            inicio = t.inicio || "";
+            fim = t.fim || "";
+          }
+        }
+      }
+    }
+    localStorage.setItem("global_trimestre_inicio", inicio);
+    localStorage.setItem("global_trimestre_fim", fim);
+    
     window.dispatchEvent(new Event("globalFilterChanged"));
   };
 
@@ -124,13 +161,32 @@ export const GlobalFilterBar = () => {
     setSelectedProjeto("all");
     setSelectedCidade("all");
     setSelectedNucleo("all");
+    setSelectedTrimestre("all");
     localStorage.setItem("global_projeto_filter", "all");
     localStorage.setItem("global_cidade_filter", "all");
     localStorage.setItem("global_nucleo_filter", "all");
+    localStorage.setItem("global_trimestre_filter", "all");
+    localStorage.removeItem("global_trimestre_inicio");
+    localStorage.removeItem("global_trimestre_fim");
     window.dispatchEvent(new Event("globalFilterChanged"));
   };
 
-  const isAnyFilterActive = selectedProjeto !== "all" || selectedCidade !== "all" || selectedNucleo !== "all";
+  const isAnyFilterActive = selectedProjeto !== "all" || selectedCidade !== "all" || selectedNucleo !== "all" || selectedTrimestre !== "all";
+
+  // Determina os trimestres (períodos) disponíveis com base no projeto selecionado
+  let trimestresOptions: any[] = [];
+  if (selectedProjeto !== "all") {
+    const proj = projetos.find(p => String(p.id) === String(selectedProjeto));
+    if (proj && proj.periodos_json) {
+      let pJson = proj.periodos_json;
+      if (typeof pJson === 'string') {
+        try { pJson = JSON.parse(pJson); } catch (e) { pJson = []; }
+      }
+      if (Array.isArray(pJson)) {
+        trimestresOptions = pJson;
+      }
+    }
+  }
 
   // Filtra núcleos compatíveis com a proposta ou cidade selecionada
   const filteredNucleosOptions = nucleos.filter(n => {
@@ -174,6 +230,33 @@ export const GlobalFilterBar = () => {
               <option value="all">Todas as Propostas</option>
               {projetos.map(p => (
                 <option key={p.id} value={p.id}>{p.nome || p.proposta || `Proposta #${p.id}`}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* 1.5. Filtro de Trimestre (Vinculado à Proposta) */}
+          <div className="flex items-center gap-1.5">
+            <Calendar size={13} className="text-slate-400 dark:text-slate-500" />
+            <select 
+              value={selectedTrimestre}
+              onChange={(e) => handleTrimestreChange(e.target.value)}
+              disabled={selectedProjeto === "all"}
+              className={`text-xs font-bold outline-none border rounded-lg px-2.5 py-1.5 transition-all ${
+                selectedProjeto === "all"
+                  ? "bg-slate-50 dark:bg-slate-800/50 text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-70 border-slate-200 dark:border-slate-800"
+                  : selectedTrimestre !== "all"
+                  ? "bg-amber-50 dark:bg-amber-950/60 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300 ring-2 ring-amber-500/10 cursor-pointer"
+                  : "bg-slate-100/90 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-200/80 dark:hover:bg-slate-700 cursor-pointer"
+              }`}
+            >
+              <option value="all">
+                {selectedProjeto === "all" ? "Selecione a Proposta" : "Todos os Períodos"}
+              </option>
+              {selectedProjeto !== "all" && trimestresOptions.length === 0 && (
+                <option value="all" disabled>⚠️ Sem períodos cadastrados</option>
+              )}
+              {trimestresOptions.map(t => (
+                <option key={t.id || t.rotulo} value={t.id || t.rotulo}>{t.rotulo}</option>
               ))}
             </select>
           </div>
@@ -292,6 +375,33 @@ export const GlobalFilterBar = () => {
                   <option value="all">Todas as Propostas</option>
                   {projetos.map(p => (
                     <option key={p.id} value={p.id}>{p.nome || p.proposta || `Proposta #${p.id}`}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 1.5. Trimestre (Período) */}
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <Calendar size={13} /> Trimestre
+                </label>
+                <select 
+                  value={selectedTrimestre}
+                  onChange={(e) => handleTrimestreChange(e.target.value)}
+                  disabled={selectedProjeto === "all"}
+                  className={`w-full text-sm font-bold outline-none border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 transition-all appearance-none ${
+                    selectedProjeto === "all"
+                      ? "bg-slate-100 dark:bg-slate-900 text-slate-400 opacity-60"
+                      : "bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-850 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 dark:focus:ring-amber-900/30"
+                  }`}
+                >
+                  <option value="all">
+                    {selectedProjeto === "all" ? "Selecione a Proposta" : "Todos os Períodos"}
+                  </option>
+                  {selectedProjeto !== "all" && trimestresOptions.length === 0 && (
+                    <option value="all" disabled>⚠️ Sem períodos cadastrados</option>
+                  )}
+                  {trimestresOptions.map(t => (
+                    <option key={t.id || t.rotulo} value={t.id || t.rotulo}>{t.rotulo}</option>
                   ))}
                 </select>
               </div>

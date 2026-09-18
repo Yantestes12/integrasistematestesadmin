@@ -123,21 +123,21 @@ export default function CadastrarProjeto() {
         </div>
 
         <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
-          <div id="section-identificacao" className={`transition-all duration-500 ${sectionsToHighlight.includes('identificacao') ? 'ring-4 ring-red-500 rounded-xl shadow-lg shadow-red-500/20' : ''}`}>
+          <div id="section-identificacao">
             <IdentificacaoSection />
           </div>
           
-          <div id="section-vigencia" className={`transition-all duration-500 ${sectionsToHighlight.includes('vigencia') ? 'ring-4 ring-red-500 rounded-xl shadow-lg shadow-red-500/20' : ''}`}>
+          <div id="section-vigencia">
             <VigenciaSection />
           </div>
           
-          <div id="section-periodos" className={`transition-all duration-500 ${sectionsToHighlight.includes('periodos') ? 'ring-4 ring-red-500 rounded-xl shadow-lg shadow-red-500/20' : ''}`}>
+          <div id="section-periodos">
             <PeriodosSection />
           </div>
           
           <ModalidadesSection />
           
-          <div id="section-equipe" className={`transition-all duration-500 ${sectionsToHighlight.includes('equipe') ? 'ring-4 ring-red-500 rounded-xl shadow-lg shadow-red-500/20' : ''}`}>
+          <div id="section-equipe">
             <LimitesSection />
           </div>
           

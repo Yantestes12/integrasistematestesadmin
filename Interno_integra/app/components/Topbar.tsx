@@ -58,6 +58,23 @@ export const Topbar = () => {
     navigate('/login');
   };
 
+  const getGreeting = (name: string) => {
+    const hour = new Date().getHours();
+    const day = new Date().getDay(); // 0 is Sunday, 1 is Monday, 5 is Friday
+    
+    let timeGreeting = "Olá";
+    if (hour >= 5 && hour < 12) timeGreeting = "Bom dia";
+    else if (hour >= 12 && hour < 18) timeGreeting = "Boa tarde";
+    else timeGreeting = "Boa noite";
+
+    // Recompensas emocionais baseadas no dia
+    if (day === 5) return `Sextou, ${name}! 🎉`;
+    if (day === 1 && hour < 12) return `${timeGreeting}, ${name}! ☕ Boa semana!`;
+    
+    // Padrão
+    return `${timeGreeting}, ${name}!`;
+  };
+
   const handleSwitchInstitute = (newInst: string) => {
     localStorage.setItem("auth_institute", newInst);
     setInstitute(newInst);
@@ -96,7 +113,15 @@ export const Topbar = () => {
   };
 
   return (
-    <header className="bg-white dark:bg-[var(--theme-topbar-dark)] text-slate-800 dark:text-white lg:bg-[var(--theme-topbar)] lg:text-white pl-14 sm:pl-16 lg:pl-6 pr-4 sm:pr-6 py-1.5 flex items-center justify-between shadow-xs sticky top-0 z-30 lg:z-30 w-full select-none min-h-[52px] h-[52px] border-b border-slate-200 dark:border-white/10 lg:border-white/10 transition-colors duration-300">
+    <header className="bg-white dark:bg-[var(--theme-topbar-dark)] text-slate-800 dark:text-white lg:bg-[var(--theme-topbar)] lg:text-white pl-14 sm:pl-16 lg:pl-6 pr-4 sm:pr-6 py-1.5 flex items-center justify-between shadow-xs sticky top-0 z-30 lg:z-30 w-full select-none min-h-[52px] h-[52px] border-b border-slate-200 dark:border-white/10 lg:border-white/10 transition-colors duration-300 relative">
+      
+      {/* Centro: Cargo do Usuário (Apenas Desktop/Notebook) */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center justify-center pointer-events-none">
+        <span className="text-[10px] md:text-[11px] font-black bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 lg:bg-white/15 lg:text-white/90 lg:border lg:border-white/20 px-4 md:px-5 py-1 md:py-1.5 rounded-full tracking-[0.15em] uppercase shadow-inner backdrop-blur-sm">
+          {userRole}
+        </span>
+      </div>
+
 
       {/* Lado Esquerdo: Logo / Marca e Contexto do Instituto */}
       <div className="flex items-center gap-3 sm:gap-4 min-w-0">
@@ -112,10 +137,10 @@ export const Topbar = () => {
           aria-label="Recolher / Expandir Menu Lateral"
         >
           <img 
-            src="/logo_integra_simbolo.gif" 
-            onError={(e) => { (e.target as any).style.display = 'none'; }} 
+            src="/_prod_simbolo.gif" 
+            onError={(e) => { (e.target as any).src='/logo_integra_simbolo.gif'; }} 
             alt="Integra" 
-            className="h-5 w-auto object-contain lg:brightness-0 lg:invert transition-transform duration-200 group-hover:scale-110 active:scale-95" 
+            className="h-6 w-auto object-contain transition-transform duration-200 group-hover:scale-110 active:scale-95 brightness-0 dark:invert lg:invert" 
           />
         </button>
 
@@ -200,11 +225,8 @@ export const Topbar = () => {
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         
         {/* User Info */}
-        <div className="flex flex-col items-end mr-1 hidden sm:flex">
-          <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 lg:text-white truncate">Olá, {userName}</span>
-          <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 lg:bg-white/15 lg:text-white/90 px-2 py-0.5 rounded-full tracking-wide">
-            {userRole}
-          </span>
+        <div className="flex flex-col justify-center items-end mr-1 hidden sm:flex">
+          <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 lg:text-white truncate">{getGreeting(userName)}</span>
         </div>
 
         {/* Botão de Alternância Dark Mode / Light Mode */}

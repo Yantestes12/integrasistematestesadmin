@@ -9,6 +9,17 @@ export function PeriodosSection() {
     name: "periodos"
   });
 
+  let focusPendenciasStr = "";
+  if (typeof window !== "undefined") {
+    const urlParams = new URLSearchParams(window.location.search);
+    focusPendenciasStr = urlParams.get("focus_pendencias") || "";
+  }
+  const focusList = focusPendenciasStr ? focusPendenciasStr.split(',') : [];
+
+  const getHighlightClass = (label: string) => {
+    return focusList.includes(label) ? "ring-2 ring-red-500 ring-offset-1 bg-red-50 animate-pulse rounded-lg" : "";
+  };
+
   return (
     <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
       <div>
@@ -20,7 +31,7 @@ export function PeriodosSection() {
       </div>
 
       {fields.length > 0 ? (
-        <div className="overflow-x-auto">
+        <div className={`overflow-x-auto ${getHighlightClass('Períodos')}`}>
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase">
@@ -81,15 +92,15 @@ export function PeriodosSection() {
           </table>
         </div>
       ) : (
-        <p className="text-xs text-slate-400 italic py-1">
+        <p className={`text-xs text-slate-400 italic py-2 px-3 rounded-lg ${getHighlightClass('Períodos')}`}>
           Nenhum período adicionado ainda. Clique abaixo caso deseje incluir um período.
         </p>
       )}
 
       <button
         type="button"
-        onClick={() => append({ id: Date.now(), tipo: "planejamento", rotulo: "", inicio: "", fim: "" })}
-        className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-semibold text-xs border border-dashed border-blue-300 px-3 py-2 rounded-lg bg-blue-50/50 hover:bg-blue-50 transition-colors"
+        onClick={() => append({ id: Date.now(), rotulo: "", inicio: "", fim: "", tipo: "planejamento" })}
+        className={`px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs rounded-lg transition-colors border border-blue-200 flex items-center gap-2 ${getHighlightClass('Períodos')}`}
       >
         <Plus className="w-4 h-4" />
         Adicionar período

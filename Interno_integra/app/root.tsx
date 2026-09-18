@@ -52,7 +52,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               (function() {
                 try {
                   var saved = localStorage.getItem('integra_dark_mode');
-                  if (saved === 'true' || (saved === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                  if (saved === 'true') {
                     document.documentElement.classList.add('dark');
                   } else {
                     document.documentElement.classList.remove('dark');

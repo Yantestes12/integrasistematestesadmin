@@ -1081,14 +1081,3 @@ export default function InscricaoEventoPublica() {
   );
 }
 
-// Componente auxiliar para linha da ficha
-function FichaRow({ label, value, mono, highlight }: { label: string; value: string; mono?: boolean; highlight?: boolean }) {
-  return (
-    <div className="flex flex-col">
-      <span className="text-gray-500 text-[10px] uppercase tracking-widest font-bold mb-0.5">{label}</span>
-      <span className={`text-sm font-semibold ${highlight ? 'text-[#ffb3ac]' : 'text-white'} ${mono ? 'font-mono tracking-wider' : ''}`}>
-        {value}
-      </span>
-    </div>
-  );
-}

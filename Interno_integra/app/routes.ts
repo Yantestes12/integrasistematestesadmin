@@ -1,4 +1,4 @@
-﻿import { type RouteConfig, index, route, layout } from "@react-router/dev/routes";
+import { type RouteConfig, index, route, layout } from "@react-router/dev/routes";
 
 export default [
   // Rota de Login (Pública/Autônoma)
@@ -22,6 +22,8 @@ export default [
     route("admin/historico-nucleos", "routes/admin/HistoricoNucleos.tsx"),
     route("admin/cadastrar-nucleo", "routes/admin/CadastrarNucleo.tsx"),
     route("admin/grade-horaria", "routes/admin/GradeHoraria.tsx"),
+    route("admin/grade-gestao", "routes/admin/GradeGestao.tsx"),
+    route("admin/grade-estagiarios", "routes/admin/GradeEstagiarios.tsx"),
     // Admin / Eventos
     route("admin/locais-evento", "routes/admin/LocaisEvento.tsx"),
     route("admin/cadastrar-local-evento", "routes/admin/CadastrarLocalEvento.tsx"),
@@ -37,6 +39,15 @@ export default [
     route("pedagogico/turmas", "routes/pedagogico/Turmas.tsx"),
     // Pedagógico / Relatórios
     route("pedagogico/relatorios", "routes/pedagogico/Relatorios.tsx"),
+    
+    // Marketing
+    route("marketing", "routes/marketing/MarketingDashboard.tsx"),
+    
+    // Instrutor
+    route("instrutor", "routes/instrutor/InstrutorDashboard.tsx"),
+    
+    // RH
+    route("rh", "routes/rh/RHDashboard.tsx"),
   ]),
 ] satisfies RouteConfig;
 

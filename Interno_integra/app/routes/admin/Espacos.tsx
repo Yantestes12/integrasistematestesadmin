@@ -32,8 +32,18 @@ export interface EspacoItem {
 }
 
 export default function Espacos() {
-  const [espacos, setEspacos] = useState<EspacoItem[]>([]);
+  const [espacos, setEspacos] = useState<EspacoItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      const authInst = localStorage.getItem("auth_institute") || "IBRASE";
+      const cache = sessionStorage.getItem(`cache_espacos_parsed_${authInst.toUpperCase()}`);
+      if (cache) {
+        try { return JSON.parse(cache); } catch(e) {}
+      }
+    }
+    return [];
+  });
   const [loading, setLoading] = useState(true);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<"todos" | "aprovados" | "pendentes">("todos");
   const [togglingId, setTogglingId] = useState<number | null>(null);
@@ -129,7 +139,7 @@ export default function Espacos() {
     let hasCache = false;
     const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
     try {
-      const cachedList = sessionStorage.getItem(`cache_espacos_list_${authInstitute.toUpperCase()}`);
+      const cachedList = sessionStorage.getItem(`cache_espacos_parsed_${authInstitute.toUpperCase()}`);
       if (cachedList) {
         const parsed = JSON.parse(cachedList);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -145,33 +155,45 @@ export default function Espacos() {
       let rawList: any[] = [];
       let nMap: Record<number, string> = {};
 
-      const [resE, resN] = await Promise.allSettled([
-        fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${authInstitute.toUpperCase()}`),
-        fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${authInstitute.toUpperCase()}`)
-      ]);
+      const rawE = sessionStorage.getItem(`cache_raw_espacos_${authInstitute.toUpperCase()}`);
+      const rawN = sessionStorage.getItem(`cache_raw_nucleos_${authInstitute.toUpperCase()}`);
+
+      let resE = null;
+      let resN = null;
+
+      if (!rawE || !rawN) {
+        const fetched = await Promise.allSettled([
+          fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${authInstitute.toUpperCase()}`),
+          fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${authInstitute.toUpperCase()}`)
+        ]);
+        resE = fetched[0] as any;
+        resN = fetched[1] as any;
+      }
 
       let nDataList: any[] = [];
-      if (resN.status === "fulfilled" && resN.value && resN.value.ok) {
+      if (rawN) {
+        nDataList = flattenResponse(JSON.parse(rawN));
+      } else if (resN?.status === "fulfilled" && resN.value && resN.value.ok) {
         try {
           const nData = await resN.value.json();
           nDataList = flattenResponse(nData);
-          nDataList.forEach((n: any) => {
-            if (n.espaco_id) {
-              nMap[Number(n.espaco_id)] = n.nome || `Núcleo #${n.id}`;
-            }
-          });
-        } catch (err) {
-          console.warn("Erro ao ler núcleos:", err);
-        }
+        } catch (err) {}
       }
+      let nObjMap: Record<number, any> = {};
+      nDataList.forEach((n: any) => {
+        if (n.espaco_id) {
+          nMap[Number(n.espaco_id)] = n.nome || `Núcleo #${n.id}`;
+          nObjMap[Number(n.espaco_id)] = n;
+        }
+      });
 
-      if (resE.status === "fulfilled" && resE.value && resE.value.ok) {
+      if (rawE) {
+        rawList = flattenResponse(JSON.parse(rawE));
+      } else if (resE?.status === "fulfilled" && resE.value && resE.value.ok) {
         try {
           const data = await resE.value.json();
           rawList = flattenResponse(data);
-        } catch (err) {
-          console.warn("Erro ao ler espaços:", err);
-        }
+        } catch (err) {}
       }
 
       // Fallback: se a tabela de espaços do N8N não retornou itens, gera a lista a partir dos núcleos legados
@@ -199,11 +221,20 @@ export default function Espacos() {
 
       const list = rawList.map((item: any) => {
         const status = (item.status_aprovacao || "aprovado").toString().toLowerCase().trim();
-
         const linkedNucleo = nMap[Number(item.id)] || item.nucleo_nome || (item.projeto_nome ? `Núcleo ${item.nome}` : null);
+        const legacyN = nObjMap[Number(item.id)];
 
         return {
           ...item,
+          foto_url: item.foto_url || legacyN?.foto_url,
+          termo_url: item.termo_url || legacyN?.termo_url,
+          resp_nome: item.resp_nome || legacyN?.resp_nome,
+          resp_cpf: item.resp_cpf || legacyN?.resp_cpf,
+          resp_telefone: item.resp_telefone || legacyN?.resp_telefone,
+          rua: item.rua || legacyN?.rua,
+          numero: item.numero || legacyN?.numero,
+          cep: item.cep || legacyN?.cep,
+          ponto_referencia: item.ponto_referencia || legacyN?.ponto_referencia,
           status_aprovacao: status,
           nucleo_nome: linkedNucleo,
           em_uso: !!linkedNucleo,
@@ -211,7 +242,7 @@ export default function Espacos() {
       });
 
       setEspacos(list);
-      try { sessionStorage.setItem(`cache_espacos_list_${authInstitute.toUpperCase()}`, JSON.stringify(list)); } catch(e) {}
+      try { sessionStorage.setItem(`cache_espacos_parsed_${authInstitute.toUpperCase()}`, JSON.stringify(list)); } catch(e) {}
     } catch (e) {
       console.error("Erro ao buscar espaços:", e);
       addToast("error", "Erro de Conexão", "Não foi possível carregar os espaços do servidor.");

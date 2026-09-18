@@ -191,6 +191,10 @@ export default function CadastrarNucleo() {
 
   const fetchProjetos = async (inst: string) => {
     try {
+      const cached = sessionStorage.getItem(`cache_projetos_list_${inst.toUpperCase()}`);
+      if (cached) {
+        try { setProjetos(flattenResponse(JSON.parse(cached))); } catch(e) {}
+      }
       const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${inst.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
         const text = await res.text();
@@ -204,6 +208,10 @@ export default function CadastrarNucleo() {
 
   const fetchModalidades = async (inst: string) => {
     try {
+      const cached = sessionStorage.getItem(`cache_modalidades_list_${inst.toUpperCase()}`);
+      if (cached) {
+        try { setModalidades(flattenResponse(JSON.parse(cached))); } catch(e) {}
+      }
       const res = await fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${inst.toUpperCase()}`, { cache: "no-store" });
       if (res.ok) {
         const text = await res.text();

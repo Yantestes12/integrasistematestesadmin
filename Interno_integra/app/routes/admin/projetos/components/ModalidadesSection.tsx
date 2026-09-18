@@ -133,14 +133,14 @@ export function ModalidadesSection() {
                     </td>
                     <td className="p-3">
                       <select
-                        value={currentModId}
+                        value={currentModId ? String(currentModId) : ""}
                         onChange={(e) => handleModalidadeChange(index, e)}
                         disabled={estaOcupada}
                         className={`w-full max-w-sm bg-white dark:bg-slate-800 border ${!currentModId ? 'border-red-300 dark:border-red-700 ring-1 ring-red-100 dark:ring-red-900/30' : 'border-slate-200 dark:border-slate-700'} rounded-lg p-2 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm disabled:bg-slate-100 dark:disabled:bg-slate-900`}
                       >
                         <option value="" disabled>Selecione uma modalidade...</option>
                         {modalidadesDisponiveis.map(m => (
-                          <option key={m.id} value={m.id}>{m.nome}</option>
+                          <option key={m.id} value={String(m.id)}>{m.nome}</option>
                         ))}
                       </select>
                     </td>

@@ -14,8 +14,12 @@ import {
   ChevronDown,
   ChevronRight,
   Menu,
-  X
+  X,
+  PaintBucket,
+  GraduationCap,
+  Briefcase
 } from 'lucide-react';
+import { AdminBookIcon, MarketingPaintIcon } from './SidebarIcons';
 
 export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
   const location = useLocation();
@@ -66,6 +70,28 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
     return () => window.removeEventListener("toggleSidebarPC", handleTogglePC);
   }, []);
 
+  useEffect(() => {
+    // Sincroniza os menus abertos com base na URL atual (efeito sanfona automático)
+    const newOpenPaths = [];
+    if (location.pathname.startsWith('/admin')) {
+      newOpenPaths.push('Administrativo');
+      if (location.pathname.startsWith('/admin/espacos') || location.pathname.startsWith('/admin/nucleos') || location.pathname.startsWith('/admin/grade-')) {
+        newOpenPaths.push('Administrativo>Projetos');
+      }
+      if (location.pathname.startsWith('/admin/nucleos') || location.pathname.startsWith('/admin/grade-')) {
+        newOpenPaths.push('Administrativo>Projetos>Núcleos');
+      }
+      if (location.pathname.startsWith('/admin/locais-evento')) {
+        newOpenPaths.push('Administrativo>Eventos');
+      }
+    } else if (location.pathname.startsWith('/pedagogico')) {
+      newOpenPaths.push('Pedagógico');
+    }
+    // Preserva menus que o usuário abriu manualmente se desejar, mas para efeito sanfona estrito, 
+    // substituímos completamente pelos paths da rota atual.
+    setOpenPaths(newOpenPaths);
+  }, [location.pathname]);
+
   const togglePath = (itemPath: any, e: any, item: any) => {
     setOpenPaths((prev) => {
       if (prev.includes(itemPath)) {
@@ -106,7 +132,7 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
   const menuTree = [
     {
       name: 'Administrativo',
-      icon: <BookOpen className="w-5 h-5" />,
+      icon: <AdminBookIcon className="w-5 h-5" />,
       roles: ['master', 'admin'],
       path: "/?view=geral", // Rota do dashboard do setor
       children: [
@@ -115,7 +141,15 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
           name: 'Projetos', 
           children: [
             { name: 'Espaços', path: "/admin/espacos" },
-            { name: 'Núcleos', path: "/admin/nucleos" }
+            { 
+              name: 'Núcleos', 
+              path: "/admin/nucleos",
+              children: [
+                { name: 'Grade Horária', isHeader: true },
+                { name: 'Gestão', path: "/admin/grade-gestao" },
+                { name: 'Estagiários', path: "/admin/grade-estagiarios" }
+              ]
+            }
           ]
         },
         ...(hasEventos ? [{
@@ -128,7 +162,7 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
     },
     {
       name: 'Pedagógico',
-      icon: <Users className="w-5 h-5" />,
+      icon: <Users className="w-5 h-5 anim-users-context" />,
       roles: ['master', 'pedagogico'],
       path: "/?view=pedagogico", // Rota do dashboard do setor
       children: [
@@ -137,6 +171,24 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
         { name: 'Turmas', path: "/pedagogico/turmas" },
         { name: 'Relatórios', path: "/pedagogico/relatorios" },
       ]
+    },
+    {
+      name: 'Marketing',
+      icon: <MarketingPaintIcon className="w-5 h-5" />,
+      roles: ['master', 'marketing'],
+      path: "/marketing",
+    },
+    {
+      name: 'Instrutor',
+      icon: <GraduationCap className="w-5 h-5 anim-cap-context" />,
+      roles: ['master', 'instrutor'],
+      path: "/instrutor",
+    },
+    {
+      name: 'RH',
+      icon: <Briefcase className="w-5 h-5" />,
+      roles: ['master', 'rh'],
+      path: "/rh",
     }
   ];
 
@@ -158,16 +210,24 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
 
       if (item.isHeader) {
         return (
-          <div key={index} className={`w-full pt-4 pb-1 mt-1 ${paddingLeft}`}>
-            <div className="text-[10px] font-bold text-white/50 tracking-widest uppercase border-b border-white/10 pb-1.5 select-none pointer-events-none">
+          <div key={index} className={`w-full pt-3 pb-0 mt-1 ${paddingLeft}`}>
+            <div className="text-xs font-black text-blue-200/90 tracking-[0.2em] uppercase border-b border-blue-200/20 pb-1 mb-1 select-none pointer-events-none">
               {item.name}
             </div>
           </div>
         );
       }
 
-      const isActiveParent = item.path && location.pathname === '/' && location.search.includes(item.path.split('?')[1]);
-
+      const isActiveParent = 
+        (item.path && location.pathname === '/' && location.search.includes(item.path.split('?')[1])) ||
+        (item.name === 'Administrativo' && location.pathname.startsWith('/admin')) ||
+        (item.name === 'Pedagógico' && location.pathname.startsWith('/pedagogico')) ||
+        (item.name === 'Marketing' && location.pathname.startsWith('/marketing')) ||
+        (item.name === 'Instrutor' && location.pathname.startsWith('/instrutor')) ||
+        (item.name === 'RH' && location.pathname.startsWith('/rh')) ||
+        (item.name === 'Projetos' && (location.pathname.startsWith('/admin/espacos') || location.pathname.startsWith('/admin/nucleos') || location.pathname.startsWith('/admin/grade-'))) ||
+        (item.name === 'Núcleos' && (location.pathname.startsWith('/admin/nucleos') || location.pathname.startsWith('/admin/grade-'))) ||
+        (item.name === 'Eventos' && location.pathname.startsWith('/admin/locais-evento'));
 
       const levelBg =
         level === 0
@@ -183,7 +243,7 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
           <div key={index} className="w-full">
             <div
               onClick={(e) => togglePath(itemKey, e, item)}
-              className={`flex items-center justify-between py-3 cursor-pointer ${paddingLeft} ${levelBg} ${isActiveParent ? 'border-l-4 border-white font-bold shadow-inner' : ''}`}
+              className={`group flex items-center justify-between py-3 cursor-pointer ${paddingLeft} ${levelBg} ${isActiveParent && level === 0 ? 'border-l-4 border-white font-bold shadow-inner text-white' : (isActiveParent ? 'font-bold text-white' : '')}`}
             >
               <div className="flex items-center gap-3 min-w-0 w-full pointer-events-none">
                 {item.icon && <span>{item.icon}</span>}
@@ -216,14 +276,14 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
               if (onSelectMenu) onSelectMenu(item.name);
               setIsOpen(false);
             }}
-            className={`flex items-center justify-between py-3 cursor-pointer select-none ${paddingLeft} ${
+            className={`group flex items-center justify-between py-3 cursor-pointer select-none ${paddingLeft} ${
               isActive ? 'bg-white/25 font-bold border-l-4 border-white text-white shadow-inner' : levelBg
             } w-full text-white no-underline text-left block`}
           >
             <div className="flex items-center gap-3 min-w-0 w-full pointer-events-none">
               {item.icon && <span className="pointer-events-none">{item.icon}</span>}
               <span className={`truncate pointer-events-none ${level === 0 ? 'text-base md:text-lg font-bold' : 'text-sm md:text-base font-medium'} ${isActive ? 'font-bold' : ''}`}>
-                {level > 0 && !item.icon && '• '} {item.name}
+                {item.name}
               </span>
             </div>
           </Link>

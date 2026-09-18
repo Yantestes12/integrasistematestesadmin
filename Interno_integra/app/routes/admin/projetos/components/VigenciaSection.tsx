@@ -5,6 +5,17 @@ import { Calendar } from "lucide-react";
 export function VigenciaSection() {
   const { register } = useFormContext<ProjetoFormData>();
 
+  let focusPendenciasStr = "";
+  if (typeof window !== "undefined") {
+    const urlParams = new URLSearchParams(window.location.search);
+    focusPendenciasStr = urlParams.get("focus_pendencias") || "";
+  }
+  const focusList = focusPendenciasStr ? focusPendenciasStr.split(',') : [];
+
+  const getHighlightClass = (label: string) => {
+    return focusList.includes(label) ? "ring-2 ring-red-500 ring-offset-1 bg-red-50 animate-pulse" : "";
+  };
+
   return (
     <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
       <h2 className="text-base font-bold text-slate-800 border-b border-slate-100 pb-3 flex items-center gap-2">
@@ -20,7 +31,7 @@ export function VigenciaSection() {
           <input
             type="date"
             {...register("vigencia.dataInicio")}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ${getHighlightClass('Início da Vigência')}`}
           />
         </div>
 

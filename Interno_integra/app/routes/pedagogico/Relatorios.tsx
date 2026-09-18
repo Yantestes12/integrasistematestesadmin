@@ -62,9 +62,51 @@ const flattenArray = (rawData: any): any[] => {
 };
 
 export default function Relatorios() {
-  const [matriculas, setMatriculas] = useState<MatriculaItem[]>([]);
-  const [nucleosList, setNucleosList] = useState<NucleoInfo[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [matriculas, setMatriculas] = useState<MatriculaItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      const inst = localStorage.getItem("auth_institute") || "IBRASE";
+      const mCache = sessionStorage.getItem(`cache_matriculas_${inst.toUpperCase()}`);
+      if (mCache) {
+        try { return JSON.parse(mCache); } catch(e){}
+      }
+    }
+    return [];
+  });
+  const [nucleosList, setNucleosList] = useState<NucleoInfo[]>(() => {
+    if (typeof window !== 'undefined') {
+      const inst = localStorage.getItem("auth_institute") || "IBRASE";
+      const nCache = sessionStorage.getItem(`cache_nucleos_list_${inst.toUpperCase()}`);
+      if (nCache) {
+        try {
+          const arr = JSON.parse(nCache);
+          const nList: NucleoInfo[] = [];
+          arr.forEach((n: any) => {
+            const id = String(n.id || n.id_nucleo || n.nucleo_id || "");
+            if (id) {
+              nList.push({
+                id,
+                nome: n.nome || n.nucleo_nome || `Núcleo ${id}`,
+                bairro: n.bairro || "",
+                cidade: n.cidade || n.cidade_nome || "",
+                projeto_id: n.projeto_id || "",
+                modalidade_id: n.modalidade_id || (n.espacos && n.espacos.modalidade_id) || "",
+                espaco_id: n.espaco_id || (n.espacos && n.espacos.id) || ""
+              });
+            }
+          });
+          return nList;
+        } catch(e){}
+      }
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const inst = localStorage.getItem("auth_institute") || "IBRASE";
+      return !sessionStorage.getItem(`cache_nucleos_list_${inst.toUpperCase()}`);
+    }
+    return true;
+  });
   const [currentInstitute, setCurrentInstitute] = useState("IBRASE");
 
   const [isGeneratingExcel, setIsGeneratingExcel] = useState(false);

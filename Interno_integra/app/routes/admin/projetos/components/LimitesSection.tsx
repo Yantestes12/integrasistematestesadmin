@@ -19,6 +19,17 @@ export function LimitesSection() {
   // Limites atuais salvos no form
   const limitesCargos = watch("limitesCargos") || [];
 
+  let focusPendenciasStr = "";
+  if (typeof window !== "undefined") {
+    const urlParams = new URLSearchParams(window.location.search);
+    focusPendenciasStr = urlParams.get("focus_pendencias") || "";
+  }
+  const focusList = focusPendenciasStr ? focusPendenciasStr.split(',') : [];
+
+  const getHighlightClass = (label: string) => {
+    return focusList.includes(label) ? "ring-2 ring-red-500 ring-offset-1 bg-red-50 animate-pulse" : "";
+  };
+
   useEffect(() => {
     fetchCargos();
   }, []);
@@ -99,7 +110,7 @@ export function LimitesSection() {
           <button
             type="button"
             onClick={openManageModal}
-            className="px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs rounded-lg transition-colors border border-blue-200 flex items-center gap-2 shrink-0 shadow-sm"
+            className={`px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs rounded-lg transition-colors border border-blue-200 flex items-center gap-2 shrink-0 shadow-sm ${getHighlightClass('Equipe')}`}
           >
             <Settings className="w-4 h-4" />
             Gerenciar Cargos
@@ -107,7 +118,7 @@ export function LimitesSection() {
         </div>
 
         {limitesCargos.length === 0 ? (
-          <div className="py-8 text-center bg-slate-50 border border-dashed border-slate-300 rounded-xl">
+          <div className={`py-8 text-center bg-slate-50 border border-dashed border-slate-300 rounded-xl ${getHighlightClass('Equipe')}`}>
             <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
             <p className="text-sm font-semibold text-slate-600">Nenhum cargo configurado</p>
             <p className="text-xs text-slate-400 mt-1">Clique no botão acima para adicionar limites de equipe.</p>

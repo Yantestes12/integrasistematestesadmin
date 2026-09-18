@@ -4,6 +4,17 @@ import type { ProjetoFormData } from "../schema";
 export function IdentificacaoSection() {
   const { register, formState: { errors } } = useFormContext<ProjetoFormData>();
 
+  let focusPendenciasStr = "";
+  if (typeof window !== "undefined") {
+    const urlParams = new URLSearchParams(window.location.search);
+    focusPendenciasStr = urlParams.get("focus_pendencias") || "";
+  }
+  const focusList = focusPendenciasStr ? focusPendenciasStr.split(',') : [];
+
+  const getHighlightClass = (label: string) => {
+    return focusList.includes(label) ? "ring-2 ring-red-500 ring-offset-1 bg-red-50 animate-pulse" : "";
+  };
+
   return (
     <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
       <h2 className="text-base font-bold text-slate-800 border-b border-slate-100 pb-3">
@@ -30,7 +41,7 @@ export function IdentificacaoSection() {
             type="text"
             placeholder="Ex.: 12345/2026"
             {...register("identificacao.numeroProposta")}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ${getHighlightClass('Nº Proposta')}`}
           />
         </div>
 
@@ -40,7 +51,7 @@ export function IdentificacaoSection() {
             type="text"
             placeholder="Ex.: Termo nº 805/2024"
             {...register("identificacao.termoFomento")}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ${getHighlightClass('Termo de Fomento')}`}
           />
         </div>
       </div>
@@ -52,7 +63,7 @@ export function IdentificacaoSection() {
             type="text"
             placeholder="Ex.: 48000.00123/2026"
             {...register("identificacao.numeroProcessoAdm")}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ${getHighlightClass('Processo Adm')}`}
           />
         </div>
 
@@ -62,7 +73,7 @@ export function IdentificacaoSection() {
             type="text"
             placeholder="Ex.: 941234/2026"
             {...register("identificacao.numeroTransfereGov")}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ${getHighlightClass('Transfere.gov')}`}
           />
         </div>
 
@@ -72,7 +83,7 @@ export function IdentificacaoSection() {
           </label>
           <select
             {...register("identificacao.aplicabilidade")}
-            className={`w-full bg-slate-50 border ${errors.identificacao?.aplicabilidade ? 'border-red-500' : 'border-slate-200'} rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            className={`w-full bg-slate-50 border ${errors.identificacao?.aplicabilidade ? 'border-red-500' : 'border-slate-200'} rounded-lg p-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ${getHighlightClass('Aplicabilidade')}`}
           >
             <option value="">Selecione...</option>
             <option value="projeto de aula">Projeto de Aula</option>
