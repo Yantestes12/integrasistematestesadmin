@@ -58,6 +58,17 @@ export const GlobalFilterBar = () => {
             const data = JSON.parse(await resProj.value.text());
             pList = flattenResponse(data).filter(p => p && (p.id || p.nome));
             setProjetos(pList);
+            const savedP = localStorage.getItem('global_projeto_filter') || 'all';
+            if (savedP !== 'all' && !pList.find(p => String(p.id) === savedP)) {
+              localStorage.setItem('global_projeto_filter', 'all');
+              setSelectedProjeto('all');
+              if (typeof onFilterChange === 'function') {
+                const savedC = localStorage.getItem("global_cidade_filter") || "all";
+                const savedN = localStorage.getItem("global_nucleo_filter") || "all";
+                const savedT = localStorage.getItem("global_trimestre_filter") || "all";
+                onFilterChange('all', savedC, savedN, savedT);
+              }
+            }
           } catch (e) {}
         }
 
