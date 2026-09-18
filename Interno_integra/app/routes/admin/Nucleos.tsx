@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Plus, Search, Edit3, Power, Loader2, Layers, Building2, Calendar, Trash2, Play, Pause } from "lucide-react";
+import { Plus, Search, Edit3, Power, Loader2, Layers, Building2, Calendar, Play, Pause } from "lucide-react";
 
 export interface NucleoItem {
   id: string | number;
@@ -54,30 +54,19 @@ export default function Nucleos() {
   const [userAccountType, setUserAccountType] = useState(() => typeof window !== 'undefined' ? (localStorage.getItem('auth_account_type') || 'colaborador').toLowerCase().trim() : 'colaborador');
   const [globalFilter, setGlobalFilter] = useState("all");
   const [viewMode, setViewMode] = useState<'ativos' | 'desativados'>('ativos');
+  const [desativandoId, setDesativandoId] = useState<string | number | null>(null);
 
   useEffect(() => {
     const inst = localStorage.getItem("auth_institute") || "IBRASE";
     setCurrentInstitute(inst);
+    const IN = inst.toUpperCase();
 
     // ─ Cache versioning: limpa cache stale se a versão não bater ─
-    const storedVersion = Number(sessionStorage.getItem(`cache_nucleos_version_${inst.toUpperCase()}`) || 0);
+    const storedVersion = Number(sessionStorage.getItem(`cache_nucleos_version_${IN}`) || 0);
     if (storedVersion < NUCLEOS_CACHE_VERSION) {
-      sessionStorage.removeItem(`cache_nucleos_parsed_${inst.toUpperCase()}`);
-      sessionStorage.removeItem(`cache_raw_nucleos_${inst.toUpperCase()}`);
+      sessionStorage.removeItem(`cache_nucleos_parsed_${IN}`);
+      sessionStorage.removeItem(`cache_raw_nucleos_${IN}`);
     }
-
-    let hasCache = false;
-    try {
-      const cached = sessionStorage.getItem(`cache_nucleos_parsed_${inst.toUpperCase()}`);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setNucleos(parsed);
-          setLoading(false);
-          hasCache = true;
-        }
-      }
-    } catch(e) {}
 
     const updateGlobalFilter = () => {
       setGlobalFilter(localStorage.getItem("global_projeto_filter") || "all");
@@ -85,24 +74,20 @@ export default function Nucleos() {
     updateGlobalFilter();
     window.addEventListener("globalFilterChanged", updateGlobalFilter);
 
-    async function loadAll() {
-      // Carrega dependências sem bloquear a UI se já temos cache
-      Promise.allSettled([
-        fetchProjetos(inst),
-        fetchModalidades(inst),
-        fetchEspacos(inst),
-      ]).then(() => {
-        fetchNucleos(inst, hasCache);
-      });
-    }
+    // Sempre mostra loading até que TODOS os dados estejam prontos (nucleos + projetos + modalidades + espacos).
+    // Nunca exibe a tabela com dados parciais/incompletos.
+    setLoading(true);
 
-    if (!hasCache) {
-      loadAll();
-    } else {
-      // Mesmo com cache, atualizamos em background
-      loadAll();
-    }
-    
+    // Repopula caches de lookup em paralelo com fetch dos núcleos.
+    // Só renderiza a tabela quando TUDO estiver resolvido.
+    const nucleosPromise = fetchRawNucleosData(inst);
+    Promise.allSettled([fetchProjetos(inst), fetchModalidades(inst), fetchEspacos(inst)])
+      .then(async () => {
+        const data = await nucleosPromise;
+        if (data) processNucleosData(data, inst, false);
+        else setLoading(false);
+      });
+
     return () => window.removeEventListener("globalFilterChanged", updateGlobalFilter);
   }, []);
 
@@ -110,7 +95,8 @@ export default function Nucleos() {
 
   const fetchProjetos = async (instituteName: string) => {
     try {
-      const raw = sessionStorage.getItem(`cache_raw_projetos_${instituteName.toUpperCase()}`);
+      const IN = instituteName.toUpperCase();
+      const raw = sessionStorage.getItem(`cache_projetos_list_${IN}`) || sessionStorage.getItem(`cache_raw_projetos_${IN}`);
       let list = [];
       if (raw) {
         list = JSON.parse(raw);
@@ -312,52 +298,51 @@ export default function Nucleos() {
     });
   };
 
-  const fetchNucleos = async (instituteName: string, hasCache = false) => {
-    if (!hasCache) setLoading(true);
-
-    let fetchedData = null;
+  const fetchRawNucleosData = async (instituteName: string) => {
     try {
       const raw = sessionStorage.getItem(`cache_raw_nucleos_${instituteName.toUpperCase()}`);
-      if (raw) {
-        fetchedData = JSON.parse(raw);
-      } else {
-        const n8nEndpoint = `https://w.ibrase.com.br/webhook/nucleos-get?instituto=${instituteName.toUpperCase()}`;
-        
-        const res = await fetch(n8nEndpoint, { method: 'GET', cache: 'no-store' });
-        if (res.ok) {
-          const text = await res.text();
-          if (text) {
-            try {
-              fetchedData = JSON.parse(text);
-            } catch (e) {
-              console.warn("N8N returned non-JSON:", text);
-            }
+      if (raw) return JSON.parse(raw);
+
+      const n8nEndpoint = `https://w.ibrase.com.br/webhook/nucleos-get?instituto=${instituteName.toUpperCase()}`;
+      const res = await fetch(n8nEndpoint, { method: 'GET', cache: 'no-store' });
+      if (res.ok) {
+        const text = await res.text();
+        if (text) {
+          try {
+            const data = JSON.parse(text);
+            sessionStorage.setItem(`cache_raw_nucleos_${instituteName.toUpperCase()}`, text);
+            return data;
+          } catch (e) {
+            console.warn("N8N returned non-JSON:", text);
           }
         }
       }
     } catch (e) {
       console.warn("Erro ao fazer fetch no Webhook N8N de Núcleos:", e);
     }
+    return null;
+  };
 
+  const processNucleosData = (fetchedData: any, instituteName: string, hasCache = false) => {
     try {
-        if (fetchedData) {
-          if (fetchedData.message === "Workflow was started" || (Array.isArray(fetchedData) && fetchedData.length > 0 && fetchedData[0].message === "Workflow was started") || fetchedData.error) {
-            if (!hasCache) console.warn("O Webhook do N8N não retornou os dados corretamente.");
-            if (!hasCache) setNucleos([]);
-          } else {
-            const parsed = parseNucleosList(fetchedData);
-            const sorted = parsed.sort((a, b) => {
-              const aVaga = a.numero_vaga === "—" ? 99999 : Number(a.numero_vaga);
-              const bVaga = b.numero_vaga === "—" ? 99999 : Number(b.numero_vaga);
-              return aVaga - bVaga;
-            });
-            setNucleos(sorted);
-            try {
-              sessionStorage.setItem(`cache_nucleos_parsed_${instituteName.toUpperCase()}`, JSON.stringify(sorted));
-              sessionStorage.setItem(`cache_nucleos_version_${instituteName.toUpperCase()}`, String(NUCLEOS_CACHE_VERSION));
-            } catch(e) {}
-          }
+      if (fetchedData) {
+        if (fetchedData.message === "Workflow was started" || (Array.isArray(fetchedData) && fetchedData.length > 0 && fetchedData[0].message === "Workflow was started") || fetchedData.error) {
+          if (!hasCache) console.warn("O Webhook do N8N não retornou os dados corretamente.");
+          if (!hasCache) setNucleos([]);
+        } else {
+          const parsed = parseNucleosList(fetchedData);
+          const sorted = parsed.sort((a, b) => {
+            const aVaga = a.numero_vaga === "—" ? 99999 : Number(a.numero_vaga);
+            const bVaga = b.numero_vaga === "—" ? 99999 : Number(b.numero_vaga);
+            return aVaga - bVaga;
+          });
+          setNucleos(sorted);
+          try {
+            sessionStorage.setItem(`cache_nucleos_parsed_${instituteName.toUpperCase()}`, JSON.stringify(sorted));
+            sessionStorage.setItem(`cache_nucleos_version_${instituteName.toUpperCase()}`, String(NUCLEOS_CACHE_VERSION));
+          } catch(e) {}
         }
+      }
     } catch (e) {
       console.warn("Erro ao processar dados de Núcleos:", e);
     } finally {
@@ -367,16 +352,24 @@ export default function Nucleos() {
 
 
 
-  const handleDesativar = async (id: string | number) => {
-    if (!window.confirm("Deseja realmente desvincular e arquivar este núcleo? Ele perderá a vaga e os alunos ficarão na vaga aguardando um novo núcleo.")) return;
-    
+  const handleToggleAtivo = async (id: string | number, currentAtivo: boolean) => {
+    const isActivating = !currentAtivo;
+    const confirmMsg = isActivating 
+      ? "Deseja reativar este núcleo? Ele retornará para a aba de Ativos."
+      : "Deseja realmente desativar e arquivar este núcleo? Ele irá para a aba de Desativados.";
+      
+    if (!window.confirm(confirmMsg)) return;
+    setDesativandoId(id);
     try {
       const authInstitute = currentInstitute.toUpperCase();
       const formData = new FormData();
       formData.append("id", String(id));
-      formData.append("ativo", "false");
-      formData.append("aceitando_vagas", "false");
-      formData.append("numero_vaga", "null"); // 'null' explícito para o N8N não ignorar
+      formData.append("ativo", isActivating ? "true" : "false");
+      formData.append("aceitando_vagas", isActivating ? "true" : "false");
+      
+      if (!isActivating) {
+        formData.append("numero_vaga", "null");
+      }
       
       const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-put?instituto=${authInstitute}`, {
         method: "PUT",
@@ -384,17 +377,28 @@ export default function Nucleos() {
       });
 
       if (res.ok) {
-        fetchNucleos(currentInstitute);
+        setNucleos(prev => prev.map(n => n.id === id ? { 
+          ...n, 
+          ativo: isActivating, 
+          aceitando_vagas: isActivating,
+          ...( !isActivating ? { numero_vaga: "—" } : {} )
+        } : n));
+        setViewMode(isActivating ? 'ativos' : 'desativados');
       } else {
-        alert("Erro ao desativar núcleo via N8N.");
+        alert("Erro ao alterar o status do núcleo via N8N.");
       }
     } catch (e) {
       console.error(e);
       alert("Erro ao conectar com o servidor.");
+    } finally {
+      setDesativandoId(null);
     }
   };
 
   const filteredNucleos = nucleos.filter((item) => {
+    // Filtra por aba ativo/desativado
+    if (viewMode === 'ativos' && !item.ativo) return false;
+    if (viewMode === 'desativados' && item.ativo) return false;
     if (globalFilter !== "all" && String(item.projeto_id) !== globalFilter) return false;
     if (!searchTerm) return true;
     return (
@@ -404,6 +408,42 @@ export default function Nucleos() {
       (item.modalidade_nome || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
+
+  const totalAtivos = nucleos.filter(n => n.ativo).length;
+  const totalDesativados = nucleos.filter(n => !n.ativo).length;
+
+  // ─── Tela de carregamento completa ───────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 font-sans select-none">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative w-16 h-16">
+            <div className="absolute inset-0 rounded-full border-4 border-slate-200 dark:border-slate-700" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-[var(--theme-primary)] animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Layers className="w-6 h-6 text-[var(--theme-primary)]" />
+            </div>
+          </div>
+          <div className="text-center space-y-1">
+            <p className="text-base font-bold text-slate-700 dark:text-slate-200">Carregando núcleos...</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">Buscando dados de projetos, modalidades e espaços</p>
+          </div>
+          <div className="flex items-center gap-1.5 mt-1">
+            <div className="w-2 h-2 rounded-full bg-[var(--theme-primary)] animate-bounce" style={{ animationDelay: '0ms' }} />
+            <div className="w-2 h-2 rounded-full bg-[var(--theme-primary)] animate-bounce" style={{ animationDelay: '150ms' }} />
+            <div className="w-2 h-2 rounded-full bg-[var(--theme-primary)] animate-bounce" style={{ animationDelay: '300ms' }} />
+          </div>
+        </div>
+
+        {/* Skeleton preview */}
+        <div className="w-full max-w-3xl space-y-3 px-4 mt-2 animate-pulse">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-slate-100 dark:bg-slate-800 rounded-xl h-14 w-full" style={{ opacity: 1 - i * 0.18 }} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-12 font-sans">
@@ -420,6 +460,19 @@ export default function Nucleos() {
         </div>
 
         <div className="flex gap-2">
+          <button
+            onClick={() => setViewMode(viewMode === 'ativos' ? 'desativados' : 'ativos')}
+            className={`font-bold px-5 py-3 rounded-xl shadow-xs border transition-all flex items-center gap-2 text-sm shrink-0 ${
+              viewMode === 'desativados'
+                ? 'bg-red-600 text-white border-red-700 hover:bg-red-700'
+                : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700'
+            }`}
+          >
+            <Power size={16} className={viewMode === 'desativados' ? 'text-white' : 'text-red-500'} />
+            <span className="hidden sm:inline">
+              {viewMode === 'desativados' ? `Desativados (${totalDesativados})` : `Desativados (${totalDesativados})`}
+            </span>
+          </button>
           <Link
             to="/admin/historico-nucleos"
             className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold px-5 py-3 rounded-xl shadow-xs border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2 text-sm shrink-0"
@@ -447,7 +500,10 @@ export default function Nucleos() {
           </div>
 
           <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-            Exibindo <strong className="text-slate-800 dark:text-slate-200">{filteredNucleos.length}</strong> núcleos
+            {viewMode === 'desativados' 
+              ? <span className="text-red-500 font-bold">Exibindo {filteredNucleos.length} desativados</span>
+              : <>Exibindo <strong className="text-slate-800 dark:text-slate-200">{filteredNucleos.length}</strong> núcleos ativos</>
+            }
           </div>
         </div>
 
@@ -581,11 +637,18 @@ export default function Nucleos() {
                           </Link>
 
                           <button
-                            onClick={() => handleDesativar(item.id)}
-                            className="p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors"
-                            title="Desvincular e Arquivar Núcleo"
+                            onClick={() => handleToggleAtivo(item.id, item.ativo)}
+                            disabled={desativandoId === item.id}
+                            className={`p-2 rounded-lg transition-colors ${
+                              item.ativo 
+                                ? "text-red-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50" 
+                                : "text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                            }`}
+                            title={item.ativo ? "Desativar e Arquivar Núcleo" : "Reativar Núcleo"}
                           >
-                            <Trash2 size={16} />
+                            {desativandoId === item.id 
+                              ? <Loader2 size={16} className="animate-spin" />
+                              : <Power size={16} />}
                           </button>
                         </div>
                       </td>

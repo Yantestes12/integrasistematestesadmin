@@ -487,6 +487,7 @@ interface MatriculaItem {
   sexo?: string;
   idade?: number;
   data_nascimento?: string;
+  created_at?: string;
   status?: string;
   projeto_id?: number | string;
   cidade?: string;
@@ -523,8 +524,11 @@ export default function Dashboard() {
   const [globalProjeto, setGlobalProjeto] = useState("all");
   const [globalCidade, setGlobalCidade] = useState("all");
   const [globalNucleo, setGlobalNucleo] = useState("all");
+  const [globalTrimestreInicio, setGlobalTrimestreInicio] = useState("");
+  const [globalTrimestreFim, setGlobalTrimestreFim] = useState("");
 
   const [loading, setLoading] = useState(true);
+  const [filterLoading, setFilterLoading] = useState(false);
   const [matriculas, setMatriculas] = useState<MatriculaItem[]>([]);
   const [nucleosList, setNucleosList] = useState<any[]>([]);
   const [nucleosCount, setNucleosCount] = useState(0);
@@ -609,15 +613,32 @@ export default function Dashboard() {
 
   // 2. Listener de Filtros Globais
   useEffect(() => {
+    let timeoutId: any;
     const updateFilters = () => {
-      setGlobalProjeto(localStorage.getItem("global_projeto_filter") || "all");
-      setGlobalCidade(localStorage.getItem("global_cidade_filter") || "all");
-      setGlobalNucleo(localStorage.getItem("global_nucleo_filter") || "all");
+      setFilterLoading(true);
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setGlobalProjeto(localStorage.getItem("global_projeto_filter") || "all");
+        setGlobalCidade(localStorage.getItem("global_cidade_filter") || "all");
+        setGlobalNucleo(localStorage.getItem("global_nucleo_filter") || "all");
+        setGlobalTrimestreInicio(localStorage.getItem("global_trimestre_inicio") || "");
+        setGlobalTrimestreFim(localStorage.getItem("global_trimestre_fim") || "");
+        setFilterLoading(false);
+      }, 700);
     };
 
-    updateFilters();
+    // Inicialização sem delay
+    setGlobalProjeto(localStorage.getItem("global_projeto_filter") || "all");
+    setGlobalCidade(localStorage.getItem("global_cidade_filter") || "all");
+    setGlobalNucleo(localStorage.getItem("global_nucleo_filter") || "all");
+    setGlobalTrimestreInicio(localStorage.getItem("global_trimestre_inicio") || "");
+    setGlobalTrimestreFim(localStorage.getItem("global_trimestre_fim") || "");
+
     window.addEventListener("globalFilterChanged", updateFilters);
-    return () => window.removeEventListener("globalFilterChanged", updateFilters);
+    return () => {
+      window.removeEventListener("globalFilterChanged", updateFilters);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   // 3. Busca de Dados de Matrículas e Núcleos
@@ -628,36 +649,42 @@ export default function Dashboard() {
       
       // SWR Cache Hydration: Renderiza instantaneamente do cache da sessão (0ms)
       try {
-        let hasCache = false;
+        let hasMatriculas = false;
+        let hasNucleos = false;
         
-        const cached = sessionStorage.getItem(`cache_matriculas_${inst}`);
+        const cached = sessionStorage.getItem(`cache_matriculas_v2_${inst}`);
         if (cached) {
           const parsedCached = JSON.parse(cached);
           if (Array.isArray(parsedCached) && parsedCached.length > 0) {
             setMatriculas(parsedCached);
-            hasCache = true;
+            hasMatriculas = true;
           }
         }
         
         const cachedProj = sessionStorage.getItem(`cache_projetos_count_${inst}`);
-        if (cachedProj) { setPropostasCount(Number(cachedProj)); hasCache = true; }
+        if (cachedProj) setPropostasCount(Number(cachedProj));
 
         const cachedEspacos = sessionStorage.getItem(`cache_espacos_count_${inst}`);
-        if (cachedEspacos) { setEspacosCount(Number(cachedEspacos)); hasCache = true; }
+        if (cachedEspacos) setEspacosCount(Number(cachedEspacos));
 
         const cachedNucleos = sessionStorage.getItem(`cache_nucleos_count_${inst}`);
-        if (cachedNucleos) { setNucleosCount(Number(cachedNucleos)); hasCache = true; }
+        if (cachedNucleos) setNucleosCount(Number(cachedNucleos));
 
         const cachedNucleosList = sessionStorage.getItem(`cache_nucleos_list_${inst}`);
         if (cachedNucleosList) {
-          setNucleosList(JSON.parse(cachedNucleosList));
+          const parsedNucleos = JSON.parse(cachedNucleosList);
+          if (Array.isArray(parsedNucleos) && parsedNucleos.length > 0) {
+            setNucleosList(parsedNucleos);
+            hasNucleos = true;
+          }
         }
 
-        if (hasCache) {
-          setLoading(false); // Mostra o Dashboard instantaneamente! A requisição continuará em background.
+        // Se tivermos os alunos (para o pedagógico) e os núcleos (para o geral/gestão), libera a tela!
+        // Assim evitamos que a tela mostre 0 (se só tiver núcleo mas não tiver aluno, por exemplo).
+        if (hasMatriculas && hasNucleos) {
+          setLoading(false);
         }
       } catch (e) {}
-
       // AbortController para evitar carregamento infinito
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 segundos timeout
@@ -794,14 +821,19 @@ export default function Dashboard() {
             const data = JSON.parse(await res.text());
             if (data && !data.error && data.message !== "Workflow was started") {
               let list = Array.isArray(data) ? data : (data.data || data.items || (data.json ? [data.json] : [data]));
-              let loadedMatriculas: MatriculaItem[] = [];
-              for (let i = 0; i < list.length; i++) {
-                const item = list[i];
-                const row = item.json || item;
-                if (row) loadedMatriculas.push(row);
-              }
-              setMatriculas(loadedMatriculas);
-              try { sessionStorage.setItem(`cache_matriculas_${inst}`, JSON.stringify(loadedMatriculas)); } catch (e) {}
+              let flatList: any[] = [];
+              list.forEach((entry: any) => {
+                if (entry && entry.json) {
+                  if (Array.isArray(entry.json)) flatList.push(...entry.json);
+                  else flatList.push(entry.json);
+                } else if (Array.isArray(entry)) {
+                  flatList.push(...entry);
+                } else {
+                  flatList.push(entry);
+                }
+              });
+              setMatriculas(flatList);
+              try { sessionStorage.setItem(`cache_matriculas_v2_${inst}`, JSON.stringify(flatList)); } catch (e) {}
             }
           }).catch(() => {});
 
@@ -875,9 +907,21 @@ export default function Dashboard() {
       if (globalNucleo !== "all" && String(m.nucleo_id) !== String(globalNucleo)) {
         return false;
       }
+
+      if (globalTrimestreInicio && globalTrimestreFim) {
+        const mDateStr = m.created_at || (m as any).criado_em;
+        if (!mDateStr) return false;
+        const normalizedDateStr = mDateStr.replace(' ', 'T');
+        const dataM = new Date(normalizedDateStr);
+        const dataInicio = new Date(globalTrimestreInicio);
+        const dataFim = new Date(globalTrimestreFim);
+        dataFim.setHours(23, 59, 59, 999);
+        if (dataM < dataInicio || dataM > dataFim) return false;
+      }
+
       return true;
     });
-  }, [matriculas, globalProjeto, globalCidade, globalNucleo]);
+  }, [matriculas, globalProjeto, globalCidade, globalNucleo, globalTrimestreInicio, globalTrimestreFim]);
 
   // 5. Métricas e Estatísticas Pedagógicas Calculadas
   const metrics = useMemo(() => {
@@ -1549,6 +1593,42 @@ export default function Dashboard() {
       {/* VISÃO PEDAGÓGICA                                                          */}
       {/* ========================================================================= */}
       {activeView === "pedagogico" ? (
+        (loading || filterLoading) ? (
+          <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 font-sans select-none w-full">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative w-16 h-16">
+                <div className="absolute inset-0 rounded-full border-4 border-slate-200 dark:border-slate-700" />
+                <div className="absolute inset-0 rounded-full border-4 border-t-blue-500 animate-spin" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <PieIcon className="w-6 h-6 text-blue-500" />
+                </div>
+              </div>
+              <div className="text-center space-y-1">
+                <p className="text-base font-bold text-slate-700 dark:text-slate-200">Carregando painel pedagógico...</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">Consolidando alunos, turmas e distribuições</p>
+              </div>
+              <div className="flex items-center gap-1.5 mt-1">
+                <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            </div>
+
+            {/* Skeleton preview simulando o painel */}
+            <div className="w-full space-y-4 px-2 mt-4 animate-pulse max-w-5xl mx-auto">
+              <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl h-20 w-full opacity-80" />
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-slate-100 dark:bg-slate-800 rounded-2xl h-32 w-full" style={{ opacity: 1 - i * 0.15 }} />
+                ))}
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl h-64 w-full opacity-60" />
+                <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl h-64 w-full opacity-40" />
+              </div>
+            </div>
+          </div>
+        ) : (
         <div className="space-y-6">
 
 
@@ -1982,8 +2062,9 @@ export default function Dashboard() {
 
 
 
-        </div>
-      ) : (
+          </div>
+          )
+        ) : (
         /* ========================================================================= */
         /* VISÃO GESTÃO (Cards Tradicionais de Módulo: Propostas, Espaços, Núcleos) */
         /* ========================================================================= */
@@ -2092,9 +2173,9 @@ export default function Dashboard() {
               </div>
             </MotionSection>
 
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Modal de Exportação PDF Customizada */}
       {exportModalOpen && (

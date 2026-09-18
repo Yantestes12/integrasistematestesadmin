@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+﻿import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -48,13 +48,30 @@ export interface MatriculaItem {
 }
 
 export default function Matriculas() {
-  const [matriculas, setMatriculas] = useState<MatriculaItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [matriculas, setMatriculas] = useState<MatriculaItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      const authInst = localStorage.getItem("auth_institute") || "IBRASE";
+      const cache = sessionStorage.getItem(`cache_matriculas_v2_${authInst.toUpperCase()}`);
+      if (cache) {
+        try { return JSON.parse(cache); } catch(e) {}
+      }
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const authInst = localStorage.getItem("auth_institute") || "IBRASE";
+      return !sessionStorage.getItem(`cache_matriculas_v2_${authInst.toUpperCase()}`);
+    }
+    return true;
+  });
   const [searchTerm, setSearchTerm] = useState("");
   const [currentInstitute, setCurrentInstitute] = useState("IBRASE");
   const [globalProjeto, setGlobalProjeto] = useState("all");
   const [globalCidade, setGlobalCidade] = useState("all");
   const [globalNucleo, setGlobalNucleo] = useState("all");
+  const [globalTrimestreInicio, setGlobalTrimestreInicio] = useState("");
+  const [globalTrimestreFim, setGlobalTrimestreFim] = useState("");
   const [nucleosLookup, setNucleosLookup] = useState<Record<string, string>>({});
   const [nucleosData, setNucleosData] = useState<any[]>([]);
 
@@ -74,12 +91,21 @@ export default function Matriculas() {
 
 
   useEffect(() => {
-    const savedInstitute = localStorage.getItem("auth_institute") || "IBRASE";
-    setCurrentInstitute(savedInstitute);
+    const savedInstitute = (localStorage.getItem("auth_institute") || "IBRASE").toUpperCase();
+    
+    // Check if we already have cache
+    try {
+      const savedN = sessionStorage.getItem(`cache_raw_nucleos_${savedInstitute}`);
+      if (savedN) {
+        setNucleosData(JSON.parse(savedN));
+      }
+    } catch (e) {}
+
+    fetchAll(savedInstitute);
     
     // Instant SWR Cache Hydration: Se já temos os dados na sessão, renderiza instantaneamente (0ms)
     try {
-      const cached = sessionStorage.getItem(`cache_matriculas_${savedInstitute.toUpperCase()}`);
+      const cached = sessionStorage.getItem(`cache_matriculas_v2_${savedInstitute}`);
       if (cached) {
         const parsedCached = JSON.parse(cached);
         if (Array.isArray(parsedCached) && parsedCached.length > 0) {
@@ -95,6 +121,8 @@ export default function Matriculas() {
       setGlobalProjeto(localStorage.getItem("global_projeto_filter") || "all");
       setGlobalCidade(localStorage.getItem("global_cidade_filter") || "all");
       setGlobalNucleo(localStorage.getItem("global_nucleo_filter") || "all");
+      setGlobalTrimestreInicio(localStorage.getItem("global_trimestre_inicio") || "");
+      setGlobalTrimestreFim(localStorage.getItem("global_trimestre_fim") || "");
     };
     updateGlobalFilter();
     window.addEventListener("globalFilterChanged", updateGlobalFilter);
@@ -107,11 +135,11 @@ export default function Matriculas() {
   // Reseta para a página 1 sempre que o filtro ou termo de busca mudar
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, globalProjeto, globalCidade, globalNucleo]);
+  }, [searchTerm, globalProjeto, globalCidade, globalNucleo, globalTrimestreInicio, globalTrimestreFim]);
 
   const fetchAll = async (instituteName: string) => {
     const inst = instituteName.toUpperCase();
-    const hasCache = sessionStorage.getItem(`cache_matriculas_${inst}`);
+    const hasCache = sessionStorage.getItem(`cache_matriculas_v2_${inst}`);
     if (!hasCache) {
       setLoading(true);
     }
@@ -200,7 +228,7 @@ export default function Matriculas() {
           
           // Salva no cache da sessão
           try {
-            sessionStorage.setItem(`cache_matriculas_${inst}`, JSON.stringify(parsed));
+            sessionStorage.setItem(`cache_matriculas_v2_${inst}`, JSON.stringify(parsed));
           } catch (e) {}
         }
       }
@@ -314,6 +342,15 @@ export default function Matriculas() {
         if (globalCidade !== "all" && nObj?.cidade?.toLowerCase() !== globalCidade.toLowerCase()) return false;
       }
 
+      if (globalTrimestreInicio && globalTrimestreFim) {
+        if (!item.created_at) return false;
+        const dataM = new Date(item.created_at);
+        const dataInicio = new Date(globalTrimestreInicio);
+        const dataFim = new Date(globalTrimestreFim);
+        dataFim.setHours(23, 59, 59, 999);
+        if (dataM < dataInicio || dataM > dataFim) return false;
+      }
+
       if (showFavoritesOnly && !matriculasMeta[String(item.id)]?.is_favorito) return false;
       
       return (
@@ -322,7 +359,7 @@ export default function Matriculas() {
         (item.nucleo_nome || "").toLowerCase().includes(searchTerm.toLowerCase())
       );
     });
-  }, [matriculas, globalNucleo, globalProjeto, globalCidade, nucleosData, searchTerm, showFavoritesOnly, matriculasMeta]);
+  }, [matriculas, globalNucleo, globalProjeto, globalCidade, globalTrimestreInicio, globalTrimestreFim, nucleosData, searchTerm, showFavoritesOnly, matriculasMeta]);
 
   // Cálculos da Paginação
   const totalItems = filteredMatriculas.length;

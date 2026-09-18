@@ -475,10 +475,10 @@ export default function CadastrarEspaco() {
 
     if (step === 3) {
       const diasSelecionados = DIAS.filter(d => form.horarios[d.key]?.ativo).length;
-      if (institute !== "IBRASE") {
-        if (diasSelecionados !== 2) errs.horarios = "O Espaço Físico deve funcionar em exatos DOIS dias na semana";
-      } else {
-        if (diasSelecionados < 2) errs.horarios = "Selecione pelo menos DOIS dias de funcionamento na semana";
+      if (diasSelecionados === 0) {
+        errs.horarios = "Selecione pelo menos um dia e horário";
+      } else if (diasSelecionados > 2) {
+        errs.horarios = "Você pode selecionar no máximo 2 dias de funcionamento.";
       }
     }
 
@@ -855,26 +855,30 @@ export default function CadastrarEspaco() {
                 {errors.horarios}
               </p>
             )}
-            <p className="text-sm text-slate-500">Selecione os dias e horários em que o espaço está disponível:</p>
+            <p className="text-sm text-slate-500">Selecione os dias e horários em que o espaço está disponível (Máximo de 2 dias):</p>
             <div className="space-y-3">
               {DIAS.map(({ key, label }) => {
                 const h = form.horarios[key];
+                const diasSelecionadosCount = DIAS.filter(d => form.horarios[d.key]?.ativo).length;
+                const isDisabled = !h.ativo && diasSelecionadosCount >= 2;
+
                 return (
                   <div
                     key={key}
                     className={`flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border transition-colors ${
                       h.ativo ? "border-[var(--theme-primary)]/30 bg-[var(--theme-primary)]/5" : "border-slate-200 bg-slate-50/50"
-                    }`}
+                    } ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
-                    <label className="flex items-center gap-3 cursor-pointer min-w-[120px]">
+                    <label className={`flex items-center gap-3 min-w-[120px] ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
                       <input
                         type="checkbox"
                         checked={h.ativo}
+                        disabled={isDisabled}
                         onChange={e => setForm(f => ({
                           ...f,
                           horarios: { ...f.horarios, [key]: { ...f.horarios[key], ativo: e.target.checked } }
                         }))}
-                        className="w-4 h-4 accent-[var(--theme-primary)] cursor-pointer"
+                        className={`w-4 h-4 accent-[var(--theme-primary)] ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
                       />
                       <span className={`text-sm font-semibold ${h.ativo ? "text-slate-800" : "text-slate-400"}`}>{label}</span>
                     </label>
