@@ -166,6 +166,7 @@ export default function Propostas() {
     } else if (rawData && typeof rawData === 'object') {
       if (Array.isArray(rawData.data)) list = rawData.data;
       else if (Array.isArray(rawData.items)) list = rawData.items;
+      else if (Array.isArray(rawData.value)) list = rawData.value;
       else if (rawData.json) list = Array.isArray(rawData.json) ? rawData.json : [rawData.json];
       else list = [rawData];
     }

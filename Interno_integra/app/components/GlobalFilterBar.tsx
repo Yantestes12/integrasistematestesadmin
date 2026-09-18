@@ -12,27 +12,30 @@ export const GlobalFilterBar = () => {
 
   const [selectedTrimestre, setSelectedTrimestre] = useState<string>("all");
 
-  const flattenResponse = (rawData: any): any[] => {
+    const flattenResponse = (rawData: any): any[] => {
+    if (!rawData) return [];
     let list: any[] = [];
     if (Array.isArray(rawData)) {
       list = rawData;
-    } else if (rawData && typeof rawData === 'object') {
+    } else if (typeof rawData === 'object') {
       if (Array.isArray(rawData.data)) list = rawData.data;
       else if (Array.isArray(rawData.items)) list = rawData.items;
+      else if (Array.isArray(rawData.value)) list = rawData.value;
+      else if (rawData.json) list = Array.isArray(rawData.json) ? rawData.json : [rawData.json];
       else list = [rawData];
     }
-    let flatList: any[] = [];
+    let flat: any[] = [];
     list.forEach((entry: any) => {
-      if (entry?.json) {
-        if (Array.isArray(entry.json)) flatList.push(...entry.json);
-        else flatList.push(entry.json);
+      if (!entry) return;
+      if (entry.json) {
+        Array.isArray(entry.json) ? flat.push(...entry.json) : flat.push(entry.json);
       } else if (Array.isArray(entry)) {
-        flatList.push(...entry);
+        flat.push(...entry);
       } else {
-        flatList.push(entry);
+        flat.push(entry);
       }
     });
-    return flatList;
+    return flat.filter(item => item !== null && item !== undefined);
   };
 
   useEffect(() => {

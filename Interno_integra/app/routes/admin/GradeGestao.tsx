@@ -35,15 +35,28 @@ export default function GradeGestao() {
   const [assinatura, setAssinatura] = useState("_____/_____/_________");
   const [isSaving, setIsSaving] = useState(false);
 
-  const flattenResponse = (data: any): any[] => {
-    if (!data) return [];
-    let list: any[] = Array.isArray(data) ? data : data.data || data.items || (data.json ? (Array.isArray(data.json) ? data.json : [data.json]) : [data]);
-    if (!Array.isArray(list)) list = [list];
+    const flattenResponse = (rawData: any): any[] => {
+    if (!rawData) return [];
+    let list: any[] = [];
+    if (Array.isArray(rawData)) {
+      list = rawData;
+    } else if (typeof rawData === 'object') {
+      if (Array.isArray(rawData.data)) list = rawData.data;
+      else if (Array.isArray(rawData.items)) list = rawData.items;
+      else if (Array.isArray(rawData.value)) list = rawData.value;
+      else if (rawData.json) list = Array.isArray(rawData.json) ? rawData.json : [rawData.json];
+      else list = [rawData];
+    }
     let flat: any[] = [];
     list.forEach((entry: any) => {
       if (!entry) return;
-      if (entry?.json) Array.isArray(entry.json) ? flat.push(...entry.json) : flat.push(entry.json);
-      else flat.push(entry);
+      if (entry.json) {
+        Array.isArray(entry.json) ? flat.push(...entry.json) : flat.push(entry.json);
+      } else if (Array.isArray(entry)) {
+        flat.push(...entry);
+      } else {
+        flat.push(entry);
+      }
     });
     return flat.filter(item => item !== null && item !== undefined);
   };
