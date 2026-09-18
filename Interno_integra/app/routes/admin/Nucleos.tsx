@@ -96,7 +96,7 @@ export default function Nucleos() {
   const fetchProjetos = async (instituteName: string) => {
     try {
       const IN = instituteName.toUpperCase();
-      const raw = sessionStorage.getItem(`cache_projetos_list_${IN}`) || sessionStorage.getItem(`cache_raw_projetos_${IN}`);
+      let raw = sessionStorage.getItem(`cache_projetos_list_${IN}`) || sessionStorage.getItem(`cache_raw_projetos_${IN}`);
       let list = [];
       if (raw) {
         try {
@@ -125,7 +125,7 @@ export default function Nucleos() {
 
   const fetchModalidades = async (instituteName: string) => {
     try {
-      const raw = sessionStorage.getItem(`cache_raw_modalidades_${instituteName.toUpperCase()}`);
+      let raw = sessionStorage.getItem(`cache_raw_modalidades_${instituteName.toUpperCase()}`);
       let list = [];
       if (raw) {
         try {
@@ -154,7 +154,7 @@ export default function Nucleos() {
 
   const fetchEspacos = async (instituteName: string) => {
     try {
-      const raw = sessionStorage.getItem(`cache_raw_espacos_${instituteName.toUpperCase()}`);
+      let raw = sessionStorage.getItem(`cache_raw_espacos_${instituteName.toUpperCase()}`);
       let list = [];
       if (raw) {
         try {
@@ -313,7 +313,7 @@ export default function Nucleos() {
 
   const fetchRawNucleosData = async (instituteName: string) => {
     try {
-      const raw = sessionStorage.getItem(`cache_raw_nucleos_${instituteName.toUpperCase()}`);
+      let raw = sessionStorage.getItem(`cache_raw_nucleos_${instituteName.toUpperCase()}`);
       if (raw) { try { return JSON.parse(raw); } catch (e) { sessionStorage.removeItem(`cache_raw_nucleos_${instituteName.toUpperCase()}`); } }
 
       const n8nEndpoint = `https://w.ibrase.com.br/webhook/nucleos-get?instituto=${instituteName.toUpperCase()}`;
