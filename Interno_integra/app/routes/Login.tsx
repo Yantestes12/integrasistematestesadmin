@@ -73,20 +73,29 @@ export default function Login() {
           const account_type = Array.isArray(resData) ? resData[0].account_type : resData.account_type;
 
           let allowedInsts: string[] = [];
+          let hasExplicitInstitutes = false;
           if (Array.isArray(resData.institutos_permitidos) && resData.institutos_permitidos.length > 0) {
             allowedInsts = resData.institutos_permitidos;
+            hasExplicitInstitutes = true;
           } else if (typeof resData.institutos_permitidos === "string" && resData.institutos_permitidos.trim()) {
             try {
               const parsed = JSON.parse(resData.institutos_permitidos);
-              if (Array.isArray(parsed)) allowedInsts = parsed;
-              else allowedInsts = resData.institutos_permitidos.split(",").map((s: string) => s.trim()).filter(Boolean);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                allowedInsts = parsed;
+                hasExplicitInstitutes = true;
+              } else {
+                const splitted = resData.institutos_permitidos.split(",").map((s: string) => s.trim()).filter(Boolean);
+                if (splitted.length > 0) { allowedInsts = splitted; hasExplicitInstitutes = true; }
+              }
             } catch (e) {
-              allowedInsts = resData.institutos_permitidos.split(",").map((s: string) => s.trim()).filter(Boolean);
+              const splitted = resData.institutos_permitidos.split(",").map((s: string) => s.trim()).filter(Boolean);
+              if (splitted.length > 0) { allowedInsts = splitted; hasExplicitInstitutes = true; }
             }
           }
 
           const isMasterUser = (cargo || account_type || '').toLowerCase().includes('master');
-          if (isMasterUser && allowedInsts.length <= 1) {
+          // Só expande para todos os institutos se NÃO houver restrição explícita no banco
+          if (isMasterUser && !hasExplicitInstitutes) {
             allowedInsts = ['IBRASE', 'GASCTPNA', 'AUNI', 'IVEM'];
           }
 
@@ -180,20 +189,29 @@ export default function Login() {
       }
 
       let allowedInsts: string[] = [];
+      let hasExplicitInstitutes = false;
       if (Array.isArray(foundUser.institutos_permitidos) && foundUser.institutos_permitidos.length > 0) {
         allowedInsts = foundUser.institutos_permitidos;
+        hasExplicitInstitutes = true;
       } else if (typeof foundUser.institutos_permitidos === "string" && foundUser.institutos_permitidos.trim()) {
         try {
           const parsed = JSON.parse(foundUser.institutos_permitidos);
-          if (Array.isArray(parsed)) allowedInsts = parsed;
-          else allowedInsts = foundUser.institutos_permitidos.split(",").map((s: string) => s.trim()).filter(Boolean);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            allowedInsts = parsed;
+            hasExplicitInstitutes = true;
+          } else {
+            const splitted = foundUser.institutos_permitidos.split(",").map((s: string) => s.trim()).filter(Boolean);
+            if (splitted.length > 0) { allowedInsts = splitted; hasExplicitInstitutes = true; }
+          }
         } catch (e) {
-          allowedInsts = foundUser.institutos_permitidos.split(",").map((s: string) => s.trim()).filter(Boolean);
+          const splitted = foundUser.institutos_permitidos.split(",").map((s: string) => s.trim()).filter(Boolean);
+          if (splitted.length > 0) { allowedInsts = splitted; hasExplicitInstitutes = true; }
         }
       }
 
       const isMasterUser = (foundUser.cargo || foundUser.account_type || '').toLowerCase().includes('master');
-      if (isMasterUser && allowedInsts.length <= 1) {
+      // Só expande para todos os institutos se NÃO houver restrição explícita no banco
+      if (isMasterUser && !hasExplicitInstitutes) {
         allowedInsts = ['IBRASE', 'GASCTPNA', 'AUNI', 'IVEM'];
       }
 
