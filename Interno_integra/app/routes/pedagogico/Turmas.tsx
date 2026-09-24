@@ -10,6 +10,7 @@ import {
   Check,
   Loader2,
 } from "lucide-react";
+import { fetchWithDedupe } from "../../utils/apiCache";
 
 /* ─── Tipos ─── */
 interface MatriculaItem {
@@ -124,18 +125,33 @@ export default function Turmas() {
       if (nCache) {
         try {
           const arr = JSON.parse(nCache);
+          const matCache = sessionStorage.getItem(`cache_matriculas_${inst.toUpperCase()}`);
+          const matCidadeMap: Record<string, string> = {};
+          if (matCache) {
+            try {
+              const mList = JSON.parse(matCache);
+              for (const m of (Array.isArray(mList) ? mList : [])) {
+                const nid = String(m.nucleo_id || "");
+                const cid = String(m.cidade || m.aluno_cidade || m.municipio || "").trim();
+                if (nid && cid && !matCidadeMap[nid]) matCidadeMap[nid] = cid;
+              }
+            } catch(e) {}
+          }
           const nMap: Record<string, NucleoInfo> = {};
           arr.forEach((n: any) => {
             const id = String(n.id || n.id_nucleo || n.nucleo_id || "");
             const numVaga = n.numero_vaga || n.vaga_numero;
             const isArquivado = !numVaga || numVaga === "—" || numVaga === "";
+            const cidade = n.cidade || n.cidade_nome || matCidadeMap[id] || "";
+            const rawNome = n.nome || n.nucleo_nome || `Núcleo ${id}`;
+            const nome = cidade ? `${rawNome} (${cidade})` : rawNome;
             if (id) {
               nMap[id] = {
                 id,
-                nome: n.nome || n.nucleo_nome || `Núcleo ${id}`,
+                nome,
                 bairro: n.bairro || "",
                 foto: n.foto || n.imagem_capa || n.imagem || n.url_foto || n.url || "",
-                cidade: n.cidade || n.cidade_nome || "",
+                cidade,
                 projeto_id: n.projeto_id || "",
                 isArquivado
               };
@@ -270,31 +286,11 @@ export default function Turmas() {
     setLoading(true);
     try {
       const [resN, resM] = await Promise.allSettled([
-        fetch(`${BASE}nucleos-get?instituto=${inst}`),
-        fetch(`${BASE}matriculas-get?instituto=${inst}`),
+        fetchWithDedupe(`${BASE}nucleos-get?instituto=${inst}`),
+        fetchWithDedupe(`${BASE}matriculas-get?instituto=${inst}`),
       ]);
 
-      const nMap: Record<string, NucleoInfo> = {};
-      if (resN.status === "fulfilled" && resN.value.ok) {
-        const nData = await resN.value.json();
-        for (const n of flattenArray(nData)) {
-          const id = String(n.id || n.id_nucleo || n.nucleo_id || "");
-          const numVaga = n.numero_vaga || n.vaga_numero;
-          const isArquivado = !numVaga || numVaga === "—" || numVaga === "";
-          const foto = n.foto || n.imagem_capa || n.imagem || n.url_foto || n.url || "";
-          if (id) nMap[id] = { 
-            id, 
-            nome: n.nome || n.nucleo_nome || `Núcleo ${id}`, 
-            bairro: n.bairro || "", 
-            foto,
-            cidade: n.cidade || n.cidade_nome || "",
-            projeto_id: n.projeto_id || "",
-            isArquivado
-          };
-        }
-      }
-      setNucleosMap(nMap);
-
+      let rawList: any[] = [];
       if (resM.status === "fulfilled" && resM.value.ok) {
         const text = await resM.value.text();
         let data: any = [];
@@ -306,21 +302,58 @@ export default function Turmas() {
           }
         }
         if (data && !data.error && data.message !== "Workflow was started") {
-          const rawList = flattenArray(data);
-          const parsed: MatriculaItem[] = rawList.map((item: any, idx: number) => {
-            const nId = String(item.nucleo_id || "");
-            return {
-              id: item.id || idx + 1,
-              aluno_nome: item.aluno_nome || item.nome || `Aluno #${item.id || idx + 1}`,
-              aluno_cpf: item.aluno_cpf || item.cpf || "",
-              nucleo_nome: item.nucleo_nome || nMap[nId]?.nome || (nId ? `Núcleo ${nId}` : "Sem Núcleo"),
-              nucleo_id: item.nucleo_id || "",
-              turma: item.turma || "Sem Turma",
-              telefone_conta: item.telefone_conta || item.whatsapp || "",
-            };
-          });
-          setMatriculas(parsed);
+          rawList = flattenArray(data);
         }
+      }
+
+      // Mapear nucleo_id -> cidade a partir das matrículas para os núcleos sem cidade no nucleos-get
+      const matCidadeMap: Record<string, string> = {};
+      for (const m of rawList) {
+        const nid = String(m.nucleo_id || "");
+        const cid = String(m.cidade || m.aluno_cidade || m.municipio || "").trim();
+        if (nid && cid && !matCidadeMap[nid]) {
+          matCidadeMap[nid] = cid;
+        }
+      }
+
+      const nMap: Record<string, NucleoInfo> = {};
+      if (resN.status === "fulfilled" && resN.value.ok) {
+        const nData = await resN.value.json();
+        for (const n of flattenArray(nData)) {
+          const id = String(n.id || n.id_nucleo || n.nucleo_id || "");
+          const numVaga = n.numero_vaga || n.vaga_numero;
+          const isArquivado = !numVaga || numVaga === "—" || numVaga === "";
+          const foto = n.foto || n.imagem_capa || n.imagem || n.url_foto || n.url || "";
+          const cidade = n.cidade || n.cidade_nome || matCidadeMap[id] || "";
+          const rawNome = n.nome || n.nucleo_nome || `Núcleo ${id}`;
+          const nome = cidade ? `${rawNome} (${cidade})` : rawNome;
+          if (id) nMap[id] = { 
+            id, 
+            nome, 
+            bairro: n.bairro || "", 
+            foto,
+            cidade,
+            projeto_id: n.projeto_id || "",
+            isArquivado
+          };
+        }
+      }
+      setNucleosMap(nMap);
+
+      if (rawList.length > 0) {
+        const parsed: MatriculaItem[] = rawList.map((item: any, idx: number) => {
+          const nId = String(item.nucleo_id || "");
+          return {
+            id: item.id || idx + 1,
+            aluno_nome: item.aluno_nome || item.nome || `Aluno #${item.id || idx + 1}`,
+            aluno_cpf: item.aluno_cpf || item.cpf || "",
+            nucleo_nome: nMap[nId]?.nome || item.nucleo_nome || (nId ? `Núcleo ${nId}` : "Sem Núcleo"),
+            nucleo_id: item.nucleo_id || "",
+            turma: item.turma || "Sem Turma",
+            telefone_conta: item.telefone_conta || item.whatsapp || "",
+          };
+        });
+        setMatriculas(parsed);
       }
     } catch (e) {
       console.warn("Erro ao buscar dados de turmas:", e);

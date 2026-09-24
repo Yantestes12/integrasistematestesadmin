@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 import { useEffect, useState, useMemo, useRef } from "react";
+import { fetchWithDedupe, safeSetSession } from "~/utils/apiCache";
 
 // Componente de Animação Motion ao Rolar a Página (Scroll Reveal / After Effects style)
 function MotionSection({ 
@@ -602,13 +603,28 @@ export default function Dashboard() {
     setUserAccountType(accType);
 
     const queryView = searchParams.get("view");
+    const activeViewStorage = cargo.includes("master") ? localStorage.getItem("integra_active_view") : null;
     if (queryView === "pedagogico" || queryView === "geral") {
       setActiveView(queryView);
-    } else if (accType === "pedagogico" || cargo.includes("pedagogic") || cargo.includes("pedagógic")) {
+    } else if (activeViewStorage === "pedagogico" || accType === "pedagogico" || cargo.includes("pedagogic") || cargo.includes("pedagógic")) {
       setActiveView("pedagogico");
     } else {
       setActiveView("geral");
     }
+
+    const handleActiveRoleChanged = (e: any) => {
+      const newRole = e.detail;
+      if (newRole === "pedagogico") {
+        setActiveView("pedagogico");
+      } else if (newRole === "admin" || newRole === "master") {
+        setActiveView("geral");
+      }
+    };
+    window.addEventListener("activeRoleChanged", handleActiveRoleChanged);
+
+    return () => {
+      window.removeEventListener("activeRoleChanged", handleActiveRoleChanged);
+    };
   }, [searchParams]);
 
   // 2. Listener de Filtros Globais
@@ -802,17 +818,15 @@ export default function Dashboard() {
 
             try { 
               sessionStorage.setItem(`cache_projetos_count_${inst}`, flatList.length.toString()); 
-              sessionStorage.setItem(`cache_projetos_list_${inst}`, JSON.stringify(flatList));
+              safeSetSession(`cache_projetos_list_${inst}`, flatList);
             } catch (e) {}
           }).catch(() => {});
 
-        const pEspacos = fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${inst}`, fetchOpts)
-          .then(async res => {
-            if (!res.ok) return;
-            const data = JSON.parse(await res.text());
-            const list = Array.isArray(data) ? data : data.data || [];
-            setEspacosCount(list.length);
-            try { sessionStorage.setItem(`cache_espacos_count_${inst}`, list.length.toString()); } catch (e) {}
+        const pEspacos = fetchWithDedupe(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${inst}`, 5000)
+          .then(list => {
+            const arr = Array.isArray(list) ? list : (list?.data || []);
+            setEspacosCount(arr.length);
+            safeSetSession(`cache_espacos_count_${inst}`, arr.length.toString());
           }).catch(() => {});
 
         const pMatriculas = fetch(`https://w.ibrase.com.br/webhook/matriculas-get?instituto=${inst}`, fetchOpts)
@@ -833,7 +847,7 @@ export default function Dashboard() {
                 }
               });
               setMatriculas(flatList);
-              try { sessionStorage.setItem(`cache_matriculas_v2_${inst}`, JSON.stringify(flatList)); } catch (e) {}
+              try { safeSetSession(`cache_matriculas_v2_${inst}`, flatList); } catch (e) {}
             }
           }).catch(() => {});
 
@@ -873,15 +887,24 @@ export default function Dashboard() {
 
   const nucleosNameLookup = useMemo(() => {
     const map: Record<string, string> = {};
+    const matCidadeMap: Record<string, string> = {};
+    matriculas.forEach((m: any) => {
+      if (m.nucleo_id && m.cidade) {
+        matCidadeMap[String(m.nucleo_id)] = m.cidade;
+      }
+    });
+
     nucleosList.forEach((n: any) => {
       const id = String(n.id || n.id_nucleo || n.nucleo_id || '');
-      const name = n.nome || n.nome_nucleo || n.nucleo_nome || n.identificacao?.nomeNucleo || n.espaco_nome || '';
+      const rawName = n.nome || n.nome_nucleo || n.nucleo_nome || n.identificacao?.nomeNucleo || n.espaco_nome || '';
+      const cidade = n.cidade || n.cidade_nome || (n.espacos && n.espacos.cidade) || matCidadeMap[id] || '';
+      const name = (id && rawName && cidade) ? `${rawName} (${cidade})` : (rawName || `Núcleo ${id}`);
       if (id && name) {
         map[id] = name;
       }
     });
     return map;
-  }, [nucleosList]);
+  }, [nucleosList, matriculas]);
 
   const nucleosProjetoLookup = useMemo(() => {
     const map: Record<string, string> = {};
@@ -1490,7 +1513,7 @@ export default function Dashboard() {
         )}
 
         {/* Foco de Hoje (Inbox Zero) - Apenas Administrativo (não aparece na tab Pedagógica) */}
-        {!isPurePedagogico && activeView !== "pedagogico" && (
+        {!isPurePedagogico && (activeView as string) !== "pedagogico" && (
           <div className={`${(!loading && metrics.total > 0) ? 'md:col-span-2' : 'md:col-span-3'} self-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex flex-col justify-center relative overflow-hidden group hover:shadow-md transition-all duration-300`}>
             <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 rounded-bl-full -z-10 group-hover:scale-110 transition-transform duration-700"></div>
             

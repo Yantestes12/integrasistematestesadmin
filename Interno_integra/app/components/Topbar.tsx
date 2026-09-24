@@ -1,6 +1,37 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Network, ArrowLeftRight, LogOut, Sun, Moon, Building2, ChevronDown, Check } from 'lucide-react';
+import { LogOut, Sun, Moon, Building2, ChevronDown, Check, Crown, Users, Briefcase, GraduationCap } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { AdminBookIcon, MarketingPaintIcon } from './SidebarIcons';
+
+const ROLE_OPTIONS = [
+  { id: 'admin', label: 'Administrativo', shortLabel: 'Administrativo', icon: AdminBookIcon },
+  { id: 'pedagogico', label: 'Pedagógico', shortLabel: 'Pedagógico', icon: Users },
+  { id: 'marketing', label: 'Marketing', shortLabel: 'Marketing', icon: MarketingPaintIcon },
+  { id: 'instrutor', label: 'Instrutor', shortLabel: 'Instrutor', icon: GraduationCap },
+  { id: 'rh', label: 'RH', shortLabel: 'RH', icon: Briefcase },
+];
+
+const normalizeRole = (raw: string): string => {
+  const r = (raw || '').toLowerCase().trim();
+  if (r.includes('master')) return 'admin';
+  if (r.includes('admin') || r.includes('geral') || r.includes('gestão') || r.includes('gestao')) return 'admin';
+  if (r.includes('pedagog') || r.includes('pedagóg')) return 'pedagogico';
+  if (r.includes('market')) return 'marketing';
+  if (r.includes('instrut') || r.includes('prof')) return 'instrutor';
+  if (r.includes('rh') || r.includes('recursos')) return 'rh';
+  return 'admin';
+};
+
+const getRoleDisplayLabel = (roleId: string, originalRole: string): string => {
+  switch (roleId) {
+    case 'admin': return 'Administrativo';
+    case 'pedagogico': return 'Pedagógico';
+    case 'marketing': return 'Marketing';
+    case 'instrutor': return 'Instrutor';
+    case 'rh': return 'RH';
+    default: return 'Administrativo';
+  }
+};
 
 export const Topbar = () => {
   const navigate = useNavigate();
@@ -10,11 +41,13 @@ export const Topbar = () => {
     }
     return "IBRASE";
   });
-  const [allowedInstitutes, setAllowedInstitutes] = useState<string[]>([]);
   const [userName, setUserName] = useState("Admin");
-  const [userRole, setUserRole] = useState("Colaborador");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [realRole, setRealRole] = useState("Colaborador");
+  const [activeRole, setActiveRole] = useState("admin");
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const roleDropdownRef = useRef<HTMLDivElement>(null);
+
+  const isMaster = realRole.toLowerCase().trim().includes("master");
 
   useEffect(() => {
     const savedInstitute = localStorage.getItem("auth_institute");
@@ -23,38 +56,64 @@ export const Topbar = () => {
     const savedUser = localStorage.getItem("auth_user");
     if (savedUser) setUserName(savedUser.split(' ')[0]);
 
-    const savedRole = localStorage.getItem("auth_cargo");
-    if (savedRole) setUserRole(savedRole);
+    const savedRole = localStorage.getItem("auth_cargo") || "Colaborador";
+    setRealRole(savedRole);
 
-    try {
-      const allowed = JSON.parse(localStorage.getItem("auth_institutos_permitidos") || "[]");
-      if (Array.isArray(allowed) && allowed.length > 0) {
-        const list = savedInstitute && !allowed.includes(savedInstitute) ? [...allowed, savedInstitute] : allowed;
-        setAllowedInstitutes(list);
-      } else if (savedInstitute) {
-        setAllowedInstitutes([savedInstitute]);
-      }
-    } catch(e) {
-      if (savedInstitute) setAllowedInstitutes([savedInstitute]);
+    const isMasterUser = savedRole.toLowerCase().trim().includes("master");
+    if (isMasterUser) {
+      const savedView = localStorage.getItem("integra_active_view") || "admin";
+      setActiveRole(savedView);
+    } else {
+      setActiveRole(normalizeRole(savedRole));
     }
 
-    // Fechar dropdown ao clicar fora
+    // Fechar dropdown de cargo ao clicar fora
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
+        setIsRoleDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
 
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    const handleActiveRoleChanged = (e: any) => {
+      if (e.detail) setActiveRole(e.detail);
+    };
+    window.addEventListener("activeRoleChanged", handleActiveRoleChanged);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("activeRoleChanged", handleActiveRoleChanged);
+    };
   }, []);
+
+  const handleSwitchRole = (newRole: string) => {
+    localStorage.setItem("integra_active_view", newRole);
+    setActiveRole(newRole);
+    setIsRoleDropdownOpen(false);
+    window.dispatchEvent(new CustomEvent("activeRoleChanged", { detail: newRole }));
+
+    if (newRole === "pedagogico") {
+      navigate("/?view=pedagogico");
+    } else if (newRole === "admin" || newRole === "master") {
+      navigate("/?view=geral");
+    } else if (newRole === "marketing") {
+      navigate("/marketing");
+    } else if (newRole === "instrutor") {
+      navigate("/instrutor");
+    } else if (newRole === "rh") {
+      navigate("/rh");
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("auth_institute");
     localStorage.removeItem("auth_user");
     localStorage.removeItem("auth_cargo");
+    localStorage.removeItem("auth_account_type");
     localStorage.removeItem("auth_id");
     localStorage.removeItem("auth_institutos_permitidos");
+    localStorage.removeItem("auth_login_timestamp");
+    localStorage.removeItem("integra_active_view");
     navigate('/login');
   };
 
@@ -73,18 +132,6 @@ export const Topbar = () => {
     
     // Padrão
     return `${timeGreeting}, ${name}!`;
-  };
-
-  const handleSwitchInstitute = (newInst: string) => {
-    localStorage.setItem("auth_institute", newInst);
-    setInstitute(newInst);
-    setIsDropdownOpen(false);
-    // IMPORTANTE: Limpar os filtros globais para que os IDs de outro instituto não causem dados vazios
-    localStorage.removeItem("global_projeto_filter");
-    localStorage.removeItem("global_cidade_filter");
-    localStorage.removeItem("global_nucleo_filter");
-    // Recarrega a página para atualizar todo o contexto do app
-    window.location.reload();
   };
 
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -113,13 +160,62 @@ export const Topbar = () => {
   };
 
   return (
-    <header className="bg-white dark:bg-[var(--theme-topbar-dark)] text-slate-800 dark:text-white lg:bg-[var(--theme-topbar)] lg:text-white pl-14 sm:pl-16 lg:pl-6 pr-4 sm:pr-6 py-1.5 flex items-center justify-between shadow-xs sticky top-0 z-30 lg:z-30 w-full select-none min-h-[52px] h-[52px] border-b border-slate-200 dark:border-white/10 lg:border-white/10 transition-colors duration-300 relative">
+    <header className="bg-white dark:bg-[var(--theme-topbar-dark)] text-slate-800 dark:text-white lg:bg-[var(--theme-topbar)] lg:text-white pl-14 sm:pl-16 lg:pl-6 pr-4 sm:pr-6 py-1.5 flex items-center justify-between shadow-xs sticky top-0 z-50 lg:z-50 w-full select-none min-h-[52px] h-[52px] border-b border-slate-200 dark:border-white/10 lg:border-white/10 transition-colors duration-300 relative">
       
-      {/* Centro: Cargo do Usuário (Apenas Desktop/Notebook) */}
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center justify-center pointer-events-none">
-        <span className="text-[10px] md:text-[11px] font-black bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 lg:bg-white/15 lg:text-white/90 lg:border lg:border-white/20 px-4 md:px-5 py-1 md:py-1.5 rounded-full tracking-[0.15em] uppercase shadow-inner backdrop-blur-sm">
-          {userRole}
-        </span>
+      {/* Centro: Cargo do Usuário / Seletor Interativo de Perfil para Master */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center justify-center">
+        {isMaster ? (
+          <div className="relative" ref={roleDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+              className="flex items-center gap-1.5 px-3 py-1 md:py-1.5 rounded-full text-[10px] md:text-[11px] font-black tracking-[0.12em] uppercase transition-all shadow-inner cursor-pointer bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 lg:bg-white/15 lg:text-white lg:hover:bg-white/25 lg:border lg:border-white/20 backdrop-blur-sm focus:outline-none"
+              title="Clique para alternar o acesso entre perfis (Master)"
+              aria-label="Alternar Cargo"
+            >
+              <Crown size={12} className="text-amber-400 shrink-0" />
+              <span>{getRoleDisplayLabel(activeRole, realRole)}</span>
+              <ChevronDown size={12} className={`text-slate-400 dark:text-slate-400 lg:text-white/80 transition-transform duration-200 ${isRoleDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isRoleDropdownOpen && (
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-xl py-2 z-[100] animate-in fade-in slide-in-from-top-2">
+                <div className="px-3 pb-2 mb-1 border-b border-slate-100 dark:border-slate-800 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                  <span>Alternar Setor</span>
+                  <span className="text-[9px] bg-amber-500/15 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded font-black flex items-center gap-1">
+                    <Crown size={10} /> MASTER
+                  </span>
+                </div>
+                {ROLE_OPTIONS.map((opt) => {
+                  const isSelected = activeRole === opt.id;
+                  const IconComp = opt.icon;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => handleSwitchRole(opt.id)}
+                      className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between gap-2.5 transition-colors cursor-pointer ${
+                        isSelected 
+                          ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 font-bold' 
+                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80 font-medium'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <IconComp className="w-4 h-4 shrink-0 text-slate-500 dark:text-slate-400" />
+                        <span className="truncate">{opt.label}</span>
+                      </div>
+                      {isSelected && <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
+          <span className="text-[10px] md:text-[11px] font-black bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 lg:bg-white/15 lg:text-white/90 lg:border lg:border-white/20 px-4 md:px-5 py-1 md:py-1.5 rounded-full tracking-[0.15em] uppercase shadow-inner backdrop-blur-sm pointer-events-none">
+            {getRoleDisplayLabel(activeRole, realRole)}
+          </span>
+        )}
       </div>
 
 
@@ -146,78 +242,36 @@ export const Topbar = () => {
 
         <div className="w-px h-5 bg-slate-200 dark:bg-slate-800 lg:bg-white/20 hidden sm:block"></div>
 
-        {/* Info do Instituto Selecionado & Dropdown */}
-        <div className="relative" ref={dropdownRef}>
-          <button 
-            onClick={() => allowedInstitutes.length > 1 && setIsDropdownOpen(!isDropdownOpen)}
-            className={`flex items-center gap-2 px-2.5 py-1 rounded-lg border transition-all ${
-              allowedInstitutes.length > 1 
-                ? 'hover:bg-slate-50 dark:hover:bg-slate-800/80 cursor-pointer border-slate-200 dark:border-slate-700/80 lg:border-white/20 lg:bg-white/10' 
-                : 'cursor-default border-transparent lg:bg-white/10'
-            }`}
-          >
-            {/* Wrapper da Logo com fundo escuro exclusivo para a logo da AUNI */}
-            <div className={`flex items-center justify-center p-0.5 rounded transition-colors ${
-              institute.toUpperCase() === 'AUNI' 
-                ? 'bg-slate-900 border border-slate-700 shadow-sm' 
-                : institute.toUpperCase() === 'IVEM'
-                ? 'bg-white border border-slate-200 shadow-sm'
-                : 'bg-transparent'
-            }`}>
-              <img 
-                src={`/logo_${institute.toLowerCase()}.png`} 
-                onError={(e) => { 
-                  (e.target as any).style.display = 'none'; 
-                  if ((e.target as any).nextElementSibling) {
-                    (e.target as any).nextElementSibling.style.display = 'flex';
-                  }
-                }} 
-                alt={institute} 
-                className="h-6 w-auto object-contain" 
-              />
-              {/* Fallback de texto se a imagem não carregar */}
-              <div className="hidden items-center gap-1.5 text-slate-700 dark:text-slate-200 lg:text-white font-bold text-xs">
-                <Building2 size={16} className="text-blue-600 lg:text-white" />
-                <span>{institute}</span>
-              </div>
+        {/* Info do Instituto Selecionado (Fixo - troca somente ao sair e logar) */}
+        <div 
+          className="flex items-center gap-2 px-2.5 py-1 rounded-lg border border-transparent lg:border-white/10 lg:bg-white/10 select-none"
+          title={`Instituto ativo: ${institute}`}
+        >
+          {/* Wrapper da Logo com fundo escuro exclusivo para a logo da AUNI */}
+          <div className={`flex items-center justify-center p-0.5 rounded transition-colors ${
+            institute.toUpperCase() === 'AUNI' 
+              ? 'bg-slate-900 border border-slate-700 shadow-sm' 
+              : institute.toUpperCase() === 'IVEM'
+              ? 'bg-white border border-slate-200 shadow-sm'
+              : 'bg-transparent'
+          }`}>
+            <img 
+              src={`/logo_${institute.toLowerCase()}.png`} 
+              onError={(e) => { 
+                (e.target as any).style.display = 'none'; 
+                if ((e.target as any).nextElementSibling) {
+                  (e.target as any).nextElementSibling.style.display = 'flex';
+                }
+              }} 
+              alt={institute} 
+              className="h-6 w-auto object-contain" 
+            />
+            {/* Fallback de texto se a imagem não carregar */}
+            <div className="hidden items-center gap-1.5 text-slate-700 dark:text-slate-200 lg:text-white font-bold text-xs">
+              <Building2 size={16} className="text-blue-600 lg:text-white" />
+              <span>{institute}</span>
             </div>
-
-            {allowedInstitutes.length > 1 && (
-              <ChevronDown size={14} className={`text-slate-400 dark:text-slate-500 lg:text-white/70 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-            )}
-          </button>
-
-          {/* Menu Dropdown de Múltiplos Institutos (Sobrepõe a barra lateral com z-[100]) */}
-          {isDropdownOpen && allowedInstitutes.length > 1 && (
-            <div className="absolute top-full left-0 mt-2 w-60 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-xl py-2 z-[100] animate-in fade-in slide-in-from-top-2">
-              <div className="px-3 pb-2 mb-2 border-b border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                Trocar Instituto
-              </div>
-              {allowedInstitutes.map((inst) => (
-                <button
-                  key={inst}
-                  onClick={() => handleSwitchInstitute(inst)}
-                  className={`w-full text-left px-4 py-2 text-xs sm:text-sm flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors ${
-                    inst === institute ? 'text-blue-700 dark:text-blue-400 font-bold bg-blue-50/50 dark:bg-blue-950/40' : 'text-slate-700 dark:text-slate-300 font-medium'
-                  }`}
-                >
-                  {/* Container da logo no dropdown com fundo escuro exclusivo para AUNI */}
-                  <div className={`p-1 rounded-md flex items-center justify-center ${
-                    inst.toUpperCase() === 'AUNI' ? 'bg-slate-900 border border-slate-700' : inst.toUpperCase() === 'IVEM' ? 'bg-white border border-slate-200' : 'bg-transparent'
-                  }`}>
-                    <img 
-                      src={`/logo_${inst.toLowerCase()}.png`} 
-                      onError={(e) => { (e.target as any).style.display = 'none'; }} 
-                      alt={inst} 
-                      className="h-4 w-auto object-contain" 
-                    />
-                  </div>
-                  <span className="flex-1">{inst}</span>
-                  {inst === institute && <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />}
-                </button>
-              ))}
-            </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -234,29 +288,23 @@ export const Topbar = () => {
           type="button"
           onClick={toggleDarkMode}
           aria-label={isDarkMode ? "Ativar Modo Claro" : "Ativar Modo Escuro"}
-          className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 lg:text-white/80 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 lg:hover:bg-white/10 transition-all cursor-pointer group flex items-center justify-center"
-          title={isDarkMode ? "Mudar para Modo Claro" : "Mudar para Modo Escuro"}
+          title={isDarkMode ? "Modo Claro" : "Modo Escuro"}
+          className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white lg:text-white/80 lg:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 lg:hover:bg-white/10 transition-colors cursor-pointer"
         >
-          {isDarkMode ? (
-            <Sun size={17} className="text-amber-400 group-hover:rotate-45 transition-transform" />
-          ) : (
-            <Moon size={17} className="group-hover:-rotate-12 transition-transform" />
-          )}
+          {isDarkMode ? <Sun size={17} /> : <Moon size={17} />}
         </button>
 
-        <div className="w-px h-5 bg-slate-200 dark:bg-slate-800 lg:bg-white/20 mx-0.5 hidden sm:block"></div>
-
-        <button
+        {/* Botão Sair */}
+        <button 
           onClick={handleLogout}
-          aria-label="Sair / Fechar"
-          className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 lg:text-white/80 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 lg:hover:bg-red-500/20 transition-colors flex items-center gap-1.5"
-          title="Sair"
+          title="Encerrar Sessão"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 lg:text-white lg:hover:bg-red-500/20 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors border border-rose-200 dark:border-rose-900/50 lg:border-white/20 cursor-pointer"
         >
-          <LogOut size={16} />
-          <span className="text-xs font-semibold hidden lg:block">Sair</span>
+          <LogOut size={15} />
+          <span className="hidden sm:inline">Sair</span>
         </button>
       </div>
 
     </header>
   );
-}
+};

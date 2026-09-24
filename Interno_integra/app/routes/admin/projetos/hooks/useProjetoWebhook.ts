@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ProjetoFormData } from "../schema";
+import { normalizeCargoName } from "../components/LimitesSection";
 
 const formatDateForInput = (val: any) => {
   if (!val) return "";
@@ -34,6 +35,17 @@ const parseModalidades = (raw: any) => {
   return null;
 };
 
+const flattenList = (data: any): any[] => {
+  let list = Array.isArray(data) ? data : (data.json ? (Array.isArray(data.json) ? data.json : [data.json]) : [data]);
+  let flatList: any[] = [];
+  list.forEach((entry: any) => {
+    if (entry && entry.json) { Array.isArray(entry.json) ? flatList.push(...entry.json) : flatList.push(entry.json); }
+    else if (Array.isArray(entry)) { flatList.push(...entry); }
+    else { flatList.push(entry); }
+  });
+  return flatList;
+};
+
 export function useProjetoWebhook(editModeId: string | null, resetForm: (values: Partial<ProjetoFormData>) => void) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,9 +53,13 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
   useEffect(() => {
     if (!editModeId) return;
 
-    const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
-    const IN = authInstitute.toUpperCase();
-    const n8nEndpoint = `https://w.ibrase.com.br/webhook/projetos-get?instituto=${authInstitute}&_t=${new Date().getTime()}`;
+    let targetInst = "IBRASE";
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      targetInst = params.get("instituto") || params.get("inst") || localStorage.getItem("auth_institute") || "IBRASE";
+    }
+    const IN = targetInst.toUpperCase();
+    const n8nEndpoint = `https://w.ibrase.com.br/webhook/projetos-get?instituto=${IN}&_t=${new Date().getTime()}`;
 
     const applyProjectData = (item: any) => {
       if (!item) return false;
@@ -51,19 +67,21 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
       const rawInicio = item.vigencia_inicio || item.vigenciainicio || item.data_inicio_vigencia || item.data_inicio || item.dataInicioVigencia || item.vigencia?.dataInicio || item.vigencia?.inicio || "";
       const rawTermino = item.vigencia_fim || item.vigencia_termino || item.vigenciatermino || item.data_termino_vigencia || item.data_fim || item.dataTerminoVigencia || item.vigencia?.dataTermino || item.vigencia?.fim || "";
 
-      let mappedVagasNucleo = null;
-      const candidates = [
-        item.vagas_nucleo, 
-        item.vagasNucleo, 
-        item.limites_modalidades, 
-        item.limitesModalidades, 
-        item.limites_modalidade, 
-        item.limitesModalidade
-      ];
-      for (const cand of candidates) {
-        const parsed = parseModalidades(cand);
-        if (parsed && parsed.length > 0) { mappedVagasNucleo = parsed; break; }
+      let mappedVagasNucleo: any[] | null = null;
+      const parsedVagas = parseModalidades(item.vagas_nucleo || item.vagasNucleo);
+      const parsedLimites = parseModalidades(item.limites_modalidades || item.limitesModalidades || item.limites_modalidade || item.limitesModalidade);
+
+      // Checa se parsedVagas possui slots reais preenchidos com modalidades
+      const hasRealSlots = Array.isArray(parsedVagas) && parsedVagas.length > 0 && parsedVagas.some((v: any) => v.modalidadeId || v.modalidade_id || v.modalidadeNome || v.nome);
+
+      if (hasRealSlots) {
+        mappedVagasNucleo = parsedVagas;
+      } else if (Array.isArray(parsedLimites) && parsedLimites.length > 0) {
+        mappedVagasNucleo = parsedLimites;
+      } else if (Array.isArray(parsedVagas) && parsedVagas.length > 0) {
+        mappedVagasNucleo = parsedVagas;
       }
+
       if (!mappedVagasNucleo || mappedVagasNucleo.length === 0) {
         mappedVagasNucleo = [];
         const totalLegacy = Number(item.limite_nucleos || item.qtd_nucleos || item.quantidade_nucleos || 0);
@@ -79,16 +97,23 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
           let currentSlot = 1;
           mappedVagasNucleo.forEach((legacyItem: any) => {
             const limite = Number(legacyItem.limite) || 0;
+            const mId = legacyItem.id != null ? String(legacyItem.id) : (legacyItem.modalidadeId != null ? String(legacyItem.modalidadeId) : "");
+            const mNome = legacyItem.nome || legacyItem.modalidadeNome || legacyItem.modalidade_nome || "";
             for (let i = 0; i < limite; i++) {
-              convertedVagas.push({ numero: currentSlot++, modalidadeId: String(legacyItem.id || legacyItem.modalidadeId || ""), modalidadeNome: legacyItem.nome || legacyItem.modalidadeNome || "Modalidade Legada" });
+              convertedVagas.push({
+                numero: currentSlot++,
+                modalidadeId: mId,
+                modalidadeNome: mNome,
+                espacoVinculadoId: null
+              });
             }
           });
           mappedVagasNucleo = convertedVagas;
         } else {
-          // Formato moderno: garante que modalidadeId é sempre string (o select compara como string)
-          mappedVagasNucleo = mappedVagasNucleo.map((v: any) => ({
+          // Formato moderno: garante que modalidadeId é sempre string e número ordenado
+          mappedVagasNucleo = mappedVagasNucleo.map((v: any, idx: number) => ({
             ...v,
-            numero: v.numero ?? v.slot ?? v.num ?? "",
+            numero: v.numero ?? v.slot ?? v.num ?? (idx + 1),
             modalidadeId: v.modalidadeId != null ? String(v.modalidadeId) : (v.modalidade_id != null ? String(v.modalidade_id) : ""),
             modalidadeNome: v.modalidadeNome || v.modalidade_nome || v.nome || "",
             espacoVinculadoId: v.espacoVinculadoId || v.espaco_id || null,
@@ -96,7 +121,7 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
         }
       }
 
-      let mappedPeriodos = [];
+      let mappedPeriodos: any[] = [];
       if (item.periodos && Array.isArray(item.periodos) && item.periodos.length > 0) {
         mappedPeriodos = item.periodos;
       } else if (item.periodos_json) {
@@ -105,11 +130,20 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
           if (Array.isArray(parsed) && parsed.length > 0) mappedPeriodos = parsed;
         } catch(e) {}
       }
-      mappedPeriodos = mappedPeriodos.map((p: any) => ({ ...p, inicio: p.inicio ? formatDateForInput(p.inicio) : "", fim: p.fim ? formatDateForInput(p.fim) : "" }));
+      mappedPeriodos = mappedPeriodos.map((p: any, idx: number) => ({
+        id: p.id || (Date.now() + idx),
+        tipo: p.tipo || "avaliacao",
+        rotulo: p.rotulo || "",
+        inicio: p.inicio ? formatDateForInput(p.inicio) : "",
+        fim: p.fim ? formatDateForInput(p.fim) : ""
+      }));
 
       let ativo = true;
-      if (item.status?.ativo !== undefined) { ativo = item.status.ativo; }
-      else if (item.ativo !== undefined) { ativo = (item.ativo === 1 || item.ativo === "1" || item.ativo === true || item.ativo === "true"); }
+      if (item.status?.ativo !== undefined) {
+        ativo = Boolean(item.status.ativo);
+      } else if (item.ativo !== undefined) {
+        ativo = (item.ativo === 1 || item.ativo === "1" || item.ativo === true || item.ativo === "true");
+      }
 
       let mappedLimitesCargos: Array<{nome: string, limite: number}> = [];
       if (item.limites_cargos && typeof item.limites_cargos === 'string') {
@@ -119,14 +153,20 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
       }
       if (mappedLimitesCargos.length === 0) {
         const fallback: Array<{nome: string, limite: number}> = [];
-        if (item.qtd_instrutor) fallback.push({ nome: "Instrutor", limite: Number(item.qtd_instrutor) });
-        if (item.limite_auxiliares) fallback.push({ nome: "Auxiliar", limite: Number(item.limite_auxiliares) });
-        if (item.qtd_coord_geral) fallback.push({ nome: "Coordenador Geral", limite: Number(item.qtd_coord_geral) });
-        if (item.qtd_coord_nucleo) fallback.push({ nome: "Coordenador de Núcleo", limite: Number(item.qtd_coord_nucleo) });
-        if (item.qtd_coord_pedagogico) fallback.push({ nome: "Coordenador Pedagógico", limite: Number(item.qtd_coord_pedagogico) });
+        if (item.qtd_instrutor) fallback.push({ nome: "Instrutor (Educador)", limite: Number(item.qtd_instrutor) });
+        if (item.limite_auxiliares) fallback.push({ nome: "Auxiliar (Monitor)", limite: Number(item.limite_auxiliares) });
+        if (item.qtd_coord_geral) fallback.push({ nome: "Coord. Geral", limite: Number(item.qtd_coord_geral) });
+        if (item.qtd_coord_nucleo) fallback.push({ nome: "Coord. de Núcleo", limite: Number(item.qtd_coord_nucleo) });
+        if (item.qtd_coord_pedagogico) fallback.push({ nome: "Coord. Pedagógico", limite: Number(item.qtd_coord_pedagogico) });
         if (item.qtd_supervisores) fallback.push({ nome: "Supervisor", limite: Number(item.qtd_supervisores) });
         if (fallback.length > 0) mappedLimitesCargos = fallback;
       }
+
+      // Normaliza nomes legados para a lista oficial dos 30 cargos
+      mappedLimitesCargos = mappedLimitesCargos.map((c: any) => ({
+        nome: normalizeCargoName(c.nome),
+        limite: Number(c.limite || 0)
+      }));
 
       let vagasAlunoExtraidas = 0;
       if (item.limites) {
@@ -164,19 +204,7 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
       return true;
     };
 
-    const flattenList = (data: any): any[] => {
-      let list = Array.isArray(data) ? data : (data.json ? (Array.isArray(data.json) ? data.json : [data.json]) : [data]);
-      let flatList: any[] = [];
-      list.forEach((entry: any) => {
-        if (entry && entry.json) { Array.isArray(entry.json) ? flatList.push(...entry.json) : flatList.push(entry.json); }
-        else if (Array.isArray(entry)) { flatList.push(...entry); }
-        else { flatList.push(entry); }
-      });
-      return flatList;
-    };
-
     // 1. Tenta preencher IMEDIATAMENTE a partir do cache local (sem loading)
-    // Lê de cache_projetos_list_* (populada pelo prefetch do MainLayout) ou cache_raw_projetos_* (populada pelo Propostas.tsx)
     let filledFromCache = false;
     try {
       const rawCache = sessionStorage.getItem(`cache_projetos_list_${IN}`) || sessionStorage.getItem(`cache_raw_projetos_${IN}`);
@@ -191,25 +219,22 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
       }
     } catch(e) {}
 
-    // 2. Busca do N8N (fallback se não achou no cache, ou apenas atualiza o cache em background)
+    // 2. Busca dados frescos do N8N (garante atualização completa)
     if (!filledFromCache) setIsLoading(true);
 
     fetch(n8nEndpoint, { cache: "no-store", headers: { "Pragma": "no-cache", "Cache-Control": "no-cache" } })
       .then((res) => res.json())
-      .then((data) => {
+      .then(async (data) => {
         if (data.message === "Workflow was started" || (Array.isArray(data) && data[0]?.message === "Workflow was started")) {
           setIsLoading(false);
           return;
         }
         const flatList = flattenList(data);
-        const item = flatList.find((i: any) => String(i.id || i.id_projeto || i.id_proposta) === String(editModeId));
+        let item = flatList.find((i: any) => String(i.id || i.id_projeto || i.id_proposta) === String(editModeId));
+        
+        // Se encontrou no instituto alvo, aplica sempre os dados frescos
         if (item) {
-          // Só preenche o formulário se o cache NÃO preencheu antes.
-          // Se já preenchemos pelo cache, só atualizamos o cache silenciosamente.
-          if (!filledFromCache) {
-            applyProjectData(item);
-          }
-          // Atualiza o cache com dados frescos do N8N
+          applyProjectData(item);
           try {
             const rawCache = sessionStorage.getItem(`cache_raw_projetos_${IN}`);
             if (rawCache) {
@@ -220,6 +245,23 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
               sessionStorage.setItem(`cache_raw_projetos_${IN}`, JSON.stringify(cacheList));
             }
           } catch(e) {}
+        } else {
+          // Fallback inteligente: se não encontrou no instituto atual, busca nos outros institutos!
+          const otherInsts = ["IBRASE", "GASCTPNA", "AUNI", "IVEM"].filter(x => x !== IN);
+          for (const otherInst of otherInsts) {
+            try {
+              const otherRes = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${otherInst}&_t=${new Date().getTime()}`);
+              if (otherRes.ok) {
+                const otherData = await otherRes.json();
+                const otherList = flattenList(otherData);
+                const found = otherList.find((i: any) => String(i.id || i.id_projeto || i.id_proposta) === String(editModeId));
+                if (found) {
+                  applyProjectData(found);
+                  break;
+                }
+              }
+            } catch(e) {}
+          }
         }
       })
       .catch((err) => {
@@ -230,7 +272,12 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
   }, [editModeId, resetForm]);
 
   const saveProjeto = async (editId: string | null, data: ProjetoFormData) => {
-    const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
+    let targetInst = "IBRASE";
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      targetInst = params.get("instituto") || params.get("inst") || localStorage.getItem("auth_institute") || "IBRASE";
+    }
+    const authInstitute = targetInst.toUpperCase();
     const webhookUrl = editId 
       ? `https://w.ibrase.com.br/webhook/projetos-put?instituto=${authInstitute}` 
       : `https://w.ibrase.com.br/webhook/projetos-post?instituto=${authInstitute}`;
@@ -261,18 +308,21 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
       limites_cargos: data.limitesCargos,
       vagas_nucleo: JSON.stringify(data.vagasNucleo || []),
       
-      // Retrocompatibilidade: Converte vagasNucleo de volta para limites_modalidades
+      // Retrocompatibilidade: Converte vagasNucleo de volta para limites_modalidades (formato JSON string)
       limites_modalidades: (() => {
         const counts: Record<string, { nome: string, count: number }> = {};
-        data.vagasNucleo.forEach(v => {
-          if (!counts[v.modalidadeId]) counts[v.modalidadeId] = { nome: v.modalidadeNome, count: 0 };
-          counts[v.modalidadeId].count++;
+        (data.vagasNucleo || []).forEach(v => {
+          if (v.modalidadeId) {
+            if (!counts[v.modalidadeId]) counts[v.modalidadeId] = { nome: v.modalidadeNome || "Modalidade", count: 0 };
+            counts[v.modalidadeId].count++;
+          }
         });
-        return Object.entries(counts).map(([id, info]) => ({
+        const arr = Object.entries(counts).map(([id, info]) => ({
           id: id,
           nome: info.nome,
           limite: info.count
         }));
+        return JSON.stringify(arr);
       })(),
 
       periodos_json: data.periodos,
@@ -290,6 +340,19 @@ export function useProjetoWebhook(editModeId: string | null, resetForm: (values:
 
     if (editId) {
       payload.id = editId;
+      try {
+        const rawCache = sessionStorage.getItem(`cache_projetos_list_${authInstitute}`) || sessionStorage.getItem(`cache_raw_projetos_${authInstitute}`);
+        if (rawCache) {
+          const cacheData = JSON.parse(rawCache);
+          const cacheList = Array.isArray(cacheData) ? cacheData : flattenList(cacheData);
+          const item = cacheList.find((i: any) => String(i.id || i.id_projeto || i.id_proposta) === String(editId));
+          if (item) {
+            if (item.grade_gestao) payload.grade_gestao = item.grade_gestao;
+            if (item.grade_estagiarios) payload.grade_estagiarios = item.grade_estagiarios;
+            if (item.perguntas_extras) payload.perguntas_extras = typeof item.perguntas_extras === "string" ? item.perguntas_extras : JSON.stringify(item.perguntas_extras);
+          }
+        }
+      } catch(e) {}
     }
 
     const response = await fetch(webhookUrl, {

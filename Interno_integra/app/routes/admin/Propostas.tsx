@@ -99,7 +99,7 @@ function PendenciasPanel({ propostas, currentInstitute }: { propostas: PropostaI
                 </div>
               </div>
               <Link
-                to={`/admin/cadastrar-projeto?edit=${proposta.id}`}
+                to={`/admin/cadastrar-projeto?edit=${proposta.id}&instituto=${currentInstitute}`}
                 className="shrink-0 inline-flex items-center gap-1.5 text-xs font-extrabold px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors"
               >
                 <Edit3 size={13} />
@@ -498,7 +498,7 @@ export default function Propostas() {
         </div>
 
         <Link
-          to="/admin/cadastrar-projeto"
+          to={`/admin/cadastrar-projeto?instituto=${currentInstitute}`}
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-3 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 text-sm shrink-0"
         >
           <Plus size={18} />
@@ -547,7 +547,7 @@ export default function Propostas() {
               Não existem registros de propostas cadastradas para o instituto {currentInstitute} no momento.
             </p>
             <Link
-              to="/admin/cadastrar-projeto"
+              to={`/admin/cadastrar-projeto?instituto=${currentInstitute}`}
               className="inline-flex items-center gap-2 mt-6 text-sm font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-4 py-2.5 rounded-xl border border-blue-100 dark:border-blue-800 transition-colors"
             >
               <Plus size={16} /> Cadastrar a primeira proposta
@@ -613,11 +613,11 @@ export default function Propostas() {
                       </td>
 
                       <td className="py-3 md:py-4 px-3 md:px-4 text-center font-extrabold text-blue-700 dark:text-blue-400 text-sm md:text-base">
-                        {item.total_nucleos !== undefined && item.total_nucleos !== null && item.total_nucleos !== "" ? `${item.total_nucleos} núcleos` : "—"}
+                        {item.total_nucleos !== undefined && item.total_nucleos !== null && (item.total_nucleos as any) !== "" ? `${item.total_nucleos} núcleos` : "—"}
                       </td>
 
                       <td className="py-3 md:py-4 px-3 md:px-4 text-center font-extrabold text-indigo-700 dark:text-indigo-400 text-sm md:text-base">
-                        {item.vagas_por_nucleo !== undefined && item.vagas_por_nucleo !== null && item.vagas_por_nucleo !== "" ? `${item.vagas_por_nucleo} alunos` : "—"}
+                        {item.vagas_por_nucleo !== undefined && item.vagas_por_nucleo !== null && (item.vagas_por_nucleo as any) !== "" ? `${item.vagas_por_nucleo} alunos` : "—"}
                       </td>
 
                       <td className="py-3 md:py-4 px-3 md:px-4 text-center">
@@ -635,7 +635,7 @@ export default function Propostas() {
                       <td className="py-4 px-4 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <Link
-                            to={`/admin/cadastrar-projeto?edit=${item.id}`}
+                            to={`/admin/cadastrar-projeto?edit=${item.id}&instituto=${currentInstitute}`}
                             className="p-2 rounded-lg text-slate-400 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors"
                             title="Editar Proposta"
                           >

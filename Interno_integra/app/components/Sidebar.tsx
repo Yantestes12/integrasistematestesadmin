@@ -7,19 +7,39 @@ import {
   BookOpen,
   UserSquare2,
   Megaphone,
-  Eye,
-  Wallet,
   Network,
   Crown,
   ChevronDown,
   ChevronRight,
   Menu,
   X,
-  PaintBucket,
   GraduationCap,
   Briefcase
 } from 'lucide-react';
 import { AdminBookIcon, MarketingPaintIcon } from './SidebarIcons';
+
+const normalizeRole = (raw: string): string => {
+  const r = (raw || '').toLowerCase().trim();
+  if (r.includes('master')) return 'master';
+  if (r.includes('admin') || r.includes('geral') || r.includes('gestão') || r.includes('gestao')) return 'admin';
+  if (r.includes('pedagog') || r.includes('pedagóg')) return 'pedagogico';
+  if (r.includes('market')) return 'marketing';
+  if (r.includes('instrut') || r.includes('prof')) return 'instrutor';
+  if (r.includes('rh') || r.includes('recursos')) return 'rh';
+  return 'admin';
+};
+
+const getRoleDisplayLabel = (roleId: string, originalRole: string): string => {
+  switch (roleId) {
+    case 'master': return 'Master';
+    case 'admin': return 'Administrador';
+    case 'pedagogico': return 'Pedagógico';
+    case 'marketing': return 'Marketing';
+    case 'instrutor': return 'Instrutor';
+    case 'rh': return 'RH';
+    default: return originalRole || 'Colaborador';
+  }
+};
 
 export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
   const location = useLocation();
@@ -29,14 +49,35 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
 
   // Mantém os submenus fechados por padrão, abrindo somente via clique do usuário
   const [openPaths, setOpenPaths] = useState<string[]>([]);
-  const [userRole, setUserRole] = useState("colaborador");
   const [hasEventos, setHasEventos] = useState(false);
+
+  const [realRole, setRealRole] = useState("colaborador");
+  const [activeRole, setActiveRole] = useState(() => {
+    if (typeof window !== "undefined") {
+      const cargo = (localStorage.getItem("auth_cargo") || "colaborador").toLowerCase().trim();
+      const isMasterUser = cargo.includes("master");
+      if (isMasterUser) {
+        return localStorage.getItem("integra_active_view") || "admin";
+      }
+      return normalizeRole(cargo);
+    }
+    return "admin";
+  });
+
+  const isMaster = realRole.toLowerCase().includes("master");
 
   // Recupera o cargo do usuário para o RBAC e o estado recolhido do menu no PC
   useEffect(() => {
     const cargo = (localStorage.getItem("auth_cargo") || "colaborador").toLowerCase().trim();
-    const accountType = (localStorage.getItem("auth_account_type") || "colaborador").toLowerCase().trim();
-    setUserRole(`${cargo} ${accountType}`);
+    setRealRole(cargo);
+
+    const isMasterUser = cargo.includes("master");
+    if (isMasterUser) {
+      const savedView = localStorage.getItem("integra_active_view") || "admin";
+      setActiveRole(savedView);
+    } else {
+      setActiveRole(normalizeRole(cargo));
+    }
 
     const savedPcCollapsed = localStorage.getItem("sidebar_collapsed_pc") === "true";
     setIsPcCollapsed(savedPcCollapsed);
@@ -66,29 +107,33 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
       });
     };
 
+    const handleActiveRoleChanged = (e: any) => {
+      if (e.detail) {
+        setActiveRole(e.detail);
+      }
+    };
+
     window.addEventListener("toggleSidebarPC", handleTogglePC);
-    return () => window.removeEventListener("toggleSidebarPC", handleTogglePC);
+    window.addEventListener("activeRoleChanged", handleActiveRoleChanged);
+
+    return () => {
+      window.removeEventListener("toggleSidebarPC", handleTogglePC);
+      window.removeEventListener("activeRoleChanged", handleActiveRoleChanged);
+    };
   }, []);
 
   useEffect(() => {
     // Sincroniza os menus abertos com base na URL atual (efeito sanfona automático)
     const newOpenPaths = [];
-    if (location.pathname.startsWith('/admin')) {
-      newOpenPaths.push('Administrativo');
-      if (location.pathname.startsWith('/admin/espacos') || location.pathname.startsWith('/admin/nucleos') || location.pathname.startsWith('/admin/grade-')) {
-        newOpenPaths.push('Administrativo>Projetos');
-      }
-      if (location.pathname.startsWith('/admin/nucleos') || location.pathname.startsWith('/admin/grade-')) {
-        newOpenPaths.push('Administrativo>Projetos>Núcleos');
-      }
-      if (location.pathname.startsWith('/admin/locais-evento')) {
-        newOpenPaths.push('Administrativo>Eventos');
-      }
-    } else if (location.pathname.startsWith('/pedagogico')) {
-      newOpenPaths.push('Pedagógico');
+    if (location.pathname.startsWith('/admin/espacos') || location.pathname.startsWith('/admin/nucleos') || location.pathname.startsWith('/admin/grade-') || location.pathname.startsWith('/admin/projetos')) {
+      newOpenPaths.push('Projetos');
     }
-    // Preserva menus que o usuário abriu manualmente se desejar, mas para efeito sanfona estrito, 
-    // substituímos completamente pelos paths da rota atual.
+    if (location.pathname.startsWith('/admin/nucleos') || location.pathname.startsWith('/admin/grade-')) {
+      newOpenPaths.push('Projetos>Núcleos');
+    }
+    if (location.pathname.startsWith('/admin/locais-evento') || location.pathname.startsWith('/admin/eventos')) {
+      newOpenPaths.push('Eventos');
+    }
     setOpenPaths(newOpenPaths);
   }, [location.pathname]);
 
@@ -119,84 +164,118 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
     }
   };
 
-  const handleItemClick = (item: any, e: any) => {
-    if (!item.path) e.preventDefault();
-    if (onSelectMenu) {
-      onSelectMenu(item.name);
-    }
-    // Fecha o drawer no mobile ao selecionar uma opção final
-    setIsOpen(false);
-  };
-
-  // Estrutura hierárquica atualizada com as rotas e regras de acesso
-  const menuTree = [
+  // 1. Itens do Administrativo (diretos, sem pasta Administrativo)
+  const adminItems = [
     {
-      name: 'Administrativo',
+      name: 'Início',
+      icon: <LayoutDashboard className="w-5 h-5" />,
+      path: "/?view=geral"
+    },
+    {
+      name: 'Propostas',
       icon: <AdminBookIcon className="w-5 h-5" />,
-      roles: ['master', 'admin'],
-      path: "/?view=geral", // Rota do dashboard do setor
+      path: "/admin/propostas"
+    },
+    { 
+      name: 'Projetos', 
+      icon: <Settings className="w-5 h-5" />,
       children: [
-        { name: 'Propostas', path: "/admin/propostas" },
+        { name: 'Espaços', path: "/admin/espacos" },
         { 
-          name: 'Projetos', 
+          name: 'Núcleos', 
+          path: "/admin/nucleos",
           children: [
-            { name: 'Espaços', path: "/admin/espacos" },
-            { 
-              name: 'Núcleos', 
-              path: "/admin/nucleos",
-              children: [
-                { name: 'Grade Horária', isHeader: true },
-                { name: 'Gestão', path: "/admin/grade-gestao" },
-                { name: 'Estagiários', path: "/admin/grade-estagiarios" }
-              ]
-            }
+            { name: 'Grade Horária', isHeader: true },
+            { name: 'Gestão', path: "/admin/grade-gestao" },
+            { name: 'Estagiários', path: "/admin/grade-estagiarios" }
           ]
         },
-        ...(hasEventos ? [{
-          name: 'Eventos', 
-          children: [
-            { name: 'Local (Núcleo)', path: "/admin/locais-evento" }
-          ]
-        }] : [])
+        { name: 'Formulários', path: "/admin/projetos/formularios" },
+        { name: 'Cronogramas', path: "/admin/projetos/cronogramas" }
       ]
     },
-    {
-      name: 'Pedagógico',
-      icon: <Users className="w-5 h-5 anim-users-context" />,
-      roles: ['master', 'pedagogico'],
-      path: "/?view=pedagogico", // Rota do dashboard do setor
+    ...(hasEventos ? [{
+      name: 'Eventos', 
+      icon: <Megaphone className="w-5 h-5" />,
       children: [
-        { name: 'Inscrições', path: "/pedagogico/inscricoes" },
-        { name: 'Matrículas', path: "/pedagogico/matriculas" },
-        { name: 'Turmas', path: "/pedagogico/turmas" },
-        { name: 'Relatórios', path: "/pedagogico/relatorios" },
+        { name: 'Local (Núcleo)', path: "/admin/locais-evento" },
+        { name: 'Formulários', path: "/admin/eventos/formularios" },
+        { name: 'Cronogramas', path: "/admin/eventos/cronogramas" }
       ]
+    }] : [])
+  ];
+
+  // 2. Itens do Pedagógico (diretos, sem pasta Pedagógico)
+  const pedagogicoItems = [
+    {
+      name: 'Início',
+      icon: <LayoutDashboard className="w-5 h-5" />,
+      path: "/?view=pedagogico"
     },
     {
-      name: 'Marketing',
-      icon: <MarketingPaintIcon className="w-5 h-5" />,
-      roles: ['master', 'marketing'],
-      path: "/marketing",
+      name: 'Inscrições',
+      icon: <UserSquare2 className="w-5 h-5" />,
+      path: "/pedagogico/inscricoes"
     },
     {
-      name: 'Instrutor',
-      icon: <GraduationCap className="w-5 h-5 anim-cap-context" />,
-      roles: ['master', 'instrutor'],
-      path: "/instrutor",
+      name: 'Matrículas',
+      icon: <BookOpen className="w-5 h-5" />,
+      path: "/pedagogico/matriculas"
     },
     {
-      name: 'RH',
+      name: 'Turmas',
+      icon: <Network className="w-5 h-5" />,
+      path: "/pedagogico/turmas"
+    },
+    {
+      name: 'Relatórios',
       icon: <Briefcase className="w-5 h-5" />,
-      roles: ['master', 'rh'],
-      path: "/rh",
+      path: "/pedagogico/relatorios"
     }
   ];
 
-  // Filtra o menu com base no cargo do usuário
-  const filteredMenuTree = menuTree.filter(item => {
-    if (!item.roles) return true;
-    return item.roles.some(allowedRole => userRole.includes(allowedRole));
-  });
+  // 3. Marketing
+  const marketingItems = [
+    {
+      name: 'Início',
+      icon: <MarketingPaintIcon className="w-5 h-5" />,
+      path: "/marketing"
+    }
+  ];
+
+  // 4. Instrutor
+  const instrutorItems = [
+    {
+      name: 'Painel do Instrutor',
+      icon: <GraduationCap className="w-5 h-5 anim-cap-context" />,
+      path: "/instrutor"
+    }
+  ];
+
+  // 5. RH
+  const rhItems = [
+    {
+      name: 'Painel de RH',
+      icon: <Briefcase className="w-5 h-5" />,
+      path: "/rh"
+    }
+  ];
+
+  // Montagem do menu dinâmico baseado no perfil ativo
+  let filteredMenuTree: any[] = [];
+  if (activeRole === 'pedagogico') {
+    filteredMenuTree = pedagogicoItems;
+  } else if (activeRole === 'admin') {
+    filteredMenuTree = adminItems;
+  } else if (activeRole === 'marketing') {
+    filteredMenuTree = marketingItems;
+  } else if (activeRole === 'instrutor') {
+    filteredMenuTree = instrutorItems;
+  } else if (activeRole === 'rh') {
+    filteredMenuTree = rhItems;
+  } else {
+    filteredMenuTree = adminItems;
+  }
 
   // Componente recursivo para renderizar N níveis de submenus
   const renderMenuItems = (items: any, level = 0, currentPath = '') => {
@@ -210,8 +289,8 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
 
       if (item.isHeader) {
         return (
-          <div key={index} className={`w-full pt-3 pb-0 mt-1 ${paddingLeft}`}>
-            <div className="text-xs font-black text-blue-200/90 tracking-[0.2em] uppercase border-b border-blue-200/20 pb-1 mb-1 select-none pointer-events-none">
+          <div key={index} className={`w-full pt-3.5 pb-1 mt-1 ${paddingLeft}`}>
+            <div className="text-[10.5px] font-black text-blue-200/90 tracking-[0.2em] uppercase border-b border-blue-200/20 pb-1 mb-1 select-none pointer-events-none">
               {item.name}
             </div>
           </div>
@@ -219,15 +298,9 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
       }
 
       const isActiveParent = 
-        (item.path && location.pathname === '/' && location.search.includes(item.path.split('?')[1])) ||
-        (item.name === 'Administrativo' && location.pathname.startsWith('/admin')) ||
-        (item.name === 'Pedagógico' && location.pathname.startsWith('/pedagogico')) ||
-        (item.name === 'Marketing' && location.pathname.startsWith('/marketing')) ||
-        (item.name === 'Instrutor' && location.pathname.startsWith('/instrutor')) ||
-        (item.name === 'RH' && location.pathname.startsWith('/rh')) ||
-        (item.name === 'Projetos' && (location.pathname.startsWith('/admin/espacos') || location.pathname.startsWith('/admin/nucleos') || location.pathname.startsWith('/admin/grade-'))) ||
+        (item.name === 'Projetos' && (location.pathname.startsWith('/admin/espacos') || location.pathname.startsWith('/admin/nucleos') || location.pathname.startsWith('/admin/grade-') || location.pathname.startsWith('/admin/projetos'))) ||
         (item.name === 'Núcleos' && (location.pathname.startsWith('/admin/nucleos') || location.pathname.startsWith('/admin/grade-'))) ||
-        (item.name === 'Eventos' && location.pathname.startsWith('/admin/locais-evento'));
+        (item.name === 'Eventos' && (location.pathname.startsWith('/admin/locais-evento') || location.pathname.startsWith('/admin/eventos')));
 
       const levelBg =
         level === 0
@@ -266,7 +339,13 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
         );
       }
 
-      const isActive = item.path && location.pathname === item.path;
+      const isActive = Boolean(
+        item.path && (
+          item.path.includes('?') 
+            ? location.pathname === item.path.split('?')[0] && location.search.includes(item.path.split('?')[1])
+            : location.pathname === item.path
+        )
+      );
 
       return (
         <div key={index} className="w-full">
@@ -321,7 +400,40 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
           ${isPcCollapsed ? 'lg:w-0 lg:min-w-0 lg:max-w-0 lg:overflow-hidden lg:opacity-0 lg:pointer-events-none' : 'lg:w-64 lg:min-w-[16rem] lg:opacity-100'}
         `}
       >
-        <nav className="flex-1 py-4 overflow-y-auto custom-scrollbar mt-12 lg:mt-0 w-64">
+        {/* Header Mobile: Perfil Ativo com Alternador para Master */}
+        <div className="lg:hidden px-5 py-3 border-b border-white/10 flex items-center justify-between mt-12 bg-black/15">
+          <div className="flex items-center gap-2">
+            {isMaster ? <Crown size={15} className="text-amber-400 shrink-0" /> : <Users size={15} className="text-white/80 shrink-0" />}
+            <span className="text-xs font-black uppercase tracking-wider text-white">
+              {getRoleDisplayLabel(activeRole, realRole)}
+            </span>
+          </div>
+          {isMaster && (
+            <select
+              value={activeRole}
+              onChange={(e) => {
+                const newRole = e.target.value;
+                localStorage.setItem("integra_active_view", newRole);
+                setActiveRole(newRole);
+                window.dispatchEvent(new CustomEvent("activeRoleChanged", { detail: newRole }));
+                if (newRole === "pedagogico") navigate("/?view=pedagogico");
+                else if (newRole === "admin" || newRole === "master") navigate("/?view=geral");
+                else if (newRole === "marketing") navigate("/marketing");
+                else if (newRole === "instrutor") navigate("/instrutor");
+                else if (newRole === "rh") navigate("/rh");
+              }}
+              className="bg-white/20 text-white text-xs font-bold rounded-lg px-2 py-1 border border-white/20 focus:outline-none"
+            >
+              <option value="admin" className="text-slate-900 bg-white">Administrativo</option>
+              <option value="pedagogico" className="text-slate-900 bg-white">Pedagógico</option>
+              <option value="marketing" className="text-slate-900 bg-white">Marketing</option>
+              <option value="instrutor" className="text-slate-900 bg-white">Instrutor</option>
+              <option value="rh" className="text-slate-900 bg-white">RH</option>
+            </select>
+          )}
+        </div>
+
+        <nav className="flex-1 py-4 overflow-y-auto custom-scrollbar lg:mt-0 w-64">
           {renderMenuItems(filteredMenuTree)}
         </nav>
       </aside>

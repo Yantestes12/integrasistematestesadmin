@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { fetchWithDedupe } from '~/utils/apiCache';
 import { Filter, X, Building, MapPin, Layers, Calendar } from 'lucide-react';
 
 export const GlobalFilterBar = () => {
@@ -43,58 +44,26 @@ export const GlobalFilterBar = () => {
 
     const fetchFilterData = async () => {
       try {
-        const [resProj, resEsp, resNuc] = await Promise.allSettled([
-          fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${savedInstitute}`, { cache: "no-store" }),
-          fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${savedInstitute}`, { cache: "no-store" }),
-          fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${savedInstitute}`, { cache: "no-store" }),
+        const [pList, nList] = await Promise.all([
+          fetchWithDedupe(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${savedInstitute}`),
+          fetchWithDedupe(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${savedInstitute}`),
         ]);
 
-        let pList: any[] = [];
-        let eList: any[] = [];
-        let nList: any[] = [];
-
-        if (resProj.status === 'fulfilled' && resProj.value.ok) {
-          try {
-            const data = JSON.parse(await resProj.value.text());
-            pList = flattenResponse(data).filter(p => p && (p.id || p.nome));
-            setProjetos(pList);
-            const savedP = localStorage.getItem('global_projeto_filter') || 'all';
-            if (savedP !== 'all' && !pList.find(p => String(p.id) === savedP)) {
-              localStorage.setItem('global_projeto_filter', 'all');
-              setSelectedProjeto('all');
-              if (typeof onFilterChange === 'function') {
-                const savedC = localStorage.getItem("global_cidade_filter") || "all";
-                const savedN = localStorage.getItem("global_nucleo_filter") || "all";
-                const savedT = localStorage.getItem("global_trimestre_filter") || "all";
-                onFilterChange('all', savedC, savedN, savedT);
-              }
-            }
-          } catch (e) {}
+        const validProjs = (Array.isArray(pList) ? pList : []).filter((p: any) => p && (p.id || p.nome));
+        setProjetos(validProjs);
+        const savedP = localStorage.getItem('global_projeto_filter') || 'all';
+        if (savedP !== 'all' && !validProjs.find((p: any) => String(p.id) === savedP)) {
+          localStorage.setItem('global_projeto_filter', 'all');
+          setSelectedProjeto('all');
+          window.dispatchEvent(new Event("globalFilterChanged"));
         }
 
-        if (resEsp.status === 'fulfilled' && resEsp.value.ok) {
-          try {
-            const data = JSON.parse(await resEsp.value.text());
-            eList = flattenResponse(data);
-          } catch (e) {}
-        }
+        const validNucleos = (Array.isArray(nList) ? nList : []).filter((n: any) => n && (n.id || n.nome));
+        setNucleos(validNucleos);
 
-        if (resNuc.status === 'fulfilled' && resNuc.value.ok) {
-          try {
-            const data = JSON.parse(await resNuc.value.text());
-            nList = flattenResponse(data).filter(n => n && (n.id || n.nome));
-            setNucleos(nList);
-          } catch (e) {}
-        }
-
-        // Extrai lista única de cidades a partir dos espaços e núcleos
+        // Extrai lista única de cidades a partir dos núcleos (sem baixar 26MB de fotos!)
         const cidadesSet = new Set<string>();
-        eList.forEach(e => {
-          if (e.cidade && typeof e.cidade === 'string' && e.cidade.trim().length > 1) {
-            cidadesSet.add(e.cidade.trim());
-          }
-        });
-        nList.forEach(n => {
+        validNucleos.forEach((n: any) => {
           if (n.cidade && typeof n.cidade === 'string' && n.cidade.trim().length > 1) {
             cidadesSet.add(n.cidade.trim());
           }
@@ -220,7 +189,7 @@ export const GlobalFilterBar = () => {
       {/* ========================================================= */}
       {/* DESKTOP VERSION (Invisível no Mobile)                       */}
       {/* ========================================================= */}
-      <div className="hidden lg:flex sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 lg:px-8 py-2.5 items-center justify-between shadow-xs w-full select-none transition-colors duration-200">
+      <div className="hidden lg:flex sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 lg:px-8 py-2.5 items-center justify-between shadow-xs w-full select-none transition-colors duration-200">
         
         <div className="flex items-center gap-4 flex-wrap">
           

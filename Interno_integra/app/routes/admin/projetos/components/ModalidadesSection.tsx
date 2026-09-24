@@ -14,8 +14,16 @@ export function ModalidadesSection() {
   const [modalidadesDisponiveis, setModalidadesDisponiveis] = useState<any[]>([]);
   const [institutoColor, setInstitutoColor] = useState("bg-slate-100 text-slate-800 border-slate-200");
 
+  const getInst = () => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      return (params.get("instituto") || params.get("inst") || localStorage.getItem("auth_institute") || "IBRASE").toUpperCase();
+    }
+    return "IBRASE";
+  };
+
   useEffect(() => {
-    const inst = localStorage.getItem("auth_institute") || "IBRASE";
+    const inst = getInst();
     if (inst === "IBRASE") {
       setInstitutoColor("bg-orange-100 text-orange-800 border-orange-200");
     } else if (inst === "GASCTPNA") {
@@ -28,7 +36,19 @@ export function ModalidadesSection() {
   }, []);
 
   useEffect(() => {
-    const fetchUrl = `https://w.ibrase.com.br/webhook/modalidades-get?instituto=${localStorage.getItem("auth_institute") || "IBRASE"}`;
+    const inst = getInst();
+    // 1. Tenta carregar do cache instantaneamente (0ms)
+    try {
+      const cached = sessionStorage.getItem(`cache_modalidades_list_${inst}`) || sessionStorage.getItem(`cache_raw_modalidades_${inst}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        const list = Array.isArray(parsed) ? parsed : (parsed.data || []);
+        if (list.length > 0) setModalidadesDisponiveis(list);
+      }
+    } catch(e) {}
+
+    // 2. Fetch de rede de garantia
+    const fetchUrl = `https://w.ibrase.com.br/webhook/modalidades-get?instituto=${inst}`;
     fetch(fetchUrl)
       .then((res) => res.json())
       .then((data) => {
@@ -45,7 +65,9 @@ export function ModalidadesSection() {
             flatList.push(entry);
           }
         });
-        setModalidadesDisponiveis(flatList);
+        if (flatList.length > 0) {
+          setModalidadesDisponiveis(flatList);
+        }
       })
       .catch(console.error);
   }, []);
@@ -67,8 +89,8 @@ export function ModalidadesSection() {
     const selectedId = event.target.value;
     const mod = modalidadesDisponiveis.find(m => String(m.id) === String(selectedId));
     if (mod) {
-      setValue(`vagasNucleo.${index}.modalidadeId`, mod.id);
-      setValue(`vagasNucleo.${index}.modalidadeNome`, mod.nome);
+      setValue(`vagasNucleo.${index}.modalidadeId`, String(mod.id), { shouldDirty: true, shouldTouch: true });
+      setValue(`vagasNucleo.${index}.modalidadeNome`, mod.nome, { shouldDirty: true, shouldTouch: true });
     }
   };
 
@@ -121,19 +143,29 @@ export function ModalidadesSection() {
               </tr>
             ) : (
               fields.map((field, index) => {
-                // Necessário watch para ver valor atual do select
-                const currentVagas = watch("vagasNucleo");
-                const currentModId = currentVagas?.[index]?.modalidadeId || "";
-                const estaOcupada = !!currentVagas?.[index]?.espacoVinculadoId;
+                const currentVagas = watch("vagasNucleo") || [];
+                const slot = currentVagas[index] || field;
+                let currentModId = slot?.modalidadeId != null && slot?.modalidadeId !== "" ? String(slot.modalidadeId) : "";
+                const estaOcupada = !!slot?.espacoVinculadoId;
+
+                // Fallback inteligente: se o ID não foi setado ou não bate com os IDs da lista, mas temos o nome da modalidade (ex: "Jiu-Jitsu"):
+                if ((!currentModId || !modalidadesDisponiveis.some(m => String(m.id) === currentModId)) && slot?.modalidadeNome) {
+                  const found = modalidadesDisponiveis.find(m => 
+                    m.nome?.trim().toLowerCase() === slot.modalidadeNome?.trim().toLowerCase()
+                  );
+                  if (found) {
+                    currentModId = String(found.id);
+                  }
+                }
 
                 return (
                   <tr key={field._rhfId} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-3 font-semibold text-slate-700">
-                      Vaga {field.numero}
+                      Vaga {slot.numero || field.numero || (index + 1)}
                     </td>
                     <td className="p-3">
                       <select
-                        value={currentModId ? String(currentModId) : ""}
+                        value={currentModId}
                         onChange={(e) => handleModalidadeChange(index, e)}
                         disabled={estaOcupada}
                         className={`w-full max-w-sm bg-white dark:bg-slate-800 border ${!currentModId ? 'border-red-300 dark:border-red-700 ring-1 ring-red-100 dark:ring-red-900/30' : 'border-slate-200 dark:border-slate-700'} rounded-lg p-2 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm disabled:bg-slate-100 dark:disabled:bg-slate-900`}

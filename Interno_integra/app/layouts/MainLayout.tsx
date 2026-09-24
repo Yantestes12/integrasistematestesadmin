@@ -4,6 +4,7 @@ import { Sidebar } from "~/components/Sidebar";
 import { Topbar } from "~/components/Topbar";
 import { GlobalFilterBar } from "~/components/GlobalFilterBar";
 import { Loader2, Building2 } from "lucide-react";
+import { fetchWithDedupe, safeSetSession } from "~/utils/apiCache";
 
 const themes = {
   IBRASE: {
@@ -116,16 +117,12 @@ export const MainLayout = () => {
 
     const fetchAndCache = async (url: string, rawKey: string, parsedKeys?: string[]) => {
       try {
-        const res = await fetch(url);
-        if (!res.ok) return;
-        const data = await res.json();
-        const flat = flattenResponse(data);
-        // Salva a chave raw (usada internamente)
-        sessionStorage.setItem(rawKey, JSON.stringify(flat));
-        // Salva também nas chaves parsedKeys que as páginas realmente leem
+        const flat = await fetchWithDedupe(url);
+        if (!flat || (Array.isArray(flat) && flat.length === 0)) return;
+        safeSetSession(rawKey, flat);
         if (parsedKeys) {
           parsedKeys.forEach(key => {
-            try { sessionStorage.setItem(key, JSON.stringify(flat)); } catch(e) {}
+            safeSetSession(key, flat);
           });
         }
       } catch (e) {
@@ -279,7 +276,7 @@ export const MainLayout = () => {
       className="h-screen overflow-hidden bg-[#f4f6fa] dark:bg-slate-950 font-sans flex flex-col text-slate-800 dark:text-slate-100 relative transition-colors duration-300 print:h-auto print:overflow-visible print:bg-white"
       style={themeVars as React.CSSProperties}
     >
-      <div className="print:hidden">
+      <div className="print:hidden relative z-50">
         <Topbar />
       </div>
 

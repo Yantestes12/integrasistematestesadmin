@@ -8,6 +8,53 @@ interface CargoItem {
   nome: string;
 }
 
+export const CARGO_NORMALIZATION: Record<string, string> = {
+  "Assistente Administrativo": "Assist. Administrativo",
+  "Auxiliar Administrativo": "Assist. Administrativo",
+  "Administrativo": "Assist. Administrativo",
+  "Assist. Administrativo (Secretário)": "Assist. Administrativo",
+  "Assistente Social": "Assist. Social",
+  "Coordenador Geral": "Coord. Geral",
+  "Coordenador(a) Geral": "Coord. Geral",
+  "Coordenador Pedagógico": "Coord. Pedagógico",
+  "coordenador_pedaggico": "Coord. Pedagógico",
+  "Coordenador de Núcleo": "Coord. de Núcleo",
+  "Coordenador(a) de Núcleo": "Coord. de Núcleo",
+  "Coordenador Setorial": "Coord. Setorial",
+  "Coord. de Núcleo (Setorial)": "Coord. Setorial",
+  "Instrutor": "Instrutor (Educador)",
+  "Instrutor Esportivo": "Instrutor (Educador)",
+  "Instrutor de Educação Física": "Instrutor (Educador)",
+  "Educador": "Instrutor (Educador)",
+  "Educador Social": "Instrutor (Educador)",
+  "Professor(a) de Artes Marciais": "Instrutor (Educador)",
+  "Professor(a) de Futebol": "Instrutor (Educador)",
+  "Auxiliar": "Auxiliar (Monitor)",
+  "Monitor": "Auxiliar (Monitor)",
+  "Monitor Esportivo": "Auxiliar (Monitor)",
+  "Técnico de Informática": "Téc. de Informática",
+  "Téc. Informática": "Téc. de Informática",
+  "Técnico em Informática": "Téc. de Informática",
+  "TECNICO": "Téc. de Informática",
+  "TI": "Téc. de Informática",
+  "Animador cultural": "Animador Cultural",
+  "Agente de contratação": "Agente de Contratação",
+  "Recursos Humanos": "Assist. de Departamento Pessoal",
+  "RH": "Assist. de Departamento Pessoal",
+  "Auxiliar de DP": "Assist. de Departamento Pessoal",
+  "Financeiro": "Contador",
+  "Marketing": "Agente de Marketing",
+  "Web Designer": "Web Design",
+  "Despachante": "Assist. Administrativo",
+  "Engenheiro": "Analista de Projetos",
+};
+
+export const normalizeCargoName = (name: string): string => {
+  if (!name) return "";
+  const trimmed = name.trim();
+  return CARGO_NORMALIZATION[trimmed] || trimmed;
+};
+
 export function LimitesSection() {
   const { register, watch, setValue, getValues } = useFormContext<ProjetoFormData>();
   const [cargosDisponiveis, setCargosDisponiveis] = useState<CargoItem[]>([]);
@@ -17,7 +64,8 @@ export function LimitesSection() {
   const [selectedNames, setSelectedNames] = useState<Set<string>>(new Set());
 
   // Limites atuais salvos no form
-  const limitesCargos = watch("limitesCargos") || [];
+  const rawLimitesCargos = watch("limitesCargos") || [];
+  const limitesCargos = rawLimitesCargos.map(c => ({ ...c, nome: normalizeCargoName(c.nome) }));
 
   let focusPendenciasStr = "";
   if (typeof window !== "undefined") {
@@ -37,18 +85,45 @@ export function LimitesSection() {
   const fetchCargos = async () => {
     setIsLoadingCargos(true);
     try {
-      const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
-      const res = await fetch(`https://w.ibrase.com.br/webhook/cargos-get?instituto=${authInstitute}`);
+      const authInstitute = (typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("instituto") || localStorage.getItem("auth_institute")) : "IBRASE") || "IBRASE";
+      const IN = authInstitute.toUpperCase();
+      
+      // 1. Tenta carregar do cache instantaneamente (0ms)
+      try {
+        const rawCached = sessionStorage.getItem(`cache_raw_cargos_${IN}`);
+        if (rawCached) {
+          const cData = JSON.parse(rawCached);
+          const cList = Array.isArray(cData) ? cData : (cData.data || []);
+          if (cList.length > 0) {
+            setCargosDisponiveis(cList.map((c: any) => ({
+              id: String(c.id),
+              nome: normalizeCargoName(c.label || c.nome || c.cargo || c.name || "Cargo Sem Nome")
+            })));
+          }
+        }
+      } catch (e) {}
+
+      // 2. Fetch de rede
+      const res = await fetch(`https://w.ibrase.com.br/webhook/cargos-get?instituto=${IN}`);
       if (res.ok) {
         const data = await res.json();
         let list = [];
         if (Array.isArray(data)) list = data;
         else if (data && Array.isArray(data.data)) list = data.data;
         
-        setCargosDisponiveis(list.map((c: any) => ({
-          id: String(c.id),
-          nome: c.label || c.nome || c.cargo || c.name || "Cargo Sem Nome"
-        })));
+        // Remove duplicatas de nomes após normalização
+        const seenNames = new Set<string>();
+        const uniqueCargos: CargoItem[] = [];
+        
+        list.forEach((c: any) => {
+          const norm = normalizeCargoName(c.label || c.nome || c.cargo || c.name || "Cargo Sem Nome");
+          if (!seenNames.has(norm)) {
+            seenNames.add(norm);
+            uniqueCargos.push({ id: String(c.id), nome: norm });
+          }
+        });
+
+        setCargosDisponiveis(uniqueCargos);
       }
     } catch (e) {
       console.warn("Erro ao buscar cargos:", e);
@@ -59,23 +134,25 @@ export function LimitesSection() {
 
   const openManageModal = () => {
     const current = getValues("limitesCargos") || [];
-    const names = new Set(current.map(c => c.nome));
+    const names = new Set(current.map(c => normalizeCargoName(c.nome)));
     setSelectedNames(names);
     setIsModalOpen(true);
   };
 
   const toggleSelection = (nome: string) => {
+    const norm = normalizeCargoName(nome);
     const next = new Set(selectedNames);
-    if (next.has(nome)) next.delete(nome);
-    else next.add(nome);
+    if (next.has(norm)) next.delete(norm);
+    else next.add(norm);
     setSelectedNames(next);
   };
 
   const handleSaveModal = () => {
     const currentLimites = getValues("limitesCargos") || [];
+    const normalizedLimites = currentLimites.map(c => ({ ...c, nome: normalizeCargoName(c.nome) }));
     
     // Filtra quem foi removido
-    let newLimites = currentLimites.filter(c => selectedNames.has(c.nome));
+    let newLimites = normalizedLimites.filter(c => selectedNames.has(c.nome));
     
     // Adiciona quem é novo
     selectedNames.forEach(nome => {
@@ -90,7 +167,8 @@ export function LimitesSection() {
 
   const removeCargo = (nome: string) => {
     const current = getValues("limitesCargos") || [];
-    setValue("limitesCargos", current.filter(c => c.nome !== nome), { shouldDirty: true });
+    const norm = normalizeCargoName(nome);
+    setValue("limitesCargos", current.filter(c => normalizeCargoName(c.nome) !== norm), { shouldDirty: true });
   };
 
   return (

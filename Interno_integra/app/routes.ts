@@ -11,9 +11,14 @@ export default [
   layout("layouts/MainLayout.tsx", [
     index("routes/Dashboard.tsx"),
     
-    // Admin / Propostas
+    // Admin / Propostas, Formulários e Cronogramas
     route("admin/propostas", "routes/admin/Propostas.tsx"),
     route("admin/cadastrar-projeto", "routes/admin/CadastrarProjeto.tsx"),
+    route("admin/formularios", "routes/admin/Formularios.tsx", { id: "admin-formularios" }),
+    route("admin/projetos/formularios", "routes/admin/Formularios.tsx", { id: "admin-projetos-formularios" }),
+    route("admin/eventos/formularios", "routes/admin/Formularios.tsx", { id: "admin-eventos-formularios" }),
+    route("admin/projetos/cronogramas", "routes/admin/Cronogramas.tsx", { id: "admin-projetos-cronogramas" }),
+    route("admin/eventos/cronogramas", "routes/admin/Cronogramas.tsx", { id: "admin-eventos-cronogramas" }),
     // Admin / Espaços
     route("admin/espacos", "routes/admin/Espacos.tsx"),
     route("admin/cadastrar-espaco", "routes/admin/CadastrarEspaco.tsx"),

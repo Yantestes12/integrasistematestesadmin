@@ -80,13 +80,6 @@ export default function CadastrarProjeto() {
   };
 
   const vagasPorAluno = methods.watch("limites.vagasPorAluno");
-  useEffect(() => {
-    if (!vagasPorAluno || vagasPorAluno <= 0) {
-      if (methods.getValues("status.ativo")) {
-        methods.setValue("status.ativo", false, { shouldDirty: true });
-      }
-    }
-  }, [vagasPorAluno, methods]);
 
   if (isLoading) {
     return (
@@ -145,16 +138,9 @@ export default function CadastrarProjeto() {
 
           {/* Status Section */}
           <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-            <h2 className="text-base font-bold text-slate-800">Status</h2>
+            <h2 className="text-base font-bold text-slate-800">Status da Proposta</h2>
             
-            {(!vagasPorAluno || vagasPorAluno <= 0) && (
-              <div className="p-3 bg-amber-50 text-amber-700 rounded-lg text-sm border border-amber-200 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 shrink-0" />
-                <span>Para ativar a proposta, é necessário definir o limite de <strong>Vagas por Aluno</strong> na seção Aluno.</span>
-              </div>
-            )}
-            
-            <label className={`flex items-center justify-between w-full sm:max-w-xs p-4 border border-slate-200 rounded-xl bg-slate-50 transition-colors ${(!vagasPorAluno || vagasPorAluno <= 0) ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:bg-slate-100"}`}>
+            <label className="flex items-center justify-between w-full sm:max-w-xs p-4 border border-slate-200 rounded-xl bg-slate-50 transition-colors cursor-pointer hover:bg-slate-100">
               <span className="text-sm font-bold text-slate-700">
                 {methods.watch("status.ativo") ? "Proposta Ativa" : "Proposta Inativa"}
               </span>
@@ -162,7 +148,6 @@ export default function CadastrarProjeto() {
                 <input 
                   type="checkbox" 
                   {...methods.register("status.ativo")} 
-                  disabled={!vagasPorAluno || vagasPorAluno <= 0}
                   className="sr-only" 
                 />
                 <div 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Plus, Search, Edit3, Power, Loader2, Layers, Building2, Calendar, Play, Pause } from "lucide-react";
+import { fetchWithDedupe } from "../../utils/apiCache";
 
 export interface NucleoItem {
   id: string | number;
@@ -97,21 +98,12 @@ export default function Nucleos() {
     try {
       const IN = instituteName.toUpperCase();
       let raw = sessionStorage.getItem(`cache_projetos_list_${IN}`) || sessionStorage.getItem(`cache_raw_projetos_${IN}`);
-      let list = [];
+      let list: any[] = [];
       if (raw) {
-        try {
-          list = flattenResponse(JSON.parse(raw));
-        } catch(e) {
-          raw = null;
-        }
+        try { list = flattenResponse(JSON.parse(raw)); } catch(e) { raw = null; }
       }
-      if (!raw) {
-        const res = await fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
-        if (res.ok) {
-          const text = await res.text();
-          const data = JSON.parse(text);
-          list = flattenResponse(data);
-        }
+      if (!raw || list.length === 0) {
+        list = await fetchWithDedupe(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${IN}`);
       }
       list.forEach((p: any) => {
         if (p.id && p.nome) {
@@ -125,22 +117,14 @@ export default function Nucleos() {
 
   const fetchModalidades = async (instituteName: string) => {
     try {
-      let raw = sessionStorage.getItem(`cache_raw_modalidades_${instituteName.toUpperCase()}`);
-      let list = [];
+      const IN = instituteName.toUpperCase();
+      let raw = sessionStorage.getItem(`cache_raw_modalidades_${IN}`);
+      let list: any[] = [];
       if (raw) {
-        try {
-          list = flattenResponse(JSON.parse(raw));
-        } catch(e) {
-          raw = null;
-        }
+        try { list = flattenResponse(JSON.parse(raw)); } catch(e) { raw = null; }
       }
-      if (!raw) {
-        const res = await fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
-        if (res.ok) {
-          const text = await res.text();
-          const data = JSON.parse(text);
-          list = flattenResponse(data);
-        }
+      if (!raw || list.length === 0) {
+        list = await fetchWithDedupe(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${IN}`);
       }
       list.forEach((m: any) => {
         if (m.id && m.nome) {
@@ -154,22 +138,14 @@ export default function Nucleos() {
 
   const fetchEspacos = async (instituteName: string) => {
     try {
-      let raw = sessionStorage.getItem(`cache_raw_espacos_${instituteName.toUpperCase()}`);
-      let list = [];
+      const IN = instituteName.toUpperCase();
+      let raw = sessionStorage.getItem(`cache_raw_espacos_${IN}`);
+      let list: any[] = [];
       if (raw) {
-        try {
-          list = flattenResponse(JSON.parse(raw));
-        } catch(e) {
-          raw = null;
-        }
+        try { list = flattenResponse(JSON.parse(raw)); } catch(e) { raw = null; }
       }
-      if (!raw) {
-        const res = await fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${instituteName.toUpperCase()}`, { cache: "no-store" });
-        if (res.ok) {
-          const text = await res.text();
-          const data = JSON.parse(text);
-          list = flattenResponse(data);
-        }
+      if (!raw || list.length === 0) {
+        list = await fetchWithDedupe(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${IN}`, 5000);
       }
       list.forEach((e: any) => {
         if (e.id) {
@@ -181,7 +157,7 @@ export default function Nucleos() {
     }
   };
 
-    const flattenResponse = (rawData: any): any[] => {
+  const flattenResponse = (rawData: any): any[] => {
     if (!rawData) return [];
     let list: any[] = [];
     if (Array.isArray(rawData)) {

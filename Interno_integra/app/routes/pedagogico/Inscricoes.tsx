@@ -246,6 +246,13 @@ export default function Inscricoes() {
   const nucleosMetrics = useMemo(() => {
     const nucleosMap: Record<string, any> = {};
 
+    const matCidadeMap: Record<string, string> = {};
+    matriculasList.forEach((m) => {
+      if (m.nucleo_id && m.cidade) {
+        matCidadeMap[String(m.nucleo_id)] = m.cidade;
+      }
+    });
+
     matriculasList.forEach((m) => {
       const sx = (m.sexo || "").toLowerCase().trim();
       const isMale = sx.startsWith("m") || sx === "masculino";
@@ -266,7 +273,6 @@ export default function Inscricoes() {
         const numVaga = nucleoObj.numero_vaga || nucleoObj.vaga_numero;
         isArquivado = !numVaga || numVaga === "—" || numVaga === "";
       } else if (!isOrfao) {
-        // Tem ID mas não achou o núcleo na lista atual (foi apagado duro no banco)
         isOrfao = true;
       }
 
@@ -276,36 +282,43 @@ export default function Inscricoes() {
       const pId = nucleoObj?.projeto_id || m.projeto_id;
       if (globalProjeto !== "all" && String(pId) !== globalProjeto) return;
 
-      if (globalCidade !== "all" && nucleoObj?.cidade?.toLowerCase() !== globalCidade.toLowerCase()) return;
+      const nCidade = nucleoObj?.cidade || nucleoObj?.espacos?.cidade || matCidadeMap[nIdKey] || m.cidade || '';
+      if (globalCidade !== "all" && nCidade.toLowerCase() !== globalCidade.toLowerCase()) return;
 
       let nNome = "";
       let nProj = "";
       let projLimit = 0;
+      let mapKey = "";
 
       if (isOrfao) {
+        mapKey = "orfao";
         nNome = "⚠️ Alunos Sem Núcleo (Órfãos)";
         nProj = "Diversas Propostas / Indefinida";
       } else if (isArquivado) {
-        const antigoNome = nucleoObj?.nome || nucleoObj?.nome_nucleo || m.nucleo_nome || `Núcleo ${nId}`;
+        mapKey = `arquivado_${nIdKey}`;
+        const rawAntigo = nucleoObj?.nome || nucleoObj?.nome_nucleo || m.nucleo_nome || `Núcleo ${nId}`;
+        const antigoNome = nCidade ? `${rawAntigo} (${nCidade})` : rawAntigo;
         nNome = `🛑 [Desativado] ${antigoNome}`;
         nProj = "Aguardando realocação";
       } else {
-        nNome = nucleoObj?.nome || nucleoObj?.nome_nucleo || m.nucleo_nome || `Núcleo ${nId}`;
+        mapKey = nIdKey;
+        const rawNome = nucleoObj?.nome || nucleoObj?.nome_nucleo || m.nucleo_nome || `Núcleo ${nId}`;
+        nNome = nCidade ? `${rawNome} (${nCidade})` : rawNome;
         nProj = projetosCache[Number(pId)] || nucleoObj?.projetos?.nome || m.projeto_nome || 'Não Informada';
         projLimit = projetosLimitCache[Number(pId)] || 100;
       }
 
-      if (!nucleosMap[nNome]) {
-        nucleosMap[nNome] = { nome: nNome, projeto: nProj, limite: projLimit, total: 0, masc: 0, fem: 0, idadesValidas: 0, somaIdades: 0 };
+      if (!nucleosMap[mapKey]) {
+        nucleosMap[mapKey] = { id: mapKey, nome: nNome, cidade: nCidade, projeto: nProj, limite: projLimit, total: 0, masc: 0, fem: 0, idadesValidas: 0, somaIdades: 0 };
       }
       
-      nucleosMap[nNome].total++;
-      if (isMale) nucleosMap[nNome].masc++; 
-      else if (isFemale) nucleosMap[nNome].fem++;
+      nucleosMap[mapKey].total++;
+      if (isMale) nucleosMap[mapKey].masc++; 
+      else if (isFemale) nucleosMap[mapKey].fem++;
       
       if (isValidIdade) {
-        nucleosMap[nNome].idadesValidas++;
-        nucleosMap[nNome].somaIdades += idade;
+        nucleosMap[mapKey].idadesValidas++;
+        nucleosMap[mapKey].somaIdades += idade;
       }
     });
 
@@ -315,19 +328,18 @@ export default function Inscricoes() {
         if (n.limite > 0) {
           pct = Math.round((n.total / n.limite) * 100);
         } else {
-          pct = 100; // Fallback "Sem Limite Definido"
+          pct = 100;
         }
         
         return {
           ...n,
-          percentualGeral: pct > 100 ? 100 : pct, // Cap em 100% pra barra visual
+          percentualGeral: pct > 100 ? 100 : pct,
           mediaIdade: n.idadesValidas > 0 ? Math.round(n.somaIdades / n.idadesValidas) : 0,
           percentMasc: n.total > 0 ? Math.round((n.masc / n.total) * 100) : 0,
           percentFem: n.total > 0 ? Math.round((n.fem / n.total) * 100) : 0,
         };
       })
       .sort((a, b) => {
-        // Colocar os de alerta sempre no final
         if (a.nome.includes("⚠️") || a.nome.includes("🛑")) return 1;
         if (b.nome.includes("⚠️") || b.nome.includes("🛑")) return -1;
         return b.total - a.total;

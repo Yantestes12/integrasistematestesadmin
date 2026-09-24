@@ -418,7 +418,7 @@ export default function Relatorios() {
           for (let i = headerRowIndex + 1; i <= totalRows + 5; i++) {
               const r = worksheet.getRow(i);
               r.values = [];
-              r.height = undefined;
+              delete (r as any).height;
               r.eachCell({ includeEmpty: true }, c => {
                  c.value = null;
                  c.style = {};

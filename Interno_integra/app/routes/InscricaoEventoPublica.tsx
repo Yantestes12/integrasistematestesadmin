@@ -375,7 +375,9 @@ export default function InscricaoEventoPublica() {
       select option{color:#000;}
     `;
     document.head.appendChild(s);
-    return () => document.head.removeChild(s);
+    return () => {
+      document.head.removeChild(s);
+    };
   }, []);
 
   const set = (field: keyof FormData, value: any) => setForm(f => ({ ...f, [field]: value }));
