@@ -128,8 +128,8 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
     if (location.pathname.startsWith('/admin/espacos') || location.pathname.startsWith('/admin/nucleos') || location.pathname.startsWith('/admin/grade-') || location.pathname.startsWith('/admin/projetos')) {
       newOpenPaths.push('Projetos');
     }
-    if (location.pathname.startsWith('/admin/nucleos') || location.pathname.startsWith('/admin/grade-')) {
-      newOpenPaths.push('Projetos>Núcleos');
+    if (location.pathname.startsWith('/admin/grade-')) {
+      newOpenPaths.push('Projetos>Grade Horária');
     }
     if (location.pathname.startsWith('/admin/locais-evento') || location.pathname.startsWith('/admin/eventos')) {
       newOpenPaths.push('Eventos');
@@ -181,11 +181,10 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
       icon: <Settings className="w-5 h-5" />,
       children: [
         { name: 'Espaços', path: "/admin/espacos" },
+        { name: 'Núcleos', path: "/admin/nucleos" },
         { 
-          name: 'Núcleos', 
-          path: "/admin/nucleos",
+          name: 'Grade Horária', 
           children: [
-            { name: 'Grade Horária', isHeader: true },
             { name: 'Gestão', path: "/admin/grade-gestao" },
             { name: 'Estagiários', path: "/admin/grade-estagiarios" }
           ]
@@ -299,7 +298,7 @@ export const Sidebar = ({ onSelectMenu }: { onSelectMenu?: any }) => {
 
       const isActiveParent = 
         (item.name === 'Projetos' && (location.pathname.startsWith('/admin/espacos') || location.pathname.startsWith('/admin/nucleos') || location.pathname.startsWith('/admin/grade-') || location.pathname.startsWith('/admin/projetos'))) ||
-        (item.name === 'Núcleos' && (location.pathname.startsWith('/admin/nucleos') || location.pathname.startsWith('/admin/grade-'))) ||
+        (item.name === 'Grade Horária' && location.pathname.startsWith('/admin/grade-')) ||
         (item.name === 'Eventos' && (location.pathname.startsWith('/admin/locais-evento') || location.pathname.startsWith('/admin/eventos')));
 
       const levelBg =

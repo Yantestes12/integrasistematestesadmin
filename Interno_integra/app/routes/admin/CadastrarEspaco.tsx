@@ -4,6 +4,7 @@ import {
   ArrowLeft, ArrowRight, Check, Loader2, Search,
   Home, User, MapPin, Clock, FileUp, CheckCircle2, ChevronRight
 } from "lucide-react";
+import { clearEntityCache } from "../../utils/apiCache";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -36,6 +37,8 @@ interface FormData {
   cidade: string;
   uf: string;
   pontoReferencia: string;
+  temDistrito: boolean;
+  distrito: string;
 
   // Passo 4 — Horários
   horarios: Record<string, HorarioDia>;
@@ -67,6 +70,7 @@ const INITIAL_FORM: FormData = {
   projetoId: "", modalidadeId: "", nomeEspaco: "",
   respCpf: "", respCnpj: "", possuiCnpj: "N", respNome: "", respEmail: "", respTelefone: "",
   cep: "", rua: "", numero: "", semNumero: false, bairro: "", cidade: "", uf: "", pontoReferencia: "",
+  temDistrito: false, distrito: "",
   horarios: DEFAULT_HORARIOS,
   docsPendentes: false,
   fotoUrl: "", termoUrl: "", fotoFile: null, termoFile: null,
@@ -140,7 +144,10 @@ const formatPhone = (v: string) => {
 };
 
 const toRoman = (num: number): string => {
-  const map: [number, string][] = [[10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]];
+  if (num <= 1) return "";
+  const map: [number, string][] = [
+    [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]
+  ];
   let res = "";
   let n = num;
   for (const [val, letter] of map) {
@@ -149,15 +156,88 @@ const toRoman = (num: number): string => {
   return res;
 };
 
-const calculateNomeEspaco = (bairroName: string, list: any[], currentEditId: string | null) => {
-  if (!bairroName.trim()) return "";
-  const cleanBairro = bairroName.trim();
-  const sameBairroCount = list.filter(
-    e => String(e.id) !== String(currentEditId) && (e.bairro?.trim().toLowerCase() === cleanBairro.toLowerCase() || e.nome?.trim().toLowerCase().startsWith(cleanBairro.toLowerCase()))
-  ).length;
+const ROMAN_MAP: Record<string, number> = {
+  I: 1, II: 2, III: 3, IV: 4, V: 5, VI: 6, VII: 7, VIII: 8, IX: 9, X: 10,
+  XI: 11, XII: 12, XIII: 13, XIV: 14, XV: 15, XVI: 16, XVII: 17, XVIII: 18, XIX: 19, XX: 20
+};
 
-  if (sameBairroCount === 0) return cleanBairro;
-  return `${cleanBairro} ${toRoman(sameBairroCount + 1)}`;
+const normalizeText = (str: string) =>
+  (str || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+
+const calculateNomeEspaco = (
+  bairroName: string,
+  cidadeName: string,
+  temDistrito: boolean,
+  distritoName: string,
+  list: any[],
+  currentEditId: string | null
+): string => {
+  if (!bairroName || !bairroName.trim()) return "";
+  const cleanBairro = bairroName.trim();
+  const cleanDistrito = temDistrito && distritoName ? distritoName.trim() : "";
+  const baseName = cleanDistrito ? `${cleanBairro} (${cleanDistrito})` : cleanBairro;
+  const normBase = normalizeText(baseName);
+  const normCidade = normalizeText(cidadeName);
+
+  if (!list || list.length === 0) return baseName;
+
+  const existingMatches: number[] = [];
+
+  list.forEach(e => {
+    if (!e) return;
+    if (currentEditId && String(e.id) === String(currentEditId)) return;
+
+    // Se temos cidade informada e o registro possui cidade, só compara se for a mesma cidade!
+    if (normCidade) {
+      const normEspacoCidade = normalizeText(e.cidade);
+      if (normEspacoCidade && normEspacoCidade !== normCidade) {
+        return; // Cidade diferente -> IGNORA completamente!
+      }
+    }
+
+    const normNome = normalizeText(e.nome);
+    const normEspacoBairro = normalizeText(e.bairro);
+
+    // Caso 1: Nome exato igual à base (ex: "Centro" ou "Nova Brasília") -> corresponde ao 1º
+    if (normNome === normBase) {
+      existingMatches.push(1);
+      return;
+    }
+
+    // Caso 2: Nome começa com baseName + " " + sufixo romano/numérico (ex: "Centro II", "Nova Brasília III")
+    if (normNome.startsWith(normBase + " ")) {
+      const suffix = normNome.slice(normBase.length + 1).trim().toUpperCase();
+      if (ROMAN_MAP[suffix]) {
+        existingMatches.push(ROMAN_MAP[suffix]);
+        return;
+      }
+      const parsedNum = parseInt(suffix, 10);
+      if (!isNaN(parsedNum) && parsedNum > 0) {
+        existingMatches.push(parsedNum);
+        return;
+      }
+    }
+
+    // Caso 3: Nome em branco mas bairro bate exatamente
+    if (normEspacoBairro === normBase && !normNome) {
+      existingMatches.push(1);
+    }
+  });
+
+  // Se não encontrou nenhum núcleo/espaço na mesma cidade com este nome:
+  // Retorna APENAS o nome base (SEM NÚMERO ROMANO!)
+  if (existingMatches.length === 0) {
+    return baseName;
+  }
+
+  // Se já existe ao menos 1, o próximo deve ser o maior número + 1 (mínimo 2 -> II)
+  const maxFound = Math.max(...existingMatches, existingMatches.length);
+  const nextNum = Math.max(2, maxFound + 1);
+  return `${baseName} ${toRoman(nextNum)}`;
 };
 
 // ─── Field helper (FORA DO COMPONENTE PARA PREVENIR TECLADO MOBILE DE DESCER) ────────
@@ -230,7 +310,17 @@ export default function CadastrarEspaco() {
           const t = await rEspacos.text();
           if (t) {
             const d = JSON.parse(t);
-            setExistingEspacos(flattenResponse(d));
+            const flatEspacos = flattenResponse(d);
+            setExistingEspacos(flatEspacos);
+            if (!editId) {
+              setForm(f => {
+                if (f.bairro) {
+                  const autoNome = calculateNomeEspaco(f.bairro, f.cidade, f.temDistrito, f.distrito, flatEspacos, null);
+                  return { ...f, nomeEspaco: autoNome || f.nomeEspaco || f.bairro };
+                }
+                return f;
+              });
+            }
           }
         }
       } catch (e) { console.warn("Erro ao carregar opções:", e); }
@@ -309,13 +399,15 @@ export default function CadastrarEspaco() {
               cidade: espaco.cidade || "",
               uf: espaco.uf || "",
               pontoReferencia: espaco.ponto_referencia || "",
+              temDistrito: Boolean(espaco.distrito || (espaco.nome && /\(([^)]+)\)/.test(espaco.nome))),
+              distrito: espaco.distrito || (espaco.nome?.match(/\(([^)]+)\)/)?.[1] || ""),
               horarios: { ...DEFAULT_HORARIOS, ...(typeof espaco.horarios === "string" ? JSON.parse(espaco.horarios) : (espaco.horarios || {})) },
-              docsPendentes: Boolean(espaco.docs_pendentes || espaco.status_aprovacao === "pendente"),
+              docsPendentes: Boolean(espaco.docs_pendentes),
               fotoUrl: espaco.foto_url || "",
               termoUrl: espaco.termo_url || "",
               fotoFile: null,
               termoFile: null,
-              status_aprovacao: espaco.status_aprovacao || "pendente",
+              status_aprovacao: "aprovado",
             });
           }
         }
@@ -344,12 +436,13 @@ export default function CadastrarEspaco() {
         const addr = item?.result || item?.data || item;
         if (addr && !addr.erro) {
           const novoBairro = addr.bairro || form.bairro;
-          const autoNome = calculateNomeEspaco(novoBairro, existingEspacos, editId);
+          const novaCidade = addr.localidade || addr.cidade || form.cidade;
+          const autoNome = calculateNomeEspaco(novoBairro, novaCidade, form.temDistrito, form.distrito, existingEspacos, editId);
           setForm(f => ({
             ...f,
             rua: addr.logradouro || f.rua,
             bairro: novoBairro,
-            cidade: addr.localidade || addr.cidade || f.cidade,
+            cidade: novaCidade,
             uf: addr.uf || f.uf,
             nomeEspaco: autoNome || f.nomeEspaco || novoBairro,
           }));
@@ -476,6 +569,7 @@ export default function CadastrarEspaco() {
       if (!form.cep.replace(/\D/g, "").length) errs.cep = "CEP é obrigatório";
       if (!form.rua.trim()) errs.rua = "Rua/Logradouro é obrigatório";
       if (!form.bairro.trim()) errs.bairro = "Bairro é obrigatório";
+      if (form.temDistrito && !form.distrito.trim()) errs.distrito = "Informe o nome do distrito";
       
       if (form.semNumero) {
         if (!form.pontoReferencia.trim()) {
@@ -525,13 +619,14 @@ export default function CadastrarEspaco() {
         setIsUploadingTermo(false);
       }
 
-      const nomeFinal = form.nomeEspaco || calculateNomeEspaco(form.bairro, existingEspacos, editId) || form.bairro || "Espaço";
+      const nomeFinal = form.nomeEspaco || calculateNomeEspaco(form.bairro, form.cidade, form.temDistrito, form.distrito, existingEspacos, editId) || form.bairro || "Espaço";
 
       const payload = {
         instituto: institute.toUpperCase(),
         projeto_id: form.projetoId ? Number(form.projetoId) : null,
         modalidade_id: form.modalidadeId ? Number(form.modalidadeId) : null,
         nome: nomeFinal,
+        distrito: form.temDistrito ? form.distrito : null,
         resp_cpf: form.respCpf.replace(/\D/g, ""),
         resp_cnpj: form.possuiCnpj === "S" ? form.respCnpj.replace(/\D/g, "") : null,
         resp_nome: form.respNome,
@@ -548,7 +643,7 @@ export default function CadastrarEspaco() {
         foto_url: fotoUrl,
         termo_url: termoUrl,
         ativo: true,
-        status_aprovacao: form.status_aprovacao || "aprovado",
+        status_aprovacao: "aprovado",
         docs_pendentes: Boolean(form.docsPendentes),
         created_by: localStorage.getItem("auth_user") || "sistema",
         ...(editId ? { id: editId, updated_by: localStorage.getItem("auth_user") || "sistema" } : {}),
@@ -562,8 +657,53 @@ export default function CadastrarEspaco() {
       });
 
       if (res.ok) {
+        let createdEspacoId = null;
+        try {
+          const resJson = await res.json();
+          if (Array.isArray(resJson) && resJson[0]?.id) createdEspacoId = resJson[0].id;
+          else if (resJson?.id) createdEspacoId = resJson.id;
+          else if (resJson?.data?.id) createdEspacoId = resJson.data.id;
+        } catch (e) {}
+
+        // Se o webhook não devolveu o ID diretamente, busca o espaço recém-criado pelo nome
+        if (!createdEspacoId) {
+          try {
+            const checkEsp = await fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${institute.toUpperCase()}`);
+            if (checkEsp.ok) {
+              const espList = await checkEsp.json();
+              const flatList = Array.isArray(espList) ? espList : (espList?.data || espList?.items || []);
+              const found = flatList.find((e: any) => e && (e.nome === nomeFinal || e.nome === form.nome));
+              if (found?.id) createdEspacoId = found.id;
+            }
+          } catch (e) {}
+        }
+
+        // Se for novo espaço, cria automaticamente o núcleo correspondente como ATIVO e com vaga pendente
+        if (!editId) {
+          try {
+            await fetch(`https://w.ibrase.com.br/webhook/nucleos-post?instituto=${institute.toUpperCase()}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                instituto: institute.toUpperCase(),
+                nome: nomeFinal,
+                nomeNucleo: nomeFinal,
+                espaco_id: createdEspacoId || null,
+                projeto_id: form.projetoId ? Number(form.projetoId) : null,
+                modalidade_id: form.modalidadeId ? Number(form.modalidadeId) : null,
+                numero_vaga: null,
+                ativo: true,
+                aceitando_vagas: false,
+              })
+            });
+          } catch (errNucleo) {
+            console.warn("Aviso ao criar núcleo automático:", errNucleo);
+          }
+        }
+
+        clearEntityCache(['espacos', 'nucleos']);
         setIsSuccess(true);
-        setTimeout(() => navigate("/admin/espacos"), 2000);
+        setTimeout(() => navigate("/admin/nucleos"), 2000);
       } else {
         alert("Erro ao salvar espaço. Verifique os dados e tente novamente.");
       }
@@ -818,17 +958,88 @@ export default function CadastrarEspaco() {
                   value={form.bairro} 
                   onChange={e => {
                     const val = e.target.value;
-                    const autoNome = calculateNomeEspaco(val, existingEspacos, editId);
+                    const autoNome = calculateNomeEspaco(val, form.cidade, form.temDistrito, form.distrito, existingEspacos, editId);
                     setForm(f => ({ ...f, bairro: val, nomeEspaco: autoNome || val }));
                     setErrors(err => { const n = { ...err }; delete n.bairro; return n; });
                   }} 
                 />
+                <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-600 dark:text-slate-400 font-medium pt-1">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-400"
+                    checked={form.temDistrito}
+                    onChange={e => {
+                      const checked = e.target.checked;
+                      const distVal = checked ? form.distrito : "";
+                      const autoNome = calculateNomeEspaco(form.bairro, form.cidade, checked, distVal, existingEspacos, editId);
+                      setForm(f => ({ ...f, temDistrito: checked, distrito: distVal, nomeEspaco: autoNome || f.bairro }));
+                      if (!checked) {
+                        setErrors(err => { const n = { ...err }; delete n.distrito; return n; });
+                      }
+                    }}
+                  />
+                  <span>Pertence a um Distrito?</span>
+                </label>
               </Field>
             </div>
 
+            {/* Campo que abre quando o quadradinho de Distrito é marcado */}
+            {form.temDistrito && (
+              <Field 
+                label={
+                  <span>
+                    Nome do Distrito <span className="text-slate-400 font-normal text-xs ml-1">(Será adicionado entre parênteses no nome do espaço)</span>
+                  </span>
+                }
+                error={errors.distrito}
+                required={form.temDistrito}
+              >
+                <input
+                  type="text"
+                  placeholder="Ex: Travessão, Santo Eduardo, Morro do Coco..."
+                  className={inputCls(errors.distrito)}
+                  value={form.distrito}
+                  onChange={e => {
+                    const val = e.target.value;
+                    const autoNome = calculateNomeEspaco(form.bairro, form.cidade, true, val, existingEspacos, editId);
+                    setForm(f => ({ ...f, distrito: val, nomeEspaco: autoNome || f.bairro }));
+                    setErrors(err => { const n = { ...err }; delete n.distrito; return n; });
+                  }}
+                />
+              </Field>
+            )}
+
+            {/* Pré-visualização do Nome do Espaço com Distrito */}
+            {form.bairro && (
+              <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-300">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-semibold text-slate-500">Nome Oficial do Espaço:</span>
+                  <span className="font-extrabold text-slate-900 dark:text-white bg-white dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs text-sm">
+                    {form.nomeEspaco || form.bairro}
+                  </span>
+                </div>
+                {form.temDistrito && form.distrito && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 px-2.5 py-1 rounded-md self-start sm:self-auto">
+                    📍 Distrito: ({form.distrito})
+                  </span>
+                )}
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <Field label="Cidade" error={errors.cidade}>
-                <input type="text" placeholder="Cidade" className={inputCls(errors.cidade)} value={form.cidade} onChange={e => set("cidade", e.target.value)} />
+                <input 
+                  type="text" 
+                  placeholder="Cidade" 
+                  className={inputCls(errors.cidade)} 
+                  value={form.cidade} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    const autoNome = calculateNomeEspaco(form.bairro, val, form.temDistrito, form.distrito, existingEspacos, editId);
+                    setForm(f => ({ ...f, cidade: val, nomeEspaco: autoNome || f.nomeEspaco || f.bairro }));
+                    setErrors(err => { const n = { ...err }; delete n.cidade; return n; });
+                  }} 
+                />
               </Field>
               <Field label="UF" error={errors.uf}>
                 <input type="text" placeholder="UF" className={inputCls(errors.uf)} value={form.uf} onChange={e => set("uf", e.target.value.toUpperCase().slice(0, 2))} maxLength={2} />

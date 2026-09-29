@@ -14,6 +14,7 @@ import {
   Users,
   Eye
 } from "lucide-react";
+import { fetchWithDedupe, safeGetSession, safeSetSession } from "../../utils/apiCache";
 
 /* ─── Tipos ─── */
 interface MatriculaItem {
@@ -21,6 +22,9 @@ interface MatriculaItem {
   aluno_nome: string;
   aluno_cpf?: string;
   nucleo_id?: string | number;
+  nucleo_nome?: string;
+  bairro?: string;
+  cidade?: string;
   turma?: string;
   sexo?: string;
   idade?: number;
@@ -64,13 +68,40 @@ const flattenArray = (rawData: any): any[] => {
 export default function Relatorios() {
   const [matriculas, setMatriculas] = useState<MatriculaItem[]>(() => {
     if (typeof window !== 'undefined') {
-      const inst = localStorage.getItem("auth_institute") || "IBRASE";
-      const mCache = sessionStorage.getItem(`cache_matriculas_${inst.toUpperCase()}`);
-      if (mCache) {
-        try { return JSON.parse(mCache); } catch(e){}
+      const inst = (localStorage.getItem("auth_institute") || "IBRASE").toUpperCase();
+      const mCache = safeGetSession<any[]>(`cache_matriculas_v2_${inst}`) || 
+                     (() => {
+                       try {
+                         const raw = sessionStorage.getItem(`cache_matriculas_${inst}`);
+                         return raw ? JSON.parse(raw) : null;
+                       } catch { return null; }
+                     })();
+      if (mCache && Array.isArray(mCache) && mCache.length > 0) {
+        return mCache.map((item: any, idx: number) => ({
+          id: item.id || idx + 1,
+          aluno_nome: item.aluno_nome || item.nome || `Aluno #${item.id || idx + 1}`,
+          aluno_cpf: item.aluno_cpf || item.cpf || "",
+          nucleo_id: item.nucleo_id || item.id_nucleo || item.espaco_id || "",
+          nucleo_nome: item.nucleo_nome || "",
+          bairro: item.bairro || "",
+          cidade: item.cidade || "",
+          turma: item.turma || "—",
+          sexo: item.sexo || "Não informado",
+          idade: item.idade || "",
+          telefone_conta: item.telefone_conta || item.whatsapp || "",
+          status: item.status || "Aprovada",
+        }));
       }
     }
     return [];
+  });
+  const [isMatriculasLoading, setIsMatriculasLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const inst = (localStorage.getItem("auth_institute") || "IBRASE").toUpperCase();
+      const mCache = safeGetSession<any[]>(`cache_matriculas_v2_${inst}`);
+      return !mCache || mCache.length === 0;
+    }
+    return true;
   });
   const [nucleosList, setNucleosList] = useState<NucleoInfo[]>(() => {
     if (typeof window !== 'undefined') {
@@ -143,104 +174,95 @@ export default function Relatorios() {
   }, []);
 
   const fetchData = async (inst: string) => {
-    setLoading(true);
+    // Se já possuímos núcleos carregados em cache, exibe a interface imediatamente
+    const hasData = nucleosList.length > 0;
+    if (!hasData) setLoading(true);
+    if (matriculas.length === 0) setIsMatriculasLoading(true);
+
     try {
       const [resN, resM, resP, resMod, resE] = await Promise.allSettled([
-        fetch(`${BASE}nucleos-get?instituto=${inst}`, { cache: "no-store" }),
-        fetch(`${BASE}matriculas-get?instituto=${inst}`, { cache: "no-store" }),
-        fetch(`${BASE}projetos-get?instituto=${inst}`, { cache: "no-store" }),
-        fetch(`${BASE}modalidades-get?instituto=${inst}`, { cache: "no-store" }),
-        fetch(`${BASE}espacos-get?instituto=${inst}`, { cache: "no-store" }),
+        fetchWithDedupe(`${BASE}nucleos-get?instituto=${inst}`, 15000),
+        fetchWithDedupe(`${BASE}matriculas-get?instituto=${inst}`, 30000),
+        fetchWithDedupe(`${BASE}projetos-get?instituto=${inst}`, 15000),
+        fetchWithDedupe(`${BASE}modalidades-get?instituto=${inst}`, 15000),
+        fetchWithDedupe(`${BASE}espacos-get?instituto=${inst}`, 15000),
       ]);
 
       const pCache: Record<number, any> = {};
-      if (resP.status === "fulfilled" && resP.value.ok) {
-        try {
-          const pData = await resP.value.json();
-          for (const p of flattenArray(pData)) {
-            if (p.id) pCache[Number(p.id)] = p;
-          }
-        } catch(e) {}
+      if (resP.status === "fulfilled" && resP.value) {
+        for (const p of flattenArray(resP.value)) {
+          if (p.id) pCache[Number(p.id)] = p;
+        }
       }
       setProjetosCache(pCache);
 
       const mCache: Record<number, string> = {};
-      if (resMod.status === "fulfilled" && resMod.value.ok) {
-        try {
-          const modData = await resMod.value.json();
-          for (const m of flattenArray(modData)) {
-            const mapId = Number(m.id || m.modalidade_id);
-            if (mapId && m.nome) mCache[mapId] = m.nome;
-          }
-        } catch(e) {}
+      if (resMod.status === "fulfilled" && resMod.value) {
+        for (const m of flattenArray(resMod.value)) {
+          const mapId = Number(m.id || m.modalidade_id);
+          if (mapId && m.nome) mCache[mapId] = m.nome;
+        }
       }
       setModalidadesCache(mCache);
 
       const eCache: Record<number, any> = {};
-      if (resE.status === "fulfilled" && resE.value.ok) {
-        try {
-          const eData = await resE.value.json();
-          for (const e of flattenArray(eData)) {
-            if (e.id) eCache[Number(e.id)] = e;
-          }
-        } catch(e) {}
+      if (resE.status === "fulfilled" && resE.value) {
+        for (const e of flattenArray(resE.value)) {
+          if (e.id) eCache[Number(e.id)] = e;
+        }
       }
       setEspacosCache(eCache);
 
       const nList: NucleoInfo[] = [];
-      if (resN.status === "fulfilled" && resN.value.ok) {
-        try {
-          const textN = await resN.value.text();
-          if (textN) {
-            const nData = JSON.parse(textN);
-            for (const n of flattenArray(nData)) {
-              const id = String(n.id || n.id_nucleo || n.nucleo_id || "");
-              if (id) {
-                nList.push({
-                  id,
-                  nome: n.nome || n.nucleo_nome || `Núcleo ${id}`,
-                  bairro: n.bairro || "",
-                  cidade: n.cidade || n.cidade_nome || "",
-                  projeto_id: n.projeto_id || "",
-                  modalidade_id: n.modalidade_id || n.espacos?.modalidade_id || "",
-                  espaco_id: n.espaco_id || n.espacos?.id || ""
-                });
-              }
-            }
+      if (resN.status === "fulfilled" && resN.value) {
+        for (const n of flattenArray(resN.value)) {
+          const id = String(n.id || n.id_nucleo || n.nucleo_id || "");
+          if (id) {
+            nList.push({
+              id,
+              nome: n.nome || n.nucleo_nome || `Núcleo ${id}`,
+              bairro: n.bairro || "",
+              cidade: n.cidade || n.cidade_nome || "",
+              projeto_id: n.projeto_id || "",
+              modalidade_id: n.modalidade_id || n.espacos?.modalidade_id || "",
+              espaco_id: n.espaco_id || n.espacos?.id || ""
+            });
           }
-        } catch(e) {}
+        }
       }
-      setNucleosList(nList);
+      if (nList.length > 0) {
+        setNucleosList(nList);
+        try { sessionStorage.setItem(`cache_nucleos_list_${inst.toUpperCase()}`, JSON.stringify(nList)); } catch (e) {}
+      }
 
-      if (resM.status === "fulfilled" && resM.value.ok) {
-        try {
-          const text = await resM.value.text();
-          if (text) {
-            const data = JSON.parse(text);
-            if (data && !data.error && data.message !== "Workflow was started") {
-              const rawList = flattenArray(data);
-              const parsed: MatriculaItem[] = rawList.map((item: any, idx: number) => {
-                return {
-                  id: item.id || idx + 1,
-                  aluno_nome: item.aluno_nome || item.nome || `Aluno #${item.id || idx + 1}`,
-                  aluno_cpf: item.aluno_cpf || item.cpf || "",
-                  nucleo_id: item.nucleo_id || item.id_nucleo || item.espaco_id || "",
-                  turma: item.turma || "—",
-                  sexo: item.sexo || "Não informado",
-                  idade: item.idade || "",
-                  telefone_conta: item.telefone_conta || item.whatsapp || "",
-                  status: item.status || "Aprovada",
-                };
-              });
-              setMatriculas(parsed);
-            }
-          }
-        } catch (e) {}
+      if (resM.status === "fulfilled" && resM.value) {
+        const rawList = flattenArray(resM.value);
+        if (rawList.length > 0) {
+          const parsed: MatriculaItem[] = rawList.map((item: any, idx: number) => {
+            return {
+              id: item.id || idx + 1,
+              aluno_nome: item.aluno_nome || item.nome || `Aluno #${item.id || idx + 1}`,
+              aluno_cpf: item.aluno_cpf || item.cpf || "",
+              nucleo_id: item.nucleo_id || item.id_nucleo || item.espaco_id || "",
+              nucleo_nome: item.nucleo_nome || "",
+              bairro: item.bairro || "",
+              cidade: item.cidade || item.cidade_nome || item.aluno_cidade || "",
+              turma: item.turma || "—",
+              sexo: item.sexo || "Não informado",
+              idade: item.idade || "",
+              telefone_conta: item.telefone_conta || item.whatsapp || "",
+              status: item.status || "Aprovada",
+            };
+          });
+          setMatriculas(parsed);
+          safeSetSession(`cache_matriculas_v2_${inst.toUpperCase()}`, parsed);
+        }
       }
     } catch (e) {
       console.warn("Erro ao buscar dados de relatórios:", e);
     } finally {
       setLoading(false);
+      setIsMatriculasLoading(false);
     }
   };
 
@@ -533,7 +555,13 @@ export default function Relatorios() {
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredNucleos.map((nucleo) => {
-                const totalAlunos = matriculas.filter(m => String(m.nucleo_id) === String(nucleo.id)).length;
+                const totalAlunos = matriculas.filter(m => {
+                  if (String(m.nucleo_id) === String(nucleo.id)) return true;
+                  if (m.nucleo_nome && nucleo.nome && m.nucleo_nome.trim().toLowerCase() === nucleo.nome.trim().toLowerCase()) return true;
+                  if (m.bairro && nucleo.bairro && m.bairro.trim().toLowerCase() === nucleo.bairro.trim().toLowerCase()) return true;
+                  return false;
+                }).length;
+
                 return (
                   <div key={nucleo.id} className="p-4 sm:p-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
@@ -546,9 +574,15 @@ export default function Relatorios() {
                             <MapPin size={14} /> {nucleo.cidade}
                           </span>
                         )}
-                        <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-xs font-semibold">
-                          {totalAlunos} alunos
-                        </span>
+                        {isMatriculasLoading && matriculas.length === 0 ? (
+                          <span className="bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded text-xs font-semibold inline-flex items-center gap-1.5 border border-blue-100 dark:border-blue-900/50">
+                            <Loader2 size={11} className="animate-spin text-blue-500" /> Carregando alunos...
+                          </span>
+                        ) : (
+                          <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-xs font-semibold">
+                            {totalAlunos} {totalAlunos === 1 ? "aluno" : "alunos"}
+                          </span>
+                        )}
                       </div>
                     </div>
 

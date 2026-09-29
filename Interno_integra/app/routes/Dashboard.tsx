@@ -16,6 +16,7 @@ import {
   MapPin, 
   CheckCircle2, 
   AlertCircle,
+  Info,
   FileText,
   Sparkles,
   Shirt,
@@ -42,7 +43,7 @@ import {
 } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 import { useEffect, useState, useMemo, useRef } from "react";
-import { fetchWithDedupe, safeSetSession } from "~/utils/apiCache";
+import { fetchWithDedupe, safeSetSession, safeGetSession } from "~/utils/apiCache";
 
 // Componente de Animação Motion ao Rolar a Página (Scroll Reveal / After Effects style)
 function MotionSection({ 
@@ -475,6 +476,513 @@ function AnimatedProgressBar({ percent, gradientClass, delayIdx = 0 }: { percent
   );
 }
 
+// Gráfico de Barras Horizontais com Metas da Proposta (Inspirado no Painel Pedagógico)
+function PedagogicoHorizontalBarChart({
+  items,
+  total,
+  meta,
+  termoPessoa,
+  titulo,
+  propostaSelecionada
+}: {
+  items: { label: string; value: number }[];
+  total: number;
+  meta: number;
+  termoPessoa: string;
+  titulo: string;
+  propostaSelecionada?: boolean;
+}) {
+  const maxItemVal = Math.max(...items.map(i => i.value), 10);
+  const maxVal = Math.max(10, Math.ceil((maxItemVal * 1.15) / 10) * 10);
+  const percentMeta = meta > 0 ? Math.min(100, Math.round((total / meta) * 100)) : 0;
+
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-xs flex flex-col justify-between h-full">
+      <div>
+        {/* Header com Ícone e Título */}
+        <div className="flex items-center gap-2.5 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
+          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold">
+            <Users size={16} />
+          </div>
+          <h3 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight truncate" title={titulo}>
+            {titulo}
+          </h3>
+        </div>
+
+        {/* Top KPIs: Total e Meta Planejada (ou Polos Atendidos quando consolidado) */}
+        <div className="grid grid-cols-2 gap-4 pb-5 mb-5 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+              Total de {termoPessoa}
+            </span>
+            <span className="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 tracking-tight">
+              {total.toLocaleString("pt-BR")}
+            </span>
+          </div>
+          <div>
+            {propostaSelecionada && meta > 0 ? (
+              <>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                    Meta da proposta
+                  </span>
+                  <span className="text-xs font-black text-blue-700 dark:text-blue-400">
+                    {percentMeta}%
+                  </span>
+                </div>
+                <span className="text-xl sm:text-2xl font-black text-slate-700 dark:text-slate-200 tracking-tight block">
+                  {meta.toLocaleString("pt-BR")}
+                </span>
+                <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full mt-1.5 overflow-hidden">
+                  <div 
+                    className="h-full bg-blue-600 dark:bg-blue-500 rounded-full transition-all duration-700" 
+                    style={{ width: `${percentMeta}%` }}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                  Polos com {termoPessoa}
+                </span>
+                <span className="text-xl sm:text-2xl font-black text-slate-700 dark:text-slate-200 tracking-tight block">
+                  {items.length} {items.length === 1 ? "polo ativo" : "polos ativos"}
+                </span>
+                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-1 block">
+                  Consolidado geral
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Barras Horizontais */}
+        <div className="space-y-3 max-h-72 overflow-y-auto pr-1.5 custom-scrollbar">
+          {items.slice(0, 10).map((it, idx) => {
+            const barWidth = maxVal > 0 ? Math.max(6, Math.round((it.value / maxVal) * 100)) : 0;
+            return (
+              <div key={idx} className="space-y-1 group">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-slate-700 dark:text-slate-200 truncate max-w-[200px]" title={it.label}>
+                    {it.label}
+                  </span>
+                  <span className="font-black text-slate-900 dark:text-white">
+                    {it.value}
+                  </span>
+                </div>
+                <div className="w-full h-6 bg-slate-100 dark:bg-slate-800/80 rounded-md overflow-hidden relative flex items-center">
+                  <div 
+                    className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 rounded-md transition-all duration-700 flex items-center justify-end pr-2 text-[11px] font-bold text-white shadow-xs group-hover:brightness-110"
+                    style={{ width: `${barWidth}%` }}
+                  >
+                    {barWidth > 20 && <span>{it.value}</span>}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          {items.length === 0 && (
+            <p className="text-xs text-slate-400 text-center py-8">Nenhum dado encontrado</p>
+          )}
+        </div>
+      </div>
+
+      {/* Eixo inferior */}
+      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex justify-between text-[10px] font-bold text-slate-400">
+          <span>0</span>
+          <span>{Math.round(maxVal * 0.25)}</span>
+          <span>{Math.round(maxVal * 0.5)}</span>
+          <span>{Math.round(maxVal * 0.75)}</span>
+          <span>{maxVal}</span>
+        </div>
+        <p className="text-[10px] text-center font-bold text-slate-400 uppercase tracking-wider mt-1.5">
+          Quantidade de {termoPessoa}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// Gráfico Circular de Distribuição por Cidade (Inspirado no Painel Pedagógico)
+function PedagogicoCityDonut({
+  items,
+  total,
+  termoPessoa
+}: {
+  items: { label: string; value: number; percent: number }[];
+  total: number;
+  termoPessoa: string;
+}) {
+  const colors = ["#1e3a8a", "#2563eb", "#38bdf8", "#7dd3fc", "#93c5fd", "#cbd5e1"];
+
+  const radius = 36;
+  const strokeWidth = 14;
+  const circumference = 2 * Math.PI * radius;
+
+  let accumulatedPercent = 0;
+
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-xs flex flex-col">
+      <div>
+        {/* Header */}
+        <div className="flex items-center gap-2.5 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
+          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold">
+            <MapPin size={16} />
+          </div>
+          <h3 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">
+            Distribuição de {termoPessoa} por cidade
+          </h3>
+        </div>
+
+        {/* Donut e Legenda lado a lado */}
+        <div className="flex flex-col sm:flex-row items-center gap-6 pt-2">
+          {/* SVG Donut com viewBox perfeito e sem cortes */}
+          <div className="relative w-44 h-44 sm:w-48 sm:h-48 shrink-0 flex items-center justify-center">
+            <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
+              <circle
+                cx="50"
+                cy="50"
+                r={radius}
+                fill="none"
+                stroke="#f1f5f9"
+                strokeWidth={strokeWidth}
+                className="dark:stroke-slate-800"
+              />
+              {items.map((it, idx) => {
+                const strokeDasharray = `${(it.percent / 100) * circumference} ${circumference}`;
+                const strokeDashoffset = -((accumulatedPercent / 100) * circumference);
+                accumulatedPercent += it.percent;
+                return (
+                  <circle
+                    key={idx}
+                    cx="50"
+                    cy="50"
+                    r={radius}
+                    fill="none"
+                    stroke={colors[idx % colors.length]}
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={strokeDasharray}
+                    strokeDashoffset={strokeDashoffset}
+                    className="transition-all duration-700 hover:opacity-80 cursor-pointer"
+                  />
+                );
+              })}
+            </svg>
+            {/* Texto Central */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                {total.toLocaleString("pt-BR")}
+              </span>
+              <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 capitalize mt-0.5">
+                {termoPessoa}
+              </span>
+            </div>
+          </div>
+
+          {/* Legenda Lateral */}
+          <div className="flex-1 w-full space-y-2.5 max-h-56 overflow-y-auto pr-1.5 custom-scrollbar">
+            {items.map((it, idx) => (
+              <div key={idx} className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span 
+                    className="w-3 h-3 rounded-full shrink-0" 
+                    style={{ backgroundColor: colors[idx % colors.length] }} 
+                  />
+                  <span className="font-bold text-slate-700 dark:text-slate-200 truncate" title={it.label}>
+                    {it.label}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0 pl-2">
+                  <span className="font-black text-slate-900 dark:text-white">{it.value}</span>
+                  <span className="text-slate-400 font-semibold text-[11px]">({it.percent}%)</span>
+                </div>
+              </div>
+            ))}
+            {items.length === 0 && (
+              <p className="text-xs text-slate-400 text-center py-6">Nenhuma cidade registrada</p>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
+        <span className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold">
+          Proporção geográfica dos participantes matriculados
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// Gráfico de Linha / Área Temporal para Captação (Inspirado no Relatório de Captação)
+function PedagogicoTimelineLineChart({
+  items,
+  totalPeriodo,
+  periodo,
+  onPeriodoChange,
+  termoPessoa
+}: {
+  items: { label: string; value: number }[];
+  totalPeriodo: number;
+  periodo: "diario" | "mensal" | "anual";
+  onPeriodoChange: (p: "diario" | "mensal" | "anual") => void;
+  termoPessoa: string;
+}) {
+  const [hoveredPoint, setHoveredPoint] = useState<{ label: string; value: number; x: number; y: number } | null>(null);
+
+  const maxVal = Math.max(...items.map(i => i.value), 5);
+  const width = 800;
+  const height = 200;
+  const paddingX = 40;
+  const paddingY = 25;
+
+  const points = items.map((it, idx) => {
+    const x = items.length > 1 
+      ? paddingX + (idx / (items.length - 1)) * (width - 2 * paddingX)
+      : width / 2;
+    const y = height - paddingY - (it.value / maxVal) * (height - 2 * paddingY);
+    return { ...it, x, y };
+  });
+
+  let pathD = "";
+  let areaD = "";
+  if (points.length === 1) {
+    pathD = `M ${paddingX} ${points[0].y} L ${width - paddingX} ${points[0].y}`;
+    areaD = `M ${paddingX} ${points[0].y} L ${width - paddingX} ${points[0].y} L ${width - paddingX} ${height - paddingY} L ${paddingX} ${height - paddingY} Z`;
+  } else if (points.length > 1) {
+    pathD = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      const prev = points[i - 1];
+      const curr = points[i];
+      const cx = (prev.x + curr.x) / 2;
+      pathD += ` C ${cx} ${prev.y}, ${cx} ${curr.y}, ${curr.x} ${curr.y}`;
+    }
+    areaD = `${pathD} L ${points[points.length - 1].x} ${height - paddingY} L ${points[0].x} ${height - paddingY} Z`;
+  }
+
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-xs space-y-4">
+      {/* Top Bar: Títulos, Pills e KPI */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+        <div>
+          <h3 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">
+            Captação de {termoPessoa}
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-0.5">
+            {periodo === "diario" 
+              ? `Acompanhe a quantidade de ${termoPessoa} captados nos últimos 7 dias.` 
+              : `Acompanhe a quantidade de ${termoPessoa} captados ao longo do tempo.`}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-4 flex-wrap">
+          {/* Pills de Período */}
+          <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold">
+            {(["diario", "mensal", "anual"] as const).map(p => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => onPeriodoChange(p)}
+                className={`px-3 py-1.5 rounded-lg capitalize transition-all cursor-pointer ${
+                  periodo === p 
+                    ? "bg-blue-600 text-white shadow-2xs font-extrabold" 
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                {p === "diario" ? "Diário (7 dias)" : p === "mensal" ? "Mensal" : "Anual"}
+              </button>
+            ))}
+          </div>
+
+          {/* KPI box */}
+          <div className="flex items-center gap-2.5 px-3.5 py-1.5 bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900/60 rounded-xl">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold">
+              <Users size={16} />
+            </div>
+            <div>
+              <span className="text-lg font-black text-blue-950 dark:text-blue-100 block leading-tight">
+                {totalPeriodo}
+              </span>
+              <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300">
+                {periodo === "diario" ? "Captados nos 7 dias" : "Total captado"}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* SVG Line / Area Chart */}
+      <div className="relative w-full h-56 pt-2">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
+          <defs>
+            <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
+            </linearGradient>
+          </defs>
+
+          {/* Gridlines horizontais */}
+          {[0, 0.25, 0.5, 0.75, 1].map((pct, idx) => {
+            const y = height - paddingY - pct * (height - 2 * paddingY);
+            return (
+              <g key={idx}>
+                <line x1={paddingX} y1={y} x2={width - paddingX} y2={y} stroke="#f1f5f9" strokeDasharray="3 3" className="dark:stroke-slate-800" />
+                <text x={paddingX - 10} y={y + 4} textAnchor="end" className="text-[10px] font-bold fill-slate-400">
+                  {Math.round(pct * maxVal)}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Área com gradiente */}
+          {areaD && <path d={areaD} fill="url(#areaGradient)" />}
+
+          {/* Linha da curva */}
+          {pathD && <path d={pathD} fill="none" stroke="#2563eb" strokeWidth="3" strokeLinecap="round" />}
+
+          {/* Pontos interativos com hit-target invisível estático para eliminar 100% o flickering */}
+          {points.map((pt, idx) => {
+            const isHovered = hoveredPoint?.label === pt.label;
+            return (
+              <g key={idx}>
+                {/* Ponto visível animado sem roubar eventos de mouse */}
+                <circle
+                  cx={pt.x}
+                  cy={pt.y}
+                  r={isHovered ? 6 : 4}
+                  fill={isHovered ? "#1d4ed8" : "#2563eb"}
+                  stroke="#ffffff"
+                  strokeWidth={isHovered ? 2.5 : 2}
+                  className="pointer-events-none transition-all duration-150"
+                />
+                {/* Área de toque transparente estática que não treme nem se move */}
+                <circle
+                  cx={pt.x}
+                  cy={pt.y}
+                  r={16}
+                  fill="transparent"
+                  className="cursor-pointer"
+                  onMouseEnter={() => setHoveredPoint(pt)}
+                  onMouseLeave={() => setHoveredPoint(null)}
+                />
+              </g>
+            );
+          })}
+
+          {/* Labels do Eixo X */}
+          {points.map((pt, idx) => {
+            if (points.length > 10 && idx % Math.ceil(points.length / 8) !== 0 && idx !== points.length - 1) return null;
+            return (
+              <text key={idx} x={pt.x} y={height - 5} textAnchor="middle" className="text-[10px] font-bold fill-slate-400">
+                {pt.label}
+              </text>
+            );
+          })}
+        </svg>
+
+        {/* Tooltip flutuante */}
+        {hoveredPoint && (
+          <div 
+            className="absolute bg-slate-900 text-white text-xs px-2.5 py-1.5 rounded-lg shadow-xl pointer-events-none transform -translate-x-1/2 -translate-y-full border border-slate-700 z-30 select-none"
+            style={{ 
+              left: `${(hoveredPoint.x / width) * 100}%`, 
+              top: `${(hoveredPoint.y / height) * 100}%`,
+              marginTop: "-10px"
+            }}
+          >
+            <p className="font-extrabold text-blue-400">{hoveredPoint.label}</p>
+            <p className="text-[11px] font-bold">{hoveredPoint.value} {termoPessoa}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Mini Donut Chart para Características do Público (Camisa, Bermuda, Calçado, Idade)
+function PedagogicoMiniDonut({
+  title,
+  items,
+  palette
+}: {
+  title: string;
+  items: { label: string; count: number; percent: number }[];
+  palette: string[];
+}) {
+  const size = 96;
+  const strokeWidth = 16;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+
+  let accumulatedPercent = 0;
+
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-xs flex flex-col justify-between">
+      <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider pb-3 border-b border-slate-100 dark:border-slate-800">
+        {title}
+      </h4>
+
+      <div className="flex items-center gap-3.5 my-3">
+        {/* Donut SVG */}
+        <div className="relative w-24 h-24 shrink-0 flex items-center justify-center">
+          <svg width={size} height={size} className="transform -rotate-90">
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              fill="none"
+              stroke="#f1f5f9"
+              strokeWidth={strokeWidth}
+              className="dark:stroke-slate-800"
+            />
+            {items.map((it, idx) => {
+              const strokeDasharray = `${(it.percent / 100) * circumference} ${circumference}`;
+              const strokeDashoffset = -((accumulatedPercent / 100) * circumference);
+              accumulatedPercent += it.percent;
+              return (
+                <circle
+                  key={idx}
+                  cx={size / 2}
+                  cy={size / 2}
+                  r={radius}
+                  fill="none"
+                  stroke={palette[idx % palette.length]}
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={strokeDasharray}
+                  strokeDashoffset={strokeDashoffset}
+                />
+              );
+            })}
+          </svg>
+        </div>
+
+        {/* Legenda Lateral */}
+        <div className="flex-1 space-y-1.5 min-w-0">
+          {items.map((it, idx) => (
+            <div key={idx} className="flex items-center justify-between text-[11px]">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span 
+                  className="w-2.5 h-2.5 rounded-sm shrink-0" 
+                  style={{ backgroundColor: palette[idx % palette.length] }} 
+                />
+                <span className="font-bold text-slate-600 dark:text-slate-300 truncate" title={it.label}>
+                  {it.label}
+                </span>
+              </div>
+              <span className="font-black text-slate-900 dark:text-white shrink-0 pl-1">
+                {it.percent}%
+              </span>
+            </div>
+          ))}
+          {items.length === 0 && (
+            <p className="text-[10px] text-slate-400 text-center py-2">Sem registros</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function meta({}: Route.MetaArgs) {
   return [
     { title: "Painel de Controle - Sistema Integra" },
@@ -501,12 +1009,43 @@ interface MatriculaItem {
   tamanho_calcado?: string;
 }
 
+const IMPACT_PHRASES = [
+  "O seu trabalho já ajudou a transformar a vida de {count} alunos matriculados. Você faz a diferença! 💖",
+  "Cada atendimento conta: já são {count} alunos acolhidos e integrados em nossos projetos. Parabéns pela dedicação! ⭐",
+  "O futuro começa com oportunidades: {count} alunos já contam com o apoio da nossa equipe. Muito orgulho dessa trajetória! 🚀",
+  "Construindo caminhos e sonhos: sua atuação alcançou {count} alunos matriculados. Obrigado pelo compromisso diário! 🌟",
+  "O esporte e a educação transformam: {count} vidas impactadas diretamente pelo esforço coletivo da nossa rede! 🏆",
+  "Juntos fazemos acontecer: {count} alunos registrados e em desenvolvimento com nossa estrutura. Excelente trabalho! 👏",
+  "Dedicando cuidado a cada detalhe: já organizamos o percurso formativo de {count} alunos. Sua dedicação move montanhas! 💫",
+  "Impacto real nas comunidades: são {count} alunos acolhidos e atendidos com excelência pela nossa instituição! 🎯",
+  "Mais do que números, são histórias: {count} trajetórias iniciadas com a força do nosso time. Gratidão pelo empenho! 🌻",
+  "Transformação que se sente no dia a dia: {count} alunos beneficiados pelo trabalho sério e humano de todos nós! 🤝",
+  "A cada dia uma nova conquista: {count} famílias impactadas positivamente através dos nossos núcleos esportivos! ⚽",
+  "O seu esforço diário abre portas: já são {count} jovens e crianças com acesso garantido aos nossos polos! 🌈",
+  "Compromisso social em ação: {count} alunos já fazem parte da nossa comunidade ativa. Vamos juntos por mais! 💪",
+  "Inclusão, respeito e cidadania: {count} alunos contam com o seu profissionalismo para seguir em frente! ✨",
+  "Resultados que orgulham: com o seu apoio, já organizamos e acompanhamos {count} alunos com excelência! 🥇"
+];
+
 export default function Dashboard() {
   const [searchParams] = useSearchParams();
   const [currentInstitute, setCurrentInstitute] = useState(() => typeof window !== 'undefined' ? localStorage.getItem('auth_institute') || 'IBRASE' : 'IBRASE');
   const [userRole, setUserRole] = useState(() => typeof window !== 'undefined' ? (localStorage.getItem('auth_cargo') || 'colaborador').toLowerCase().trim() : 'colaborador');
   const [userAccountType, setUserAccountType] = useState(() => typeof window !== 'undefined' ? (localStorage.getItem('auth_account_type') || 'colaborador').toLowerCase().trim() : 'colaborador');
-  const [activeView, setActiveView] = useState<"geral" | "pedagogico">("geral");
+  const [activeView, setActiveView] = useState<"geral" | "pedagogico">(() => {
+    if (typeof window !== "undefined") {
+      const url = new URLSearchParams(window.location.search);
+      const qv = url.get("view");
+      if (qv === "pedagogico" || qv === "geral") return qv;
+      const cargo = (localStorage.getItem("auth_cargo") || "").toLowerCase().trim();
+      const accType = (localStorage.getItem("auth_account_type") || "").toLowerCase().trim();
+      const saved = localStorage.getItem("integra_active_view");
+      if (saved === "pedagogico" || accType === "pedagogico" || cargo.includes("pedagogic") || cargo.includes("pedagógic")) {
+        return "pedagogico";
+      }
+    }
+    return "geral";
+  });
   const [uniformTab, setUniformTab] = useState<"todos" | "blusas" | "bermudas" | "tenis">("todos");
 
   // Modal de Exportação PDF Customizada
@@ -530,7 +1069,24 @@ export default function Dashboard() {
 
   const [loading, setLoading] = useState(true);
   const [filterLoading, setFilterLoading] = useState(false);
-  const [matriculas, setMatriculas] = useState<MatriculaItem[]>([]);
+  const [matriculas, setMatriculas] = useState<MatriculaItem[]>(() => {
+    if (typeof window !== "undefined") {
+      const inst = (localStorage.getItem("auth_institute") || "IBRASE").toUpperCase();
+      const cached = safeGetSession<MatriculaItem[]>(`cache_matriculas_v2_${inst}`);
+      if (cached && Array.isArray(cached) && cached.length > 0) {
+        return cached;
+      }
+    }
+    return [];
+  });
+  const [matriculasFetched, setMatriculasFetched] = useState(() => {
+    if (typeof window !== "undefined") {
+      const inst = (localStorage.getItem("auth_institute") || "IBRASE").toUpperCase();
+      const cached = safeGetSession<MatriculaItem[]>(`cache_matriculas_v2_${inst}`);
+      return !!(cached && Array.isArray(cached) && cached.length > 0);
+    }
+    return false;
+  });
   const [nucleosList, setNucleosList] = useState<any[]>([]);
   const [nucleosCount, setNucleosCount] = useState(0);
   const [propostasCount, setPropostasCount] = useState(0);
@@ -538,12 +1094,36 @@ export default function Dashboard() {
   const [modalidadesCache, setModalidadesCache] = useState<Record<number, string>>({});
   const [projetosCache, setProjetosCache] = useState<Record<number, string>>({});
   const [propostasComPendencia, setPropostasComPendencia] = useState<{ id: string | number, nome: string, campos: string[] }[]>([]);
+  const [propostasList, setPropostasList] = useState<any[]>([]);
+  const [espacosList, setEspacosList] = useState<any[]>([]);
+  const [hoveredCityIdx, setHoveredCityIdx] = useState<number | null>(null);
+  const [hoveredModIdx, setHoveredModIdx] = useState<number | null>(null);
+  const modalidadesCarouselRef = useRef<HTMLDivElement>(null);
   const [pendenciasExpanded, setPendenciasExpanded] = useState(false);
+  const [vagasModalidadeOpen, setVagasModalidadeOpen] = useState(false);
+
+  // Estados para o Painel Pedagógico Inspirado na Referência
+  const [captacaoPeriodo, setCaptacaoPeriodo] = useState<"diario" | "mensal" | "anual">("diario");
+  const [generoPerfilFilter, setGeneroPerfilFilter] = useState<"todos" | "feminino" | "masculino">("todos");
+
+  // Frase rotativa diária de impacto baseada no dia do mês
+  const currentImpactPhrase = useMemo(() => {
+    const day = typeof window !== 'undefined' ? new Date().getDate() : 1;
+    const template = IMPACT_PHRASES[day % IMPACT_PHRASES.length];
+    return template.replace("{count}", String(matriculas.length));
+  }, [matriculas.length]);
 
   // Estados e filtros refinados para Gestão de Núcleos no Pedagógico
   const [nucleoFilterStatus, setNucleoFilterStatus] = useState<"todos" | "abertos" | "pausados">("todos");
   const [nucleoSearchQuery, setNucleoSearchQuery] = useState("");
   const nucleosCarouselRef = useRef<HTMLDivElement>(null);
+
+    const scrollModalidades = (direction: 'left' | 'right') => {
+    if (modalidadesCarouselRef.current) {
+      const offset = direction === 'left' ? -260 : 260;
+      modalidadesCarouselRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+    }
+  };
 
   const scrollCarousel = (direction: 'left' | 'right') => {
     if (nucleosCarouselRef.current) {
@@ -551,6 +1131,278 @@ export default function Dashboard() {
       nucleosCarouselRef.current.scrollBy({ left: offset, behavior: 'smooth' });
     }
   };
+
+    // =========================================================================
+  // CÁLCULOS EXECUTIVOS DA VISÃO GESTÃO (Vagas, Modalidades, Cidades, Pendências)
+  // =========================================================================
+  const CITY_PALETTE = [
+    "#3b82f6", // Azul
+    "#10b981", // Verde Esmeralda
+    "#8b5cf6", // Roxo
+    "#f59e0b", // Âmbar
+    "#06b6d4", // Ciano
+    "#ec4899", // Rosa
+    "#6366f1", // Índigo
+    "#14b8a6", // Verde Petróleo
+    "#f97316", // Laranja
+    "#84cc16", // Lima
+    "#a855f7", // Violeta
+    "#64748b"  // Ardósia
+  ];
+
+  // Mapas de Espaços (por ID e por Nome/Bairro) para resolução precisa e instantânea de cidades
+  const espacosMaps = useMemo(() => {
+    const byId: Record<string, any> = {};
+    const byName: Record<string, any> = {};
+    espacosList.forEach(e => {
+      if (e) {
+        if (e.id) {
+          byId[String(e.id)] = e;
+          byId[Number(e.id)] = e;
+        }
+        if (e.nome) byName[String(e.nome).toLowerCase().trim()] = e;
+        if (e.bairro) byName[String(e.bairro).toLowerCase().trim()] = e;
+      }
+    });
+    return { byId, byName };
+  }, [espacosList]);
+
+  // Mapeamento nucleo_id -> cidade derivado das matrículas dos alunos (garante cidade mesmo sem espaços carregados)
+  const matCidadeMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    matriculas.forEach((m) => {
+      const nid = String(m.nucleo_id || '');
+      const cid = (m.cidade || m.aluno_cidade || m.municipio || '').trim();
+      if (nid && cid && !map[nid] && cid.toLowerCase() !== "null" && cid !== "—") {
+        map[nid] = cid;
+      }
+    });
+    return map;
+  }, [matriculas]);
+
+  // Resolução robusta da cidade do núcleo com contingência multinível (Espaço > Matrícula > Nome > Fallback oficial)
+  const getResolvedNucleoCidade = (n: any): string => {
+    if (n.cidade && String(n.cidade).trim() !== "" && String(n.cidade).toLowerCase() !== "null" && n.cidade !== "—") {
+      return String(n.cidade).trim();
+    }
+    const nid = String(n.id || n.id_nucleo || n.nucleo_id || '');
+    const espid = String(n.espaco_id || n.bairro_id || '');
+    if (espid && espacosMaps.byId[espid]?.cidade) {
+      return espacosMaps.byId[espid].cidade;
+    }
+    const nomeLower = String(n.nome || n.nome_nucleo || '').toLowerCase().trim();
+    if (nomeLower && espacosMaps.byName[nomeLower]?.cidade) {
+      return espacosMaps.byName[nomeLower].cidade;
+    }
+    const bairroLower = String(n.bairro || '').toLowerCase().trim();
+    if (bairroLower && espacosMaps.byName[bairroLower]?.cidade) {
+      return espacosMaps.byName[bairroLower].cidade;
+    }
+    if (nid && matCidadeMap[nid]) {
+      return matCidadeMap[nid];
+    }
+    // Mapeamento de contingência para os núcleos cadastrados nos projetos oficiais
+    if (nomeLower.includes("km 14") || nomeLower.includes("travessão") || nomeLower.includes("conselheiro josino") || 
+        nomeLower.includes("parque são caetano") || nomeLower.includes("santa cruz") || nomeLower.includes("saturnino braga") || 
+        nomeLower.includes("jóquei") || nomeLower.includes("goitacazes")) {
+      return "Campos dos Goytacazes";
+    }
+    if (nomeLower.includes("centro") || nomeLower.includes("chatuba")) {
+      return "São João da Barra";
+    }
+    if (nomeLower.includes("batelão") || nomeLower.includes("barra seca")) {
+      return "São Francisco de Itabapoana";
+    }
+    if (nomeLower.includes("vila nova")) {
+      return "Conceição de Macabu";
+    }
+    if (nomeLower.includes("moquetá") || nomeLower.includes("palmares")) {
+      return "Nova Iguaçu";
+    }
+    if (nomeLower.includes("vargem pequena") || nomeLower.includes("magalhães bastos")) {
+      return "Rio de Janeiro";
+    }
+    return "Outra Localidade";
+  };
+
+  // 1. Vagas Oficiais de Núcleos (Disponíveis, Ocupadas, Meta Planejada e por Modalidade)
+  const vagasNucleoStats = useMemo(() => {
+    // Propostas consideradas
+    const propostasFiltradas = propostasList.filter(p => {
+      const isAtivo = p.ativo !== false && p.status !== false && p.status !== "inativo";
+      if (!isAtivo) return false;
+      if (globalProjeto !== "all" && String(p.id || p.id_projeto || p.id_proposta) !== String(globalProjeto)) return false;
+      return true;
+    });
+
+    let totalVagas = 0;
+    const modTotals: Record<string, { nome: string; total: number; ocupadas: number; disponiveis: number }> = {};
+
+    propostasFiltradas.forEach(p => {
+      const raw = p.vagas_nucleo || p.vagasNucleo;
+      let parsed: any[] = [];
+      if (typeof raw === "string") {
+        try { parsed = JSON.parse(raw); } catch (e) {}
+      } else if (Array.isArray(raw)) {
+        parsed = raw;
+      }
+
+      let count = parsed.length;
+      if (count > 0 && (parsed[0].modalidadeNome || parsed[0].modalidade_nome || parsed[0].numero !== undefined)) {
+        parsed.forEach((slot: any) => {
+          const modName = slot.modalidadeNome || slot.modalidade_nome || (slot.modalidadeId && modalidadesCache[Number(slot.modalidadeId)]) || slot.modalidade || "Geral";
+          if (!modTotals[modName]) {
+            modTotals[modName] = { nome: modName, total: 0, ocupadas: 0, disponiveis: 0 };
+          }
+          modTotals[modName].total++;
+        });
+      } else if (p.limites_modalidades) {
+        let lm = p.limites_modalidades;
+        if (typeof lm === "string") {
+          try { lm = JSON.parse(lm); } catch (e) {}
+        }
+        if (Array.isArray(lm)) {
+          count = lm.reduce((acc: number, curr: any) => acc + (Number(curr.limite) || 0), 0);
+          lm.forEach((item: any) => {
+            const modName = item.nome || (item.id && modalidadesCache[Number(item.id)]) || "Geral";
+            const lim = Number(item.limite) || 0;
+            if (!modTotals[modName]) {
+              modTotals[modName] = { nome: modName, total: 0, ocupadas: 0, disponiveis: 0 };
+            }
+            modTotals[modName].total += lim;
+          });
+        }
+      }
+      if (count === 0) {
+        count = Number(p.limite_nucleos || p.qtd_nucleos || p.quantidade_nucleos || 0);
+      }
+      totalVagas += count;
+    });
+
+    // Núcleos ativos
+    const nucleosAtivos = nucleosList.filter(n => {
+      const isAtivo = n.ativo !== false && n.ativo !== 0 && n.ativo !== "0" && n.ativo !== "false";
+      if (!isAtivo) return false;
+      if (globalProjeto !== "all" && String(n.projeto_id) !== String(globalProjeto)) return false;
+      const cid = getResolvedNucleoCidade(n);
+      if (globalCidade !== "all" && cid.toLowerCase() !== globalCidade.toLowerCase()) return false;
+      if (globalNucleo !== "all" && String(n.id || n.id_nucleo || n.nucleo_id) !== String(globalNucleo)) return false;
+      return true;
+    });
+
+    const ocupadas = nucleosAtivos.filter(n => 
+      n.numero_vaga !== null && n.numero_vaga !== undefined && String(n.numero_vaga).trim() !== "" && String(n.numero_vaga) !== "0"
+    ).length;
+
+    // Contabiliza ocupação por modalidade nos núcleos ativos com vaga
+    nucleosAtivos.forEach(n => {
+      const hasVaga = n.numero_vaga !== null && n.numero_vaga !== undefined && String(n.numero_vaga).trim() !== "" && String(n.numero_vaga) !== "0";
+      if (!hasVaga) return;
+      const modName = n.modalidade_nome || (n.modalidade_id && modalidadesCache[Number(n.modalidade_id)]) || n.modalidade || "Geral";
+      if (modTotals[modName]) {
+        modTotals[modName].ocupadas++;
+      } else {
+        const key = Object.keys(modTotals).find(k => k.toLowerCase() === modName.toLowerCase());
+        if (key) {
+          modTotals[key].ocupadas++;
+        } else {
+          modTotals[modName] = { nome: modName, total: 1, ocupadas: 1, disponiveis: 0 };
+        }
+      }
+    });
+
+    Object.values(modTotals).forEach(m => {
+      m.disponiveis = Math.max(0, m.total - m.ocupadas);
+    });
+
+    const modalidadesDisponiveis = Object.values(modTotals)
+      .sort((a, b) => b.disponiveis - a.disponiveis || a.nome.localeCompare(b.nome));
+
+    const disponiveis = Math.max(0, totalVagas - ocupadas);
+    const percentOcupado = totalVagas > 0 ? Math.min(100, Math.round((ocupadas / totalVagas) * 100)) : 0;
+
+    return {
+      totalVagas,
+      ocupadas,
+      disponiveis,
+      percentOcupado,
+      totalAtivos: nucleosAtivos.length,
+      modalidadesDisponiveis
+    };
+  }, [propostasList, nucleosList, modalidadesCache, espacosMaps, matCidadeMap, globalProjeto, globalCidade, globalNucleo]);
+
+  // 2. Gráfico de Barras: Quantidade de Núcleos por Modalidade
+  const modalidadesChartData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    nucleosList.forEach(n => {
+      const isAtivo = n.ativo !== false && n.ativo !== 0 && n.ativo !== "0" && n.ativo !== "false";
+      if (!isAtivo) return;
+      if (globalProjeto !== "all" && String(n.projeto_id) !== String(globalProjeto)) return;
+      const cid = getResolvedNucleoCidade(n);
+      if (globalCidade !== "all" && cid.toLowerCase() !== globalCidade.toLowerCase()) return;
+      if (globalNucleo !== "all" && String(n.id || n.id_nucleo || n.nucleo_id) !== String(globalNucleo)) return;
+
+      const modName = n.modalidade_nome || (n.modalidade_id && modalidadesCache[Number(n.modalidade_id)]) || n.modalidade || "Não Definida";
+      counts[modName] = (counts[modName] || 0) + 1;
+    });
+
+    const list = Object.entries(counts).map(([nome, count]) => ({ nome, count }));
+    list.sort((a, b) => b.count - a.count);
+    return list;
+  }, [nucleosList, modalidadesCache, espacosMaps, matCidadeMap, globalProjeto, globalCidade, globalNucleo]);
+
+  // 3. Gráfico Circular: Distribuição de Núcleos por Cidade
+  const cidadesChartData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    let totalAtivos = 0;
+
+    nucleosList.forEach(n => {
+      const isAtivo = n.ativo !== false && n.ativo !== 0 && n.ativo !== "0" && n.ativo !== "false";
+      if (!isAtivo) return;
+      if (globalProjeto !== "all" && String(n.projeto_id) !== String(globalProjeto)) return;
+
+      const cidade = getResolvedNucleoCidade(n);
+      if (globalCidade !== "all" && cidade.toLowerCase() !== globalCidade.toLowerCase()) return;
+      if (globalNucleo !== "all" && String(n.id || n.id_nucleo || n.nucleo_id) !== String(globalNucleo)) return;
+
+      totalAtivos++;
+      counts[cidade] = (counts[cidade] || 0) + 1;
+    });
+
+    const list = Object.entries(counts).map(([cidade, count]) => {
+      const percent = totalAtivos > 0 ? (count / totalAtivos) * 100 : 0;
+      return {
+        cidade,
+        count,
+        percent: Number(percent.toFixed(1))
+      };
+    });
+    list.sort((a, b) => b.count - a.count);
+    return { list, totalAtivos };
+  }, [nucleosList, espacosMaps, matCidadeMap, globalProjeto, globalCidade, globalNucleo]);
+
+  // 4. Lista de Pendências Operacionais
+  const pendenciasGestao = useMemo(() => {
+    // Núcleos ativos sem vaga
+    const nucleosSemVaga = nucleosList.filter(n => {
+      const isAtivo = n.ativo !== false && n.ativo !== 0 && n.ativo !== "0" && n.ativo !== "false";
+      if (!isAtivo) return false;
+      return n.numero_vaga === null || n.numero_vaga === undefined || String(n.numero_vaga).trim() === "" || String(n.numero_vaga) === "0";
+    });
+
+    // Espaços incompletos
+    const espacosIncompletos = espacosList.filter(e => {
+      const respNome = e.resp_nome || e.respNome;
+      const rua = e.rua || e.endereco;
+      return !respNome || respNome === "—" || respNome === "temp" || respNome === "x" || !rua || rua === "temp" || rua === "xxxxxxx";
+    });
+
+    return {
+      nucleosSemVaga,
+      espacosIncompletos,
+      total: nucleosSemVaga.length + espacosIncompletos.length + propostasComPendencia.length
+    };
+  }, [nucleosList, espacosList, propostasComPendencia]);
 
   const nucleoStats = useMemo(() => {
     let abertos = 0;
@@ -571,7 +1423,8 @@ export default function Dashboard() {
 
       // Filtros Globais (Barra do Topo)
       if (globalProjeto !== "all" && String(n.projeto_id) !== String(globalProjeto)) return false;
-      if (globalCidade !== "all" && n.cidade && n.cidade.toLowerCase() !== globalCidade.toLowerCase()) return false;
+      const cid = getResolvedNucleoCidade(n);
+      if (globalCidade !== "all" && cid.toLowerCase() !== globalCidade.toLowerCase()) return false;
       if (globalNucleo !== "all" && String(id) !== String(globalNucleo)) return false;
 
       // Filtros Locais (Tabs)
@@ -581,16 +1434,17 @@ export default function Dashboard() {
       if (nucleoSearchQuery.trim()) {
         const query = nucleoSearchQuery.toLowerCase();
         const matchesNome = nome.toLowerCase().includes(query);
+        const matchesCid = cid.toLowerCase().includes(query);
         const modalidade = n.modalidade_nome || n.modalidade || (n.modalidade_id && modalidadesCache[Number(n.modalidade_id)]) || "";
         const matchesMod = modalidade.toLowerCase().includes(query);
         const projetoNome = n.projetos?.nome || n.projeto_nome || n.proposta || (n.projeto_id && projetosCache[Number(n.projeto_id)]) || "";
         const matchesProj = projetoNome.toLowerCase().includes(query);
-        if (!matchesNome && !matchesMod && !matchesProj) return false;
+        if (!matchesNome && !matchesMod && !matchesProj && !matchesCid) return false;
       }
 
       return true;
     });
-  }, [nucleosList, nucleoFilterStatus, nucleoSearchQuery, modalidadesCache, projetosCache, globalProjeto, globalCidade, globalNucleo]);
+  }, [nucleosList, nucleoFilterStatus, nucleoSearchQuery, modalidadesCache, projetosCache, espacosMaps, matCidadeMap, globalProjeto, globalCidade, globalNucleo]);
 
   // 1. Inicializa Usuário e Papel
   useEffect(() => {
@@ -640,7 +1494,7 @@ export default function Dashboard() {
         setGlobalTrimestreInicio(localStorage.getItem("global_trimestre_inicio") || "");
         setGlobalTrimestreFim(localStorage.getItem("global_trimestre_fim") || "");
         setFilterLoading(false);
-      }, 700);
+      }, 100);
     };
 
     // Inicialização sem delay
@@ -679,9 +1533,28 @@ export default function Dashboard() {
         
         const cachedProj = sessionStorage.getItem(`cache_projetos_count_${inst}`);
         if (cachedProj) setPropostasCount(Number(cachedProj));
+        const cachedProjList = sessionStorage.getItem(`cache_projetos_list_${inst}`);
+        if (cachedProjList) {
+          try {
+            const parsed = JSON.parse(cachedProjList);
+            if (Array.isArray(parsed) && parsed.length > 0) setPropostasList(parsed);
+          } catch(e) {}
+        }
 
         const cachedEspacos = sessionStorage.getItem(`cache_espacos_count_${inst}`);
         if (cachedEspacos) setEspacosCount(Number(cachedEspacos));
+        const cachedEspacosList = safeGetSession<any[]>(`cache_espacos_list_${inst}`) || 
+          (() => {
+            try {
+              const raw = sessionStorage.getItem(`cache_espacos_list_${inst}`);
+              return raw ? JSON.parse(raw) : null;
+            } catch { return null; }
+          })();
+        let hasEspacos = false;
+        if (cachedEspacosList && Array.isArray(cachedEspacosList) && cachedEspacosList.length > 0) {
+          setEspacosList(cachedEspacosList);
+          hasEspacos = true;
+        }
 
         const cachedNucleos = sessionStorage.getItem(`cache_nucleos_count_${inst}`);
         if (cachedNucleos) setNucleosCount(Number(cachedNucleos));
@@ -695,39 +1568,21 @@ export default function Dashboard() {
           }
         }
 
-        // Se tivermos os alunos (para o pedagógico) e os núcleos (para o geral/gestão), libera a tela!
-        // Assim evitamos que a tela mostre 0 (se só tiver núcleo mas não tiver aluno, por exemplo).
-        if (hasMatriculas && hasNucleos) {
+        // Se tivermos os dados necessários para a visão atual (incluindo espaços para o mapa de cidades), libera a tela
+        if (activeView === "geral" ? (hasNucleos && hasPropostas && hasEspacos) : (hasMatriculas && hasNucleos && hasEspacos)) {
           setLoading(false);
         }
       } catch (e) {}
       // AbortController para evitar carregamento infinito
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 segundos timeout
+      const timeoutId = setTimeout(() => controller.abort(), 35000); // 35 segundos timeout
 
       try {
         const fetchOpts = { cache: "no-store" as RequestCache, signal: controller.signal };
         
-        const pNucleos = fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst}`, fetchOpts)
-          .then(async res => {
-            if (!res.ok) return;
-            const data = JSON.parse(await res.text());
-            let list = Array.isArray(data) ? data : (data.data || data.items || data.value || (data.json ? [data.json] : [data]));
-            let loadedNucleos: any[] = [];
-            for (let i = 0; i < list.length; i++) {
-              const entry = list[i];
-              if (entry && entry.json) {
-                if (Array.isArray(entry.json)) {
-                  for (let j = 0; j < entry.json.length; j++) loadedNucleos.push(entry.json[j]);
-                } else {
-                  loadedNucleos.push(entry.json);
-                }
-              } else if (Array.isArray(entry)) {
-                for (let j = 0; j < entry.length; j++) loadedNucleos.push(entry[j]);
-              } else if (entry) {
-                loadedNucleos.push(entry);
-              }
-            }
+        const pNucleos = fetchWithDedupe(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst}`, 15000)
+          .then(list => {
+            let loadedNucleos: any[] = Array.isArray(list) ? list : [];
             setNucleosList(loadedNucleos);
             setNucleosCount(loadedNucleos.length);
             try { 
@@ -736,19 +1591,9 @@ export default function Dashboard() {
             } catch (e) {}
           }).catch(() => {});
 
-        const pProjetos = fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${inst}`, fetchOpts)
-          .then(async res => {
-            if (!res.ok) return;
-            const data = JSON.parse(await res.text());
-            let list = Array.isArray(data) ? data : (data.data || data.items || data.value || (data.json ? [data.json] : [data]));
-            let flatList: any[] = [];
-            list.forEach((entry: any) => {
-              if (entry && entry.json) {
-                if (Array.isArray(entry.json)) flatList.push(...entry.json);
-                else flatList.push(entry.json);
-              } else if (Array.isArray(entry)) flatList.push(...entry);
-              else flatList.push(entry);
-            });
+        const pProjetos = fetchWithDedupe(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${inst}`, 15000)
+          .then(list => {
+            let flatList: any[] = Array.isArray(list) ? list : [];
             const pCache: Record<number, string> = {};
             flatList.forEach((p: any) => {
               if (p.id && (p.nome || p.titulo || p.projeto_nome)) {
@@ -757,6 +1602,7 @@ export default function Dashboard() {
             });
             setProjetosCache(pCache);
             setPropostasCount(flatList.length);
+            setPropostasList(flatList);
 
             // Calcula pendências detalhadas de propostas para o Foco de Hoje
             const propostasPendentesLocal: { id: string | number, nome: string, campos: string[] }[] = [];
@@ -822,48 +1668,41 @@ export default function Dashboard() {
             } catch (e) {}
           }).catch(() => {});
 
-        const pEspacos = fetchWithDedupe(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${inst}`, 5000)
+        const pEspacos = fetchWithDedupe(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${inst}`, 15000)
           .then(list => {
             const arr = Array.isArray(list) ? list : (list?.data || []);
-            setEspacosCount(arr.length);
-            safeSetSession(`cache_espacos_count_${inst}`, arr.length.toString());
-          }).catch(() => {});
-
-        const pMatriculas = fetch(`https://w.ibrase.com.br/webhook/matriculas-get?instituto=${inst}`, fetchOpts)
-          .then(async res => {
-            if (!res.ok) return;
-            const data = JSON.parse(await res.text());
-            if (data && !data.error && data.message !== "Workflow was started") {
-              let list = Array.isArray(data) ? data : (data.data || data.items || data.value || (data.json ? [data.json] : [data]));
-              let flatList: any[] = [];
-              list.forEach((entry: any) => {
-                if (entry && entry.json) {
-                  if (Array.isArray(entry.json)) flatList.push(...entry.json);
-                  else flatList.push(entry.json);
-                } else if (Array.isArray(entry)) {
-                  flatList.push(...entry);
-                } else {
-                  flatList.push(entry);
+            if (arr.length > 0) {
+              setEspacosCount(arr.length);
+              safeSetSession(`cache_espacos_count_${inst}`, arr.length.toString());
+              // Sanitizar fotos base64 gigantes para manter o Dashboard e o React ultraleves
+              const cleanArr = arr.map((item: any) => {
+                if (item && item.foto_url && item.foto_url.length > 500) {
+                  const { foto_url, ...rest } = item;
+                  return rest;
                 }
+                return item;
               });
-              setMatriculas(flatList);
-              try { safeSetSession(`cache_matriculas_v2_${inst}`, flatList); } catch (e) {}
+              setEspacosList(cleanArr);
+              safeSetSession(`cache_espacos_list_${inst}`, cleanArr);
             }
           }).catch(() => {});
 
+        const pMatriculas = fetchWithDedupe(`https://w.ibrase.com.br/webhook/matriculas-get?instituto=${inst}`, 30000)
+          .then(list => {
+            let flatList: any[] = Array.isArray(list) ? list : [];
+            if (flatList.length > 0) {
+              setMatriculas(flatList);
+              try { safeSetSession(`cache_matriculas_v2_${inst}`, flatList); } catch (e) {}
+            }
+            setMatriculasFetched(true);
+          }).catch(() => {
+            setMatriculasFetched(true);
+          });
+
         // Carregar modalidades em background independente
-        fetch(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${inst}`, { cache: "no-store" })
-          .then(res => res.json())
-          .then(data => {
-            let list = Array.isArray(data) ? data : (data.data || data.items || data.value || (data.json ? [data.json] : [data]));
-            let flatList: any[] = [];
-            list.forEach((entry: any) => {
-              if (entry && entry.json) {
-                if (Array.isArray(entry.json)) flatList.push(...entry.json);
-                else flatList.push(entry.json);
-              } else if (Array.isArray(entry)) flatList.push(...entry);
-              else flatList.push(entry);
-            });
+        fetchWithDedupe(`https://w.ibrase.com.br/webhook/modalidades-get?instituto=${inst}`, 8000)
+          .then(list => {
+            let flatList: any[] = Array.isArray(list) ? list : [];
             const modCache: Record<number, string> = {};
             flatList.forEach((m: any) => {
               if (m.id && m.nome) modCache[Number(m.id)] = m.nome;
@@ -872,7 +1711,11 @@ export default function Dashboard() {
             try { sessionStorage.setItem(`cache_modalidades_list_${inst}`, JSON.stringify(flatList)); } catch (e) {}
           }).catch(() => {});
 
-        await Promise.allSettled([pNucleos, pProjetos, pEspacos, pMatriculas]);
+        if (activeView === "geral") {
+          await Promise.allSettled([pNucleos, pProjetos, pEspacos]);
+        } else {
+          await Promise.allSettled([pNucleos, pProjetos, pEspacos, pMatriculas]);
+        }
         clearTimeout(timeoutId);
         
       } catch (err) {
@@ -887,24 +1730,17 @@ export default function Dashboard() {
 
   const nucleosNameLookup = useMemo(() => {
     const map: Record<string, string> = {};
-    const matCidadeMap: Record<string, string> = {};
-    matriculas.forEach((m: any) => {
-      if (m.nucleo_id && m.cidade) {
-        matCidadeMap[String(m.nucleo_id)] = m.cidade;
-      }
-    });
-
     nucleosList.forEach((n: any) => {
       const id = String(n.id || n.id_nucleo || n.nucleo_id || '');
       const rawName = n.nome || n.nome_nucleo || n.nucleo_nome || n.identificacao?.nomeNucleo || n.espaco_nome || '';
-      const cidade = n.cidade || n.cidade_nome || (n.espacos && n.espacos.cidade) || matCidadeMap[id] || '';
-      const name = (id && rawName && cidade) ? `${rawName} (${cidade})` : (rawName || `Núcleo ${id}`);
+      const cidade = getResolvedNucleoCidade(n);
+      const name = (id && rawName && cidade && cidade !== "Outra Localidade") ? `${rawName} (${cidade})` : (rawName || `Núcleo ${id}`);
       if (id && name) {
         map[id] = name;
       }
     });
     return map;
-  }, [nucleosList, matriculas]);
+  }, [nucleosList, espacosMaps, matCidadeMap]);
 
   const nucleosProjetoLookup = useMemo(() => {
     const map: Record<string, string> = {};
@@ -936,8 +1772,11 @@ export default function Dashboard() {
         if (!mDateStr) return false;
         const normalizedDateStr = mDateStr.replace(' ', 'T');
         const dataM = new Date(normalizedDateStr);
-        const dataInicio = new Date(globalTrimestreInicio);
-        const dataFim = new Date(globalTrimestreFim);
+        let dataInicio = new Date(globalTrimestreInicio);
+        let dataFim = new Date(globalTrimestreFim);
+        if (dataFim < dataInicio) {
+          dataFim.setFullYear(dataFim.getFullYear() + 1);
+        }
         dataFim.setHours(23, 59, 59, 999);
         if (dataM < dataInicio || dataM > dataFim) return false;
       }
@@ -1152,6 +1991,247 @@ export default function Dashboard() {
       uniformes,
     };
   }, [filteredMatriculas]);
+
+  // Proposta selecionada e metadados contextuais para a Visão Pedagógica
+  const selectedPropostaObj = useMemo(() => {
+    if (globalProjeto !== "all") {
+      return propostasList.find(p => String(p.id) === String(globalProjeto)) || null;
+    }
+    return null;
+  }, [globalProjeto, propostasList]);
+
+  const isEventoProposta = useMemo(() => {
+    const aplicabilidade = (selectedPropostaObj?.aplicabilidade || "").toLowerCase();
+    return aplicabilidade.includes("evento");
+  }, [selectedPropostaObj]);
+
+  const termoPessoa = isEventoProposta ? "participantes" : "alunos";
+  const termoPessoaCap = isEventoProposta ? "Participantes" : "Alunos";
+
+  const metaProposta = useMemo(() => {
+    if (globalProjeto !== "all") {
+      const nucleosDoProj = nucleosList.filter(n => String(n.projeto_id) === String(globalProjeto));
+      const sumVagas = nucleosDoProj.reduce((acc, n) => acc + (Number(n.vagas) || 0), 0);
+      if (sumVagas > 0) return sumVagas;
+      if (selectedPropostaObj?.vagas_nucleo) return Number(selectedPropostaObj.vagas_nucleo) * (nucleosDoProj.length || 1);
+    }
+    const sumTotalVagas = nucleosList.reduce((acc, n) => acc + (Number(n.vagas) || 0), 0);
+    return sumTotalVagas > 0 ? sumTotalVagas : 1000;
+  }, [globalProjeto, nucleosList, selectedPropostaObj]);
+
+  // Ranking Horizontal de Núcleos / Bairros
+  const nucleosHorizontalStats = useMemo(() => {
+    return metrics.nucleosStats
+      .filter(n => n.total > 0)
+      .map(n => ({
+        label: n.nome,
+        value: n.total
+      }));
+  }, [metrics.nucleosStats]);
+
+  // Distribuição de Alunos por Cidade (com normalização de grafias reais)
+  const cidadesStats = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredMatriculas.forEach(m => {
+      let raw = (m.cidade || "").trim();
+      if (!raw || raw === "—" || raw.toLowerCase() === "null") raw = "Não Informada";
+      const cl = raw.toLowerCase();
+      let nomeCid = raw;
+      if (cl.includes("campos dos goytacazes") || cl === "campos") nomeCid = "Campos dos Goytacazes";
+      else if (cl.includes("conceição de macabu") || cl.includes("conceicao de macabu")) nomeCid = "Conceição de Macabu";
+      else if (cl.includes("são joão da barra") || cl.includes("sao joao da barra")) nomeCid = "São João da Barra";
+      else if (cl.includes("são francisco") || cl.includes("sao francisco")) nomeCid = "São Francisco de Itabapoana";
+      else if (cl.includes("rio de janeiro")) nomeCid = "Rio de Janeiro";
+
+      counts[nomeCid] = (counts[nomeCid] || 0) + 1;
+    });
+
+    const total = filteredMatriculas.length;
+    const sorted = Object.entries(counts)
+      .map(([label, value]) => ({
+        label,
+        value,
+        percent: total > 0 ? Math.round((value / total) * 100) : 0
+      }))
+      .sort((a, b) => b.value - a.value);
+
+    if (sorted.length > 5) {
+      const top4 = sorted.slice(0, 4);
+      const rest = sorted.slice(4);
+      const restVal = rest.reduce((acc, c) => acc + c.value, 0);
+      return [
+        ...top4,
+        {
+          label: "Outras",
+          value: restVal,
+          percent: total > 0 ? Math.round((restVal / total) * 100) : 0
+        }
+      ];
+    }
+
+    return sorted;
+  }, [filteredMatriculas]);
+
+  // Relatório de Captação Temporal (Diário, Mensal, Anual) baseado nos registros reais
+  const timelineData = useMemo(() => {
+    const buckets: Record<string, number> = {};
+    const totalReal = filteredMatriculas.length;
+
+    filteredMatriculas.forEach(m => {
+      const dateStr = m.created_at || (m as any).criado_em;
+      if (!dateStr) return;
+      const d = new Date(dateStr.replace(' ', 'T'));
+      if (isNaN(d.getTime())) return;
+
+      if (captacaoPeriodo === "diario") {
+        const key = d.toISOString().split("T")[0]; // YYYY-MM-DD
+        buckets[key] = (buckets[key] || 0) + 1;
+      } else if (captacaoPeriodo === "mensal") {
+        const y = d.getFullYear();
+        const mIdx = d.getMonth();
+        const key = `${y}-${String(mIdx + 1).padStart(2, '0')}`;
+        buckets[key] = (buckets[key] || 0) + 1;
+      } else {
+        const y = String(d.getFullYear());
+        buckets[y] = (buckets[y] || 0) + 1;
+      }
+    });
+
+    const sortedKeys = Object.keys(buckets).sort();
+    let displayKeys = sortedKeys;
+    if (captacaoPeriodo === "diario") {
+      // Exatamente os últimos 7 dias registrados
+      displayKeys = sortedKeys.slice(-7);
+    }
+
+    const items = displayKeys.map(k => {
+      let label = k;
+      if (captacaoPeriodo === "diario") {
+        const parts = k.split("-");
+        if (parts.length === 3) label = `${parts[2]}/${parts[1]}`;
+      } else if (captacaoPeriodo === "mensal") {
+        const parts = k.split("-");
+        const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        if (parts.length === 2) {
+          const idx = parseInt(parts[1], 10) - 1;
+          label = `${meses[idx] || parts[1]}/${parts[0].slice(2)}`;
+        }
+      }
+      return {
+        label,
+        value: buckets[k] || 0
+      };
+    });
+
+    const totalPeriodo = items.reduce((acc, cur) => acc + cur.value, 0);
+
+    return {
+      items,
+      totalPeriodo
+    };
+  }, [filteredMatriculas, captacaoPeriodo]);
+
+  // Características do Público (Filtrado por Gênero para os 4 Mini Donuts)
+  const perfilStats = useMemo(() => {
+    const list = filteredMatriculas.filter(m => {
+      if (generoPerfilFilter === "todos") return true;
+      const sx = (m.sexo || "").toLowerCase().trim();
+      if (generoPerfilFilter === "masculino") return sx.startsWith("m") || sx === "masculino";
+      if (generoPerfilFilter === "feminino") return sx.startsWith("f") || sx === "feminino";
+      return true;
+    });
+
+    // Camisas
+    const camisasMap: Record<string, number> = {};
+    const bermudasMap: Record<string, number> = {};
+    const calcadosMap: Record<string, number> = {
+      "26 a 34": 0,
+      "35 a 38": 0,
+      "39 a 42": 0,
+      "43+": 0
+    };
+    let totalCalcados = 0;
+
+    const idadesMap: Record<string, number> = {
+      "6 a 10 anos": 0,
+      "11 a 14 anos": 0,
+      "15 a 18 anos": 0,
+      "19+ anos": 0
+    };
+    let totalIdades = 0;
+
+    list.forEach(m => {
+      const cam = (m.tamanho_camisa || "").trim().toUpperCase();
+      if (cam && cam !== "NÃO INFORMADO" && cam !== "NAO INFORMADO" && cam !== "—" && cam !== "NULL") {
+        camisasMap[cam] = (camisasMap[cam] || 0) + 1;
+      }
+      const cal = (m.tamanho_calca || "").trim().toUpperCase();
+      if (cal && cal !== "NÃO INFORMADO" && cal !== "NAO INFORMADO" && cal !== "—" && cal !== "NULL") {
+        bermudasMap[cal] = (bermudasMap[cal] || 0) + 1;
+      }
+      const calcRaw = m.tamanho_calcado ? String(m.tamanho_calcado).trim() : "";
+      if (calcRaw && !isNaN(Number(calcRaw))) {
+        const n = Number(calcRaw);
+        totalCalcados++;
+        if (n <= 34) calcadosMap["26 a 34"]++;
+        else if (n <= 38) calcadosMap["35 a 38"]++;
+        else if (n <= 42) calcadosMap["39 a 42"]++;
+        else calcadosMap["43+"]++;
+      }
+      const idade = Number(m.idade);
+      if (idade && idade > 0) {
+        totalIdades++;
+        if (idade <= 10) idadesMap["6 a 10 anos"]++;
+        else if (idade <= 14) idadesMap["11 a 14 anos"]++;
+        else if (idade <= 18) idadesMap["15 a 18 anos"]++;
+        else idadesMap["19+ anos"]++;
+      }
+    });
+
+    const toTop4Slices = (map: Record<string, number>) => {
+      const sorted = Object.entries(map).sort((a, b) => b[1] - a[1]);
+      const sum = sorted.reduce((acc, cur) => acc + cur[1], 0);
+      if (sum === 0) return [];
+      const top3 = sorted.slice(0, 3);
+      const rest = sorted.slice(3).reduce((acc, cur) => acc + cur[1], 0);
+      const res = top3.map(([k, v]) => ({
+        label: k,
+        count: v,
+        percent: Math.round((v / sum) * 100)
+      }));
+      if (rest > 0) {
+        res.push({
+          label: "Outros",
+          count: rest,
+          percent: Math.round((rest / sum) * 100)
+        });
+      }
+      return res;
+    };
+
+    const camisas = toTop4Slices(camisasMap);
+    const bermudas = toTop4Slices(bermudasMap);
+
+    const calcados = Object.entries(calcadosMap).map(([label, count]) => ({
+      label,
+      count,
+      percent: totalCalcados > 0 ? Math.round((count / totalCalcados) * 100) : 0
+    }));
+
+    const faixas = Object.entries(idadesMap).map(([label, count]) => ({
+      label,
+      count,
+      percent: totalIdades > 0 ? Math.round((count / totalIdades) * 100) : 0
+    }));
+
+    return {
+      camisas,
+      bermudas,
+      calcados,
+      faixas,
+      total: list.length
+    };
+  }, [filteredMatriculas, generoPerfilFilter]);
 
   const getInstituteLogo = (inst: string) => {
     const up = (inst || "").toUpperCase().trim();
@@ -1491,132 +2571,12 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pt-2 pb-12 font-sans transition-colors duration-200">
-      
-      {/* ========================================================================= */}
-      {/* WIDGETS DE GAMIFICAÇÃO E PROPÓSITO (UX)                                   */}
-      {/* ========================================================================= */}
-      {activeView !== "pedagogico" && (
-        <MotionSection className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Senso de Propósito - Só exibe se já tiver carregado dados reais maiores que zero */}
-          {!loading && metrics.total > 0 && (
-          <div className="md:col-span-1 self-start bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-900/20 border border-rose-200 dark:border-rose-800 p-5 rounded-2xl shadow-sm flex items-start gap-4 hover:-translate-y-1 hover:shadow-md transition-all duration-300">
-            <div className="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-rose-500 shrink-0">
-              <Heart className="w-6 h-6 animate-pulse" />
-            </div>
-            <div>
-              <h3 className="text-[10px] sm:text-xs font-black text-rose-900 dark:text-rose-100 uppercase tracking-widest mb-1.5 opacity-80">Nosso Impacto</h3>
-              <p className="text-xs text-rose-800 dark:text-rose-200 font-medium leading-relaxed">
-                O seu trabalho já ajudou a organizar a vida de <strong className="text-xl font-black mx-1">{metrics.total}</strong> alunos matriculados. Você faz a diferença! 💖
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Foco de Hoje (Inbox Zero) - Apenas Administrativo (não aparece na tab Pedagógica) */}
-        {!isPurePedagogico && (activeView as string) !== "pedagogico" && (
-          <div className={`${(!loading && metrics.total > 0) ? 'md:col-span-2' : 'md:col-span-3'} self-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex flex-col justify-center relative overflow-hidden group hover:shadow-md transition-all duration-300`}>
-            <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 rounded-bl-full -z-10 group-hover:scale-110 transition-transform duration-700"></div>
-            
-            {/* Se houver pendências em propostas ou núcleos pausados */}
-            {(nucleoStats.pausados > 0 || propostasComPendencia.length > 0) ? (
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl shrink-0 border border-amber-200/50 dark:border-amber-800/50">
-                    <Target className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2">
-                    Foco de Hoje
-                    <span className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 px-2 py-0.5 rounded-full font-bold">
-                      {(nucleoStats.pausados > 0 ? 1 : 0) + propostasComPendencia.length} Pendência{((nucleoStats.pausados > 0 ? 1 : 0) + propostasComPendencia.length) > 1 ? 's' : ''}
-                    </span>
-                  </h3>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-amber-50/40 dark:bg-amber-900/10 border border-amber-100/60 dark:border-amber-900/20 p-3 rounded-xl">
-                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-                    Você tem pendências que requerem sua atenção para o funcionamento do sistema.
-                  </span>
-                  <button 
-                    onClick={() => setPendenciasExpanded(!pendenciasExpanded)}
-                    className="shrink-0 text-xs font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-800/60 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
-                  >
-                    {pendenciasExpanded ? 'Ocultar Detalhes' : 'Ver Detalhes'}
-                    {pendenciasExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-
-                {pendenciasExpanded && (
-                  <div className="space-y-3 pl-1 mt-2 animate-in fade-in slide-in-from-top-2 duration-300 max-h-[250px] overflow-y-auto pr-2">
-                    {/* Pendência de Propostas (Destrinchado) */}
-                    {propostasComPendencia.map(prop => (
-                      <div key={prop.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 p-3.5 rounded-xl">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
-                            <span className="text-sm font-extrabold text-slate-800 dark:text-slate-200 truncate">{prop.nome}</span>
-                          </div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {prop.campos.map(c => (
-                              <span key={c} className="text-[10px] font-bold bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/60 px-1.5 py-0.5 rounded-md flex items-center gap-1">
-                                <X className="w-3 h-3" />
-                                {c}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        <Link 
-                          to={`/admin/cadastrar-projeto?edit=${prop.id}&focus_pendencias=${encodeURIComponent(prop.campos.join(','))}`}
-                          className="shrink-0 flex items-center gap-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 px-4 py-2 rounded-lg shadow-sm transition-colors"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                          Preencher
-                        </Link>
-                      </div>
-                    ))}
-
-                    {/* Pendência de Núcleos */}
-                    {nucleoStats.pausados > 0 && (
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 p-3.5 rounded-xl">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-                            <span className="text-sm font-extrabold text-slate-800 dark:text-slate-200">Revisão de Núcleos</span>
-                          </div>
-                          <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-1">Existem <strong>{nucleoStats.pausados} {nucleoStats.pausados === 1 ? 'núcleo inativo' : 'núcleos inativos'}</strong> precisando de revisão na gestão.</p>
-                        </div>
-                        <Link 
-                          to="/admin/nucleos"
-                          className="shrink-0 flex items-center gap-1.5 text-xs font-bold text-amber-900 bg-amber-300 hover:bg-amber-400 dark:bg-amber-600 dark:text-white dark:hover:bg-amber-500 px-4 py-2 rounded-lg shadow-sm transition-colors"
-                        >
-                          <ArrowRight className="w-3.5 h-3.5" />
-                          Ver Núcleos
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center gap-5 text-left h-full">
-                <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                  <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-black text-slate-800 dark:text-emerald-100 tracking-tight">Tudo limpo por hoje!</h3>
-                  <p className="text-xs text-slate-500 dark:text-emerald-200/70 font-medium mt-0.5">Nenhuma pendência crítica de núcleos ("Inbox Zero"). Você está voando! 🚀</p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </MotionSection>
-      )}
 
       {/* ========================================================================= */}
       {/* VISÃO PEDAGÓGICA                                                          */}
       {/* ========================================================================= */}
       {activeView === "pedagogico" ? (
-        (loading || filterLoading) ? (
+        (loading || filterLoading || (!matriculasFetched && matriculas.length === 0)) ? (
           <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 font-sans select-none w-full">
             <div className="flex flex-col items-center gap-4">
               <div className="relative w-16 h-16">
@@ -1655,249 +2615,209 @@ export default function Dashboard() {
         <div className="space-y-6">
 
 
-          {/* 2. HEADER DA SEÇÃO DE GRÁFICOS (Posicionado logo abaixo da Gestão de Núcleos) */}
-          <MotionSection delayClass="motion-stagger-2">
-            <div className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors duration-200">
-              <div>
-                {(globalProjeto !== "all" || globalCidade !== "all" || globalNucleo !== "all") && (
-                  <div className="mb-2">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded-full">
-                      <Sparkles size={11} />
-                      Filtros Ativos
-                    </span>
+          {/* 1. CABEÇALHO & CONTEXTO DA PROPOSTA (Inspirado no Painel Pedagógico da Referência) */}
+          <MotionSection delayClass="motion-stagger-1">
+            <div className="space-y-4">
+              {/* Breadcrumb & Título de Boas-vindas */}
+              <div className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors duration-200">
+                <div>
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 dark:text-slate-500 mb-1.5">
+                    <Link to="/" className="hover:text-blue-600 transition-colors">Início</Link>
+                    <ChevronRight size={13} />
+                    <span className="text-slate-700 dark:text-slate-300">Pedagógico</span>
                   </div>
-                )}
 
-                <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
-                  <PieIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                  <span>Gráficos</span>
-                </h1>
-                <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm mt-1">
-                  Estatísticas demográficas, divisão por gênero e perfil etário dos alunos.
-                </p>
+                  <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+                    <span>Seja bem-vindo!</span>
+                    <span className="text-lg">👋</span>
+                  </h1>
+                  {selectedPropostaObj ? (
+                    <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm mt-1">
+                      A proposta que você selecionou é{" "}
+                      <strong className="text-blue-600 dark:text-blue-400 font-extrabold">
+                        {selectedPropostaObj.nome}
+                      </strong>
+                      {selectedPropostaObj.aplicabilidade ? ` (${selectedPropostaObj.aplicabilidade})` : ""}. Para mudar, utilize os filtros acima.
+                    </p>
+                  ) : (
+                    <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm mt-1">
+                      Você está visualizando <strong className="text-blue-600 dark:text-blue-400 font-extrabold">todas as propostas consolidadas</strong>. Para filtrar por uma proposta específica, utilize os filtros acima.
+                    </p>
+                  )}
+                </div>
+
+                {/* Botões de Ação do Header */}
+                <div className="flex items-center gap-3 self-stretch sm:self-auto flex-wrap justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setExportModalOpen(true)}
+                    className="px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 bg-slate-900 dark:bg-blue-600 text-white hover:bg-slate-800 dark:hover:bg-blue-500 shadow-xs border border-slate-800 dark:border-blue-500 cursor-pointer active:scale-[0.98]"
+                    title="Baixar Relatório em PDF"
+                  >
+                    <Download size={15} />
+                    <span>Baixar Relatório PDF</span>
+                  </button>
+                </div>
               </div>
 
-              {/* Botões de Ação do Header */}
-              <div className="flex items-center gap-3 self-stretch sm:self-auto flex-wrap justify-end">
-                <button
-                  type="button"
-                  onClick={() => setExportModalOpen(true)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 bg-slate-900 dark:bg-blue-600 text-white hover:bg-slate-800 dark:hover:bg-blue-500 shadow-xs border border-slate-800 dark:border-blue-500 cursor-pointer active:scale-[0.98]"
-                  title="Baixar Relatório em PDF"
-                >
-                  <Download size={15} />
-                  <span>Baixar Relatório PDF</span>
-                </button>
+              {/* Banner Informativo: Participantes vs Alunos */}
+              <div className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-2xs">
+                <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+                  <Info size={17} />
+                </div>
+                <div className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                  <p>
+                    <strong className="font-extrabold text-blue-950 dark:text-blue-200">Participantes:</strong> Pessoas alcançadas em eventos pontuais, sem cadastro formal ou frequência contínua (ex: oficinas, palestras e ações comunitárias).
+                  </p>
+                  <p>
+                    <strong className="font-extrabold text-blue-950 dark:text-blue-200">Alunos:</strong> Pessoas formalmente matriculadas e acompanhadas com frequência contínua nas turmas do projeto.
+                  </p>
+                </div>
               </div>
             </div>
           </MotionSection>
 
-          {/* 1. Cards de Resumo Principal (Métricas com micro-elevação e acentos de cor) */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-            
-            {/* Total de Alunos */}
-            <MotionSection delayClass="motion-stagger-1" className="h-full">
-              <div className="h-full bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-600 opacity-80 group-hover:opacity-100 transition-opacity" />
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total de Alunos</span>
-                    <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold border border-blue-100/80 dark:border-blue-800/60 group-hover:scale-105 transition-transform">
-                      <Users size={17} />
-                    </div>
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-                      {loading && metrics.total === 0 ? (
-                        <div className="h-8 sm:h-10 w-24 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse inline-block translate-y-1"></div>
-                      ) : (
-                        metrics.total.toLocaleString("pt-BR")
-                      )}
-                    </span>
-                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500">alunos</span>
-                  </div>
-                </div>
-                <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                  Base consolidada ativa
-                </p>
-              </div>
-            </MotionSection>
-
-            {/* Núcleos Atendidos */}
-            <MotionSection delayClass="motion-stagger-2" className="h-full">
-              <div className="h-full bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-600 opacity-80 group-hover:opacity-100 transition-opacity" />
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="text-[11px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Núcleos Ativos</span>
-                    <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold border border-emerald-100/80 dark:border-emerald-800/60 group-hover:scale-105 transition-transform">
-                      <Building2 size={17} />
-                    </div>
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-                      {loading && metrics.nucleosStats.length === 0 ? (
-                        <div className="h-8 sm:h-10 w-16 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse inline-block translate-y-1"></div>
-                      ) : (
-                        metrics.nucleosStats.length
-                      )}
-                    </span>
-                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500">polos</span>
-                  </div>
-                </div>
-                <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  Com alunos alocados
-                </p>
-              </div>
-            </MotionSection>
-
-            {/* Média de Idade */}
-            <MotionSection delayClass="motion-stagger-3" className="h-full">
-              <div className="h-full bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 to-purple-600 opacity-80 group-hover:opacity-100 transition-opacity" />
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="text-[11px] font-black text-violet-700 dark:text-violet-400 uppercase tracking-wider">Média de Idade</span>
-                    <div className="w-9 h-9 rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 flex items-center justify-center font-bold border border-violet-100/80 dark:border-violet-800/60 group-hover:scale-105 transition-transform">
-                      <Calendar size={17} />
-                    </div>
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-                      {loading && metrics.mediaIdade === 0 ? (
-                        <div className="h-8 sm:h-10 w-16 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse inline-block translate-y-1"></div>
-                      ) : (
-                        metrics.mediaIdade
-                      )}
-                    </span>
-                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500">anos</span>
-                  </div>
-                </div>
-                <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
-                  Média etária geral
-                </p>
-              </div>
-            </MotionSection>
-
-            {/* Faixa Predominante */}
-            <MotionSection delayClass="motion-stagger-4" className="h-full">
-              <div className="h-full bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-orange-600 opacity-80 group-hover:opacity-100 transition-opacity" />
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="text-[11px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider">Maior Adesão</span>
-                    <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold border border-amber-100/80 dark:border-amber-800/60 group-hover:scale-105 transition-transform">
-                      <TrendingUp size={17} />
-                    </div>
-                  </div>
-                  {(() => {
-                    const topFaixa = [...metrics.faixas].sort((a, b) => b.total - a.total)[0];
-                    return (
-                      <div>
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white truncate max-w-[140px]" title={topFaixa?.label}>
-                            {loading && (!topFaixa || topFaixa.total === 0) ? (
-                              <div className="h-7 sm:h-8 w-20 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse inline-block translate-y-0.5"></div>
-                            ) : (
-                              topFaixa ? topFaixa.label.split('(')[0].trim() : '—'
-                            )}
-                          </span>
-                          <span className="text-[11px] font-black text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-200/80 dark:border-amber-800/60">
-                            {loading && (!topFaixa || topFaixa.total === 0) ? (
-                              <div className="h-4 w-8 bg-amber-200/50 dark:bg-amber-800/50 rounded-full animate-pulse inline-block"></div>
-                            ) : (
-                              topFaixa ? `${topFaixa.percent}%` : '0%'
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-                <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                  Faixa mais expressiva
-                </p>
-              </div>
-            </MotionSection>
-
-          </div>
-
-          {/* 2. Gráficos Comparativos: Gênero e Gráfico Circular de Faixas de Idade */}
+          {/* 2. LINHA SUPERIOR: ALUNOS DA PROPOSTA COM METAS (ESQUERDA) + DISTRIBUIÇÃO POR CIDADE (DIREITA) */}
           <MotionSection delayClass="motion-stagger-2">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-              
-              {/* Bloco Gênero */}
-              <div className="lg:col-span-5 bg-white dark:bg-slate-900 p-6 sm:p-7 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 mb-4">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold">
-                        <Users size={16} />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-black text-slate-900 dark:text-white tracking-tight">Divisão por Gênero</h3>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">Proporção demográfica dos matriculados</p>
-                      </div>
-                    </div>
-                    <span className="text-xs font-black text-slate-700 dark:text-slate-300 bg-slate-100/80 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200/60 dark:border-slate-700">
-                      {loading && metrics.total === 0 ? "..." : metrics.total.toLocaleString("pt-BR")} alunos
-                    </span>
-                  </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+              {/* Card Esquerda (7 cols): Horizontal Bar Chart com Meta */}
+              <div className="lg:col-span-7">
+                <PedagogicoHorizontalBarChart
+                  titulo={
+                    selectedPropostaObj
+                      ? `${termoPessoaCap} do Projeto ${selectedPropostaObj.nome}`
+                      : `${termoPessoaCap} — Todas as Propostas (${currentInstitute})`
+                  }
+                  total={metrics.total}
+                  meta={metaProposta}
+                  termoPessoa={termoPessoa}
+                  items={nucleosHorizontalStats}
+                  propostaSelecionada={!!selectedPropostaObj}
+                />
+              </div>
 
-                  {/* Barra Visual de Proporção com Gradientes Fluidos, Mini Cards e Animação */}
-                  <InteractiveGenderChart 
-                    mascPercent={metrics.mascPercent}
-                    femPercent={metrics.femPercent}
-                    mascCount={metrics.mascCount}
-                    femCount={metrics.femCount}
-                  />
+              {/* Card Direita (5 cols): Donut de Distribuição por Cidade */}
+              <div className="lg:col-span-5">
+                <PedagogicoCityDonut
+                  items={cidadesStats}
+                  total={metrics.total}
+                  termoPessoa={termoPessoa}
+                />
+              </div>
+            </div>
+          </MotionSection>
+
+          {/* 3. RELATÓRIO DE CAPTAÇÃO (LINHA / ÁREA TEMPORAL) */}
+          <MotionSection delayClass="motion-stagger-2">
+            <PedagogicoTimelineLineChart
+              items={timelineData.items}
+              totalPeriodo={timelineData.totalPeriodo}
+              periodo={captacaoPeriodo}
+              onPeriodoChange={setCaptacaoPeriodo}
+              termoPessoa={termoPessoa}
+            />
+          </MotionSection>
+
+          {/* 4. CARACTERÍSTICAS DO PÚBLICO (FILTRO DE GÊNERO + 4 MINI DONUTS) */}
+          <MotionSection delayClass="motion-stagger-3">
+            <div className="space-y-4">
+              {/* Header com Filtros de Gênero */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs">
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                    <Users size={17} className="text-blue-600 dark:text-blue-400" />
+                    <span>Características do Público</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-0.5">
+                    Distribuição proporcional de tamanhos de uniformes e faixas etárias dos {termoPessoa}.
+                  </p>
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
-                  <span className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold flex items-center justify-center gap-1.5">
-                    <Sparkles size={13} className="text-blue-500" />
-                    Divisão demográfica atualizada em tempo real
-                  </span>
+                {/* Filtro de Gênero */}
+                <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold self-start sm:self-auto">
+                  {(["todos", "feminino", "masculino"] as const).map(g => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setGeneroPerfilFilter(g)}
+                      className={`px-3 py-1.5 rounded-lg capitalize transition-all cursor-pointer ${
+                        generoPerfilFilter === g
+                          ? "bg-blue-600 text-white shadow-2xs font-extrabold"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      }`}
+                    >
+                      {g === "todos" ? "Todos" : g === "feminino" ? "Feminino" : "Masculino"}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Bloco Faixas de Idade: GRÁFICO CIRCULAR (DONUT) */}
-              <div className="lg:col-span-7 bg-white dark:bg-slate-900 p-6 sm:p-7 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 mb-4">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 flex items-center justify-center font-bold">
-                        <Calendar size={16} />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-black text-slate-900 dark:text-white tracking-tight">Distribuição por Faixa de Idade</h3>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">Perfil etário dos alunos participantes</p>
-                      </div>
+              {/* 4 Donut Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* 1. Camisa (Pink) */}
+                <PedagogicoMiniDonut
+                  title="Tamanhos de camisa"
+                  items={perfilStats.camisas}
+                  palette={["#e11d48", "#f43f5e", "#fb7185", "#fda4af"]}
+                />
+
+                {/* 2. Bermuda (Blue) */}
+                <PedagogicoMiniDonut
+                  title="Tamanhos de bermuda"
+                  items={perfilStats.bermudas}
+                  palette={["#0284c7", "#0ea5e9", "#38bdf8", "#7dd3fc"]}
+                />
+
+                {/* 3. Calçado (Purple) */}
+                <PedagogicoMiniDonut
+                  title="Tamanhos de calçado"
+                  items={perfilStats.calcados}
+                  palette={["#7c3aed", "#8b5cf6", "#a78bfa", "#c4b5fd"]}
+                />
+
+                {/* 4. Faixa Etária (Green) */}
+                <PedagogicoMiniDonut
+                  title="Faixa etária"
+                  items={perfilStats.faixas}
+                  palette={["#059669", "#10b981", "#34d399", "#6ee7b7"]}
+                />
+              </div>
+            </div>
+          </MotionSection>
+
+          {/* 5. PROPORÇÃO DE GÊNERO CONSOLIDADA */}
+          <MotionSection delayClass="motion-stagger-3">
+            <div className="bg-white dark:bg-slate-900 p-6 sm:p-7 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 mb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold">
+                      <Users size={16} />
                     </div>
-                    <span className="text-xs font-black text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/60 px-3 py-1 rounded-lg border border-violet-200/80 dark:border-violet-800/60">
-                      Média: {metrics.mediaIdade} anos
-                    </span>
+                    <div>
+                      <h3 className="text-base font-black text-slate-900 dark:text-white tracking-tight">Divisão por Gênero</h3>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">Proporção demográfica dos matriculados</p>
+                    </div>
                   </div>
-
-                  {/* Gráfico Donut Animado com Revelação por Rolagem & Legenda Interativa */}
-                  <AgeDonutChart 
-                    faixas={metrics.faixas}
-                    total={metrics.total}
-                    mediaIdade={metrics.mediaIdade}
-                  />
-                </div>
-
-                <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
-                  <span className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold">
-                    Divisão proporcional agrupada por faixa etária oficial
+                  <span className="text-xs font-black text-slate-700 dark:text-slate-300 bg-slate-100/80 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200/60 dark:border-slate-700">
+                    {loading && metrics.total === 0 ? "..." : metrics.total.toLocaleString("pt-BR")} alunos
                   </span>
                 </div>
+
+                <InteractiveGenderChart 
+                  mascPercent={metrics.mascPercent}
+                  femPercent={metrics.femPercent}
+                  mascCount={metrics.mascCount}
+                  femCount={metrics.femCount}
+                />
               </div>
 
+              <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold flex items-center justify-center gap-1.5">
+                  <Sparkles size={13} className="text-blue-500" />
+                  Divisão demográfica atualizada em tempo real
+                </span>
+              </div>
             </div>
           </MotionSection>
 
@@ -2089,116 +3009,654 @@ export default function Dashboard() {
           )
         ) : (
         /* ========================================================================= */
-        /* VISÃO GESTÃO (Cards Tradicionais de Módulo: Propostas, Espaços, Núcleos) */
+        /* VISÃO GESTÃO (Vagas Disponíveis, Gráficos de Modalidades e Cidades, Pendências) */
         /* ========================================================================= */
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-            
-            {/* Card 01 - Propostas */}
-            <MotionSection delayClass="motion-stagger-1" className="h-full">
-              <div className="h-full bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-6 lg:p-7 flex flex-col justify-between transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 group min-h-[300px]">
-                <div>
-                  <div className="flex items-center justify-between gap-4 mb-5">
-                    <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[var(--theme-primary)] flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-900/50 group-hover:scale-105 transition-transform">
-                      <GraduationCap className="w-6 h-6" />
-                    </div>
-                    <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700/60 px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
-                      {loading && propostasCount === 0 ? <Loader2 className="w-3 h-3 animate-spin inline-block" /> : propostasCount} Ativas
-                    </span>
-                  </div>
 
-                  <h2 className="text-lg lg:text-xl font-extrabold text-slate-900 dark:text-white group-hover:text-[var(--theme-primary)] transition-colors">
-                    Propostas
-                  </h2>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-2 leading-relaxed">
-                    Crie e gerencie projetos de aula, termos de fomento e prazos de execução.
-                  </p>
+          {/* 1. CARD HERO DE VAGAS DE NÚCLEO DISPONÍVEIS & OBSERVAÇÃO SISTÊMICA */}
+          <MotionSection delayClass="motion-stagger-1">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-xs space-y-3.5 transition-all">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                
+                {/* Destaque Numérico de Vagas - Tamanho Harmonioso e Confortável */}
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] flex items-center justify-center shrink-0">
+                    <Target size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                      Capacidade de Núcleos
+                    </span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-sm sm:text-base font-extrabold text-slate-800 dark:text-slate-100">
+                        Vagas de Núcleo disponíveis:
+                      </span>
+                      {loading || filterLoading ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold text-xs border border-slate-200/80 dark:border-slate-700">
+                          <Loader2 size={13} className="animate-spin text-[var(--theme-primary)]" />
+                          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Carregando...</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-lg bg-[var(--theme-primary)]/15 text-[var(--theme-primary)] font-black text-base sm:text-lg">
+                          {vagasNucleoStats.disponiveis}
+                        </span>
+                      )}
+
+                      {/* Botão de Ajuda "?" com Modal/Popover de Modalidades Disponíveis */}
+                      <div className="relative inline-flex items-center">
+                        <button
+                          type="button"
+                          onClick={() => setVagasModalidadeOpen(!vagasModalidadeOpen)}
+                          className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-[var(--theme-primary)] hover:text-white text-slate-500 dark:text-slate-400 text-xs font-black flex items-center justify-center transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shadow-2xs"
+                          title="Ver modalidades com vagas disponíveis"
+                        >
+                          ?
+                        </button>
+
+                        {vagasModalidadeOpen && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setVagasModalidadeOpen(false)} />
+                            <div 
+                              className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-72 sm:w-80 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-50 text-left animate-in fade-in zoom-in-95 duration-150"
+                            >
+                              <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="w-2 h-2 rounded-full bg-[var(--theme-primary)]" />
+                                  <h4 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider">
+                                    Vagas por Modalidade
+                                  </h4>
+                                </div>
+                                <span className="text-[10px] font-black bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] px-2 py-0.5 rounded-full">
+                                  {vagasNucleoStats.disponiveis} {vagasNucleoStats.disponiveis === 1 ? 'livre' : 'livres'}
+                                </span>
+                              </div>
+
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2.5 leading-relaxed">
+                                Modalidades com cotas oficiais disponíveis para abertura de núcleos:
+                              </p>
+
+                              <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
+                                {vagasNucleoStats.modalidadesDisponiveis.length === 0 ? (
+                                  <p className="text-xs text-slate-400 text-center py-4 font-semibold">
+                                    Nenhuma vaga de modalidade encontrada.
+                                  </p>
+                                ) : (
+                                  vagasNucleoStats.modalidadesDisponiveis.map((mod, idx) => (
+                                    <div 
+                                      key={idx} 
+                                      className={`p-2 rounded-xl border flex items-center justify-between text-xs transition-all ${
+                                        mod.disponiveis > 0 
+                                          ? "bg-slate-50 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/80" 
+                                          : "bg-slate-50/40 dark:bg-slate-900/40 border-slate-100 dark:border-slate-800 opacity-60"
+                                      }`}
+                                    >
+                                      <div className="min-w-0 pr-2">
+                                        <span className="font-bold text-slate-800 dark:text-slate-200 block truncate">
+                                          {mod.nome}
+                                        </span>
+                                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                                          {mod.ocupadas} de {mod.total} núcleos alocados
+                                        </span>
+                                      </div>
+                                      <div className="shrink-0">
+                                        {mod.disponiveis > 0 ? (
+                                          <span className="inline-flex items-center gap-1 font-black text-[11px] text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-lg">
+                                            {mod.disponiveis} {mod.disponiveis === 1 ? 'vaga' : 'vagas'}
+                                          </span>
+                                        ) : (
+                                          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md">
+                                            Esgotado
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="pt-4 mt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 truncate">Projetos & Eventos</span>
-                  <Link 
-                    to="/admin/propostas"
-                    className="inline-flex items-center gap-1.5 bg-[var(--theme-primary)] hover:opacity-90 text-white font-bold px-4 py-2 rounded-xl shadow-xs transition-all text-xs shrink-0 group-hover:translate-x-1"
+                {/* Botões Rápidos */}
+                <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                  <Link
+                    to="/admin/nucleos"
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 bg-[var(--theme-primary)] hover:opacity-90 text-white font-extrabold px-3.5 py-2 rounded-xl shadow-xs transition-all text-xs tracking-wide"
                   >
-                    <span>Acessar</span>
-                    <ArrowRight size={14} />
+                    <Building2 size={14} />
+                    <span>Gerenciar Núcleos</span>
+                    <ArrowRight size={12} />
                   </Link>
-                </div>
-              </div>
-            </MotionSection>
 
-            {/* Card 02 - Espaços */}
-            <MotionSection delayClass="motion-stagger-2" className="h-full">
-              <div className="h-full bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-6 lg:p-7 flex flex-col justify-between transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 group min-h-[300px]">
-                <div>
-                  <div className="flex items-center justify-between gap-4 mb-5">
-                    <div className="w-12 h-12 rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0 border border-violet-100 dark:border-violet-900/50 group-hover:scale-105 transition-transform">
-                      <Home className="w-6 h-6" />
-                    </div>
-                    <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700/60 px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
-                      {loading && espacosCount === 0 ? <Loader2 className="w-3 h-3 animate-spin inline-block" /> : espacosCount} Locais
-                    </span>
-                  </div>
-
-                  <h2 className="text-lg lg:text-xl font-extrabold text-slate-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-                    Espaços
-                  </h2>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-2 leading-relaxed">
-                    Mapeamento dos locais físicos nos bairros, dados do cedente/responsável e termos de uso.
-                  </p>
-                </div>
-
-                <div className="pt-4 mt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 truncate">Locais Físicos</span>
                   <Link
                     to="/admin/espacos"
-                    className="inline-flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700 text-white font-bold px-4 py-2 rounded-xl shadow-xs transition-all text-xs shrink-0 group-hover:translate-x-1"
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 font-bold px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs transition-all text-xs"
                   >
-                    <span>Acessar</span>
-                    <ArrowRight size={14} />
+                    <Home size={14} />
+                    <span>Ver Espaços</span>
                   </Link>
+                </div>
+              </div>
+
+              {/* Observação Suave e Discreta */}
+              <div className="bg-slate-50/80 dark:bg-slate-850/60 border border-slate-200/60 dark:border-slate-800 rounded-xl p-3 flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed shadow-2xs">
+                <Info size={14} className="text-[var(--theme-primary)] shrink-0 mt-0.5" />
+                <p>
+                  <strong className="text-slate-800 dark:text-slate-100 font-bold">Lembrete:</strong> Cada núcleo criado ocupa 1 vaga oficial no sistema, orientando todos os setores.
+                </p>
+              </div>
+            </div>
+          </MotionSection>
+
+          {/* 2. GRID DE 2 COLUNAS: GRÁFICO DE MODALIDADES (BARRAS) & GRÁFICO DE CIDADES (CIRCULAR) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+            
+            {/* Gráfico 01: Quantidade de núcleos em cada modalidade (Barras Verticais + Slider) */}
+            <MotionSection delayClass="motion-stagger-2" className="h-full">
+              <div className="h-full bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs p-6 flex flex-col justify-between">
+                <div>
+                  {/* Cabeçalho com Setinhas de Deslizar e Destaque no Hover */}
+                  <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+                    <div className="min-w-0 flex-1 pr-2">
+                      <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                        <Layers className="text-[var(--theme-primary)]" size={18} />
+                        <span>Quantidade de núcleos em cada modalidade</span>
+                      </h3>
+                      <div className="flex items-center gap-2 mt-0.5 min-h-[20px]">
+                        {hoveredModIdx !== null && modalidadesChartData[hoveredModIdx] ? (
+                          <span className="text-xs font-black text-[var(--theme-primary)] bg-[var(--theme-primary)]/10 px-2 py-0.5 rounded-md animate-in fade-in duration-150">
+                            {modalidadesChartData[hoveredModIdx].nome}: <strong>{modalidadesChartData[hoveredModIdx].count} {modalidadesChartData[hoveredModIdx].count === 1 ? 'núcleo' : 'núcleos'}</strong>
+                          </span>
+                        ) : (
+                          <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+                            Distribuição das unidades ativas por modalidade esportiva
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Controles de Navegação Horizontal */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        onClick={() => scrollModalidades('left')}
+                        className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-all cursor-pointer"
+                        title="Deslizar modalidades para esquerda"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      <button
+                        onClick={() => scrollModalidades('right')}
+                        className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-all cursor-pointer"
+                        title="Deslizar modalidades para direita"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Renderização do Gráfico de Barras com Escala no Eixo Y */}
+                  {loading || filterLoading ? (
+                    <div className="flex flex-col items-center justify-center h-64 gap-3 text-slate-400">
+                      <div className="relative flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-700 border-t-[var(--theme-primary)] animate-spin" />
+                        <Layers size={16} className="absolute text-[var(--theme-primary)]" />
+                      </div>
+                      <p className="text-xs font-bold text-slate-500 dark:text-slate-400 animate-pulse">
+                        Carregando distribuição de modalidades...
+                      </p>
+                    </div>
+                  ) : modalidadesChartData.length === 0 ? (
+                    <div className="py-16 text-center text-slate-400 text-xs font-semibold">
+                      Nenhuma modalidade com núcleos ativos encontrada.
+                    </div>
+                  ) : (() => {
+                    const maxCount = Math.max(...modalidadesChartData.map(d => d.count), 1);
+                    const step = maxCount <= 6 ? 2 : maxCount <= 12 ? 3 : maxCount <= 20 ? 4 : maxCount <= 35 ? 5 : 10;
+                    const maxScale = Math.ceil(maxCount / step) * step;
+                    const yTicks: number[] = [];
+                    for (let i = maxScale; i >= 0; i -= step) {
+                      yTicks.push(i);
+                    }
+
+                    return (
+                      <div className="flex h-64 gap-2 pt-6">
+                        {/* Eixo Y com Escala Numérica */}
+                        <div className="flex flex-col justify-between text-right text-[11px] font-bold text-slate-400 dark:text-slate-500 pr-2 select-none shrink-0 w-7 h-[175px]">
+                          {yTicks.map(tick => (
+                            <span key={tick}>{tick}</span>
+                          ))}
+                        </div>
+
+                        {/* Área das Barras com Rolagem Horizontal */}
+                        <div className="relative flex-1 h-[215px]">
+                          {/* Linhas de Grade de Fundo */}
+                          <div className="absolute inset-0 flex flex-col justify-between pointer-events-none h-[175px]">
+                            {yTicks.map(tick => (
+                              <div key={tick} className="w-full border-b border-slate-100 dark:border-slate-800/80" />
+                            ))}
+                          </div>
+
+                          {/* Barras Roláveis Estilizadas */}
+                          <div
+                            ref={modalidadesCarouselRef}
+                            className="relative z-10 flex items-end gap-3.5 sm:gap-4 overflow-x-auto pb-4 h-full custom-scrollbar scroll-smooth pl-2 pr-4"
+                          >
+                            {modalidadesChartData.map((item, idx) => {
+                              const heightPercent = maxScale > 0 ? (item.count / maxScale) * 100 : 0;
+                              const isHovered = hoveredModIdx === idx;
+                              const isOtherHovered = hoveredModIdx !== null && hoveredModIdx !== idx;
+
+                              return (
+                                <div
+                                  key={idx}
+                                  onMouseEnter={() => setHoveredModIdx(idx)}
+                                  onMouseLeave={() => setHoveredModIdx(null)}
+                                  className={`flex flex-col items-center shrink-0 w-16 sm:w-20 group cursor-pointer transition-all duration-200 ${
+                                    isOtherHovered ? "opacity-35" : "opacity-100"
+                                  }`}
+                                >
+                                  {/* Quantidade no Topo - Sempre visível e nítida */}
+                                  <span className={`text-xs font-black mb-1.5 transition-all ${isHovered ? "text-[var(--theme-primary)] scale-125" : "text-slate-700 dark:text-slate-300"}`}>
+                                    {item.count}
+                                  </span>
+
+                                  {/* Barra Vertical sem caixas cinzas pesadas */}
+                                  <div className="w-9 sm:w-11 h-[175px] flex items-end justify-center">
+                                    <div
+                                      className="w-full rounded-t-lg transition-all duration-300 shadow-xs"
+                                      style={{
+                                        height: `${Math.max(6, heightPercent)}%`,
+                                        backgroundColor: "var(--theme-primary)",
+                                        filter: isHovered ? "brightness(1.15) drop-shadow(0 0 6px var(--theme-primary))" : "none",
+                                        transform: isHovered ? "scaleY(1.02)" : "scaleY(1)",
+                                        transformOrigin: "bottom"
+                                      }}
+                                    />
+                                  </div>
+
+                                  {/* Nome da Modalidade */}
+                                  <span
+                                    className={`text-[11px] font-extrabold mt-2 text-center line-clamp-2 leading-tight transition-colors ${
+                                      isHovered ? "text-[var(--theme-primary)]" : "text-slate-600 dark:text-slate-300"
+                                    }`}
+                                    title={item.nome}
+                                  >
+                                    {item.nome}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </MotionSection>
 
-            {/* Card 03 - Núcleos */}
+            {/* Gráfico 02: Distribuição dos núcleos entre as cidades de atendimento (Circular / Donut) */}
             <MotionSection delayClass="motion-stagger-3" className="h-full">
-              <div className="h-full bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-6 lg:p-7 flex flex-col justify-between transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 group min-h-[300px]">
+              <div className="h-full bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs p-6 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between gap-4 mb-5">
-                    <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-900/50 group-hover:scale-105 transition-transform">
-                      <Building2 className="w-6 h-6" />
+                  <div className="pb-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                    <div>
+                      <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                        <PieIcon className="text-emerald-600 dark:text-emerald-400" size={18} />
+                        <span>Distribuição dos núcleos entre as cidades de atendimento</span>
+                      </h3>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5">
+                        Presença territorial e cobertura por município
+                      </p>
                     </div>
-                    <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700/60 px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
-                      {loading && nucleosCount === 0 ? <Loader2 className="w-3 h-3 animate-spin inline-block" /> : nucleosCount} Ativos
-                    </span>
+                    {cidadesChartData.list.length > 0 && (
+                      <span className="shrink-0 px-3 py-1 rounded-full text-xs font-black bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                        {cidadesChartData.list.length} {cidadesChartData.list.length === 1 ? 'Cidade Atendida' : 'Cidades Atendidas'}
+                      </span>
+                    )}
                   </div>
 
-                  <h2 className="text-lg lg:text-xl font-extrabold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                    Núcleos
-                  </h2>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-2 leading-relaxed">
-                    Gestão das unidades operacionais, alocação de equipe, vagas e grade horária.
+                  {loading || filterLoading ? (
+                    <div className="flex flex-col items-center justify-center h-64 gap-3 text-slate-400">
+                      <div className="relative flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-700 border-t-emerald-500 animate-spin" />
+                        <PieIcon size={16} className="absolute text-emerald-500" />
+                      </div>
+                      <p className="text-xs font-bold text-slate-500 dark:text-slate-400 animate-pulse">
+                        Carregando cidades de atendimento...
+                      </p>
+                    </div>
+                  ) : cidadesChartData.list.length === 0 ? (
+                    <div className="py-16 text-center text-slate-400 text-xs font-semibold">
+                      Nenhuma cidade com núcleos ativos registrada.
+                    </div>
+                  ) : (() => {
+                    const circumference = 2 * Math.PI * 38; // ~238.76
+                    let cumulativePercent = 0;
+
+                    return (
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-6">
+                        {/* Donut Chart SVG */}
+                        <div className="relative w-48 h-48 sm:w-52 sm:h-52 shrink-0 flex items-center justify-center">
+                          <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
+                            {/* Fundo do Donut */}
+                            <circle
+                              cx="50"
+                              cy="50"
+                              r="38"
+                              className="text-slate-100 dark:text-slate-800"
+                              strokeWidth="11"
+                              stroke="currentColor"
+                              fill="transparent"
+                            />
+
+                            {/* Fatias das Cidades com Destaque Hover & Opacidade Reduzida */}
+                            {cidadesChartData.list.map((item, idx) => {
+                              const percent = item.percent;
+                              const strokeDasharray = `${(percent / 100) * circumference} ${circumference}`;
+                              const strokeDashoffset = -((cumulativePercent / 100) * circumference);
+                              cumulativePercent += percent;
+
+                              const isHovered = hoveredCityIdx === idx;
+                              const isOtherHovered = hoveredCityIdx !== null && hoveredCityIdx !== idx;
+                              const color = CITY_PALETTE[idx % CITY_PALETTE.length];
+
+                              return (
+                                <circle
+                                  key={idx}
+                                  cx="50"
+                                  cy="50"
+                                  r="38"
+                                  stroke={color}
+                                  strokeWidth={isHovered ? 15 : 11}
+                                  strokeDasharray={strokeDasharray}
+                                  strokeDashoffset={strokeDashoffset}
+                                  fill="transparent"
+                                  onMouseEnter={() => setHoveredCityIdx(idx)}
+                                  onMouseLeave={() => setHoveredCityIdx(null)}
+                                  style={{
+                                    transition: "stroke-width 0.25s ease, opacity 0.25s ease, filter 0.25s ease",
+                                    filter: isHovered ? `drop-shadow(0 0 6px ${color})` : "none",
+                                    opacity: isOtherHovered ? 0.35 : 1,
+                                    cursor: "pointer"
+                                  }}
+                                />
+                              );
+                            })}
+                          </svg>
+
+                          {/* Centro do Gráfico Circular */}
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none pointer-events-none transition-all duration-200">
+                            {hoveredCityIdx !== null && cidadesChartData.list[hoveredCityIdx] ? (
+                              <div className="animate-in fade-in zoom-in duration-150 px-2">
+                                <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-none block">
+                                  {cidadesChartData.list[hoveredCityIdx].count}
+                                </span>
+                                <span className="text-[11px] font-black text-blue-600 dark:text-blue-400 block mt-1">
+                                  {cidadesChartData.list[hoveredCityIdx].percent}%
+                                </span>
+                                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 block truncate max-w-[90px] mt-0.5">
+                                  {cidadesChartData.list[hoveredCityIdx].cidade}
+                                </span>
+                              </div>
+                            ) : (
+                              <div>
+                                <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-none block">
+                                  {cidadesChartData.list.length}
+                                </span>
+                                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mt-1">
+                                  {cidadesChartData.list.length === 1 ? 'Cidade' : 'Cidades'}
+                                </span>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium block mt-0.5">
+                                  ({cidadesChartData.totalAtivos} {cidadesChartData.totalAtivos === 1 ? 'núcleo' : 'núcleos'})
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Legenda Lateral com Bolinhas Coloridas & Interatividade */}
+                        <div className="w-full sm:flex-1 space-y-1.5 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
+                          {cidadesChartData.list.map((item, idx) => {
+                            const color = CITY_PALETTE[idx % CITY_PALETTE.length];
+                            const isHovered = hoveredCityIdx === idx;
+                            const isOtherHovered = hoveredCityIdx !== null && hoveredCityIdx !== idx;
+
+                            return (
+                              <div
+                                key={idx}
+                                onMouseEnter={() => setHoveredCityIdx(idx)}
+                                onMouseLeave={() => setHoveredCityIdx(null)}
+                                className={`flex items-center justify-between gap-2 p-2 rounded-xl text-xs transition-all cursor-pointer ${
+                                  isHovered
+                                    ? "bg-slate-100 dark:bg-slate-800 scale-[1.02]"
+                                    : isOtherHovered
+                                    ? "opacity-50 hover:opacity-80"
+                                    : "hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span
+                                    className="w-2.5 h-2.5 rounded-full shrink-0 transition-transform"
+                                    style={{
+                                      backgroundColor: color,
+                                      transform: isHovered ? "scale(1.4)" : "scale(1)"
+                                    }}
+                                  />
+                                  <span className="font-bold text-slate-700 dark:text-slate-200 truncate">
+                                    {item.cidade}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 shrink-0 text-slate-500 dark:text-slate-400 font-semibold text-[11px]">
+                                  <span className="font-black text-slate-800 dark:text-slate-100">{item.count}</span>
+                                  <span>({item.percent}%)</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            </MotionSection>
+
+          </div>
+
+          {/* 3. SEÇÃO INFERIOR: PENDÊNCIAS & ATENÇÃO OPERACIONAL */}
+          <MotionSection delayClass="motion-stagger-4">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 lg:p-7 shadow-xs space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <AlertTriangle className="text-amber-500" size={20} />
+                    <span>Pendências & Atenção Operacional</span>
+                  </h3>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5">
+                    Itens que necessitam de preenchimento ou confirmação para operação plena
                   </p>
                 </div>
 
-                <div className="pt-4 mt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 truncate">Unidades & Turmas</span>
-                  <Link 
+                <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                  {pendenciasGestao.total} {pendenciasGestao.total === 1 ? "Pendência" : "Pendências"}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                
+                {/* Coluna 1: Núcleos Sem Vaga Oficial */}
+                <div className="bg-slate-50/70 dark:bg-slate-850/60 rounded-2xl border border-slate-200/70 dark:border-slate-800 p-4 space-y-3 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <Building2 size={14} className="text-blue-600 dark:text-blue-400" />
+                        Núcleos sem Vaga Atribuída
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-black ${
+                        pendenciasGestao.nucleosSemVaga.length > 0
+                          ? "bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300"
+                          : "bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300"
+                      }`}>
+                        {pendenciasGestao.nucleosSemVaga.length}
+                      </span>
+                    </div>
+
+                    {pendenciasGestao.nucleosSemVaga.length === 0 ? (
+                      <p className="text-xs text-slate-400 dark:text-slate-500 font-medium py-4 text-center">
+                        Todos os núcleos ativos possuem vagas vinculadas.
+                      </p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                        {pendenciasGestao.nucleosSemVaga.map(n => (
+                          <div key={n.id} className="bg-white dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-xs">
+                            <span className="font-extrabold text-slate-800 dark:text-slate-100 block truncate">
+                              {n.nome || `Núcleo #${n.id}`}
+                            </span>
+                            <span className="text-[11px] text-slate-400 dark:text-slate-500 block truncate mt-0.5">
+                              {getResolvedNucleoCidade(n)} • {n.modalidade_nome || "Modalidade a definir"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <Link
                     to="/admin/nucleos"
-                    className="inline-flex items-center gap-1.5 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white font-bold px-4 py-2 rounded-xl shadow-xs transition-all text-xs shrink-0 group-hover:translate-x-1"
+                    className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-2xs transition-all"
                   >
-                    <span>Acessar</span>
-                    <ArrowRight size={14} />
+                    <span>Configurar Vagas nos Núcleos</span>
+                    <ArrowRight size={13} />
                   </Link>
+                </div>
+
+                {/* Coluna 2: Espaços Incompletos */}
+                <div className="bg-slate-50/70 dark:bg-slate-850/60 rounded-2xl border border-slate-200/70 dark:border-slate-800 p-4 space-y-3 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <Home size={14} className="text-violet-600 dark:text-violet-400" />
+                        Espaços Físicos Incompletos
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-black ${
+                        pendenciasGestao.espacosIncompletos.length > 0
+                          ? "bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300"
+                          : "bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300"
+                      }`}>
+                        {pendenciasGestao.espacosIncompletos.length}
+                      </span>
+                    </div>
+
+                    {pendenciasGestao.espacosIncompletos.length === 0 ? (
+                      <p className="text-xs text-slate-400 dark:text-slate-500 font-medium py-4 text-center">
+                        Todos os espaços físicos estão devidamente documentados.
+                      </p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                        {pendenciasGestao.espacosIncompletos.slice(0, 8).map(e => (
+                          <div key={e.id} className="bg-white dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-xs">
+                            <span className="font-extrabold text-slate-800 dark:text-slate-100 block truncate">
+                              {e.nome || `Espaço #${e.id}`}
+                            </span>
+                            <span className="text-[11px] text-amber-700 dark:text-amber-400 font-medium block truncate mt-0.5">
+                              Dados ou termo de uso pendentes
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <Link
+                    to="/admin/espacos"
+                    className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-xs shadow-2xs transition-all"
+                  >
+                    <span>Completar Cadastros de Espaço</span>
+                    <ArrowRight size={13} />
+                  </Link>
+                </div>
+
+                {/* Coluna 3: Propostas com Pendências Cadastrais */}
+                <div className="bg-slate-50/70 dark:bg-slate-850/60 rounded-2xl border border-slate-200/70 dark:border-slate-800 p-4 space-y-3 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <GraduationCap size={14} className="text-emerald-600 dark:text-emerald-400" />
+                        Propostas / Termos de Fomento
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-black ${
+                        propostasComPendencia.length > 0
+                          ? "bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300"
+                          : "bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300"
+                      }`}>
+                        {propostasComPendencia.length}
+                      </span>
+                    </div>
+
+                    {propostasComPendencia.length === 0 ? (
+                      <p className="text-xs text-slate-400 dark:text-slate-500 font-medium py-4 text-center">
+                        Todas as propostas estão completas e validadas.
+                      </p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                        {propostasComPendencia.map(p => (
+                          <div key={p.id} className="bg-white dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-xs">
+                            <span className="font-extrabold text-slate-800 dark:text-slate-100 block truncate">
+                              {p.nome}
+                            </span>
+                            <span className="text-[11px] text-amber-700 dark:text-amber-400 font-medium block truncate mt-0.5">
+                              Faltam: {p.campos.slice(0, 3).join(", ")}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <Link
+                    to="/admin/propostas"
+                    className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white font-extrabold text-xs shadow-2xs transition-all"
+                  >
+                    <span>Editar Propostas</span>
+                    <ArrowRight size={13} />
+                  </Link>
+                </div>
+
+              </div>
+            </div>
+          </MotionSection>
+
+          {/* 4. CARD INSPIRACIONAL: NOSSO IMPACTO (Frase Rotativa Diária) */}
+          {!loading && matriculas.length > 0 && (
+            <MotionSection delayClass="motion-stagger-5">
+              <div className="bg-gradient-to-r from-rose-50/70 via-pink-50/50 to-amber-50/40 dark:from-rose-950/20 dark:via-pink-950/20 dark:to-amber-950/10 border border-rose-200/60 dark:border-rose-900/40 rounded-3xl p-5 sm:p-6 shadow-2xs flex flex-col sm:flex-row items-center sm:items-start gap-4 transition-all">
+                <div className="p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-xs text-rose-500 shrink-0 border border-rose-100 dark:border-rose-900/30">
+                  <Heart className="w-6 h-6 animate-pulse" />
+                </div>
+                <div className="space-y-1 text-center sm:text-left flex-1">
+                  <div className="flex items-center justify-center sm:justify-start gap-2">
+                    <span className="text-[11px] font-black text-rose-900 dark:text-rose-200 uppercase tracking-widest">
+                      Nosso Impacto Coletivo
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300">
+                      Inspiração do Dia
+                    </span>
+                  </div>
+                  <p className="text-sm font-semibold text-rose-950 dark:text-rose-100 leading-relaxed">
+                    {currentImpactPhrase}
+                  </p>
                 </div>
               </div>
             </MotionSection>
+          )}
 
-            </div>
-          </div>
-        )}
+        </div>
+      )}
 
       {/* Modal de Exportação PDF Customizada */}
       {exportModalOpen && (

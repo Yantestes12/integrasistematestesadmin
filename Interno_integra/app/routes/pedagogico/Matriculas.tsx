@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -42,6 +42,7 @@ export interface MatriculaItem {
   cidade?: string;
   nucleo_nome?: string;
   nucleo_id?: string | number;
+  projeto_id?: string | number;
   turma?: string;
   telefone_conta?: string;
   created_at?: string;
@@ -95,9 +96,9 @@ export default function Matriculas() {
     
     // Check if we already have cache
     try {
-      const savedN = sessionStorage.getItem(`cache_raw_nucleos_${savedInstitute}`);
+      const savedN = sessionStorage.getItem(`cache_raw_nucleos_${savedInstitute}`) || sessionStorage.getItem(`cache_nucleos_list_${savedInstitute}`);
       if (savedN) {
-        setNucleosData(JSON.parse(savedN));
+        setNucleosData(flattenArray(JSON.parse(savedN)));
       }
     } catch (e) {}
 
@@ -217,6 +218,7 @@ export default function Matriculas() {
               cidade: item.cidade || item.cidade_nome || "—",
               nucleo_nome: resolvedNucleoName,
               nucleo_id: item.nucleo_id || "",
+              projeto_id: item.projeto_id || "",
               turma: item.turma || "Sem Turma",
               telefone_conta: item.telefone_conta || item.whatsapp || "—",
               created_at: item.created_at || "",
@@ -333,30 +335,68 @@ export default function Matriculas() {
   };
 
   const filteredMatriculas = useMemo(() => {
+    // Objeto do núcleo selecionado para permitir correspondência tanto por ID quanto por Nome
+    const selectedNucleoObj = globalNucleo !== "all"
+      ? nucleosData.find(n => String(n.id || n.id_nucleo || n.nucleo_id) === String(globalNucleo))
+      : null;
+    const targetNucleoNome = selectedNucleoObj?.nome?.trim().toLowerCase();
+
     return matriculas.filter((item) => {
-      if (globalNucleo !== "all" && String(item.nucleo_id) !== globalNucleo) return false;
+      // 1. Filtro de Núcleo (combina por ID do núcleo e fallback por Nome do núcleo)
+      if (globalNucleo !== "all") {
+        const itemNId = String(item.nucleo_id || "").trim();
+        const matchesId = itemNId === String(globalNucleo).trim();
+        const matchesNome = targetNucleoNome && item.nucleo_nome && item.nucleo_nome.trim().toLowerCase() === targetNucleoNome;
+        if (!matchesId && !matchesNome) return false;
+      }
       
+      // 2. Filtro de Projeto e Cidade
       if (globalProjeto !== "all" || globalCidade !== "all") {
-        const nObj = nucleosData.find(n => String(n.id || n.id_nucleo || n.nucleo_id) === String(item.nucleo_id));
-        if (globalProjeto !== "all" && String(nObj?.projeto_id) !== globalProjeto) return false;
-        if (globalCidade !== "all" && nObj?.cidade?.toLowerCase() !== globalCidade.toLowerCase()) return false;
+        const nObj = nucleosData.find(n => 
+          String(n.id || n.id_nucleo || n.nucleo_id) === String(item.nucleo_id) ||
+          (item.nucleo_nome && n.nome && n.nome.trim().toLowerCase() === item.nucleo_nome.trim().toLowerCase())
+        );
+        
+        if (globalProjeto !== "all") {
+          const isSelectedNucleoOfProject = globalNucleo !== "all" && 
+            selectedNucleoObj && 
+            String(selectedNucleoObj.projeto_id).trim() === String(globalProjeto).trim();
+          const directMatch = item.projeto_id && String(item.projeto_id).trim() === String(globalProjeto).trim();
+          const nucleoMatch = nObj?.projeto_id && String(nObj.projeto_id).trim() === String(globalProjeto).trim();
+          if (!isSelectedNucleoOfProject && !directMatch && !nucleoMatch) return false;
+        }
+
+        if (globalCidade !== "all") {
+          const itemCid = (item.cidade || "").trim().toLowerCase();
+          const nObjCid = (nObj?.cidade || "").trim().toLowerCase();
+          const targetCid = globalCidade.trim().toLowerCase();
+          if (itemCid !== targetCid && nObjCid !== targetCid) return false;
+        }
       }
 
+      // 3. Filtro de Trimestre
       if (globalTrimestreInicio && globalTrimestreFim) {
         if (!item.created_at) return false;
         const dataM = new Date(item.created_at);
-        const dataInicio = new Date(globalTrimestreInicio);
-        const dataFim = new Date(globalTrimestreFim);
+        let dataInicio = new Date(globalTrimestreInicio);
+        let dataFim = new Date(globalTrimestreFim);
+        if (dataFim < dataInicio) {
+          dataFim.setFullYear(dataFim.getFullYear() + 1);
+        }
         dataFim.setHours(23, 59, 59, 999);
         if (dataM < dataInicio || dataM > dataFim) return false;
       }
 
+      // 4. Somente Favoritos
       if (showFavoritesOnly && !matriculasMeta[String(item.id)]?.is_favorito) return false;
       
+      // 5. Busca por termo
+      if (!searchTerm) return true;
+      const term = searchTerm.toLowerCase();
       return (
-        (item.aluno_nome || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.aluno_nome || "").toLowerCase().includes(term) ||
         (item.aluno_cpf || "").includes(searchTerm) ||
-        (item.nucleo_nome || "").toLowerCase().includes(searchTerm.toLowerCase())
+        (item.nucleo_nome || "").toLowerCase().includes(term)
       );
     });
   }, [matriculas, globalNucleo, globalProjeto, globalCidade, globalTrimestreInicio, globalTrimestreFim, nucleosData, searchTerm, showFavoritesOnly, matriculasMeta]);

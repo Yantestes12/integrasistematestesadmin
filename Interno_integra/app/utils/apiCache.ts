@@ -12,7 +12,7 @@ const inFlightRequests = new Map<string, Promise<any>>();
 // Cache em memória para acesso síncrono ultra-rápido durante a sessão
 const memoryCache = new Map<string, { data: any; timestamp: number }>();
 
-const MEMORY_CACHE_TTL = 30 * 1000; // 30 segundos em memória viva
+const MEMORY_CACHE_TTL = 10 * 60 * 1000; // 10 minutos em memória viva
 
 /**
  * Achata respostas do N8N / Supabase para array simples
@@ -44,7 +44,7 @@ export const flattenResponse = (rawData: any): any[] => {
 };
 
 /**
- * Remove fotos base64 gigantes (que podem ter 1MB cada) para não estourar os 5MB do sessionStorage
+ * Remove fotos base64 gigantes e campos pesados de matrículas para não estourar os 5MB do sessionStorage
  */
 export const sanitizeForStorage = (data: any): any => {
   if (!data) return data;
@@ -57,6 +57,36 @@ export const sanitizeForStorage = (data: any): any => {
         delete copy.foto_url;
         return copy;
       }
+      // Se for matrícula, compacta campos essenciais para caber no sessionStorage com facilidade (<1.2MB)
+      if (item.aluno_nome !== undefined || item.aluno_cpf !== undefined) {
+        return {
+          id: item.id,
+          aluno_nome: item.aluno_nome || item.nome || '',
+          aluno_cpf: item.aluno_cpf || item.cpf || '',
+          nucleo_id: item.nucleo_id || item.id_nucleo || item.espaco_id || '',
+          nucleo_nome: item.nucleo_nome || '',
+          projeto_id: item.projeto_id || item.id_projeto || '',
+          cidade_id: item.cidade_id || '',
+          cidade: item.cidade || item.cidade_nome || item.aluno_cidade || item.municipio || '',
+          bairro_id: item.bairro_id || '',
+          bairro: item.bairro || '',
+          modalidade_id: item.modalidade_id || '',
+          turma: item.turma || '',
+          turno: item.turno || item.turno_label || '',
+          sexo: item.sexo || '',
+          idade: item.idade || '',
+          tamanho_calcado: item.tamanho_calcado || '',
+          tamanho_camisa: item.tamanho_camisa || '',
+          tamanho_calca: item.tamanho_calca || '',
+          status: item.status || 'Aprovada',
+          created_at: item.created_at || '',
+          telefone_conta: item.telefone_conta || item.whatsapp || '',
+          origem_cadastro: item.origem_cadastro || '',
+          resp_nome: item.resp_nome || '',
+          resp_cpf: item.resp_cpf || '',
+          resp_whatsapp: item.resp_whatsapp || '',
+        };
+      }
       return item;
     });
   }
@@ -68,6 +98,9 @@ export const sanitizeForStorage = (data: any): any => {
  */
 export const safeSetSession = (key: string, data: any): void => {
   if (typeof window === 'undefined') return;
+  // Sempre armazena na memória viva primeiro (0ms garantido)
+  memoryCache.set(key, { data, timestamp: Date.now() });
+
   try {
     const sanitized = sanitizeForStorage(data);
     const jsonStr = JSON.stringify(sanitized);
@@ -82,12 +115,12 @@ export const safeSetSession = (key: string, data: any): void => {
           sessionStorage.removeItem(k);
         }
       });
-      // Tenta salvar novamente
+      // Tenta salvar novamente com dados sanitizados
       const sanitized = sanitizeForStorage(data);
       sessionStorage.setItem(key, JSON.stringify(sanitized));
     } catch (retryErr) {
-      // Se ainda assim não couber, falha silenciosamente sem quebrar a execução
-      console.warn(`[safeSetSession] Não foi possível persistir ${key} no sessionStorage. Mantendo apenas em memória.`);
+      // Se ainda assim não couber no sessionStorage, fica garantido em memoryCache
+      console.warn(`[safeSetSession] Mantido apenas em memória viva para ${key}.`);
     }
   }
 };
@@ -116,11 +149,11 @@ export const safeGetSession = <T = any>(key: string): T | null => {
 };
 
 /**
- * Fetch com desduplicação automática e timeout de segurança (12s)
- * Se 5 componentes requisitarem o mesmo endpoint ao mesmo tempo,
- * apenas 1 requisição HTTP real vai para o servidor e os 5 recebem a mesma resposta!
+ * Fetch com desduplicação automática e timeout de segurança (30s)
+ * Se vários componentes requisitarem o mesmo endpoint ao mesmo tempo,
+ * apenas 1 requisição HTTP real vai para o servidor e todos recebem a mesma resposta!
  */
-export const fetchWithDedupe = async (url: string, timeoutMs: number = 12000): Promise<any> => {
+export const fetchWithDedupe = async (url: string, timeoutMs: number = 30000): Promise<any> => {
   // Verifica se já existe uma requisição em andamento para esta URL exata
   if (inFlightRequests.has(url)) {
     return inFlightRequests.get(url);
@@ -155,7 +188,7 @@ export const fetchWithDedupe = async (url: string, timeoutMs: number = 12000): P
     } catch (err: any) {
       clearTimeout(timer);
       if (err.name === 'AbortError') {
-        console.warn(`[fetchWithDedupe] Requisição abortada por timeout (12s): ${url}`);
+        console.warn(`[fetchWithDedupe] Requisição abortada por timeout (${timeoutMs}ms): ${url}`);
       } else {
         console.warn(`[fetchWithDedupe] Falha na requisição: ${url}`, err);
       }
@@ -168,4 +201,32 @@ export const fetchWithDedupe = async (url: string, timeoutMs: number = 12000): P
 
   inFlightRequests.set(url, requestPromise);
   return requestPromise;
+};
+
+/**
+ * Invalida caches em memória viva e no sessionStorage para entidades específicas (ex: 'espacos', 'nucleos').
+ * Garante que alterações em Espaços e Núcleos reflitam instantaneamente sem dados fantasmas.
+ */
+export const clearEntityCache = (entities: string[] = ['espacos', 'nucleos']): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    // 1. Limpa memória viva
+    memoryCache.forEach((_, key) => {
+      if (entities.some(e => key.toLowerCase().includes(e.toLowerCase()))) {
+        memoryCache.delete(key);
+      }
+    });
+
+    // 2. Limpa sessionStorage
+    const toRemove: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key && entities.some(e => key.toLowerCase().includes(e.toLowerCase()))) {
+        toRemove.push(key);
+      }
+    }
+    toRemove.forEach(k => sessionStorage.removeItem(k));
+  } catch (e) {
+    console.warn("[clearEntityCache] Erro ao limpar caches:", e);
+  }
 };

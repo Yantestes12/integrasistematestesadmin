@@ -1,104 +1,349 @@
-import React, { useEffect, useState } from 'react';
-import { fetchWithDedupe } from '~/utils/apiCache';
+import React, { useEffect, useState, useMemo } from 'react';
+import { safeSetSession, flattenResponse } from '~/utils/apiCache';
 import { Filter, X, Building, MapPin, Layers, Calendar } from 'lucide-react';
 
 export const GlobalFilterBar = () => {
-  const [projetos, setProjetos] = useState<any[]>([]);
-  const [cidades, setCidades] = useState<string[]>([]);
-  const [nucleos, setNucleos] = useState<any[]>([]);
+  const [currentInstitute, setCurrentInstitute] = useState(() => 
+    typeof window !== 'undefined' ? (localStorage.getItem("auth_institute") || "IBRASE").toUpperCase() : "IBRASE"
+  );
 
-  const [selectedProjeto, setSelectedProjeto] = useState<string>("all");
-  const [selectedCidade, setSelectedCidade] = useState<string>("all");
-  const [selectedNucleo, setSelectedNucleo] = useState<string>("all");
-
-  const [selectedTrimestre, setSelectedTrimestre] = useState<string>("all");
-
-    const flattenResponse = (rawData: any): any[] => {
-    if (!rawData) return [];
-    let list: any[] = [];
-    if (Array.isArray(rawData)) {
-      list = rawData;
-    } else if (typeof rawData === 'object') {
-      if (Array.isArray(rawData.data)) list = rawData.data;
-      else if (Array.isArray(rawData.items)) list = rawData.items;
-      else if (Array.isArray(rawData.value)) list = rawData.value;
-      else if (rawData.json) list = Array.isArray(rawData.json) ? rawData.json : [rawData.json];
-      else list = [rawData];
-    }
-    let flat: any[] = [];
-    list.forEach((entry: any) => {
-      if (!entry) return;
-      if (entry.json) {
-        Array.isArray(entry.json) ? flat.push(...entry.json) : flat.push(entry.json);
-      } else if (Array.isArray(entry)) {
-        flat.push(...entry);
-      } else {
-        flat.push(entry);
+  // 1. SWR Cache Hydration: Inicializa propostas e núcleos instantaneamente em 0ms
+  const [projetos, setProjetos] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      const inst = (localStorage.getItem("auth_institute") || "IBRASE").toUpperCase();
+      const cached = sessionStorage.getItem(`cache_projetos_list_${inst}`);
+      if (cached) {
+        try {
+          const list = flattenResponse(JSON.parse(cached));
+          if (Array.isArray(list) && list.length > 0) {
+            return list.filter((p: any) => p && (p.id || p.nome));
+          }
+        } catch (e) {}
       }
-    });
-    return flat.filter(item => item !== null && item !== undefined);
+    }
+    return [];
+  });
+
+  const [nucleos, setNucleos] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      const inst = (localStorage.getItem("auth_institute") || "IBRASE").toUpperCase();
+      const cached = sessionStorage.getItem(`cache_nucleos_list_${inst}`) || sessionStorage.getItem(`cache_raw_nucleos_${inst}`);
+      if (cached) {
+        try {
+          const list = flattenResponse(JSON.parse(cached));
+          if (Array.isArray(list) && list.length > 0) {
+            return list.filter((n: any) => n && (n.id || n.nome));
+          }
+        } catch (e) {}
+      }
+    }
+    return [];
+  });
+
+  const [cidades, setCidades] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const inst = (localStorage.getItem("auth_institute") || "IBRASE").toUpperCase();
+      const cached = sessionStorage.getItem(`cache_nucleos_list_${inst}`) || sessionStorage.getItem(`cache_raw_nucleos_${inst}`);
+      if (cached) {
+        try {
+          const list = JSON.parse(cached);
+          if (Array.isArray(list)) {
+            const set = new Set<string>();
+            list.forEach((n: any) => {
+              if (n.cidade && typeof n.cidade === 'string' && n.cidade.trim().length > 1) {
+                set.add(n.cidade.trim());
+              }
+            });
+            return Array.from(set).sort();
+          }
+        } catch (e) {}
+      }
+    }
+    return [];
+  });
+
+  const [selectedProjeto, setSelectedProjeto] = useState<string>(() => 
+    typeof window !== 'undefined' ? localStorage.getItem("global_projeto_filter") || "all" : "all"
+  );
+  const [selectedCidade, setSelectedCidade] = useState<string>(() => 
+    typeof window !== 'undefined' ? localStorage.getItem("global_cidade_filter") || "all" : "all"
+  );
+  const [selectedNucleo, setSelectedNucleo] = useState<string>(() => 
+    typeof window !== 'undefined' ? localStorage.getItem("global_nucleo_filter") || "all" : "all"
+  );
+  const [selectedTrimestre, setSelectedTrimestre] = useState<string>(() => 
+    typeof window !== 'undefined' ? localStorage.getItem("global_trimestre_filter") || "all" : "all"
+  );
+
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+
+  // 2. Busca paralela resiliente com salvamento em cache (projetos, nucleos e espacos para cidades)
+  const fetchFilterData = async (inst: string) => {
+    // 2.1 Busca de Projetos / Propostas
+    fetch(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${inst}`, { cache: "no-store" })
+      .then(async (res) => {
+        if (!res.ok) return;
+        const text = await res.text();
+        const data = JSON.parse(text);
+        const flat = flattenResponse(data).filter((p: any) => p && (p.id || p.nome));
+        if (flat.length > 0) {
+          setProjetos(flat);
+          safeSetSession(`cache_projetos_list_${inst}`, flat);
+
+          // Só reseta se o projeto salvo anteriormente realmente não existe nessa lista nova de projetos
+          const savedP = localStorage.getItem('global_projeto_filter') || 'all';
+          if (savedP !== 'all' && !flat.find((p: any) => String(p.id) === savedP)) {
+            localStorage.setItem('global_projeto_filter', 'all');
+            setSelectedProjeto('all');
+            window.dispatchEvent(new Event("globalFilterChanged"));
+          }
+        }
+      })
+      .catch((err) => console.warn("Erro ao buscar projetos no GlobalFilterBar:", err));
+
+    // 2.2 Busca de Núcleos e Espaços (para resolver Cidades reais dos núcleos)
+    Promise.allSettled([
+      fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${inst}`, { cache: "no-store" }),
+      fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${inst}`, { cache: "no-store" }),
+    ]).then(async ([resN, resE]) => {
+      const espacosMap: Record<string, string> = {};
+      const espacosByName: Record<string, string> = {};
+
+      if (resE.status === "fulfilled" && resE.value.ok) {
+        try {
+          const textE = await resE.value.text();
+          const dataE = JSON.parse(textE);
+          const flatE = flattenResponse(dataE);
+          flatE.forEach((e: any) => {
+            if (e.id && e.cidade && e.cidade !== "temp" && !String(e.cidade).startsWith("Cidade ID")) {
+              espacosMap[String(e.id)] = String(e.cidade).trim();
+            }
+            if (e.nome && e.cidade && e.cidade !== "temp" && !String(e.cidade).startsWith("Cidade ID")) {
+              espacosByName[String(e.nome).trim().toLowerCase()] = String(e.cidade).trim();
+            }
+          });
+        } catch (e) {}
+      }
+
+      if (resN.status === "fulfilled" && resN.value.ok) {
+        try {
+          const textN = await resN.value.text();
+          const dataN = JSON.parse(textN);
+          const flatN = flattenResponse(dataN).filter((n: any) => n && (n.id || n.nome));
+
+          const enriched = flatN.map((n: any) => {
+            const espacoId = n.espaco_id ? String(n.espaco_id) : "";
+            const nNome = String(n.nome || n.nome_nucleo || "").trim().toLowerCase();
+            const cid = n.cidade || espacosMap[espacoId] || espacosByName[nNome] || "";
+            return {
+              ...n,
+              cidade: cid,
+              cidade_nome: cid,
+            };
+          });
+
+          if (enriched.length > 0) {
+            setNucleos(enriched);
+            safeSetSession(`cache_nucleos_list_${inst}`, enriched);
+
+            const cidadesSet = new Set<string>();
+            enriched.forEach((n: any) => {
+              const c = (n.cidade || "").trim();
+              if (c && c.length > 1) {
+                cidadesSet.add(c);
+              }
+            });
+            setCidades(Array.from(cidadesSet).sort());
+
+            // Validação inicial do núcleo salvo contra a lista e o projeto
+            const savedP = localStorage.getItem('global_projeto_filter') || 'all';
+            const savedN = localStorage.getItem('global_nucleo_filter') || 'all';
+            if (savedN !== 'all') {
+              const foundN = enriched.find((n: any) => String(n.id) === savedN);
+              const nProj = foundN?.projeto_id ?? foundN?.id_projeto ?? foundN?.projeto;
+              if (!foundN || (savedP !== 'all' && String(nProj).trim() !== savedP.trim())) {
+                localStorage.setItem('global_nucleo_filter', 'all');
+                setSelectedNucleo('all');
+                window.dispatchEvent(new Event("globalFilterChanged"));
+              }
+            }
+          }
+        } catch (e) {}
+      }
+    }).catch((err) => console.warn("Erro ao buscar núcleos e espaços no GlobalFilterBar:", err));
   };
 
   useEffect(() => {
-    const savedInstitute = (localStorage.getItem("auth_institute") || "IBRASE").toUpperCase();
+    const inst = (localStorage.getItem("auth_institute") || "IBRASE").toUpperCase();
+    setCurrentInstitute(inst);
+    fetchFilterData(inst);
 
-    const fetchFilterData = async () => {
-      try {
-        const [pList, nList] = await Promise.all([
-          fetchWithDedupe(`https://w.ibrase.com.br/webhook/projetos-get?instituto=${savedInstitute}`),
-          fetchWithDedupe(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${savedInstitute}`),
-        ]);
+    // Carrega filtros salvos inicialmente
+    setSelectedProjeto(localStorage.getItem("global_projeto_filter") || "all");
+    setSelectedCidade(localStorage.getItem("global_cidade_filter") || "all");
+    setSelectedNucleo(localStorage.getItem("global_nucleo_filter") || "all");
+    setSelectedTrimestre(localStorage.getItem("global_trimestre_filter") || "all");
 
-        const validProjs = (Array.isArray(pList) ? pList : []).filter((p: any) => p && (p.id || p.nome));
-        setProjetos(validProjs);
-        const savedP = localStorage.getItem('global_projeto_filter') || 'all';
-        if (savedP !== 'all' && !validProjs.find((p: any) => String(p.id) === savedP)) {
-          localStorage.setItem('global_projeto_filter', 'all');
-          setSelectedProjeto('all');
-          window.dispatchEvent(new Event("globalFilterChanged"));
-        }
-
-        const validNucleos = (Array.isArray(nList) ? nList : []).filter((n: any) => n && (n.id || n.nome));
-        setNucleos(validNucleos);
-
-        // Extrai lista única de cidades a partir dos núcleos (sem baixar 26MB de fotos!)
-        const cidadesSet = new Set<string>();
-        validNucleos.forEach((n: any) => {
-          if (n.cidade && typeof n.cidade === 'string' && n.cidade.trim().length > 1) {
-            cidadesSet.add(n.cidade.trim());
-          }
-        });
-        const cidadesArr = Array.from(cidadesSet).sort();
-        setCidades(cidadesArr);
-
-      } catch (err) {
-        console.warn("Erro ao carregar dados do GlobalFilterBar:", err);
-      }
+    // Listener para quando o instituto for alterado em outra tela/topbar
+    const handleStorageUpdate = () => {
+      const updatedInst = (localStorage.getItem("auth_institute") || "IBRASE").toUpperCase();
+      setCurrentInstitute(updatedInst);
+      fetchFilterData(updatedInst);
     };
 
-    fetchFilterData();
+    window.addEventListener("activeRoleChanged", handleStorageUpdate);
+    window.addEventListener("storage", handleStorageUpdate);
 
-    // Carrega filtros salvos
-    const savedP = localStorage.getItem("global_projeto_filter") || "all";
-    const savedC = localStorage.getItem("global_cidade_filter") || "all";
-    const savedN = localStorage.getItem("global_nucleo_filter") || "all";
-    const savedT = localStorage.getItem("global_trimestre_filter") || "all";
-    setSelectedProjeto(savedP);
-    setSelectedCidade(savedC);
-    setSelectedNucleo(savedN);
-    setSelectedTrimestre(savedT);
+    return () => {
+      window.removeEventListener("activeRoleChanged", handleStorageUpdate);
+      window.removeEventListener("storage", handleStorageUpdate);
+    };
   }, []);
+
+  // Sincroniza estado local se o filtro for alterado externamente
+  useEffect(() => {
+    const syncFilters = () => {
+      setSelectedProjeto(localStorage.getItem("global_projeto_filter") || "all");
+      setSelectedCidade(localStorage.getItem("global_cidade_filter") || "all");
+      setSelectedNucleo(localStorage.getItem("global_nucleo_filter") || "all");
+      setSelectedTrimestre(localStorage.getItem("global_trimestre_filter") || "all");
+    };
+    window.addEventListener("globalFilterChanged", syncFilters);
+    return () => window.removeEventListener("globalFilterChanged", syncFilters);
+  }, []);
+
+  // 3. Determina os trimestres (períodos) disponíveis com base no projeto selecionado
+  const trimestresOptions = useMemo(() => {
+    if (selectedProjeto === "all") return [];
+    const proj = projetos.find(p => String(p.id) === String(selectedProjeto));
+    if (!proj) return [];
+
+    const raw = proj.periodos_json || proj.periodos;
+    let pJson: any[] = [];
+    if (typeof raw === 'string') {
+      try { pJson = JSON.parse(raw); } catch (e) { pJson = []; }
+    } else if (Array.isArray(raw)) {
+      pJson = raw;
+    }
+
+    return pJson.map((t: any, idx: number) => {
+      const rotulo = t.rotulo || t.nome || (t.tipo === 'planejamento' ? 'Iniciação' : `Trimestre #${idx}`);
+      let dateRange = "";
+      if (t.inicio && t.fim) {
+        const formatD = (d: string) => {
+          const parts = d.split('-');
+          return parts.length >= 3 ? `${parts[2]}/${parts[1]}` : d;
+        };
+        dateRange = ` (${formatD(t.inicio)} a ${formatD(t.fim)})`;
+      }
+      return {
+        ...t,
+        id: String(t.id || rotulo),
+        rotulo: rotulo,
+        displayLabel: `${rotulo}${dateRange}`
+      };
+    });
+  }, [selectedProjeto, projetos]);
+
+  // Filtra cidades disponíveis com base na proposta selecionada
+  const filteredCidadesOptions = useMemo(() => {
+    const list = nucleos.filter(n => {
+      if (selectedProjeto !== "all") {
+        const nProj = n.projeto_id ?? n.id_projeto ?? n.projeto;
+        if (!nProj || String(nProj).trim() !== String(selectedProjeto).trim()) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    const set = new Set<string>();
+    list.forEach((n: any) => {
+      const cid = (n.cidade || n.cidade_nome || "").trim();
+      if (cid && cid !== "temp" && !cid.startsWith("Cidade ID")) {
+        set.add(cid);
+      }
+    });
+
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+  }, [nucleos, selectedProjeto]);
+
+  // Filtra núcleos compatíveis com a proposta ou cidade selecionada
+  const filteredNucleosOptions = useMemo(() => {
+    const list = nucleos.filter(n => {
+      if (selectedProjeto !== "all") {
+        const nProj = n.projeto_id ?? n.id_projeto ?? n.projeto;
+        if (!nProj || String(nProj).trim() !== String(selectedProjeto).trim()) {
+          return false;
+        }
+      }
+      if (selectedCidade !== "all") {
+        const nCid = (n.cidade || n.cidade_nome || "").trim().toLowerCase();
+        if (!nCid || nCid !== selectedCidade.trim().toLowerCase()) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    return list.sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
+  }, [nucleos, selectedProjeto, selectedCidade]);
+
+  // Se o núcleo atualmente selecionado não pertencer mais às opções filtradas, reseta para "all"
+  useEffect(() => {
+    if (selectedNucleo !== "all" && filteredNucleosOptions.length > 0) {
+      const exists = filteredNucleosOptions.some(n => String(n.id) === String(selectedNucleo));
+      if (!exists) {
+        setSelectedNucleo("all");
+        localStorage.setItem("global_nucleo_filter", "all");
+        window.dispatchEvent(new Event("globalFilterChanged"));
+      }
+    }
+  }, [filteredNucleosOptions, selectedNucleo]);
 
   const handleProjetoChange = (val: string) => {
     setSelectedProjeto(val);
     localStorage.setItem("global_projeto_filter", val);
     
+    // Sempre reseta o núcleo ao trocar o projeto para que não fique selecionado um núcleo de outro projeto
+    setSelectedNucleo("all");
+    localStorage.setItem("global_nucleo_filter", "all");
+
     // Limpa o trimestre ao trocar de projeto (já que os trimestres são por projeto)
     setSelectedTrimestre("all");
     localStorage.setItem("global_trimestre_filter", "all");
     localStorage.removeItem("global_trimestre_inicio");
     localStorage.removeItem("global_trimestre_fim");
+
+    // Verifica se a cidade atualmente selecionada pertence ao novo projeto
+    const savedC = localStorage.getItem("global_cidade_filter") || "all";
+    if (savedC !== "all") {
+      const pNucleos = val === "all" ? nucleos : nucleos.filter(n => String(n.projeto_id ?? n.id_projeto ?? n.projeto).trim() === val.trim());
+      const hasCidade = pNucleos.some(n => (n.cidade || n.cidade_nome || "").trim().toLowerCase() === savedC.trim().toLowerCase());
+      if (!hasCidade) {
+        setSelectedCidade("all");
+        localStorage.setItem("global_cidade_filter", "all");
+      }
+    }
     
+    window.dispatchEvent(new Event("globalFilterChanged"));
+  };
+
+  const handleCidadeChange = (val: string) => {
+    setSelectedCidade(val);
+    localStorage.setItem("global_cidade_filter", val);
+
+    // Se o núcleo selecionado não pertencer à nova cidade, reseta núcleo para "all"
+    if (val !== "all" && selectedNucleo !== "all") {
+      const curNucleo = nucleos.find(n => String(n.id) === selectedNucleo);
+      const curCid = (curNucleo?.cidade || curNucleo?.cidade_nome || "").trim().toLowerCase();
+      if (curCid !== val.trim().toLowerCase()) {
+        setSelectedNucleo("all");
+        localStorage.setItem("global_nucleo_filter", "all");
+      }
+    }
+
     window.dispatchEvent(new Event("globalFilterChanged"));
   };
 
@@ -109,17 +354,10 @@ export const GlobalFilterBar = () => {
     let inicio = "";
     let fim = "";
     if (val !== "all") {
-      const proj = projetos.find(p => String(p.id) === String(selectedProjeto));
-      if (proj && proj.periodos_json) {
-        let pJson = proj.periodos_json;
-        if (typeof pJson === 'string') { try { pJson = JSON.parse(pJson); } catch (e) { pJson = []; } }
-        if (Array.isArray(pJson)) {
-          const t = pJson.find((item: any) => String(item.id || item.rotulo) === val);
-          if (t) {
-            inicio = t.inicio || "";
-            fim = t.fim || "";
-          }
-        }
+      const t = trimestresOptions.find(item => String(item.id || item.rotulo) === val);
+      if (t) {
+        inicio = t.inicio || "";
+        fim = t.fim || "";
       }
     }
     localStorage.setItem("global_trimestre_inicio", inicio);
@@ -128,11 +366,17 @@ export const GlobalFilterBar = () => {
     window.dispatchEvent(new Event("globalFilterChanged"));
   };
 
-  const handleCidadeChange = (val: string) => {
-    setSelectedCidade(val);
-    localStorage.setItem("global_cidade_filter", val);
-    window.dispatchEvent(new Event("globalFilterChanged"));
-  };
+  // Se a cidade atualmente selecionada não pertencer mais às opções disponíveis do projeto, reseta para "all"
+  useEffect(() => {
+    if (selectedCidade !== "all" && filteredCidadesOptions.length > 0) {
+      const exists = filteredCidadesOptions.some(c => c.toLowerCase() === selectedCidade.toLowerCase());
+      if (!exists) {
+        setSelectedCidade("all");
+        localStorage.setItem("global_cidade_filter", "all");
+        window.dispatchEvent(new Event("globalFilterChanged"));
+      }
+    }
+  }, [filteredCidadesOptions, selectedCidade]);
 
   const handleNucleoChange = (val: string) => {
     setSelectedNucleo(val);
@@ -156,42 +400,14 @@ export const GlobalFilterBar = () => {
 
   const isAnyFilterActive = selectedProjeto !== "all" || selectedCidade !== "all" || selectedNucleo !== "all" || selectedTrimestre !== "all";
 
-  // Determina os trimestres (períodos) disponíveis com base no projeto selecionado
-  let trimestresOptions: any[] = [];
-  if (selectedProjeto !== "all") {
-    const proj = projetos.find(p => String(p.id) === String(selectedProjeto));
-    if (proj && proj.periodos_json) {
-      let pJson = proj.periodos_json;
-      if (typeof pJson === 'string') {
-        try { pJson = JSON.parse(pJson); } catch (e) { pJson = []; }
-      }
-      if (Array.isArray(pJson)) {
-        trimestresOptions = pJson;
-      }
-    }
-  }
-
-  // Filtra núcleos compatíveis com a proposta ou cidade selecionada
-  const filteredNucleosOptions = nucleos.filter(n => {
-    if (selectedProjeto !== "all" && String(n.projeto_id) !== String(selectedProjeto)) {
-      return false;
-    }
-    if (selectedCidade !== "all" && n.cidade && n.cidade.toLowerCase() !== selectedCidade.toLowerCase()) {
-      return false;
-    }
-    return true;
-  });
-
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-
   return (
     <>
       {/* ========================================================= */}
-      {/* DESKTOP VERSION (Invisível no Mobile)                       */}
+      {/* DESKTOP & NOTEBOOK VERSION (Visível em md: e superiores)    */}
       {/* ========================================================= */}
-      <div className="hidden lg:flex sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 lg:px-8 py-2.5 items-center justify-between shadow-xs w-full select-none transition-colors duration-200">
+      <div className="hidden md:flex sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 lg:px-8 py-2.5 items-center justify-between shadow-xs w-full select-none transition-colors duration-200">
         
-        <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-3.5 flex-wrap">
           
           <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider mr-1">
             <Filter size={14} className="text-slate-500 dark:text-slate-400" />
@@ -238,8 +454,10 @@ export const GlobalFilterBar = () => {
               {selectedProjeto !== "all" && trimestresOptions.length === 0 && (
                 <option value="all" disabled>⚠️ Sem períodos cadastrados</option>
               )}
-              {trimestresOptions.map(t => (
-                <option key={t.id || t.rotulo} value={t.id || t.rotulo}>{t.rotulo}</option>
+              {trimestresOptions.map((t, idx) => (
+                <option key={t.id || idx} value={t.id || t.rotulo}>
+                  {t.displayLabel || t.rotulo}
+                </option>
               ))}
             </select>
           </div>
@@ -256,8 +474,10 @@ export const GlobalFilterBar = () => {
                   : "bg-slate-100/90 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-200/80 dark:hover:bg-slate-700"
               }`}
             >
-              <option value="all">Todas as Cidades</option>
-              {cidades.map(c => (
+              <option value="all">
+                {selectedProjeto !== "all" ? "Todas as Cidades do Projeto" : "Todas as Cidades"}
+              </option>
+              {filteredCidadesOptions.map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
@@ -299,11 +519,11 @@ export const GlobalFilterBar = () => {
       </div>
 
       {/* ========================================================= */}
-      {/* MOBILE VERSION (Botão Flutuante e Drawer)                   */}
+      {/* MOBILE VERSION (Botão Flutuante e Drawer para telas < md)  */}
       {/* ========================================================= */}
-      <button
+      <button 
         onClick={() => setIsMobileOpen(true)}
-        className="lg:hidden fixed bottom-6 right-6 z-[60] text-white p-3.5 rounded-full shadow-xl shadow-slate-900/20 active:scale-95 transition-transform flex items-center justify-center border-2 border-white dark:border-slate-800 cursor-pointer"
+        className="md:hidden fixed bottom-6 right-6 z-[60] text-white p-3.5 rounded-full shadow-xl shadow-slate-900/20 active:scale-95 transition-transform flex items-center justify-center border-2 border-white dark:border-slate-800 cursor-pointer"
         title="Abrir Filtros"
         style={{ backgroundColor: 'var(--theme-primary, #2563eb)' }}
       >
@@ -314,7 +534,7 @@ export const GlobalFilterBar = () => {
       </button>
 
       {isMobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-[70] flex flex-col justify-end font-sans">
+        <div className="md:hidden fixed inset-0 z-[70] flex flex-col justify-end font-sans">
           {/* Backdrop Escuro */}
           <div 
             className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-300"
@@ -323,7 +543,7 @@ export const GlobalFilterBar = () => {
           
           {/* Drawer Content */}
           <div className="relative bg-white dark:bg-slate-900 rounded-t-3xl border-t border-slate-200 dark:border-slate-800 shadow-2xl p-6 pb-10 animate-in slide-in-from-bottom-full duration-300">
-            {/* Handlbar for aesthetic drag look */}
+            {/* Handlebar */}
             <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-5" />
 
             <div className="flex items-center justify-between mb-6">
@@ -383,8 +603,10 @@ export const GlobalFilterBar = () => {
                   {selectedProjeto !== "all" && trimestresOptions.length === 0 && (
                     <option value="all" disabled>⚠️ Sem períodos cadastrados</option>
                   )}
-                  {trimestresOptions.map(t => (
-                    <option key={t.id || t.rotulo} value={t.id || t.rotulo}>{t.rotulo}</option>
+                  {trimestresOptions.map((t, idx) => (
+                    <option key={t.id || idx} value={t.id || t.rotulo}>
+                      {t.displayLabel || t.rotulo}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -399,8 +621,10 @@ export const GlobalFilterBar = () => {
                   onChange={(e) => handleCidadeChange(e.target.value)}
                   className="w-full text-sm font-bold outline-none border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-850 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-900/30 transition-all appearance-none"
                 >
-                  <option value="all">Todas as Cidades</option>
-                  {cidades.map(c => (
+                  <option value="all">
+                    {selectedProjeto !== "all" ? "Todas as Cidades do Projeto" : "Todas as Cidades"}
+                  </option>
+                  {filteredCidadesOptions.map(c => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
@@ -447,4 +671,3 @@ export const GlobalFilterBar = () => {
     </>
   );
 };
-

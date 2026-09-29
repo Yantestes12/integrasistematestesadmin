@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Plus, Search, Edit3, Power, CheckCircle2, Clock, MapPin, Building2, User, Phone, AlertCircle, AlertTriangle, Trash2, Loader2, X, Archive, Download, Printer, Layers } from "lucide-react";
+import { Plus, Search, Edit3, Power, CheckCircle2, Clock, MapPin, Building2, User, Phone, AlertCircle, AlertTriangle, Trash2, Loader2, X, Archive, Download, Printer, Layers, Home } from "lucide-react";
 import ToastContainer, { type ToastMessage } from "../../components/Toast";
+import { clearEntityCache } from "../../utils/apiCache";
 
 export interface EspacoItem {
   id: number;
@@ -26,6 +27,7 @@ export interface EspacoItem {
   ativo?: boolean;
   status_aprovacao?: string; // 'aprovado' | 'pendente' | 'rejeitado'
   projeto_nome?: string;
+  nucleo_id?: string | number;
   nucleo_nome?: string;
   em_uso?: boolean;
   created_at?: string;
@@ -35,7 +37,7 @@ export default function Espacos() {
   const [espacos, setEspacos] = useState<EspacoItem[]>(() => {
     if (typeof window !== 'undefined') {
       const authInst = localStorage.getItem("auth_institute") || "IBRASE";
-      const cache = sessionStorage.getItem(`cache_espacos_parsed_${authInst.toUpperCase()}`);
+      const cache = sessionStorage.getItem(`cache_espacos_parsed_v4_${authInst.toUpperCase()}`);
       if (cache) {
         try { return JSON.parse(cache); } catch(e) {}
       }
@@ -43,9 +45,10 @@ export default function Espacos() {
     return [];
   });
   const [loading, setLoading] = useState(true);
+  const [nucleosLinkedObjMap, setNucleosLinkedObjMap] = useState<Record<number, any>>({});
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<"todos" | "aprovados" | "pendentes">("todos");
+  const [activeTab, setActiveTab] = useState<"todos" | "em_uso" | "nao_aplicado" | "incompletos">("todos");
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [approvingId, setApprovingId] = useState<number | null>(null);
   const [togglingDocsId, setTogglingDocsId] = useState<number | null>(null);
@@ -89,13 +92,18 @@ export default function Espacos() {
   }, []);
 
   const [globalFilter, setGlobalFilter] = useState("all");
+  const [globalCidadeFilter, setGlobalCidadeFilter] = useState("all");
+  const [globalNucleoFilter, setGlobalNucleoFilter] = useState("all");
+
   useEffect(() => {
-    const updateGlobalFilter = () => {
+    const updateGlobalFilters = () => {
       setGlobalFilter(localStorage.getItem("global_projeto_filter") || "all");
+      setGlobalCidadeFilter(localStorage.getItem("global_cidade_filter") || "all");
+      setGlobalNucleoFilter(localStorage.getItem("global_nucleo_filter") || "all");
     };
-    updateGlobalFilter();
-    window.addEventListener("globalFilterChanged", updateGlobalFilter);
-    return () => window.removeEventListener("globalFilterChanged", updateGlobalFilter);
+    updateGlobalFilters();
+    window.addEventListener("globalFilterChanged", updateGlobalFilters);
+    return () => window.removeEventListener("globalFilterChanged", updateGlobalFilters);
   }, []);
 
   // Timer de Trava de Segurança (25 segundos)
@@ -140,7 +148,7 @@ export default function Espacos() {
       const cachedList = sessionStorage.getItem(`cache_espacos_parsed_${authInstitute.toUpperCase()}`);
       if (cachedList) {
         const parsed = JSON.parse(cachedList);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed) && parsed.length > 0 && parsed.some(p => p.foto_url)) {
           setEspacos(parsed);
           hasCache = true;
         }
@@ -153,25 +161,14 @@ export default function Espacos() {
       let rawList: any[] = [];
       let nMap: Record<number, string> = {};
 
-      const rawE = sessionStorage.getItem(`cache_raw_espacos_${authInstitute.toUpperCase()}`);
-      const rawN = sessionStorage.getItem(`cache_raw_nucleos_${authInstitute.toUpperCase()}`);
-
-      let resE = null;
-      let resN = null;
-
-      if (!rawE || !rawN) {
-        const fetched = await Promise.allSettled([
-          fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${authInstitute.toUpperCase()}`),
-          fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${authInstitute.toUpperCase()}`)
-        ]);
-        resE = fetched[0] as any;
-        resN = fetched[1] as any;
-      }
+      // Sempre busca da rede para Espaços para garantir as fotos base64 completas
+      const [resE, resN] = await Promise.allSettled([
+        fetch(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${authInstitute.toUpperCase()}`),
+        fetch(`https://w.ibrase.com.br/webhook/nucleos-get?instituto=${authInstitute.toUpperCase()}`)
+      ]);
 
       let nDataList: any[] = [];
-      if (rawN) {
-        nDataList = flattenResponse(JSON.parse(rawN));
-      } else if (resN?.status === "fulfilled" && resN.value && resN.value.ok) {
+      if (resN.status === "fulfilled" && resN.value && resN.value.ok) {
         try {
           const nData = await resN.value.json();
           nDataList = flattenResponse(nData);
@@ -184,10 +181,9 @@ export default function Espacos() {
           nObjMap[Number(n.espaco_id)] = n;
         }
       });
+      setNucleosLinkedObjMap(nObjMap);
 
-      if (rawE) {
-        rawList = flattenResponse(JSON.parse(rawE));
-      } else if (resE?.status === "fulfilled" && resE.value && resE.value.ok) {
+      if (resE.status === "fulfilled" && resE.value && resE.value.ok) {
         try {
           const data = await resE.value.json();
           rawList = flattenResponse(data);
@@ -200,6 +196,7 @@ export default function Espacos() {
           id: n.espaco_id || n.id,
           nome: n.nome || `Espaço ${n.bairro || n.id}`,
           bairro: n.bairro,
+          cidade: n.cidade,
           resp_nome: n.resp_nome,
           resp_cpf: n.resp_cpf,
           resp_telefone: n.resp_telefone,
@@ -212,18 +209,23 @@ export default function Espacos() {
           termo_url: n.termo_url,
           status_aprovacao: n.status_aprovacao || "aprovado",
           ativo: n.ativo !== false,
+          nucleo_id: n.id,
+          projeto_id: n.projeto_id,
           nucleo_nome: n.nome,
           em_uso: true,
         }));
       }
 
       const list = rawList.map((item: any) => {
-        const status = (item.status_aprovacao || "aprovado").toString().toLowerCase().trim();
+        const status = "aprovado";
         const linkedNucleo = nMap[Number(item.id)] || item.nucleo_nome || (item.projeto_nome ? `Núcleo ${item.nome}` : null);
         const legacyN = nObjMap[Number(item.id)];
 
         return {
           ...item,
+          nucleo_id: legacyN?.id || item.nucleo_id,
+          projeto_id: item.projeto_id || legacyN?.projeto_id,
+          cidade: item.cidade || legacyN?.cidade,
           foto_url: item.foto_url || legacyN?.foto_url,
           termo_url: item.termo_url || legacyN?.termo_url,
           resp_nome: item.resp_nome || legacyN?.resp_nome,
@@ -240,7 +242,9 @@ export default function Espacos() {
       });
 
       setEspacos(list);
-      try { sessionStorage.setItem(`cache_espacos_parsed_${authInstitute.toUpperCase()}`, JSON.stringify(list)); } catch(e) {}
+      try {
+        sessionStorage.setItem(`cache_espacos_parsed_v4_${authInstitute.toUpperCase()}`, JSON.stringify(list));
+      } catch (e) {}
     } catch (e) {
       console.error("Erro ao buscar espaços:", e);
       addToast("error", "Erro de Conexão", "Não foi possível carregar os espaços do servidor.");
@@ -260,6 +264,7 @@ export default function Espacos() {
         body: JSON.stringify({ id: espaco.id, ativo: nextVal, instituto: authInstitute.toUpperCase() }),
       });
       if (res.ok) {
+        clearEntityCache(['espacos']);
         setEspacos(prev => prev.map(e => e.id === espaco.id ? { ...e, ativo: nextVal } : e));
         addToast(
           nextVal ? "success" : "warning",
@@ -272,6 +277,34 @@ export default function Espacos() {
       addToast("error", "Erro ao Alterar Status", "Falha na comunicação com o servidor.");
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const handleAprovarEspacoSimples = async (espaco: EspacoItem) => {
+    setApprovingId(espaco.id);
+    try {
+      const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
+      const res = await fetch("https://w.ibrase.com.br/webhook/espacos-put", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: espaco.id,
+          status_aprovacao: "aprovado",
+          instituto: authInstitute.toUpperCase()
+        }),
+      });
+      if (res.ok) {
+        clearEntityCache(['espacos']);
+        setEspacos(prev => prev.map(e => e.id === espaco.id ? { ...e, status_aprovacao: "aprovado" } : e));
+        addToast("success", "ESPAÇO APROVADO", `O espaço "${espaco.nome}" foi aprovado com sucesso e está desvinculado (disponível para núcleos).`);
+      } else {
+        addToast("error", "Erro ao Aprovar", "Falha ao salvar no servidor.");
+      }
+    } catch (e) {
+      console.error(e);
+      addToast("error", "Erro ao Aprovar", "Falha de conexão.");
+    } finally {
+      setApprovingId(null);
     }
   };
 
@@ -401,6 +434,7 @@ export default function Espacos() {
       });
 
       if (resE.ok && resN.ok) {
+        clearEntityCache(['espacos', 'nucleos']);
         addToast("success", "ESPAÇO APROVADO E NÚCLEO CRIADO!", `O espaço "${espacoToApprove.nome}" foi aprovado e o Núcleo (Vaga Nº ${selectedVaga.numero}) foi gerado automaticamente.`);
         setApproveModalOpen(false);
         setEspacoToApprove(null);
@@ -454,6 +488,7 @@ export default function Espacos() {
         }
 
         if (res.ok) {
+          clearEntityCache(['espacos', 'nucleos']);
           const nomeRemovido = selectedDeleteEspaco.nome;
           setEspacos(prev => prev.filter(e => e.id !== selectedDeleteEspaco.id));
           setDeleteModalOpen(false);
@@ -681,28 +716,86 @@ export default function Espacos() {
     printWin.document.close();
   };
 
+    // Helper para Status Solicitado: Em uso, Incompleto ou Não aplicado
+  const getStatusEspaco = (espaco: EspacoItem) => {
+    if (isIncompleto(espaco)) {
+      return {
+        key: "incompleto",
+        label: "Incompleto",
+        description: "Faltam informações obrigatórias no cadastro (ex: logradouro ou dados do responsável).",
+        badgeClass: "bg-amber-50/90 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/80",
+        dotClass: "bg-amber-500",
+      };
+    }
+    if (espaco.em_uso || espaco.nucleo_nome) {
+      return {
+        key: "em_uso",
+        label: "Em uso",
+        description: "Este espaço físico possui um núcleo ativo vinculado realizando atividades.",
+        badgeClass: "bg-emerald-50/90 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/80",
+        dotClass: "bg-emerald-500",
+      };
+    }
+    return {
+      key: "nao_aplicado",
+      label: "Não aplicado",
+      description: "Espaço cadastrado e disponível, sem núcleo operacional vinculado no momento.",
+      badgeClass: "bg-slate-100/90 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700",
+      dotClass: "bg-slate-400",
+    };
+  };
+
   const isIncompleto = (e: EspacoItem) => {
     return !e.resp_nome || e.resp_nome === "—" || e.resp_nome === "temp" || e.resp_nome === "x" || !e.rua || e.rua === "temp" || e.rua === "xxxxxxx";
   };
 
   const filteredEspacos = espacos.filter(e => {
-    if (globalFilter !== "all" && String(e.projeto_id) !== globalFilter) return false;
+    // 1. Filtro Global de Projeto
+    if (globalFilter !== "all") {
+      const matchProj = e.projeto_id && String(e.projeto_id) === globalFilter;
+      const nObj = nucleosLinkedObjMap[Number(e.id)];
+      const matchLinkedProj = nObj && String(nObj.projeto_id) === globalFilter;
+      if (!matchProj && !matchLinkedProj) return false;
+    }
+
+    // 2. Filtro Global de Cidade
+    if (globalCidadeFilter !== "all") {
+      const targetCid = globalCidadeFilter.toLowerCase().trim();
+      const matchCid = (e.cidade || "").toLowerCase().trim() === targetCid;
+      const nObj = nucleosLinkedObjMap[Number(e.id)];
+      const matchLinkedCid = (nObj?.cidade || "").toLowerCase().trim() === targetCid;
+      if (!matchCid && !matchLinkedCid) return false;
+    }
+
+    // 3. Filtro Global de Núcleo
+    if (globalNucleoFilter !== "all") {
+      const matchNucleoId = e.nucleo_id && String(e.nucleo_id) === globalNucleoFilter;
+      const nObj = nucleosLinkedObjMap[Number(e.id)];
+      const matchLinkedId = nObj && String(nObj.id) === globalNucleoFilter;
+      if (!matchNucleoId && !matchLinkedId) return false;
+    }
+
     if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
     return (
-      e.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (e.resp_nome || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (e.bairro || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (e.projeto_nome || "").toLowerCase().includes(searchTerm.toLowerCase())
+      e.nome.toLowerCase().includes(term) ||
+      (e.resp_nome || "").toLowerCase().includes(term) ||
+      (e.bairro || "").toLowerCase().includes(term) ||
+      (e.cidade || "").toLowerCase().includes(term) ||
+      (e.projeto_nome || "").toLowerCase().includes(term) ||
+      (e.nucleo_nome || "").toLowerCase().includes(term)
     );
   });
 
-  const solicitacoesPendentes = filteredEspacos.filter(e => String(e.status_aprovacao || "").toLowerCase().trim() === "pendente");
-  const espacosAprovados = filteredEspacos.filter(e => String(e.status_aprovacao || "").toLowerCase().trim() !== "pendente");
+  const espacosEmUso = filteredEspacos.filter(e => (e.em_uso || e.nucleo_nome) && !isIncompleto(e));
+  const espacosNaoAplicados = filteredEspacos.filter(e => !e.em_uso && !e.nucleo_nome && !isIncompleto(e));
+  const espacosIncompletos = filteredEspacos.filter(e => isIncompleto(e));
 
   const getCurrentList = () => {
     switch (activeTab) {
-      case "aprovados": return espacosAprovados;
-      case "pendentes": return solicitacoesPendentes;
+      case "em_uso": return espacosEmUso;
+      case "nao_aplicado": return espacosNaoAplicados;
+      case "incompletos": return espacosIncompletos;
       case "todos":
       default: return filteredEspacos;
     }
@@ -780,11 +873,24 @@ export default function Espacos() {
         </Link>
       </div>
 
+      {/* Banner Informativo com Sincronização e Nomenclatura dos Bairros/Distritos */}
+      <div className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 rounded-2xl p-4 flex items-start gap-3.5 shadow-2xs">
+        <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 font-black text-base shadow-xs">
+          !
+        </div>
+        <div className="text-xs text-blue-900 dark:text-blue-200 leading-relaxed">
+          <strong className="font-extrabold block text-blue-950 dark:text-blue-100 mb-0.5 text-sm">
+            Sincronização Automática com Núcleos
+          </strong>
+          Ao salvar um novo espaço físico, é criado automaticamente um núcleo correspondente no sistema como pendente de confirmação. Entre parênteses, é exibido o distrito ou localidade de referência do bairro (ex: <em>Amendoeiras (Travessão)</em>).
+        </div>
+      </div>
+
       {/* Tabs & Busca */}
       <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 transition-colors">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
           
-          {/* Navegação de Abas (Todos, Aprovados, Pendentes) */}
+          {/* Navegação de Abas (Todos, Em uso, Não aplicados, Incompletos) */}
           <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl">
             <button
               onClick={() => setActiveTab("todos")}
@@ -802,31 +908,46 @@ export default function Espacos() {
             </button>
 
             <button
-              onClick={() => setActiveTab("aprovados")}
+              onClick={() => setActiveTab("em_uso")}
               className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
-                activeTab === "aprovados" ? "bg-white dark:bg-slate-700 text-emerald-800 dark:text-emerald-300 shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                activeTab === "em_uso" ? "bg-white dark:bg-slate-700 text-emerald-800 dark:text-emerald-300 shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
               }`}
             >
               <CheckCircle2 size={14} className="text-emerald-500" />
-              <span>Aprovados</span>
+              <span>Em uso</span>
               <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
-                activeTab === "aprovados" ? "bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                activeTab === "em_uso" ? "bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
               }`}>
-                {espacosAprovados.length}
+                {espacosEmUso.length}
               </span>
             </button>
 
             <button
-              onClick={() => setActiveTab("pendentes")}
+              onClick={() => setActiveTab("nao_aplicado")}
               className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
-                activeTab === "pendentes" ? "bg-white dark:bg-slate-700 text-purple-900 dark:text-purple-300 shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                activeTab === "nao_aplicado" ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
               }`}
             >
-              <Clock size={14} className={solicitacoesPendentes.length > 0 ? "text-purple-600 animate-pulse" : ""} />
-              <span>Pendentes</span>
-              {solicitacoesPendentes.length > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                  {solicitacoesPendentes.length}
+              <Home size={14} className="text-slate-500 dark:text-slate-400" />
+              <span>Não aplicados</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                activeTab === "nao_aplicado" ? "bg-slate-200 dark:bg-slate-600 text-slate-800 dark:text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+              }`}>
+                {espacosNaoAplicados.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("incompletos")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
+                activeTab === "incompletos" ? "bg-white dark:bg-slate-700 text-amber-900 dark:text-amber-300 shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+              }`}
+            >
+              <AlertCircle size={14} className={espacosIncompletos.length > 0 ? "text-amber-500 animate-pulse" : "text-slate-400"} />
+              <span>Incompletos</span>
+              {espacosIncompletos.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                  {espacosIncompletos.length}
                 </span>
               )}
             </button>
@@ -846,12 +967,12 @@ export default function Espacos() {
         </div>
 
         {/* Banners Informativos das Abas */}
-        {activeTab === "pendentes" && (
-          <div className="bg-purple-50/80 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800/60 rounded-xl p-3.5 flex items-start gap-3 text-xs text-purple-900 dark:text-purple-300">
-            <AlertCircle size={18} className="text-purple-600 shrink-0 mt-0.5" />
+        {activeTab === "incompletos" && (
+          <div className="bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 rounded-xl p-3.5 flex items-start gap-3 text-xs text-amber-900 dark:text-amber-300">
+            <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
             <div>
-              <strong className="font-extrabold block text-purple-950 dark:text-purple-200">Solicitações de Espaços Pendentes de Aprovação</strong>
-              Cadastros novos enviados por cedentes/externos que aguardam aprovação do Administrador. Após aprovados, eles passam para a aba de Aprovados.
+              <strong className="font-extrabold block text-amber-950 dark:text-amber-200">Espaços com Pendência de Informações</strong>
+              Espaços físicos cadastrados que precisam de preenchimento de endereço completo ou dados do responsável para ficarem 100% regulares.
             </div>
           </div>
         )}
@@ -859,203 +980,134 @@ export default function Espacos() {
 
       {/* Lista de Espaços */}
       {loading ? (
-        <div className="bg-white dark:bg-slate-900 p-12 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-center space-y-3">
-          <Loader2 size={32} className="animate-spin text-blue-600 mx-auto" />
-          <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">Carregando espaços...</p>
+        <div className="space-y-4">
+          <div className="flex items-center justify-center gap-2 py-2 text-xs font-bold text-slate-500 dark:text-slate-400">
+            <Loader2 size={16} className="animate-spin text-blue-600" />
+            <span>Carregando espaços físicos...</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 animate-pulse">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xs space-y-3 p-4">
+                <div className="h-40 bg-slate-200 dark:bg-slate-800 rounded-xl w-full" />
+                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
+                <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/2" />
+                <div className="h-8 bg-slate-100 dark:bg-slate-800/60 rounded-xl w-full" />
+              </div>
+            ))}
+          </div>
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-white dark:bg-slate-900 p-12 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-center space-y-3">
           <Building2 size={40} className="text-slate-300 dark:text-slate-600 mx-auto" />
           <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">Nenhum espaço encontrado</h3>
           <p className="text-slate-400 dark:text-slate-500 text-xs max-w-sm mx-auto">
-            {activeTab === "pendentes"
-              ? "Não existem solicitações de espaço pendentes no momento."
+            {activeTab === "incompletos"
+              ? "Nenhum espaço com pendência de informações cadastrais."
+              : activeTab === "em_uso"
+              ? "Nenhum espaço com núcleo em operação ativa encontrado."
+              : activeTab === "nao_aplicado"
+              ? "Nenhum espaço livre sem núcleo vinculado no momento."
               : "Nenhum espaço cadastrado corresponde aos critérios da busca."}
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
           {filtered.map(espaco => {
-            const isPendente = String(espaco.status_aprovacao || "").toLowerCase().trim() === "pendente";
+            const statusInfo = getStatusEspaco(espaco);
 
             return (
               <div
                 key={espaco.id}
-                className="bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-200 dark:border-slate-800 shadow-sm hover:border-[var(--theme-primary)] hover:shadow-md transition-all overflow-hidden flex flex-col justify-between"
+                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between group overflow-hidden"
               >
-                {/* Imagem de Capa ou Placeholder */}
-                <div className="relative h-32 bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  {espaco.foto_url ? (
-                    <img
-                      src={espaco.foto_url}
-                      alt={espaco.nome}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800">
-                      <Building2 size={36} />
-                      <span className="text-xs font-semibold mt-1">Sem foto cadastrada</span>
+                <div>
+                  {/* Foto de Capa do Espaço ou Placeholder */}
+                  <div className="relative h-44 w-full bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 border-b border-slate-100 dark:border-slate-800">
+                    {espaco.foto_url ? (
+                      <img
+                        src={espaco.foto_url}
+                        alt={espaco.nome}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800">
+                        <Building2 size={36} />
+                        <span className="text-xs font-semibold mt-1">Sem foto cadastrada</span>
+                      </div>
+                    )}
+
+                    {/* Botão de Ativar/Desativar com efeito Frosted Glass */}
+                    <div className="absolute top-2.5 right-2.5 z-10">
+                      <button
+                        onClick={() => handleToggleAtivo(espaco)}
+                        disabled={togglingId === espaco.id}
+                        className={`p-1.5 rounded-full backdrop-blur-md shadow-xs transition-all ${
+                          espaco.ativo
+                            ? "bg-white/90 dark:bg-slate-900/90 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/80"
+                            : "bg-white/90 dark:bg-slate-900/90 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        }`}
+                        title={espaco.ativo ? "Espaço Ativo (clique para pausar)" : "Espaço Inativo (clique para ativar)"}
+                      >
+                        {togglingId === espaco.id ? <Loader2 size={13} className="animate-spin" /> : <Power size={13} />}
+                      </button>
                     </div>
-                  )}
 
-                  {/* Badges do Topo: Status do Espaço */}
-                  <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
-                    {isPendente ? (
-                      <span className="bg-purple-600 text-white text-[11px] font-black px-2.5 py-1 rounded shadow-xs flex items-center gap-1 uppercase tracking-wider">
-                        <Clock size={12} /> Solicitação Pendente
-                      </span>
-                    ) : isIncompleto(espaco) ? (
-                      <span className="bg-amber-500 text-white text-[11px] font-black px-2.5 py-1 rounded shadow-xs flex items-center gap-1 uppercase tracking-wider">
-                        <AlertTriangle size={12} /> ??? Info Pendente
-                      </span>
-                    ) : (
-                      <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm p-1 rounded-full shadow-sm" title="Aprovado e Completo">
-                        <CheckCircle2 size={20} className="text-emerald-500" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Conteúdo Principal do Card */}
-                <div className="p-3 sm:p-4 space-y-3 flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white line-clamp-2 flex items-start gap-1.5 leading-tight">
-                      <MapPin size={20} className="text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" />
-                      <span>{[espaco.bairro, espaco.cidade].filter(Boolean).join(" • ") || espaco.nome}</span>
-                    </h3>
-
-                    {/* Indicador de "Em Uso" e Vínculo ao Núcleo */}
-                    {espaco.em_uso && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-2.5 py-0.5 rounded-md mt-2">
-                        <Layers size={12} className="text-blue-500 shrink-0" />
-                        <span>Em uso • Vinculado ao Núcleo {espaco.nucleo_nome}</span>
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Detalhes do Responsável */}
-                  <div className="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-100 dark:border-slate-700/60 space-y-1 text-xs">
-                    {espaco.resp_nome && espaco.resp_nome !== "temp" && espaco.resp_nome !== "x" && espaco.resp_nome !== "—" ? (
-                      <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-bold">
-                        <User size={13} className="text-slate-400 shrink-0" />
-                        <span className="truncate">Resp: {espaco.resp_nome}</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-300 font-extrabold bg-amber-50/90 dark:bg-amber-950/60 p-1.5 rounded-lg border border-amber-200 dark:border-amber-800">
-                        <AlertTriangle size={13} className="shrink-0 text-amber-600" />
-                        <span>Resp: ??? (Ajeitar depois)</span>
-                      </div>
-                    )}
-
-                    {espaco.resp_telefone && espaco.resp_telefone !== "00000000000" && (
-                      <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 font-medium">
-                        <Phone size={13} className="text-slate-400 shrink-0" />
-                        <span>{espaco.resp_telefone}</span>
-                      </div>
-                    )}
-
-                    {espaco.ponto_referencia && (
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 italic line-clamp-1 mt-1 pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
-                        Ref: {espaco.ponto_referencia}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Footer do Card com Ações Limpas e Botão Download Ficha */}
-                <div className="px-4 py-3 bg-slate-50 dark:bg-slate-850/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-                  {isPendente ? (
-                    <>
-                      <button
-                        onClick={() => handleAprovarEspaco(espaco)}
-                        disabled={approvingId === espaco.id}
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2 px-3 rounded-xl text-xs shadow-xs transition-all flex items-center justify-center gap-1.5"
+                    {/* Badge de Status com Tooltip (?) no canto inferior */}
+                    <div className="absolute bottom-2.5 left-2.5 z-10">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-black border backdrop-blur-md shadow-xs ${statusInfo.badgeClass}`}
+                        title={statusInfo.description}
                       >
-                        {approvingId === espaco.id ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                        <span>Aprovar Espaço</span>
-                      </button>
-
-                      <Link
-                        to={`/admin/cadastrar-espaco?edit=${espaco.id}`}
-                        className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
-                        title="Editar Espaço"
-                      >
-                        <Edit3 size={16} />
-                      </Link>
-
-                      <button
-                        onClick={() => openDeleteModal(espaco)}
-                        className="p-2 rounded-xl text-slate-400 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-slate-800 transition-colors"
-                        title="Rejeitar / Excluir"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
-                          espaco.ativo ? "text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/70" : "text-slate-400 dark:text-slate-400 bg-slate-100 dark:bg-slate-800"
-                        }`}>
-                          {espaco.ativo ? "Ativo" : "Inativo"}
+                        <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotClass}`} />
+                        <span>{statusInfo.label}</span>
+                        <span className="text-[10px] opacity-70 hover:opacity-100 cursor-help font-mono" title={statusInfo.description}>
+                          (?)
                         </span>
-                      </div>
+                      </span>
+                    </div>
+                  </div>
 
-                      <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                        {/* Botão de Virar Núcleo para espaços disponíveis */}
-                        {!espaco.em_uso && !isIncompleto(espaco) && (
-                          <button
-                            onClick={() => handleAprovarEspaco(espaco)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 transition-colors"
-                            title="Aprovar e Virar Núcleo"
-                          >
-                            <Plus size={13} />
-                            Virar Núcleo
-                          </button>
-                        )}
+                  {/* Informações Principais */}
+                  <div className="p-3.5 space-y-1">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white truncate" title={espaco.nome}>
+                      {espaco.nome}
+                    </h3>
+                    <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 truncate flex items-center gap-1">
+                      <MapPin size={11} className="shrink-0 text-slate-400" />
+                      <span>{[espaco.bairro, espaco.cidade].filter(Boolean).join(" • ") || "Sem localização"}</span>
+                    </p>
+                  </div>
+                </div>
 
-                        {/* Botão de Download / Imprimir Ficha Oficial */}
-                        <button
-                          onClick={() => handleOpenPrintFicha(espaco)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800 transition-colors"
-                          title="Baixar Ficha Oficial em PDF / Imprimir"
-                        >
-                          <Download size={13} />
-                          Ficha
-                        </button>
+                {/* Ações Compactas */}
+                <div className="p-3.5 pt-0 flex items-center justify-between gap-1.5">
+                  <button
+                    onClick={() => handleOpenPrintFicha(espaco)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200/80 dark:border-blue-800 transition-colors"
+                    title="Baixar Ficha Oficial em PDF / Imprimir"
+                  >
+                    <Download size={13} />
+                    <span>Ficha</span>
+                  </button>
 
-                        <Link
-                          to={`/admin/cadastrar-espaco?edit=${espaco.id}`}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                          title="Editar Espaço"
-                        >
-                          <Edit3 size={13} />
-                          Editar
-                        </Link>
+                  <div className="flex items-center gap-1">
+                    <Link
+                      to={`/admin/cadastrar-espaco?edit=${espaco.id}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                      title="Editar Espaço"
+                    >
+                      <Edit3 size={13} />
+                      <span>Editar</span>
+                    </Link>
 
-                        <button
-                          onClick={() => handleToggleAtivo(espaco)}
-                          disabled={togglingId === espaco.id}
-                          className={`p-1.5 rounded-lg transition-colors ${
-                            espaco.ativo
-                              ? "text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-slate-800"
-                              : "text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-800"
-                          }`}
-                          title={espaco.ativo ? "Desativar" : "Ativar"}
-                        >
-                          {togglingId === espaco.id ? <Loader2 size={14} className="animate-spin" /> : <Power size={14} />}
-                        </button>
-
-                        <button
-                          onClick={() => openDeleteModal(espaco)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 transition-colors"
-                          title="Desvincular Espaço"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </>
-                  )}
+                    <button
+                      onClick={() => openDeleteModal(espaco)}
+                      className="p-1.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 transition-colors"
+                      title="Excluir Espaço"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
               </div>
             );

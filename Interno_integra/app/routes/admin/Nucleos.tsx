@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router";
-import { Plus, Search, Edit3, Power, Loader2, Layers, Building2, Calendar, Play, Pause } from "lucide-react";
-import { fetchWithDedupe } from "../../utils/apiCache";
+import { Plus, Search, Edit3, Edit2, Power, Loader2, Layers, Building2, Calendar, Play, Pause, HelpCircle, Check, X, Sparkles, MessageSquare, Bot, AlertCircle, CheckCircle2, Key, Send, MapPin } from "lucide-react";
+import { fetchWithDedupe, clearEntityCache } from "../../utils/apiCache";
 
 export interface NucleoItem {
   id: string | number;
@@ -11,6 +11,7 @@ export interface NucleoItem {
   modalidade_id?: number;
   modalidade_nome?: string;
   bairro: string;
+  cidade?: string;
   bairro_id?: number;
   espaco_id?: number;
   numero_vaga?: string | number;
@@ -41,10 +42,50 @@ const BAIRROS_MAP: Record<number, string> = {
 let projetosCache: Record<number, string> = {};
 let modalidadesCache: Record<number, string> = {};
 let espacosCache: Record<number, any> = {};
+let espacosListCache: any[] = [];
 
 // Versão do cache — incrementar sempre que o schema de colunas do Supabase mudar.
 // Isso força limpeza do sessionStorage stale quando a versão não bater.
-const NUCLEOS_CACHE_VERSION = 5;
+const NUCLEOS_CACHE_VERSION = 7;
+
+// Componente de Ajuda Rápida com Tooltip/Card Explicativo
+function HelpTooltip({ title, text, align = "center" }: { title: string; text: string; align?: "left" | "right" | "center" }) {
+  const [open, setOpen] = useState(false);
+  const alignClass = 
+    align === "left" 
+      ? "left-0 top-full mt-2" 
+      : align === "right" 
+      ? "right-0 top-full mt-2" 
+      : "left-1/2 -translate-x-1/2 top-full mt-2";
+
+  return (
+    <div className="relative inline-flex items-center ml-1 z-30">
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition-colors flex items-center justify-center text-[10px] font-black cursor-pointer shadow-2xs shrink-0"
+        title="Ajuda e explicação"
+      >
+        ?
+      </button>
+      {open && (
+        <div 
+          className={`absolute ${alignClass} w-64 p-3 bg-slate-900 text-white rounded-xl shadow-2xl text-xs z-50 normal-case font-normal border border-slate-700 pointer-events-none animate-in fade-in zoom-in-95 duration-150 text-left`}
+          style={{ minWidth: "220px" }}
+        >
+          <p className="font-bold text-amber-400 mb-1 flex items-center gap-1">
+            💡 {title}
+          </p>
+          <p className="text-slate-200 leading-relaxed text-[11px]">
+            {text}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Nucleos() {
   const [nucleos, setNucleos] = useState<NucleoItem[]>([]);
@@ -53,9 +94,18 @@ export default function Nucleos() {
   const [currentInstitute, setCurrentInstitute] = useState(() => typeof window !== 'undefined' ? localStorage.getItem('auth_institute') || 'IBRASE' : 'IBRASE');
   const [userRole, setUserRole] = useState(() => typeof window !== 'undefined' ? (localStorage.getItem('auth_cargo') || 'colaborador').toLowerCase().trim() : 'colaborador');
   const [userAccountType, setUserAccountType] = useState(() => typeof window !== 'undefined' ? (localStorage.getItem('auth_account_type') || 'colaborador').toLowerCase().trim() : 'colaborador');
-  const [globalFilter, setGlobalFilter] = useState("all");
+  const [globalFilter, setGlobalFilter] = useState(() => typeof window !== 'undefined' ? localStorage.getItem('global_projeto_filter') || 'all' : 'all');
+  const [globalNucleoFilter, setGlobalNucleoFilter] = useState(() => typeof window !== 'undefined' ? localStorage.getItem('global_nucleo_filter') || 'all' : 'all');
   const [viewMode, setViewMode] = useState<'ativos' | 'desativados'>('ativos');
+  const [filtroApenasPendentes, setFiltroApenasPendentes] = useState(false);
   const [desativandoId, setDesativandoId] = useState<string | number | null>(null);
+  const [editingNomeId, setEditingNomeId] = useState<string | number | null>(null);
+  const [editingNomeValue, setEditingNomeValue] = useState("");
+  const [isSavingNome, setIsSavingNome] = useState(false);
+  const [editingVagaId, setEditingVagaId] = useState<string | number | null>(null);
+  const [editingVagaValue, setEditingVagaValue] = useState("");
+  const [isSavingVaga, setIsSavingVaga] = useState(false);
+  const [feedbackToast, setFeedbackToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
     const inst = localStorage.getItem("auth_institute") || "IBRASE";
@@ -65,12 +115,15 @@ export default function Nucleos() {
     // ─ Cache versioning: limpa cache stale se a versão não bater ─
     const storedVersion = Number(sessionStorage.getItem(`cache_nucleos_version_${IN}`) || 0);
     if (storedVersion < NUCLEOS_CACHE_VERSION) {
-      sessionStorage.removeItem(`cache_nucleos_parsed_${IN}`);
+      clearEntityCache(['nucleos', 'espacos']);
       sessionStorage.removeItem(`cache_raw_nucleos_${IN}`);
+      sessionStorage.removeItem(`cache_nucleos_parsed_${IN}`);
+      sessionStorage.removeItem(`cache_nucleos_version_${IN}`);
     }
 
     const updateGlobalFilter = () => {
       setGlobalFilter(localStorage.getItem("global_projeto_filter") || "all");
+      setGlobalNucleoFilter(localStorage.getItem("global_nucleo_filter") || "all");
     };
     updateGlobalFilter();
     window.addEventListener("globalFilterChanged", updateGlobalFilter);
@@ -139,16 +192,10 @@ export default function Nucleos() {
   const fetchEspacos = async (instituteName: string) => {
     try {
       const IN = instituteName.toUpperCase();
-      let raw = sessionStorage.getItem(`cache_raw_espacos_${IN}`);
-      let list: any[] = [];
-      if (raw) {
-        try { list = flattenResponse(JSON.parse(raw)); } catch(e) { raw = null; }
-      }
-      if (!raw || list.length === 0) {
-        list = await fetchWithDedupe(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${IN}`, 5000);
-      }
-      list.forEach((e: any) => {
-        if (e.id) {
+      const list = await fetchWithDedupe(`https://w.ibrase.com.br/webhook/espacos-get?instituto=${IN}`, 5000);
+      espacosListCache = Array.isArray(list) ? list : (list?.data || []);
+      espacosListCache.forEach((e: any) => {
+        if (e && e.id) {
           espacosCache[Number(e.id)] = e;
         }
       });
@@ -188,7 +235,18 @@ export default function Nucleos() {
 
     return flatList.map((item, idx) => {
       const id = item.id || item.id_nucleo || idx + 1;
-      const nome = item.nome || item.nome_nucleo || `Núcleo ${id}`;
+      let espacoObj = item.espacos || (item.espaco_id ? espacosCache[Number(item.espaco_id)] : null);
+      if (!espacoObj && (item.nome || item.nome_nucleo)) {
+        const rawN = String(item.nome || item.nome_nucleo || '').trim().toLowerCase();
+        const found = (espacosListCache || []).find((e: any) => {
+          if (!e || !e.nome) return false;
+          const eN = String(e.nome).trim().toLowerCase();
+          return eN === rawN || rawN.startsWith(eN) || eN.startsWith(rawN);
+        });
+        if (found) espacoObj = found;
+      }
+
+      const nome = espacoObj?.nome || item.nome || item.nome_nucleo || `Núcleo ${id}`;
       const isAtivo = item.ativo !== false && item.ativo !== 0 && item.ativo !== "0";
       const isAceitandoVagas = item.aceitando_vagas === true;
 
@@ -207,7 +265,6 @@ export default function Nucleos() {
       }
 
       // 2. Resolver nome da modalidade
-      const espacoObj = item.espacos || (item.espaco_id ? espacosCache[Number(item.espaco_id)] : null);
       const targetModId = item.modalidade_id || espacoObj?.modalidade_id;
 
       let modalidadeNome = "";
@@ -225,9 +282,48 @@ export default function Nucleos() {
         modalidadeNome = "—";
       }
 
-      // 3. RESOLUÇÃO ROBUSTA DO BAIRRO (Tenta várias fontes)
+      // 3. RESOLUÇÃO ROBUSTA DA CIDADE E BAIRRO
+      let cidadeNome = "";
+      if (espacoObj?.cidade && espacoObj.cidade !== "temp" && !espacoObj.cidade.startsWith("Cidade ID")) {
+        cidadeNome = espacoObj.cidade;
+      } else if (item.cidade && item.cidade !== "temp" && !item.cidade.startsWith("Cidade ID")) {
+        cidadeNome = item.cidade;
+      } else if (item.espacos?.cidade) {
+        cidadeNome = item.espacos.cidade;
+      } else if (item.espaco_id && espacosCache[Number(item.espaco_id)]?.cidade) {
+        cidadeNome = espacosCache[Number(item.espaco_id)].cidade;
+      }
+
+      // Mapeamento de contingência para nomes conhecidos
+      const lowerName = String(nome || '').toLowerCase().trim();
+      if (!cidadeNome) {
+        if (lowerName.includes("fluminense") || lowerName.includes("wona") || lowerName.includes("lote xv") || lowerName.includes("são josé") || lowerName.includes("apollo")) {
+          cidadeNome = "Belford Roxo";
+        } else if (lowerName.includes("catarina") || lowerName.includes("lage") || lowerName.includes("guaxindiba") || lowerName.includes("tribobó") || lowerName.includes("zumbi") || lowerName.includes("engenho pequeno") || lowerName.includes("parada quarenta") || lowerName.includes("patronato") || lowerName.includes("santa sofia")) {
+          cidadeNome = "São Gonçalo";
+        } else if (lowerName.includes("josino") || lowerName.includes("saturnino") || lowerName.includes("santa cruz") || lowerName.includes("jóquei") || lowerName.includes("tócos") || lowerName.includes("tocos") || lowerName.includes("são caetano") || lowerName.includes("eldorado") || lowerName.includes("manhães") || lowerName.includes("tapera") || lowerName.includes("salo brand") || lowerName.includes("canaã") || lowerName.includes("caju") || lowerName.includes("penha") || lowerName.includes("amendoeiras") || lowerName.includes("travessão") || lowerName.includes("km 14") || lowerName.includes("goitacazes")) {
+          cidadeNome = "Campos dos Goytacazes";
+        } else if (lowerName.includes("batelão") || lowerName.includes("barra seca")) {
+          cidadeNome = "São Francisco de Itabapoana";
+        } else if (lowerName.includes("vila nova")) {
+          cidadeNome = "Conceição de Macabu";
+        } else if (lowerName.includes("aroeira") || lowerName.includes("botafogo") || lowerName.includes("aeroporto")) {
+          cidadeNome = "Macaé";
+        } else if (lowerName.includes("monsuaba")) {
+          cidadeNome = "Angra dos Reis";
+        } else if (lowerName.includes("itaboraí")) {
+          cidadeNome = "Itaboraí";
+        } else if (lowerName.includes("piedade") || lowerName.includes("pavuna") || lowerName.includes("vargem pequena")) {
+          cidadeNome = "Rio de Janeiro";
+        } else if (lowerName.includes("moquetá") || lowerName.includes("palmares")) {
+          cidadeNome = "Nova Iguaçu";
+        }
+      }
+
       let bairroNome = "";
-      if (item.bairro && item.bairro !== "temp" && !item.bairro.startsWith("Bairro ID")) {
+      if (espacoObj?.bairro && espacoObj.bairro !== "temp" && !espacoObj.bairro.startsWith("Bairro ID")) {
+        bairroNome = espacoObj.bairro;
+      } else if (item.bairro && item.bairro !== "temp" && !item.bairro.startsWith("Bairro ID")) {
         bairroNome = item.bairro;
       } else if (item.espacos?.bairro) {
         bairroNome = item.espacos.bairro;
@@ -237,13 +333,15 @@ export default function Nucleos() {
         bairroNome = BAIRROS_MAP[Number(item.bairro_id)];
       } else if (item.espaco_id && espacosCache[Number(item.espaco_id)]?.bairro) {
         bairroNome = espacosCache[Number(item.espaco_id)].bairro;
-      } else {
-        bairroNome = item.nome || "—";
+      }
+
+      // Se bairro for idêntico ao nome do núcleo, limpa para não duplicar
+      if (bairroNome && bairroNome.toLowerCase() === String(nome).toLowerCase()) {
+        bairroNome = "";
       }
 
       // 4. VAGA DO NÚCLEO (Número da Vaga Alocada no Projeto)
       let numeroVaga: string | number = item.numero_vaga ?? item.vaga_numero ?? item.n_vaga ?? item.vaga_numero_alocado ?? item.vaga_alocada ?? item.slot_vaga ?? item.vaga_slot ?? "";
-      // Normaliza: null, undefined, string 'null', string vazia → ''
       if (numeroVaga === null || numeroVaga === undefined || String(numeroVaga).trim() === '' || String(numeroVaga) === 'null') {
         numeroVaga = "";
       }
@@ -256,14 +354,23 @@ export default function Nucleos() {
         instrutor = "—";
       }
 
-      const rua = item.rua || espacoObj?.rua;
-      const num = item.numero || espacoObj?.numero;
+      const rua = espacoObj?.rua || item.rua;
+      const num = espacoObj?.numero || item.numero;
       
-      let enderecoFormatado = "";
-      if (rua && rua !== "temp" && rua !== "xxxxxxx") {
-        enderecoFormatado = `${rua}${num ? `, ${num}` : ''} - ${bairroNome}`;
+      // Sublinha do Núcleo: Apresenta a Cidade (e rua/bairro se distintos), NUNCA repetindo o nome do núcleo
+      let localizacaoFormatada = "";
+      if (cidadeNome) {
+        if (rua && rua !== "temp" && rua !== "xxxxxxx") {
+          localizacaoFormatada = `${cidadeNome} • ${rua}${num ? `, ${num}` : ''}`;
+        } else if (bairroNome && bairroNome.toLowerCase() !== cidadeNome.toLowerCase()) {
+          localizacaoFormatada = `${cidadeNome} • ${bairroNome}`;
+        } else {
+          localizacaoFormatada = cidadeNome;
+        }
+      } else if (bairroNome) {
+        localizacaoFormatada = bairroNome;
       } else {
-        enderecoFormatado = bairroNome || "—";
+        localizacaoFormatada = "Localidade vinculada";
       }
 
       return {
@@ -274,13 +381,14 @@ export default function Nucleos() {
         modalidade_id: item.modalidade_id || targetModId,
         modalidade_nome: modalidadeNome,
         bairro: bairroNome,
+        cidade: cidadeNome,
         bairro_id: item.bairro_id,
         espaco_id: item.espaco_id,
         numero_vaga: numeroVaga,
         vagas: item.vagas,
         instrutor: instrutor,
         resp_nome: item.resp_nome,
-        endereco: enderecoFormatado,
+        endereco: localizacaoFormatada,
         ativo: isAtivo,
         aceitando_vagas: isAceitandoVagas,
       };
@@ -366,6 +474,7 @@ export default function Nucleos() {
       });
 
       if (res.ok) {
+        clearEntityCache(['nucleos']);
         setNucleos(prev => prev.map(n => n.id === id ? { 
           ...n, 
           ativo: isActivating, 
@@ -384,11 +493,90 @@ export default function Nucleos() {
     }
   };
 
+
+
+  // Edição rápida do nome do núcleo
+  const handleStartEditNome = (item: NucleoItem) => {
+    setEditingNomeId(item.id);
+    setEditingNomeValue(item.nome);
+  };
+
+  const handleSaveNome = async (item: NucleoItem) => {
+    const cleanNome = editingNomeValue.trim();
+    if (!cleanNome || cleanNome === item.nome) {
+      setEditingNomeId(null);
+      return;
+    }
+    setIsSavingNome(true);
+    try {
+      const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-put?instituto=${currentInstitute}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: item.id,
+          nome: cleanNome,
+          nomeNucleo: cleanNome,
+          instituto: currentInstitute.toUpperCase()
+        })
+      });
+      if (res.ok) {
+        setNucleos(prev => prev.map(n => n.id === item.id ? { ...n, nome: cleanNome } : n));
+        clearEntityCache(['nucleos']);
+        setFeedbackToast({ type: 'success', message: `Nome do núcleo atualizado para "${cleanNome}"!` });
+        setTimeout(() => setFeedbackToast(null), 3500);
+      } else {
+        alert("Erro ao atualizar o nome do núcleo no servidor.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erro de conexão ao salvar nome.");
+    } finally {
+      setIsSavingNome(false);
+      setEditingNomeId(null);
+    }
+  };
+
+  const handleSaveVaga = async (item: NucleoItem) => {
+    const rawVal = editingVagaValue.trim();
+    const cleanVaga = rawVal === "" ? null : Number(rawVal);
+    setIsSavingVaga(true);
+    try {
+      const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-put?instituto=${currentInstitute}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: item.id,
+          numero_vaga: cleanVaga,
+          vaga_numero: cleanVaga,
+          instituto: currentInstitute.toUpperCase()
+        })
+      });
+      if (res.ok) {
+        setNucleos(prev => prev.map(n => n.id === item.id ? { ...n, numero_vaga: cleanVaga ?? "—" } : n));
+        clearEntityCache(['nucleos']);
+        setFeedbackToast({ type: 'success', message: cleanVaga ? `Vaga Nº ${cleanVaga} atribuída com sucesso!` : "Vaga redefinida para pendente." });
+        setTimeout(() => setFeedbackToast(null), 3500);
+      } else {
+        alert("Erro ao atualizar a vaga no servidor.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erro de conexão ao salvar vaga.");
+    } finally {
+      setIsSavingVaga(false);
+      setEditingVagaId(null);
+    }
+  };
+
   const filteredNucleos = nucleos.filter((item) => {
-    // Filtra por aba ativo/desativado
     if (viewMode === 'ativos' && !item.ativo) return false;
     if (viewMode === 'desativados' && item.ativo) return false;
+    if (viewMode === 'ativos' && filtroApenasPendentes) {
+      const isPendente = item.numero_vaga === "—" || !item.numero_vaga || item.numero_vaga === "null";
+      if (!isPendente) return false;
+    }
     if (globalFilter !== "all" && String(item.projeto_id) !== globalFilter) return false;
+    if (globalNucleoFilter !== "all" && String(item.id) !== globalNucleoFilter) return false;
     if (!searchTerm) return true;
     return (
       (item.nome || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -400,6 +588,7 @@ export default function Nucleos() {
 
   const totalAtivos = nucleos.filter(n => n.ativo).length;
   const totalDesativados = nucleos.filter(n => !n.ativo).length;
+  const totalPendentes = nucleos.filter(n => n.ativo && (n.numero_vaga === "—" || !n.numero_vaga || n.numero_vaga === "null")).length;
 
   // ─── Tela de carregamento completa ───────────────────────────────────────
   if (loading) {
@@ -448,29 +637,62 @@ export default function Nucleos() {
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2.5">
+          {/* Botão de Núcleos Desativados */}
           <button
-            onClick={() => setViewMode(viewMode === 'ativos' ? 'desativados' : 'ativos')}
-            className={`font-bold px-5 py-3 rounded-xl shadow-xs border transition-all flex items-center gap-2 text-sm shrink-0 ${
+            type="button"
+            onClick={() => setViewMode(viewMode === 'desativados' ? 'ativos' : 'desativados')}
+            className={`font-bold px-4 py-3 rounded-xl shadow-xs border transition-all flex items-center gap-2 text-sm shrink-0 cursor-pointer ${
               viewMode === 'desativados'
-                ? 'bg-red-600 text-white border-red-700 hover:bg-red-700'
+                ? 'bg-red-600 text-white border-red-700 shadow-sm'
                 : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700'
             }`}
+            title="Visualizar núcleos desabilitados / arquivados"
           >
             <Power size={16} className={viewMode === 'desativados' ? 'text-white' : 'text-red-500'} />
-            <span className="hidden sm:inline">
-              {viewMode === 'desativados' ? `Desativados (${totalDesativados})` : `Desativados (${totalDesativados})`}
-            </span>
+            <span>Desativados ({totalDesativados})</span>
           </button>
+
+          {/* Histórico */}
           <Link
             to="/admin/historico-nucleos"
-            className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold px-5 py-3 rounded-xl shadow-xs border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2 text-sm shrink-0"
+            className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold px-5 py-3 rounded-xl shadow-xs border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2 text-sm shrink-0 cursor-pointer"
           >
             <Calendar size={18} className="text-slate-500 dark:text-slate-400" />
-            <span className="hidden sm:inline">Histórico</span>
+            <span>Histórico de Núcleos</span>
           </Link>
         </div>
       </div>
+
+      {/* Alerta de Núcleos Pendentes */}
+      {viewMode === 'ativos' && totalPendentes > 0 && (
+        <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs animate-in fade-in duration-150">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <AlertCircle size={22} />
+            </div>
+            <div>
+              <p className="text-sm font-extrabold text-amber-900 dark:text-amber-200">
+                {totalPendentes} núcleo(s) pendente(s) de atribuição de vaga (slot)
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                Os espaços físicos cadastrados viram núcleos automaticamente. Defina a vaga clicando em "+ Definir Vaga" na tabela para habilitar a alocação.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFiltroApenasPendentes(prev => !prev)}
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs ${
+              filtroApenasPendentes
+                ? "bg-amber-700 text-white hover:bg-amber-800 ring-2 ring-amber-500/50"
+                : "bg-amber-600 hover:bg-amber-700 text-white"
+            }`}
+          >
+            {filtroApenasPendentes ? "Exibir Todos os Núcleos" : "Filtrar Somente Pendentes"}
+          </button>
+        </div>
+      )}
 
       {/* Card da Tabela de Núcleos */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
@@ -489,10 +711,17 @@ export default function Nucleos() {
           </div>
 
           <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-            {viewMode === 'desativados' 
-              ? <span className="text-red-500 font-bold">Exibindo {filteredNucleos.length} desativados</span>
-              : <>Exibindo <strong className="text-slate-800 dark:text-slate-200">{filteredNucleos.length}</strong> núcleos ativos</>
-            }
+            {viewMode === 'desativados' ? (
+              <span className="text-red-500 font-bold">
+                Exibindo {filteredNucleos.length} núcleos desativados
+              </span>
+            ) : filtroApenasPendentes ? (
+              <span className="text-amber-600 dark:text-amber-400 font-bold">
+                Exibindo {filteredNucleos.length} pendentes de vaga
+              </span>
+            ) : (
+              <>Exibindo <strong className="text-slate-800 dark:text-slate-200">{filteredNucleos.length}</strong> núcleos ativos</>
+            )}
           </div>
         </div>
 
@@ -511,29 +740,88 @@ export default function Nucleos() {
             <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-200 dark:border-slate-700">
               <Layers size={32} />
             </div>
-            <h3 className="text-lg md:text-xl font-bold text-slate-800 dark:text-white">Nenhum núcleo encontrado</h3>
+            <h3 className="text-lg md:text-xl font-bold text-slate-800 dark:text-white">
+              {searchTerm || globalFilter !== "all" || globalNucleoFilter !== "all" || filtroApenasPendentes
+                ? "Nenhum núcleo corresponde aos filtros"
+                : "Nenhum núcleo encontrado"}
+            </h3>
             <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base mt-1 max-w-md mx-auto">
-              Não existem registros de núcleos cadastrados para o instituto {currentInstitute} no momento.
+              {searchTerm || globalFilter !== "all" || globalNucleoFilter !== "all" || filtroApenasPendentes
+                ? "Tente limpar os filtros de busca ou projeto selecionados acima."
+                : `Não existem registros de núcleos cadastrados para o instituto ${currentInstitute} no momento.`}
             </p>
-            <Link
-              to="/admin/cadastrar-nucleo"
-              className="inline-flex items-center gap-2 mt-6 text-sm md:text-base font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-4 py-2.5 rounded-xl border border-blue-100 dark:border-blue-800 transition-colors"
-            >
-              <Plus size={16} /> Cadastrar o primeiro núcleo
-            </Link>
+            {searchTerm || globalFilter !== "all" || globalNucleoFilter !== "all" || filtroApenasPendentes ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTerm("");
+                  setGlobalFilter("all");
+                  setGlobalNucleoFilter("all");
+                  setFiltroApenasPendentes(false);
+                  localStorage.removeItem("global_projeto_filter");
+                  localStorage.removeItem("global_nucleo_filter");
+                  window.dispatchEvent(new Event("globalFilterChanged"));
+                }}
+                className="inline-flex items-center gap-2 mt-6 text-sm md:text-base font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 bg-blue-50 dark:bg-blue-950/60 px-4 py-2.5 rounded-xl border border-blue-100 dark:border-blue-800 transition-colors cursor-pointer"
+              >
+                Limpar Todos os Filtros
+              </button>
+            ) : (
+              <Link
+                to="/admin/cadastrar-nucleo"
+                className="inline-flex items-center gap-2 mt-6 text-sm md:text-base font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-4 py-2.5 rounded-xl border border-blue-100 dark:border-blue-800 transition-colors"
+              >
+                <Plus size={16} /> Cadastrar o primeiro núcleo
+              </Link>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[900px]">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 text-xs sm:text-sm md:text-base font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  <th className="py-4 px-3 md:px-4">Núcleo / Endereço</th>
-                  <th className="py-4 px-3 md:px-4">Projeto</th>
-                  <th className="py-4 px-3 md:px-4">Modalidade</th>
-                  <th className="py-4 px-3 md:px-4">Instrutor</th>
-                  <th className="py-4 px-3 md:px-4 text-center">Vaga (Slot)</th>
-                  <th className="py-4 px-3 md:px-4 text-center">Status Físico</th>
-                  <th className="py-4 px-3 md:px-4 w-28 text-center">Ações</th>
+                  <th className="py-4 px-3 md:px-4 text-center w-36">
+                    <div className="inline-flex items-center justify-center">
+                      Vagas
+                      <HelpTooltip title="Número da Vaga (Slot)" text="Número sequencial da cota/slot de atendimento vinculada ao plano de trabalho do projeto." align="left" />
+                    </div>
+                  </th>
+                  <th className="py-4 px-3 md:px-4">
+                    <div className="inline-flex items-center">
+                      Núcleo
+                      <HelpTooltip title="Núcleo" text="Nome de identificação do núcleo operacional e seu endereço físico vinculado. Passe o mouse ou clique no ícone de lápis para editar o nome do núcleo." align="left" />
+                    </div>
+                  </th>
+                  <th className="py-4 px-3 md:px-4">
+                    <div className="inline-flex items-center">
+                      Projeto
+                      <HelpTooltip title="Projeto Vinculado" text="Projeto ou iniciativa oficial do instituto onde este núcleo atua." align="center" />
+                    </div>
+                  </th>
+                  <th className="py-4 px-3 md:px-4">
+                    <div className="inline-flex items-center">
+                      Modalidade
+                      <HelpTooltip title="Modalidade Oferecida" text="Tipo de aula ou atividade ministrada no núcleo (ex: Futebol, Futsal, Dança, Ginástica, Natação, etc.)." align="center" />
+                    </div>
+                  </th>
+                  <th className="py-4 px-3 md:px-4">
+                    <div className="inline-flex items-center">
+                      Instrutor
+                      <HelpTooltip title="Instrutor / Professor" text="Profissional responsável por ministrar as aulas e orientar os alunos inscritos." align="center" />
+                    </div>
+                  </th>
+                  <th className="py-4 px-3 md:px-4 text-center">
+                    <div className="inline-flex items-center justify-center">
+                      Status Físico
+                      <HelpTooltip title="Status Físico Operacional" text="Ativo: Núcleo aberto e em atividade regular. Inativo: Núcleo pausado ou desativado temporariamente." align="right" />
+                    </div>
+                  </th>
+                  <th className="py-4 px-3 md:px-4 w-28 text-center">
+                    <div className="inline-flex items-center justify-center">
+                      Ações
+                      <HelpTooltip title="Ações Rápidas" text="Ver grade horária de turmas, editar configurações gerais ou alternar status físico do núcleo." align="right" />
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm md:text-base">
@@ -541,11 +829,128 @@ export default function Nucleos() {
                   return (
                     <tr key={item.id} className="hover:bg-blue-50/30 dark:hover:bg-slate-800/50 transition-colors group">
                       
-                      {/* Núcleo e Endereço */}
+                      {/* Vagas (Primeira coluna) */}
+                      <td className="py-3 md:py-4 px-3 md:px-4 text-center">
+                        {editingVagaId === item.id ? (
+                          <div className="inline-flex items-center gap-1">
+                            <input
+                              type="number"
+                              placeholder="Nº"
+                              value={editingVagaValue}
+                              onChange={(e) => setEditingVagaValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleSaveVaga(item);
+                                if (e.key === "Escape") setEditingVagaId(null);
+                              }}
+                              className="w-16 px-2 py-1 text-xs font-bold text-center bg-white dark:bg-slate-800 border-2 border-indigo-500 rounded-lg text-slate-900 dark:text-white outline-none"
+                              autoFocus
+                              disabled={isSavingVaga}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSaveVaga(item)}
+                              disabled={isSavingVaga}
+                              className="p-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                              title="Salvar vaga"
+                            >
+                              {isSavingVaga ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingVagaId(null)}
+                              disabled={isSavingVaga}
+                              className="p-1 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 cursor-pointer"
+                              title="Cancelar"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ) : item.numero_vaga !== "—" && item.numero_vaga !== null && item.numero_vaga !== "null" ? (
+                          <div className="inline-flex items-center gap-1 group/vaga">
+                            <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs md:text-sm font-extrabold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/60 shadow-2xs">
+                              Nº {item.numero_vaga}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingVagaId(item.id);
+                                setEditingVagaValue(String(item.numero_vaga));
+                              }}
+                              className="opacity-0 group-hover/vaga:opacity-100 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-600 transition-all cursor-pointer"
+                              title="Alterar número da vaga"
+                            >
+                              <Edit2 size={11} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="inline-flex flex-col items-center gap-1">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-black px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700/60 animate-pulse">
+                              ⚠ Pendente
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingVagaId(item.id);
+                                setEditingVagaValue("");
+                              }}
+                              className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                            >
+                              + Definir Vaga
+                            </button>
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Núcleo */}
                       <td className="py-3 md:py-4 px-3 md:px-4">
-                        <span className="font-extrabold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors block text-sm sm:text-sm md:text-base">
-                          {item.nome}
-                        </span>
+                        {editingNomeId === item.id ? (
+                          <div className="flex items-center gap-1.5 py-1">
+                            <input
+                              type="text"
+                              value={editingNomeValue}
+                              onChange={(e) => setEditingNomeValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleSaveNome(item);
+                                if (e.key === "Escape") setEditingNomeId(null);
+                              }}
+                              className="px-2 py-1 text-sm font-bold bg-white dark:bg-slate-800 border-2 border-blue-500 rounded-lg text-slate-900 dark:text-white outline-none ring-2 ring-blue-500/20 w-full max-w-[220px]"
+                              autoFocus
+                              disabled={isSavingNome}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSaveNome(item)}
+                              disabled={isSavingNome}
+                              className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer"
+                              title="Salvar novo nome"
+                            >
+                              {isSavingNome ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingNomeId(null)}
+                              disabled={isSavingNome}
+                              className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+                              title="Cancelar edição"
+                            >
+                              <X size={13} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors block text-sm sm:text-sm md:text-base">
+                              {item.nome}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleStartEditNome(item)}
+                              className="opacity-60 hover:opacity-100 p-1 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                              title="Editar nome do núcleo"
+                            >
+                              <Edit2 size={13} />
+                            </button>
+                          </div>
+                        )}
                         <span className="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-medium block mt-0.5">
                           📍 {item.endereco}
                         </span>
@@ -577,19 +982,6 @@ export default function Nucleos() {
                         <span className="font-semibold text-slate-700 dark:text-slate-300 text-sm md:text-base block">
                           👤 {item.instrutor || "—"}
                         </span>
-                      </td>
-
-                      {/* Vaga do Núcleo */}
-                      <td className="py-3 md:py-4 px-3 md:px-4 text-center">
-                        {item.numero_vaga !== "—" ? (
-                          <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs md:text-sm font-extrabold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/60 shadow-2xs">
-                            Nº {item.numero_vaga}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700/60">
-                            ⚠ Sem vaga
-                          </span>
-                        )}
                       </td>
 
                       {/* Status Captação (Removido) */}
@@ -650,6 +1042,20 @@ export default function Nucleos() {
           </div>
         )}
       </div>
+
+      {/* Feedback Toast */}
+      {feedbackToast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 duration-200">
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-sm font-semibold border ${
+            feedbackToast.type === 'success'
+              ? 'bg-emerald-600 text-white border-emerald-700'
+              : 'bg-red-600 text-white border-red-700'
+          }`}>
+            {feedbackToast.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+            <span>{feedbackToast.message}</span>
+          </div>
+        </div>
+      )}
 
     </div>
   );

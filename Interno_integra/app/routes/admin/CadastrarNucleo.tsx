@@ -4,6 +4,7 @@ import type { Resolver } from "react-hook-form";
 import { useSearchParams, useNavigate } from "react-router";
 import { z } from "zod";
 import { ArrowLeft, Save, MapPin, Building2, Loader2, Award, User, AlertCircle } from "lucide-react";
+import { clearEntityCache } from "../../utils/apiCache";
 
 // Schemas de Validação (Zod)
 const cadastrarNucleoSchema = z.object({
@@ -51,6 +52,7 @@ export default function CadastrarNucleo() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const editId = searchParams.get("edit");
+  const preselectedEspacoId = searchParams.get("espacoId");
   const [isLoadingData, setIsLoadingData] = useState(!!editId);
 
   const [espacos, setEspacos] = useState<any[]>([]);
@@ -65,6 +67,7 @@ export default function CadastrarNucleo() {
       aceitandoVagas: false,
       numeroVaga: "1",
       vagas: "100",
+      espacoId: preselectedEspacoId || "",
     },
   });
 
@@ -104,11 +107,29 @@ export default function CadastrarNucleo() {
                 const nucleo = flatList.find((n: any) => n && String(n.id || n.id_nucleo) === editId);
                 
                 if (nucleo) {
+                  let espId = String(nucleo.espaco_id || "");
+                  let projId = String(nucleo.projeto_id || "");
+                  let modId = String(nucleo.modalidade_id || "");
+                  
+                  if (!espId || !projId) {
+                    const nucleoNome = String(nucleo.nome || nucleo.nome_nucleo || "").trim().toLowerCase();
+                    const matchedEspaco = espacos.find((e: any) => {
+                      if (!e || !e.nome) return false;
+                      const eNome = String(e.nome).trim().toLowerCase();
+                      return eNome === nucleoNome || nucleoNome.startsWith(eNome) || eNome.startsWith(nucleoNome);
+                    });
+                    if (matchedEspaco) {
+                      if (!espId && matchedEspaco.id) espId = String(matchedEspaco.id);
+                      if (!projId && matchedEspaco.projeto_id) projId = String(matchedEspaco.projeto_id);
+                      if (!modId && matchedEspaco.modalidade_id) modId = String(matchedEspaco.modalidade_id);
+                    }
+                  }
+
                   reset({
                     nomeNucleo: nucleo.nome || nucleo.nome_nucleo || "",
-                    espacoId: String(nucleo.espaco_id || ""),
-                    projetoId: String(nucleo.projeto_id || ""),
-                    modalidadeId: String(nucleo.modalidade_id || ""),
+                    espacoId: espId,
+                    projetoId: projId,
+                    modalidadeId: modId,
                     cidadeId: String(nucleo.cidade_id || ""),
                     uf: nucleo.uf || "",
                     bairroId: String(nucleo.bairro_id || ""),
@@ -276,10 +297,10 @@ export default function CadastrarNucleo() {
 
   const filteredEspacos = useMemo(() => {
     // Apenas Espaços APROVADOS (não pendentes) podem ser selecionados para virar Núcleo
-    const apenasAprovados = espacos.filter(e => e && e.status_aprovacao !== "pendente");
+    const apenasAprovados = espacos.filter(e => e && e.status_aprovacao !== "rejeitado");
     if (!projetoIdWatch) return apenasAprovados;
     return apenasAprovados.filter(e => 
-      e && (String(e.projeto_id) === String(projetoIdWatch) || String(e.id) === String(espacoIdWatch))
+      e && (!e.projeto_id || String(e.projeto_id) === String(projetoIdWatch) || String(e.id) === String(espacoIdWatch))
     );
   }, [espacos, projetoIdWatch, espacoIdWatch]);
 
@@ -357,7 +378,18 @@ export default function CadastrarNucleo() {
 
 
 
-      if (data.nomeNucleo) payload.nome = data.nomeNucleo;
+      if (selectedEspaco) {
+        payload.nome = selectedEspaco.nome || data.nomeNucleo || "";
+        payload.nomeNucleo = payload.nome;
+        payload.bairro = selectedEspaco.bairro || "";
+        payload.rua = selectedEspaco.rua || "";
+        payload.numero = selectedEspaco.numero || "";
+        payload.cep = selectedEspaco.cep || "";
+        if (selectedEspaco.bairro_id) payload.bairro_id = Number(selectedEspaco.bairro_id);
+      } else if (data.nomeNucleo) {
+        payload.nome = data.nomeNucleo;
+        payload.nomeNucleo = data.nomeNucleo;
+      }
       if (data.espacoId) payload.espaco_id = Number(data.espacoId);
       if (data.projetoId) payload.projeto_id = Number(data.projetoId);
       if (data.modalidadeId) payload.modalidade_id = Number(data.modalidadeId);
@@ -379,6 +411,7 @@ export default function CadastrarNucleo() {
         throw new Error("Erro ao enviar dados.");
       }
       
+      clearEntityCache(['nucleos', 'espacos']);
       alert(editId ? "Núcleo atualizado com sucesso!" : "Núcleo cadastrado com sucesso!");
       navigate("/admin/nucleos");
     } catch (error) {
@@ -420,6 +453,7 @@ export default function CadastrarNucleo() {
 
       {!isLoadingData && (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 pb-12 opacity-100 transition-opacity duration-300">
+          <input type="hidden" {...register("nomeNucleo")} />
         
         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
           <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100 dark:border-slate-800">

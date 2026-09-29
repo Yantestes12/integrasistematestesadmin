@@ -1,9 +1,17 @@
 # Memória de Sessão - Plataforma Integra (GASCTPNA)
 
-## 🔴 REGRA CRÍTICA: Branch de Deploy
-- A hospedagem usa a branch **`master`** (NÃO `main`).
-- Sempre fazer push para AMBAS: `git push origin main` E `git push origin main:master`
-- Repositório: `https://github.com/Yantestes12/integrasistematestesadmin.git`
+## 🔴 REGRA CRÍTICA: REPOSITÓRIOS CORRETOS PARA PUSH
+- **SISTEMA INTERNO / ADMIN (Interno_integra)**:
+  - Repositório: `https://github.com/Yantestes12/integrasistematestesadmin.git`
+  - A hospedagem de produção usa a branch **`master`** (NÃO apenas `main`).
+  - Fazer push para ambas: `git push origin main` E `git push origin main:master`.
+  - **PROIBIDO**: NUNCA subir `site_integra_central` ou páginas de portais de alunos neste repositório.
+- **DESCONTINUADO**: O repositório `areadeloginintegra` NÃO é mais utilizado.
+- **REPOSITÓRIOS OFICIAIS DOS PORTAIS (Frontend Alunos)**:
+  - **GASCTPNA**: `https://github.com/Yantestes12/gasectpna` (pasta `temp_gasectpna`)
+  - **IBRASE**: `https://github.com/Yantestes12/ibrase` (pasta `temp_ibrase`)
+  - **AUNI**: `https://github.com/Yantestes12/auni` (pasta `temp_auni`)
+  - **IVEM**: `https://github.com/Yantestes12/ivem` (pasta `temp_ivem`)
 
 ## 🔴 REGRA CRÍTICA: Não Mexer no Mobile
 - O design mobile está PERFEITO. Nunca alterar estilos/lógica do celular.
@@ -103,3 +111,22 @@
 - **Zero Achismos**: Sempre que o contexto não for suficiente, pare e FAÇA PERGUNTAS EXPLÍCITAS para alinhar as expectativas antes de sair executando código errado.
 - **Raciocínio Metódico**: Resolva um problema de cada vez com total profundidade. Não pule etapas nem entregue soluções rasas. Assuma a responsabilidade de investigar até o fim.
 
+
+## 🔴 Faixa Etária e Edição de Matrículas (GASCTPNA, IBRASE, etc.)
+- **NUNCA HARDCODEAR `{ idade_min: 6, idade_max: 18 }`**: Ao iniciar modo edição (`iniciarEdicaoMatricula`) ou selecionar projeto (`iniciarMatriculaNoProjeto`), ler a faixa real do projeto (`projObj.idade_min`, `projObj.idade_max`).
+- Se `idade_min` for `null` ou indefinido, NÃO há idade mínima.
+- Se `idade_max` for `null` ou indefinido, NÃO há idade máxima (ex: ÍMPETO II é livre, IMPETO vai até 65 anos, CRESP vai até 60 anos, AGON até 65 anos).
+- Em `validarPassoAtual`, só bloquear se o limite estiver explicitamente configurado no banco de dados.
+
+## 🔴 Regra de Limite de Vagas e Cadastro de Reserva
+- **Fórmula de Vagas**: `vagasBase + Math.ceil(vagasBase * 0.10)`. Ex: 100 vagas base + 10 reserva = 110 vagas totais máximas (ou 110 + 11 = 121).
+- **Status dos Núcleos**:
+  - `inscritos < vagasBase`: Vagas regulares abertas (`X vagas disponíveis`).
+  - `inscritos >= vagasTotais`: Núcleo Esgotado (`Vagas Esgotadas (X/Y)`). ATENÇÃO: NUNCA usar `aceitando_vagas === false` para marcar esgotado, pois em institutos como GASCTPNA esse campo pode vir false/null no banco mesmo com muitas vagas abertas. A disponibilidade de vagas é baseada exclusivamente em `vagas` e `inscritos`.
+- **Bloqueio no Frontend**:
+  - Tile com opacidade reduzida e badge vermelho `Vagas Esgotadas`.
+  - Clique no card esgotado bloqueado com alerta explicativo.
+  - Auto-seleção bloqueada se o núcleo estiver esgotado.
+  - `validarPassoAtual(3)` impede avanço caso o núcleo esteja esgotado.
+  - `submit` do formulário revalida a capacidade antes do dispatch, atribuindo `tipo_vaga = 'reserva' | 'regular'` e incrementando localmente a contagem.
+  - **Modo Edição**: Aluno editando sua própria matrícula no mesmo núcleo NÃO é bloqueado caso o núcleo esteja lotado (preserva a vaga que já era dele).

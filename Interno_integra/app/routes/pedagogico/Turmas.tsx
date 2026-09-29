@@ -10,7 +10,7 @@ import {
   Check,
   Loader2,
 } from "lucide-react";
-import { fetchWithDedupe } from "../../utils/apiCache";
+import { fetchWithDedupe, safeSetSession } from "../../utils/apiCache";
 
 /* ─── Tipos ─── */
 interface MatriculaItem {
@@ -19,6 +19,8 @@ interface MatriculaItem {
   aluno_cpf?: string;
   nucleo_nome?: string;
   nucleo_id?: string | number;
+  projeto_id?: string | number;
+  cidade?: string;
   turma?: string;
   telefone_conta?: string;
 }
@@ -111,21 +113,42 @@ export default function Turmas() {
   const [matriculas, setMatriculas] = useState<MatriculaItem[]>(() => {
     if (typeof window !== 'undefined') {
       const inst = localStorage.getItem("auth_institute") || "IBRASE";
-      const mCache = sessionStorage.getItem(`cache_matriculas_${inst.toUpperCase()}`);
+      const IN = inst.toUpperCase();
+      const mCache = sessionStorage.getItem(`cache_matriculas_v2_${IN}`) || sessionStorage.getItem(`cache_matriculas_${IN}`);
       if (mCache) {
-        try { return JSON.parse(mCache); } catch(e){}
+        try {
+          const list = JSON.parse(mCache);
+          if (Array.isArray(list) && list.length > 0) {
+            return list.map((item: any, idx: number) => {
+              const nId = String(item.nucleo_id || "");
+              return {
+                id: item.id || idx + 1,
+                aluno_nome: item.aluno_nome || item.nome || `Aluno #${item.id || idx + 1}`,
+                aluno_cpf: item.aluno_cpf || item.cpf || "",
+                nucleo_nome: item.nucleo_nome || (nId && nId !== "null" && nId !== "undefined" ? `Núcleo #${nId}` : "Sem Núcleo"),
+                nucleo_id: item.nucleo_id || "",
+                projeto_id: item.projeto_id || "",
+                cidade: item.cidade || item.cidade_nome || item.aluno_cidade || item.municipio || "",
+                turma: item.turma || "Sem Turma",
+                telefone_conta: item.telefone_conta || item.whatsapp || "",
+              };
+            });
+          }
+        } catch(e){}
       }
     }
     return [];
   });
+
   const [nucleosMap, setNucleosMap] = useState<Record<string, NucleoInfo>>(() => {
     if (typeof window !== 'undefined') {
       const inst = localStorage.getItem("auth_institute") || "IBRASE";
-      const nCache = sessionStorage.getItem(`cache_nucleos_list_${inst.toUpperCase()}`);
+      const IN = inst.toUpperCase();
+      const nCache = sessionStorage.getItem(`cache_nucleos_list_${IN}`);
       if (nCache) {
         try {
           const arr = JSON.parse(nCache);
-          const matCache = sessionStorage.getItem(`cache_matriculas_${inst.toUpperCase()}`);
+          const matCache = sessionStorage.getItem(`cache_matriculas_v2_${IN}`) || sessionStorage.getItem(`cache_matriculas_${IN}`);
           const matCidadeMap: Record<string, string> = {};
           if (matCache) {
             try {
@@ -138,12 +161,12 @@ export default function Turmas() {
             } catch(e) {}
           }
           const nMap: Record<string, NucleoInfo> = {};
-          arr.forEach((n: any) => {
+          (Array.isArray(arr) ? arr : []).forEach((n: any) => {
             const id = String(n.id || n.id_nucleo || n.nucleo_id || "");
             const numVaga = n.numero_vaga || n.vaga_numero;
             const isArquivado = !numVaga || numVaga === "—" || numVaga === "";
             const cidade = n.cidade || n.cidade_nome || matCidadeMap[id] || "";
-            const rawNome = n.nome || n.nucleo_nome || `Núcleo ${id}`;
+            const rawNome = n.nome || n.nucleo_nome || (id ? `Núcleo #${id}` : "Sem Núcleo");
             const nome = cidade ? `${rawNome} (${cidade})` : rawNome;
             if (id) {
               nMap[id] = {
@@ -163,13 +186,18 @@ export default function Turmas() {
     }
     return {};
   });
+
   const [loading, setLoading] = useState(() => {
     if (typeof window !== 'undefined') {
       const inst = localStorage.getItem("auth_institute") || "IBRASE";
-      return !sessionStorage.getItem(`cache_matriculas_${inst.toUpperCase()}`);
+      const IN = inst.toUpperCase();
+      const hasMat = !!(sessionStorage.getItem(`cache_matriculas_v2_${IN}`) || sessionStorage.getItem(`cache_matriculas_${IN}`));
+      const hasNuc = !!sessionStorage.getItem(`cache_nucleos_list_${IN}`);
+      return !(hasMat && hasNuc);
     }
     return true;
   });
+
   const [currentInstitute, setCurrentInstitute] = useState("IBRASE");
 
   // Filtros Locais
@@ -283,32 +311,23 @@ export default function Turmas() {
   }, []);
 
   const fetchData = async (inst: string) => {
-    setLoading(true);
+    // Se não tiver dados na tela, exibe o spinner
+    if (matriculas.length === 0 || Object.keys(nucleosMap).length === 0) {
+      setLoading(true);
+    }
     try {
+      const IN = inst.toUpperCase();
       const [resN, resM] = await Promise.allSettled([
-        fetchWithDedupe(`${BASE}nucleos-get?instituto=${inst}`),
-        fetchWithDedupe(`${BASE}matriculas-get?instituto=${inst}`),
+        fetchWithDedupe(`${BASE}nucleos-get?instituto=${IN}`),
+        fetchWithDedupe(`${BASE}matriculas-get?instituto=${IN}`),
       ]);
 
-      let rawList: any[] = [];
-      if (resM.status === "fulfilled" && resM.value.ok) {
-        const text = await resM.value.text();
-        let data: any = [];
-        if (text && text.trim() !== "") {
-          try {
-            data = JSON.parse(text);
-          } catch (e) {
-            console.warn("Erro ao fazer parse das turmas", e);
-          }
-        }
-        if (data && !data.error && data.message !== "Workflow was started") {
-          rawList = flattenArray(data);
-        }
-      }
+      const rawNucleos = resN.status === "fulfilled" ? (Array.isArray(resN.value) ? resN.value : flattenArray(resN.value)) : [];
+      const rawMatriculas = resM.status === "fulfilled" ? (Array.isArray(resM.value) ? resM.value : flattenArray(resM.value)) : [];
 
       // Mapear nucleo_id -> cidade a partir das matrículas para os núcleos sem cidade no nucleos-get
       const matCidadeMap: Record<string, string> = {};
-      for (const m of rawList) {
+      for (const m of rawMatriculas) {
         const nid = String(m.nucleo_id || "");
         const cid = String(m.cidade || m.aluno_cidade || m.municipio || "").trim();
         if (nid && cid && !matCidadeMap[nid]) {
@@ -317,43 +336,64 @@ export default function Turmas() {
       }
 
       const nMap: Record<string, NucleoInfo> = {};
-      if (resN.status === "fulfilled" && resN.value.ok) {
-        const nData = await resN.value.json();
-        for (const n of flattenArray(nData)) {
+      if (rawNucleos.length > 0) {
+        for (const n of rawNucleos) {
           const id = String(n.id || n.id_nucleo || n.nucleo_id || "");
           const numVaga = n.numero_vaga || n.vaga_numero;
           const isArquivado = !numVaga || numVaga === "—" || numVaga === "";
           const foto = n.foto || n.imagem_capa || n.imagem || n.url_foto || n.url || "";
           const cidade = n.cidade || n.cidade_nome || matCidadeMap[id] || "";
-          const rawNome = n.nome || n.nucleo_nome || `Núcleo ${id}`;
+          const rawNome = n.nome || n.nucleo_nome || (id ? `Núcleo #${id}` : "Sem Núcleo");
           const nome = cidade ? `${rawNome} (${cidade})` : rawNome;
-          if (id) nMap[id] = { 
-            id, 
-            nome, 
-            bairro: n.bairro || "", 
-            foto,
-            cidade,
-            projeto_id: n.projeto_id || "",
-            isArquivado
-          };
+          if (id) {
+            nMap[id] = { 
+              id, 
+              nome, 
+              bairro: n.bairro || "", 
+              foto,
+              cidade,
+              projeto_id: n.projeto_id || "",
+              isArquivado
+            };
+          }
         }
+        setNucleosMap(nMap);
+        safeSetSession(`cache_nucleos_list_${IN}`, rawNucleos);
       }
-      setNucleosMap(nMap);
 
-      if (rawList.length > 0) {
-        const parsed: MatriculaItem[] = rawList.map((item: any, idx: number) => {
+      const activeMap = Object.keys(nMap).length > 0 ? nMap : nucleosMap;
+
+      if (rawMatriculas.length > 0) {
+        const parsed: MatriculaItem[] = rawMatriculas.map((item: any, idx: number) => {
           const nId = String(item.nucleo_id || "");
+          const nObj = nId ? activeMap[nId] : null;
+          const nucleoNome = nObj?.nome || item.nucleo_nome || (nId && nId !== "null" && nId !== "undefined" ? `Núcleo #${nId}` : "Sem Núcleo");
           return {
             id: item.id || idx + 1,
             aluno_nome: item.aluno_nome || item.nome || `Aluno #${item.id || idx + 1}`,
             aluno_cpf: item.aluno_cpf || item.cpf || "",
-            nucleo_nome: nMap[nId]?.nome || item.nucleo_nome || (nId ? `Núcleo ${nId}` : "Sem Núcleo"),
+            nucleo_nome: nucleoNome,
             nucleo_id: item.nucleo_id || "",
+            projeto_id: item.projeto_id || "",
+            cidade: item.cidade || item.cidade_nome || matCidadeMap[nId] || nObj?.cidade || "",
             turma: item.turma || "Sem Turma",
             telefone_conta: item.telefone_conta || item.whatsapp || "",
           };
         });
         setMatriculas(parsed);
+        safeSetSession(`cache_matriculas_v2_${IN}`, parsed);
+      } else if (rawNucleos.length > 0) {
+        // Se já tínhamos matrículas em tela mas os núcleos acabaram de carregar, atualiza os nomes dos núcleos
+        setMatriculas((prev) =>
+          prev.map((m) => {
+            const nId = String(m.nucleo_id || "");
+            const nObj = nId ? activeMap[nId] : null;
+            if (nObj && nObj.nome) {
+              return { ...m, nucleo_nome: nObj.nome, cidade: m.cidade || nObj.cidade || "" };
+            }
+            return m;
+          })
+        );
       }
     } catch (e) {
       console.warn("Erro ao buscar dados de turmas:", e);
@@ -376,12 +416,33 @@ export default function Turmas() {
   const groupedByNucleo = useMemo(() => {
     const filtered = matriculas.filter((m) => {
       // Filtros Globais
-      if (globalNucleo !== "all" && String(m.nucleo_id) !== globalNucleo) return false;
+      if (globalNucleo !== "all") {
+        const itemNId = String(m.nucleo_id || "");
+        const targetNucleoNome = nucleosMap[globalNucleo]?.nome?.toLowerCase();
+        const matchesId = itemNId === globalNucleo;
+        const matchesNome = targetNucleoNome && m.nucleo_nome && m.nucleo_nome.toLowerCase().includes(targetNucleoNome);
+        if (!matchesId && !matchesNome) return false;
+      }
       
       if (globalProjeto !== "all" || globalCidade !== "all") {
-        const nObj = nucleosMap[String(m.nucleo_id)];
-        if (globalProjeto !== "all" && String(nObj?.projeto_id) !== globalProjeto) return false;
-        if (globalCidade !== "all" && nObj?.cidade?.toLowerCase() !== globalCidade.toLowerCase()) return false;
+        const nObj = nucleosMap[String(m.nucleo_id)] || Object.values(nucleosMap).find(n => 
+          m.nucleo_nome && n.nome && n.nome.toLowerCase().includes(m.nucleo_nome.toLowerCase())
+        );
+        if (globalProjeto !== "all") {
+          const selectedNucleoObj = globalNucleo !== "all" ? nucleosMap[globalNucleo] : null;
+          const isSelectedNucleoOfProject = globalNucleo !== "all" && 
+            selectedNucleoObj && 
+            String(selectedNucleoObj.projeto_id) === String(globalProjeto);
+          const directMatch = m.projeto_id && String(m.projeto_id) === globalProjeto;
+          const nucleoMatch = nObj?.projeto_id && String(nObj.projeto_id) === globalProjeto;
+          if (!isSelectedNucleoOfProject && !directMatch && !nucleoMatch) return false;
+        }
+        if (globalCidade !== "all") {
+          const itemCid = (m.cidade || "").toLowerCase();
+          const nObjCid = (nObj?.cidade || "").toLowerCase();
+          const targetCid = globalCidade.toLowerCase();
+          if (itemCid !== targetCid && nObjCid !== targetCid) return false;
+        }
       }
 
       // Filtro por turma
@@ -402,10 +463,16 @@ export default function Turmas() {
     // Agrupar por núcleo
     const groups: Record<string, { info: NucleoInfo; alunos: MatriculaItem[] }> = {};
     for (const m of filtered) {
-      const nKey = String(m.nucleo_id || "sem");
+      const hasNucleo = m.nucleo_id !== null && m.nucleo_id !== undefined && String(m.nucleo_id).trim() !== "" && String(m.nucleo_id).trim() !== "null" && String(m.nucleo_id).trim() !== "undefined";
+      const nKey = hasNucleo ? String(m.nucleo_id) : "sem";
+      
       if (!groups[nKey]) {
+        const nObj = nucleosMap[nKey];
+        const defaultName = nKey === "sem" 
+          ? "Órfãos (Sem Núcleo)" 
+          : (m.nucleo_nome && m.nucleo_nome !== "Sem Núcleo" ? m.nucleo_nome : `Núcleo #${nKey}`);
         groups[nKey] = {
-          info: nucleosMap[nKey] || { id: nKey, nome: m.nucleo_nome || "Sem Núcleo", bairro: "" },
+          info: nObj || { id: nKey, nome: defaultName, bairro: "" },
           alunos: [],
         };
       }
@@ -413,7 +480,12 @@ export default function Turmas() {
     }
 
     return Object.values(groups)
-      .sort((a, b) => a.info.nome.localeCompare(b.info.nome))
+      .sort((a, b) => {
+        // Órfãos sempre no final
+        if (String(a.info.id) === "sem") return 1;
+        if (String(b.info.id) === "sem") return -1;
+        return a.info.nome.localeCompare(b.info.nome);
+      })
       .map((g) => {
         const turmasGrouped: Record<string, MatriculaItem[]> = {};
         for (const aluno of g.alunos) {
