@@ -246,7 +246,7 @@ export default function Nucleos() {
         if (found) espacoObj = found;
       }
 
-      const nome = espacoObj?.nome || item.nome || item.nome_nucleo || `Núcleo ${id}`;
+      const nome = item.nome || item.nome_nucleo || espacoObj?.nome || `Núcleo ${id}`;
       const isAtivo = item.ativo !== false && item.ativo !== 0 && item.ativo !== "0";
       const isAceitandoVagas = item.aceitando_vagas === true;
 
@@ -449,33 +449,46 @@ export default function Nucleos() {
 
 
 
-  const handleToggleAtivo = async (id: string | number, currentAtivo: boolean) => {
-    const isActivating = !currentAtivo;
+  const handleToggleAtivo = async (item: NucleoItem) => {
+    const isActivating = !item.ativo;
     const confirmMsg = isActivating 
-      ? "Deseja reativar este núcleo? Ele retornará para a aba de Ativos."
-      : "Deseja realmente desativar e arquivar este núcleo? Ele irá para a aba de Desativados.";
+      ? `Deseja reativar o núcleo "${item.nome}"? Ele retornará para a aba de Ativos.`
+      : `Deseja realmente desativar e arquivar o núcleo "${item.nome}"? Ele irá para a aba de Desativados.`;
       
     if (!window.confirm(confirmMsg)) return;
-    setDesativandoId(id);
+    setDesativandoId(item.id);
     try {
       const authInstitute = currentInstitute.toUpperCase();
-      const formData = new FormData();
-      formData.append("id", String(id));
-      formData.append("ativo", isActivating ? "true" : "false");
-      formData.append("aceitando_vagas", isActivating ? "true" : "false");
-      
-      if (!isActivating) {
-        formData.append("numero_vaga", "null");
-      }
-      
+      const numVaga = isActivating ? ((item.numero_vaga && item.numero_vaga !== "—") ? Number(item.numero_vaga) : null) : null;
       const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-put?instituto=${authInstitute}`, {
         method: "PUT",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: item.id,
+          nome: item.nome,
+          nomeNucleo: item.nome,
+          projeto_id: item.projeto_id ? Number(item.projeto_id) : null,
+          projetoId: item.projeto_id ? Number(item.projeto_id) : null,
+          espaco_id: item.espaco_id ? Number(item.espaco_id) : null,
+          espacoId: item.espaco_id ? Number(item.espaco_id) : null,
+          modalidade_id: item.modalidade_id ? Number(item.modalidade_id) : null,
+          modalidadeId: item.modalidade_id ? Number(item.modalidade_id) : null,
+          bairro_id: item.bairro_id ? Number(item.bairro_id) : null,
+          bairroId: item.bairro_id ? Number(item.bairro_id) : null,
+          bairro: item.bairro || "",
+          numero_vaga: numVaga,
+          numeroVaga: numVaga,
+          vagas: item.vagas ? Number(item.vagas) : 100,
+          ativo: isActivating,
+          aceitando_vagas: isActivating,
+          instrutor: (item.instrutor && item.instrutor !== "—") ? item.instrutor : null,
+          instituto: authInstitute
+        })
       });
 
       if (res.ok) {
         clearEntityCache(['nucleos']);
-        setNucleos(prev => prev.map(n => n.id === id ? { 
+        setNucleos(prev => prev.map(n => n.id === item.id ? { 
           ...n, 
           ativo: isActivating, 
           aceitando_vagas: isActivating,
@@ -509,6 +522,7 @@ export default function Nucleos() {
     }
     setIsSavingNome(true);
     try {
+      const numVaga = (item.numero_vaga && item.numero_vaga !== "—") ? Number(item.numero_vaga) : null;
       const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-put?instituto=${currentInstitute}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -516,6 +530,21 @@ export default function Nucleos() {
           id: item.id,
           nome: cleanNome,
           nomeNucleo: cleanNome,
+          projeto_id: item.projeto_id ? Number(item.projeto_id) : null,
+          projetoId: item.projeto_id ? Number(item.projeto_id) : null,
+          espaco_id: item.espaco_id ? Number(item.espaco_id) : null,
+          espacoId: item.espaco_id ? Number(item.espaco_id) : null,
+          modalidade_id: item.modalidade_id ? Number(item.modalidade_id) : null,
+          modalidadeId: item.modalidade_id ? Number(item.modalidade_id) : null,
+          bairro_id: item.bairro_id ? Number(item.bairro_id) : null,
+          bairroId: item.bairro_id ? Number(item.bairro_id) : null,
+          bairro: item.bairro || "",
+          numero_vaga: numVaga,
+          numeroVaga: numVaga,
+          vagas: item.vagas ? Number(item.vagas) : 100,
+          ativo: item.ativo,
+          aceitando_vagas: item.aceitando_vagas,
+          instrutor: (item.instrutor && item.instrutor !== "—") ? item.instrutor : null,
           instituto: currentInstitute.toUpperCase()
         })
       });
@@ -546,8 +575,23 @@ export default function Nucleos() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: item.id,
+          nome: item.nome,
+          nomeNucleo: item.nome,
+          projeto_id: item.projeto_id ? Number(item.projeto_id) : null,
+          projetoId: item.projeto_id ? Number(item.projeto_id) : null,
+          espaco_id: item.espaco_id ? Number(item.espaco_id) : null,
+          espacoId: item.espaco_id ? Number(item.espaco_id) : null,
+          modalidade_id: item.modalidade_id ? Number(item.modalidade_id) : null,
+          modalidadeId: item.modalidade_id ? Number(item.modalidade_id) : null,
+          bairro_id: item.bairro_id ? Number(item.bairro_id) : null,
+          bairroId: item.bairro_id ? Number(item.bairro_id) : null,
+          bairro: item.bairro || "",
           numero_vaga: cleanVaga,
-          vaga_numero: cleanVaga,
+          numeroVaga: cleanVaga,
+          vagas: item.vagas ? Number(item.vagas) : 100,
+          ativo: item.ativo,
+          aceitando_vagas: item.aceitando_vagas,
+          instrutor: (item.instrutor && item.instrutor !== "—") ? item.instrutor : null,
           instituto: currentInstitute.toUpperCase()
         })
       });
@@ -1018,7 +1062,7 @@ export default function Nucleos() {
                           </Link>
 
                           <button
-                            onClick={() => handleToggleAtivo(item.id, item.ativo)}
+                            onClick={() => handleToggleAtivo(item)}
                             disabled={desativandoId === item.id}
                             className={`p-2 rounded-lg transition-colors ${
                               item.ativo 

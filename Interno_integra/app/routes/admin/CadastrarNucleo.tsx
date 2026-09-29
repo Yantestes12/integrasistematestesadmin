@@ -323,10 +323,10 @@ export default function CadastrarNucleo() {
   };
 
   useEffect(() => {
-    if (selectedEspaco?.nome) {
+    if (selectedEspaco?.nome && !editId) {
       setFormValue("nomeNucleo", selectedEspaco.nome);
     }
-  }, [selectedEspaco, setFormValue]);
+  }, [selectedEspaco, setFormValue, editId]);
 
   const getProjVagas = (proj: any) => {
     if (!proj) return [];
@@ -376,28 +376,37 @@ export default function CadastrarNucleo() {
       const payload: Record<string, any> = {};
       if (editId) payload.id = Number(editId);
 
-
+      const nomeFinal = (data.nomeNucleo && data.nomeNucleo.trim()) ? data.nomeNucleo.trim() : (selectedEspaco?.nome || "");
+      payload.nome = nomeFinal;
+      payload.nomeNucleo = nomeFinal;
 
       if (selectedEspaco) {
-        payload.nome = selectedEspaco.nome || data.nomeNucleo || "";
-        payload.nomeNucleo = payload.nome;
         payload.bairro = selectedEspaco.bairro || "";
         payload.rua = selectedEspaco.rua || "";
         payload.numero = selectedEspaco.numero || "";
         payload.cep = selectedEspaco.cep || "";
         if (selectedEspaco.bairro_id) payload.bairro_id = Number(selectedEspaco.bairro_id);
-      } else if (data.nomeNucleo) {
-        payload.nome = data.nomeNucleo;
-        payload.nomeNucleo = data.nomeNucleo;
       }
-      if (data.espacoId) payload.espaco_id = Number(data.espacoId);
-      if (data.projetoId) payload.projeto_id = Number(data.projetoId);
-      if (data.modalidadeId) payload.modalidade_id = Number(data.modalidadeId);
-      if (data.vagas) payload.vagas = Number(data.vagas);
-      if (data.instrutor) payload.instrutor = data.instrutor;
-      if (data.numeroVaga) payload.numero_vaga = Number(data.numeroVaga);
+      if (data.espacoId) {
+        payload.espaco_id = Number(data.espacoId);
+        payload.espacoId = Number(data.espacoId);
+      }
+      if (data.projetoId) {
+        payload.projeto_id = Number(data.projetoId);
+        payload.projetoId = Number(data.projetoId);
+      }
+      if (data.modalidadeId) {
+        payload.modalidade_id = Number(data.modalidadeId);
+        payload.modalidadeId = Number(data.modalidadeId);
+      }
+      payload.vagas = data.vagas ? Number(data.vagas) : 100;
+      payload.instrutor = (data.instrutor && data.instrutor !== "—") ? data.instrutor : null;
+      payload.numero_vaga = data.numeroVaga ? Number(data.numeroVaga) : null;
+      payload.numeroVaga = payload.numero_vaga;
       
       payload.ativo = (data.ativo === true || data.ativo === 'true');
+      payload.aceitando_vagas = (data.aceitandoVagas === true || data.aceitandoVagas === 'true');
+      payload.instituto = authInstitute.toUpperCase();
 
       const response = await fetch(webhookUrl, {
         method: editId ? "PUT" : "POST",

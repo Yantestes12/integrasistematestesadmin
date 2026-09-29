@@ -48,6 +48,7 @@ export default function GradeHoraria() {
   const [espacoHorarios, setEspacoHorarios] = useState<Record<string, { ativo: boolean; abertura: string; fechamento: string }> | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [nucleoRaw, setNucleoRaw] = useState<any>(null);
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Estado dos dias da semana e horários
@@ -102,6 +103,7 @@ export default function GradeHoraria() {
 
         const found = flat.find((n: any) => String(n.id || n.id_nucleo) === String(id));
         if (found) {
+          setNucleoRaw(found);
           setNucleoNome(found.nome || found.nome_nucleo || `Núcleo #${id}`);
           
           let parsedEspacoHorarios = null;
@@ -236,16 +238,37 @@ export default function GradeHoraria() {
     setSaving(true);
     setStatusMsg(null);
     try {
-      const authInstitute = localStorage.getItem("auth_institute") || "IBRASE";
-      const res = await fetch("https://w.ibrase.com.br/webhook/nucleos-put", {
-        method: "POST",
+      const authInstitute = (localStorage.getItem("auth_institute") || "IBRASE").toUpperCase();
+      const payload: any = {
+        id: nucleoId,
+        instituto: authInstitute,
+        grade_horaria: JSON.stringify(diasGrade),
+        turnos_calculados: turnosCalculados.join(", "),
+      };
+      if (nucleoRaw) {
+        payload.nome = nucleoRaw.nome || nucleoRaw.nome_nucleo;
+        payload.nomeNucleo = payload.nome;
+        payload.projeto_id = nucleoRaw.projeto_id ? Number(nucleoRaw.projeto_id) : null;
+        payload.projetoId = payload.projeto_id;
+        payload.espaco_id = nucleoRaw.espaco_id ? Number(nucleoRaw.espaco_id) : null;
+        payload.espacoId = payload.espaco_id;
+        payload.modalidade_id = nucleoRaw.modalidade_id ? Number(nucleoRaw.modalidade_id) : null;
+        payload.modalidadeId = payload.modalidade_id;
+        payload.bairro_id = nucleoRaw.bairro_id ? Number(nucleoRaw.bairro_id) : null;
+        payload.bairroId = payload.bairro_id;
+        payload.bairro = nucleoRaw.bairro || "";
+        payload.numero_vaga = (nucleoRaw.numero_vaga && nucleoRaw.numero_vaga !== "—") ? Number(nucleoRaw.numero_vaga) : null;
+        payload.numeroVaga = payload.numero_vaga;
+        payload.vagas = nucleoRaw.vagas ? Number(nucleoRaw.vagas) : 100;
+        payload.ativo = nucleoRaw.ativo !== false && nucleoRaw.ativo !== 0 && nucleoRaw.ativo !== "0";
+        payload.aceitando_vagas = nucleoRaw.aceitando_vagas !== false;
+        payload.instrutor = (nucleoRaw.instrutor && nucleoRaw.instrutor !== "—") ? nucleoRaw.instrutor : null;
+      }
+
+      const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-put?instituto=${authInstitute}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: nucleoId,
-          instituto: authInstitute.toUpperCase(),
-          grade_horaria: JSON.stringify(diasGrade),
-          turnos_calculados: turnosCalculados.join(", "),
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {

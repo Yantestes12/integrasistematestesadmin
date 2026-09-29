@@ -2543,15 +2543,30 @@ export default function Dashboard() {
       const isAtivo = item.ativo !== false && item.ativo !== 0 && item.ativo !== "0" && item.ativo !== "false";
       const novoEstado = !isAtivo;
       
-      const formData = new FormData();
-      formData.append("id", String(item.id || item.id_nucleo || item.nucleo_id));
-      formData.append("ativo", String(novoEstado));
-      formData.append("aceitando_vagas", String(novoEstado));
-      formData.append("instituto", currentInstitute.toUpperCase());
-
       const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-put?instituto=${currentInstitute.toUpperCase()}`, {
         method: "PUT",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: item.id || item.id_nucleo || item.nucleo_id,
+          nome: item.nome || item.nome_nucleo,
+          nomeNucleo: item.nome || item.nome_nucleo,
+          projeto_id: item.projeto_id ? Number(item.projeto_id) : null,
+          projetoId: item.projeto_id ? Number(item.projeto_id) : null,
+          espaco_id: item.espaco_id ? Number(item.espaco_id) : null,
+          espacoId: item.espaco_id ? Number(item.espaco_id) : null,
+          modalidade_id: item.modalidade_id ? Number(item.modalidade_id) : null,
+          modalidadeId: item.modalidade_id ? Number(item.modalidade_id) : null,
+          bairro_id: item.bairro_id ? Number(item.bairro_id) : null,
+          bairroId: item.bairro_id ? Number(item.bairro_id) : null,
+          bairro: item.bairro || "",
+          numero_vaga: (item.numero_vaga && item.numero_vaga !== "—") ? Number(item.numero_vaga) : null,
+          numeroVaga: (item.numero_vaga && item.numero_vaga !== "—") ? Number(item.numero_vaga) : null,
+          vagas: item.vagas ? Number(item.vagas) : 100,
+          ativo: novoEstado,
+          aceitando_vagas: novoEstado,
+          instrutor: (item.instrutor && item.instrutor !== "—") ? item.instrutor : null,
+          instituto: currentInstitute.toUpperCase()
+        })
       });
 
       if (res.ok) {
