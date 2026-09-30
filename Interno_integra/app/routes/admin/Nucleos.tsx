@@ -46,7 +46,7 @@ let espacosListCache: any[] = [];
 
 // Versão do cache — incrementar sempre que o schema de colunas do Supabase mudar.
 // Isso força limpeza do sessionStorage stale quando a versão não bater.
-const NUCLEOS_CACHE_VERSION = 7;
+const NUCLEOS_CACHE_VERSION = 15;
 
 // Componente de Ajuda Rápida com Tooltip/Card Explicativo
 function HelpTooltip({ title, text, align = "center" }: { title: string; text: string; align?: "left" | "right" | "center" }) {
@@ -118,7 +118,7 @@ export default function Nucleos() {
       clearEntityCache(['nucleos', 'espacos']);
       sessionStorage.removeItem(`cache_raw_nucleos_${IN}`);
       sessionStorage.removeItem(`cache_nucleos_parsed_${IN}`);
-      sessionStorage.removeItem(`cache_nucleos_version_${IN}`);
+      sessionStorage.setItem(`cache_nucleos_version_${IN}`, String(NUCLEOS_CACHE_VERSION));
     }
 
     const updateGlobalFilter = () => {
@@ -396,18 +396,16 @@ export default function Nucleos() {
   };
 
   const fetchRawNucleosData = async (instituteName: string) => {
+    const IN = instituteName.toUpperCase();
     try {
-      let raw = sessionStorage.getItem(`cache_raw_nucleos_${instituteName.toUpperCase()}`);
-      if (raw) { try { return JSON.parse(raw); } catch (e) { sessionStorage.removeItem(`cache_raw_nucleos_${instituteName.toUpperCase()}`); } }
-
-      const n8nEndpoint = `https://w.ibrase.com.br/webhook/nucleos-get?instituto=${instituteName.toUpperCase()}`;
+      const n8nEndpoint = `https://w.ibrase.com.br/webhook/nucleos-get?instituto=${IN}`;
       const res = await fetch(n8nEndpoint, { method: 'GET', cache: 'no-store' });
       if (res.ok) {
         const text = await res.text();
         if (text) {
           try {
             const data = JSON.parse(text);
-            try { sessionStorage.setItem(`cache_raw_nucleos_${instituteName.toUpperCase()}`, text); } catch(e) { console.warn("Cache cheio", e); sessionStorage.clear(); try { sessionStorage.setItem(`cache_raw_nucleos_${instituteName.toUpperCase()}`, text); } catch(e2) {} }
+            try { sessionStorage.setItem(`cache_raw_nucleos_${IN}`, text); } catch(e) {}
             return data;
           } catch (e) {
             console.warn("N8N returned non-JSON:", text);
@@ -417,6 +415,11 @@ export default function Nucleos() {
     } catch (e) {
       console.warn("Erro ao fazer fetch no Webhook N8N de Núcleos:", e);
     }
+    // Fallback apenas se a rede falhar completamente
+    try {
+      const raw = sessionStorage.getItem(`cache_raw_nucleos_${IN}`);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
     return null;
   };
 
