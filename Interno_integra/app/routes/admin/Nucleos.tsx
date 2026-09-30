@@ -525,8 +525,23 @@ export default function Nucleos() {
     }
     setIsSavingNome(true);
     try {
+      const authInst = currentInstitute.toUpperCase();
+
+      // Sincroniza o novo nome com o Espaço Físico vinculado (se houver)
+      if (item.espaco_id) {
+        fetch(`https://w.ibrase.com.br/webhook/espacos-put?instituto=${authInst}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: Number(item.espaco_id),
+            nome: cleanNome,
+            instituto: authInst
+          })
+        }).catch(err => console.warn("Erro ao sincronizar nome com espaço:", err));
+      }
+
       const numVaga = (item.numero_vaga && item.numero_vaga !== "—") ? Number(item.numero_vaga) : null;
-      const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-put?instituto=${currentInstitute}`, {
+      const res = await fetch(`https://w.ibrase.com.br/webhook/nucleos-put?instituto=${authInst}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -548,12 +563,17 @@ export default function Nucleos() {
           ativo: item.ativo,
           aceitando_vagas: item.aceitando_vagas,
           instrutor: (item.instrutor && item.instrutor !== "—") ? item.instrutor : null,
-          instituto: currentInstitute.toUpperCase()
+          instituto: authInst
         })
       });
       if (res.ok) {
         setNucleos(prev => prev.map(n => n.id === item.id ? { ...n, nome: cleanNome } : n));
-        clearEntityCache(['nucleos']);
+        clearEntityCache(['nucleos', 'espacos']);
+        try {
+          sessionStorage.removeItem(`cache_raw_nucleos_${authInst}`);
+          sessionStorage.removeItem(`cache_nucleos_parsed_${authInst}`);
+          sessionStorage.removeItem(`cache_espacos_list_${authInst}`);
+        } catch (e) {}
         setFeedbackToast({ type: 'success', message: `Nome do núcleo atualizado para "${cleanNome}"!` });
         setTimeout(() => setFeedbackToast(null), 3500);
       } else {
