@@ -46,7 +46,7 @@ let espacosListCache: any[] = [];
 
 // Versão do cache — incrementar sempre que o schema de colunas do Supabase mudar.
 // Isso força limpeza do sessionStorage stale quando a versão não bater.
-const NUCLEOS_CACHE_VERSION = 15;
+const NUCLEOS_CACHE_VERSION = 16;
 
 // Componente de Ajuda Rápida com Tooltip/Card Explicativo
 function HelpTooltip({ title, text, align = "center" }: { title: string; text: string; align?: "left" | "right" | "center" }) {
@@ -398,7 +398,7 @@ export default function Nucleos() {
   const fetchRawNucleosData = async (instituteName: string) => {
     const IN = instituteName.toUpperCase();
     try {
-      const n8nEndpoint = `https://w.ibrase.com.br/webhook/nucleos-get?instituto=${IN}`;
+      const n8nEndpoint = `https://w.ibrase.com.br/webhook/nucleos-get?instituto=${IN}&_t=${Date.now()}`;
       const res = await fetch(n8nEndpoint, { method: 'GET', cache: 'no-store' });
       if (res.ok) {
         const text = await res.text();
